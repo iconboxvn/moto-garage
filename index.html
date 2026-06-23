@@ -383,6 +383,36 @@
   .pwa-banner { padding-bottom:calc(18px + env(safe-area-inset-bottom)); }
   body { padding-bottom: env(safe-area-inset-bottom); }
 
+
+  /* ── BACKUP PAGE ── */
+  .gdrive-user {
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:6px; padding:10px 12px; margin-bottom:4px;
+  }
+  .gdrive-avatar {
+    width:32px; height:32px; border-radius:50%;
+    background:var(--surface3); border:1px solid var(--border-bright);
+    display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;
+  }
+  .gdrive-name { font-size:13px; font-weight:600; }
+  .gdrive-email { font-size:10px; color:var(--text-dim); margin-top:1px; }
+  .backup-stat-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:7px 0; border-bottom:1px solid var(--border); font-size:13px;
+  }
+  .backup-stat-row:last-child { border-bottom:none; }
+  .backup-stat-val { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--accent); }
+  .backup-toast {
+    position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+    padding:10px 20px; border-radius:6px; font-size:13px; font-weight:600;
+    z-index:600; white-space:nowrap; display:none;
+    animation:fadeInUp 0.3s ease;
+  }
+  .backup-toast.success { background:var(--green); color:#fff; }
+  .backup-toast.error { background:var(--red); color:#fff; }
+  .backup-toast.show { display:block; }
+
 </style>
 </head>
 <body>
@@ -410,6 +440,7 @@
   <button class="nav-btn" onclick="showPage('consumables',this)">🔧 소모품</button>
   <button class="nav-btn" onclick="showPage('riding',this)">📍 주행 일지</button>
   <button class="nav-btn" onclick="showPage('history',this)">📋 정비 이력</button>
+  <button class="nav-btn" onclick="showPage('backup',this)">☁ 백업</button>
 </nav>
 
 <div class="container">
@@ -521,6 +552,61 @@
     </div>
     <div class="card" style="padding:0;overflow:hidden;">
       <div style="overflow-x:auto;" id="history-table"></div>
+    </div>
+  </div>
+
+
+  <!-- ═══ BACKUP ═══ -->
+  <div class="page" id="page-backup">
+    <div class="sec-header"><span class="sec-title">데이터 백업</span><div class="sec-line"></div></div>
+
+    <!-- Google Drive -->
+    <div class="card" style="margin-bottom:12px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#4285F4,#34A853,#FBBC05,#EA4335);"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="font-size:28px;">☁️</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;">Google Drive 백업</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Google 계정으로 로그인해서 자동 백업</div>
+        </div>
+      </div>
+      <div id="gdrive-status" style="margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="gdrive-btns">
+        <button class="btn" id="btn-gdrive-login" onclick="gdriveLogin()" style="border-color:#4285F4;color:#4285F4;">
+          <svg width="14" height="14" viewBox="0 0 24 24" style="margin-right:2px;"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Google 로그인
+        </button>
+        <button class="btn" id="btn-gdrive-save" onclick="gdriveSave()" style="display:none;">☁ Drive에 저장</button>
+        <button class="btn" id="btn-gdrive-load" onclick="gdriveLoad()" style="display:none;">⬇ Drive에서 불러오기</button>
+        <button class="btn btn-danger btn-sm" id="btn-gdrive-logout" onclick="gdriveLogout()" style="display:none;">로그아웃</button>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:10px;">* 백업 파일은 Google Drive 앱 폴더에 저장됩니다 (moto-garage-backup.json)</div>
+    </div>
+
+    <!-- JSON 수동 백업 -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="font-size:24px;">📁</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;">수동 백업 / 복원</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">JSON 파일로 내보내기·가져오기</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="exportJSON()">⬆ JSON 내보내기</button>
+        <button class="btn" onclick="document.getElementById('import-file').click()">⬇ JSON 가져오기</button>
+        <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:10px;">내보내기 파일을 카카오톡·이메일로 보내두면 안전해요</div>
+    </div>
+
+    <!-- 데이터 현황 -->
+    <div class="card">
+      <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:12px;">현재 저장된 데이터</div>
+      <div id="backup-stats"></div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 전체 데이터 초기화</button>
+      </div>
     </div>
   </div>
 
@@ -997,6 +1083,7 @@ function showPage(name, btn) {
   if(name==='consumables') renderConsumables();
   if(name==='riding') renderRiding();
   if(name==='history') renderHistory();
+  if(name==='backup') renderBackupPage();
 }
 
 // ─────────────────────────────────────────
@@ -1602,6 +1689,234 @@ if(window.navigator.standalone===true || window.matchMedia('(display-mode:standa
   document.body.style.paddingTop='env(safe-area-inset-top)';
 }
 
+
+// ─────────────────────────────────────────
+//  BACKUP — JSON 내보내기/가져오기
+// ─────────────────────────────────────────
+function renderBackupPage() {
+  const stats = document.getElementById('backup-stats');
+  const lastBackup = localStorage.getItem('mg2-last-backup');
+  stats.innerHTML = `
+    <div class="backup-stat-row"><span>등록 차량</span><span class="backup-stat-val">${D.bikes.length}대</span></div>
+    <div class="backup-stat-row"><span>주행 기록</span><span class="backup-stat-val">${D.rides.length}건</span></div>
+    <div class="backup-stat-row"><span>정비 이력</span><span class="backup-stat-val">${D.history.length}건</span></div>
+    <div class="backup-stat-row"><span>마지막 백업</span><span class="backup-stat-val" style="font-size:11px;">${lastBackup||'없음'}</span></div>
+  `;
+  renderGdriveStatus();
+}
+
+function showBackupToast(msg, type='success') {
+  const t = document.getElementById('backup-toast');
+  t.textContent = msg; t.className = `backup-toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── JSON 내보내기 ──
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(D, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `moto-garage-backup-${date}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  localStorage.setItem('mg2-last-backup', new Date().toLocaleString('ko-KR'));
+  showBackupToast('✓ 백업 파일이 다운로드됐습니다');
+  renderBackupPage();
+}
+
+// ── JSON 가져오기 ──
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.bikes || !imported.rides || !imported.history) throw new Error('형식 오류');
+      if (!confirm(`백업 파일을 불러오면 현재 데이터가 교체됩니다.\n차량 ${imported.bikes.length}대, 주행 ${imported.rides.length}건, 정비 ${imported.history.length}건\n\n계속하시겠습니까?`)) return;
+      D = imported; save();
+      showBackupToast('✓ 데이터를 성공적으로 불러왔습니다');
+      renderBackupPage();
+      renderDash();
+    } catch(err) {
+      showBackupToast('✗ 파일 형식이 올바르지 않습니다', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ── 전체 초기화 ──
+function confirmReset() {
+  if (!confirm('모든 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+  if (!confirm('정말로 삭제합니다. 백업 파일을 먼저 만들었나요?')) return;
+  D = { bikes:[], rides:[], history:[] }; save();
+  showBackupToast('데이터가 초기화됐습니다', 'error');
+  renderBackupPage(); renderDash(); renderBikes();
+}
+
+// ─────────────────────────────────────────
+//  GOOGLE DRIVE 연동 (Google Identity Services)
+// ─────────────────────────────────────────
+const GDRIVE_CLIENT_ID = ''; // ← Google Cloud Console에서 발급 후 입력
+const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const BACKUP_FILENAME = 'moto-garage-backup.json';
+
+let gdriveToken = null;
+let gdriveUser = null;
+
+function renderGdriveStatus() {
+  const statusEl = document.getElementById('gdrive-status');
+  const loginBtn = document.getElementById('btn-gdrive-login');
+  const saveBtn = document.getElementById('btn-gdrive-save');
+  const loadBtn = document.getElementById('btn-gdrive-load');
+  const logoutBtn = document.getElementById('btn-gdrive-logout');
+
+  if (!GDRIVE_CLIENT_ID) {
+    statusEl.innerHTML = `<div style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:5px;padding:10px 12px;font-size:12px;color:var(--accent);">
+      ⚠ Google Drive 연동을 사용하려면 <strong>Google Cloud Console</strong>에서 Client ID를 발급받아야 합니다.<br>
+      <span style="color:var(--text-dim);margin-top:4px;display:block;">아래 "설정 방법 보기"를 참고하세요.</span>
+    </div>
+    <details style="margin-top:8px;">
+      <summary style="font-size:11px;color:var(--text-dim);cursor:pointer;padding:4px 0;">📖 Google Drive 연동 설정 방법 보기</summary>
+      <div style="font-size:11px;color:var(--text-dim);line-height:1.8;margin-top:8px;padding:10px;background:var(--surface2);border-radius:5px;">
+        1. <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent);">Google Cloud Console</a> 접속<br>
+        2. 새 프로젝트 만들기<br>
+        3. API 및 서비스 → OAuth 동의 화면 설정<br>
+        4. 사용자 인증 정보 → OAuth 2.0 클라이언트 ID 만들기<br>
+        5. 애플리케이션 유형: 웹 애플리케이션<br>
+        6. 승인된 JavaScript 출처: <code style="background:var(--surface3);padding:1px 4px;border-radius:2px;">https://iconboxvn.github.io</code><br>
+        7. 발급된 Client ID를 index.html의 GDRIVE_CLIENT_ID에 입력
+      </div>
+    </details>`;
+    loginBtn.style.display = 'none';
+    return;
+  }
+
+  if (gdriveToken && gdriveUser) {
+    statusEl.innerHTML = `<div class="gdrive-user">
+      <div class="gdrive-avatar">👤</div>
+      <div><div class="gdrive-name">${gdriveUser.name||'사용자'}</div><div class="gdrive-email">${gdriveUser.email||''}</div></div>
+    </div>`;
+    loginBtn.style.display = 'none';
+    saveBtn.style.display = 'inline-flex';
+    loadBtn.style.display = 'inline-flex';
+    logoutBtn.style.display = 'inline-flex';
+  } else {
+    statusEl.innerHTML = '';
+    loginBtn.style.display = 'inline-flex';
+    saveBtn.style.display = 'none';
+    loadBtn.style.display = 'none';
+    logoutBtn.style.display = 'none';
+  }
+}
+
+function gdriveLogin() {
+  if (!GDRIVE_CLIENT_ID) { showBackupToast('Client ID를 먼저 설정하세요', 'error'); return; }
+  if (typeof google === 'undefined') {
+    // load GIS script dynamically
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.onload = () => _gdriveLogin();
+    document.head.appendChild(s);
+  } else { _gdriveLogin(); }
+}
+
+function _gdriveLogin() {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope: GDRIVE_SCOPE + ' profile email',
+    callback: async (response) => {
+      if (response.error) { showBackupToast('로그인 실패: ' + response.error, 'error'); return; }
+      gdriveToken = response.access_token;
+      // get user info
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: 'Bearer ' + gdriveToken }
+        });
+        gdriveUser = await res.json();
+      } catch(e) { gdriveUser = {name:'Google 사용자'}; }
+      renderGdriveStatus();
+      showBackupToast('✓ Google 로그인 성공');
+    }
+  });
+  client.requestAccessToken();
+}
+
+function gdriveLogout() {
+  if (gdriveToken && typeof google !== 'undefined') {
+    google.accounts.oauth2.revoke(gdriveToken);
+  }
+  gdriveToken = null; gdriveUser = null;
+  renderGdriveStatus();
+  showBackupToast('로그아웃됐습니다');
+}
+
+async function gdriveSave() {
+  if (!gdriveToken) { showBackupToast('먼저 로그인하세요', 'error'); return; }
+  showBackupToast('저장 중...');
+  try {
+    // find existing file
+    const listRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${BACKUP_FILENAME}'`,
+      { headers: { Authorization: 'Bearer ' + gdriveToken } }
+    );
+    const list = await listRes.json();
+    const fileId = list.files && list.files[0] ? list.files[0].id : null;
+    const content = JSON.stringify(D, null, 2);
+    const blob = new Blob([content], {type:'application/json'});
+
+    let res;
+    if (fileId) {
+      // update existing
+      res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + gdriveToken, 'Content-Type': 'application/json' },
+        body: blob
+      });
+    } else {
+      // create new in appDataFolder
+      const meta = JSON.stringify({ name: BACKUP_FILENAME, parents: ['appDataFolder'] });
+      const form = new FormData();
+      form.append('metadata', new Blob([meta], {type:'application/json'}));
+      form.append('file', blob);
+      res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + gdriveToken },
+        body: form
+      });
+    }
+    if (res.ok) {
+      const now = new Date().toLocaleString('ko-KR');
+      localStorage.setItem('mg2-last-backup', 'Drive: ' + now);
+      renderBackupPage();
+      showBackupToast('✓ Google Drive에 저장됐습니다');
+    } else { throw new Error(res.status); }
+  } catch(e) { showBackupToast('저장 실패: ' + e.message, 'error'); }
+}
+
+async function gdriveLoad() {
+  if (!gdriveToken) { showBackupToast('먼저 로그인하세요', 'error'); return; }
+  try {
+    const listRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${BACKUP_FILENAME}'`,
+      { headers: { Authorization: 'Bearer ' + gdriveToken } }
+    );
+    const list = await listRes.json();
+    if (!list.files || !list.files[0]) { showBackupToast('Drive에 백업 파일이 없습니다', 'error'); return; }
+    const fileId = list.files[0].id;
+    const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { Authorization: 'Bearer ' + gdriveToken }
+    });
+    const imported = await fileRes.json();
+    if (!imported.bikes) throw new Error('형식 오류');
+    if (!confirm(`Drive 백업을 불러오면 현재 데이터가 교체됩니다.\n차량 ${imported.bikes.length}대, 주행 ${imported.rides.length}건\n\n계속하시겠습니까?`)) return;
+    D = imported; save();
+    renderDash(); renderBackupPage();
+    showBackupToast('✓ Drive에서 데이터를 불러왔습니다');
+  } catch(e) { showBackupToast('불러오기 실패: ' + e.message, 'error'); }
+}
+
 </script>
 
 <!-- PWA INSTALL BANNER -->
@@ -1620,5 +1935,7 @@ if(window.navigator.standalone===true || window.matchMedia('(display-mode:standa
 </div>
 <div class="pwa-installed-toast" id="pwa-toast">✓ 홈 화면에 추가되었습니다!</div>
 
+
+<div class="backup-toast" id="backup-toast"></div>
 </body>
 </html>
