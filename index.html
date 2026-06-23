@@ -461,6 +461,7 @@
   <div class="page" id="page-consumables">
     <div id="c-bike-tabs" style="margin-bottom:14px;"></div>
     <div id="c-content"></div>
+    <div id="c-extra-section"></div>
   </div>
 
   <!-- ═══ RIDING ═══ -->
@@ -548,8 +549,9 @@
         <option value="">전체 유형</option>
         <option>소모품교체</option><option>정기점검</option><option>수리</option><option>기타</option>
       </select>
-      <button class="btn btn-primary" onclick="openModal('m-history')">+ 정비 기록</button>
     </div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">정비 기록은 <strong style="color:var(--accent);">🔧 소모품</strong> 탭에서 추가하세요</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">정비 기록은 <strong style="color:var(--accent);">🔧 소모품</strong> 탭에서 추가하세요</div>
     <div class="card" style="padding:0;overflow:hidden;">
       <div style="overflow-x:auto;" id="history-table"></div>
     </div>
@@ -1282,7 +1284,10 @@ function consumableCard(c,km) {
     <div class="c-name">${c.name}</div>
     <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'미등록'}<br>주기: ${c.km.toLocaleString()} km<br>${remain>0?'잔여: '+remain.toLocaleString()+' km':''}</div>
     <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
-    <span class="c-tag ${cls}">${tag}</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+      <span class="c-tag ${cls}">${tag}</span>
+      <button class="btn btn-sm" style="padding:2px 7px;font-size:10px;" onclick="event.stopPropagation();openEditConsumable('${c.id}')">✏ 수정</button>
+    </div>
   </div>`;
 }
 
@@ -1509,7 +1514,7 @@ function renderHistory() {
       <td class="mono">${l.km?l.km.toLocaleString():'-'}</td>
       <td class="mono">${l.cost?'₫'+parseInt(l.cost).toLocaleString():'-'}</td>
       <td style="color:var(--text-dim)">${l.shop||'—'}</td>
-      <td><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">삭제</button></td>
+      <td style="display:flex;gap:4px;"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">삭제</button></td>
     </tr>`;
   }).join('')}</tbody></table>`;
 }
@@ -1917,6 +1922,197 @@ async function gdriveLoad() {
   } catch(e) { showBackupToast('불러오기 실패: ' + e.message, 'error'); }
 }
 
+
+// ─────────────────────────────────────────
+//  소모품 탭 — 기타 정비 섹션
+// ─────────────────────────────────────────
+let extraDateVal = todayStr();
+let editingExtraId = null;
+let editingConsumableHistId = null;
+let editingHistoryId = null;
+
+// 소모품 렌더링 시 기타 정비 섹션도 같이 렌더
+const _origRenderConsumables = renderConsumables;
+function renderConsumables() {
+  _origRenderConsumables();
+  renderExtraSection();
+}
+
+function renderExtraSection() {
+  const el = document.getElementById('c-extra-section');
+  if (!D.bikes.length) { el.innerHTML=''; return; }
+  const bike = D.bikes[cState.bikeIdx];
+  // 이 차량의 기타 정비 이력 (소모품교체 제외)
+  const logs = D.history
+    .filter(l => l.bikeId == bike.id && l.type !== '소모품교체')
+    .sort((a,b) => b.date.localeCompare(a.date));
+
+  el.innerHTML = `
+    <div class="sec-header" style="margin-top:8px;">
+      <span class="sec-title">기타 정비</span>
+      <div class="sec-line"></div>
+      <button class="btn btn-primary btn-sm" style="margin-left:12px;flex-shrink:0;" onclick="openExtraModal()">+ 추가</button>
+    </div>
+    ${!logs.length
+      ? `<div class="card" style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px;">기타 정비 기록이 없습니다</div>`
+      : `<div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;">${renderExtraTable(logs)}</div></div>`
+    }
+  `;
+}
+
+function renderExtraTable(logs) {
+  const tm = {'정기점검':'badge-maint','수리':'badge-repair','세차':'badge-other','튜닝':'badge-cons','기타':'badge-other'};
+  return `<table class="log-table">
+    <thead><tr><th>날짜</th><th>유형</th><th>내용</th><th>km</th><th>비용</th><th>정비소</th><th></th></tr></thead>
+    <tbody>${logs.map(l=>`<tr>
+      <td class="mono">${l.date}</td>
+      <td><span class="badge ${tm[l.type]||'badge-other'}">${l.type}</span></td>
+      <td>${l.desc||'—'}</td>
+      <td class="mono">${l.km?l.km.toLocaleString()+' km':'-'}</td>
+      <td class="mono">${l.cost?'₫'+parseInt(l.cost).toLocaleString():'-'}</td>
+      <td style="color:var(--text-dim)">${l.shop||'—'}</td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">삭제</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ── 기타 정비 추가 모달
+function openExtraModal(editId=null) {
+  editingExtraId = editId;
+  const isEdit = editId !== null;
+  document.getElementById('m-extra-title').textContent = isEdit ? '기타 정비 수정' : '기타 정비 추가';
+  clearPills('m-extra');
+  extraDateVal = todayStr();
+  document.getElementById('extra-date-input').style.display='none';
+  document.getElementById('extra-desc').value = '';
+  document.getElementById('extra-type').value = '';
+  document.getElementById('extra-km').value = D.bikes[cState.bikeIdx]?.odometer || '';
+  document.getElementById('extra-cost').value = '';
+  document.getElementById('extra-shop').value = '';
+
+  if(isEdit) {
+    const log = D.history.find(l=>l.id===editId);
+    if(log) {
+      document.getElementById('extra-desc').value = log.desc||'';
+      document.getElementById('extra-type').value = log.type||'';
+      document.getElementById('extra-km').value = log.km||'';
+      document.getElementById('extra-cost').value = log.cost||'';
+      document.getElementById('extra-shop').value = log.shop||'';
+      extraDateVal = log.date;
+      document.getElementById('extra-date-input').value = log.date;
+      // highlight type pill
+      document.querySelectorAll('#m-extra .pill-group:first-of-type .pill').forEach(p=>{
+        if(p.textContent.trim().includes(log.type)) { p.classList.add('selected'); }
+      });
+    }
+  }
+  openModal('m-extra');
+}
+
+function selectExtraType(val,el) { clearPills(el.parentElement); el.classList.add('selected'); document.getElementById('extra-type').value=val; }
+function selectExtraDate(type,el) {
+  clearPills(el.parentElement); el.classList.add('selected');
+  const inp=document.getElementById('extra-date-input');
+  if(type==='pick'){ inp.style.display='block'; inp.value=todayStr(); }
+  else { inp.style.display='none'; extraDateVal=type==='today'?todayStr():yesterdayStr(); }
+}
+function setExtraDesc(val,el) { clearPills('extra-desc-pills'); el.classList.add('selected'); document.getElementById('extra-desc').value=val; }
+function setExtraCost(val,el) { clearPills('extra-cost-pills'); el.classList.add('selected'); document.getElementById('extra-cost').value=val; }
+function setExtraShop(val,el) { clearPills('extra-shop-pills'); el.classList.add('selected'); document.getElementById('extra-shop').value=val; }
+
+function saveExtra() {
+  const bike = D.bikes[cState.bikeIdx];
+  if(!bike) return;
+  const dateInp = document.getElementById('extra-date-input');
+  const date = dateInp.style.display!=='none' ? dateInp.value : extraDateVal;
+  const record = {
+    bikeId: bike.id, date,
+    km: parseInt(document.getElementById('extra-km').value)||0,
+    type: document.getElementById('extra-type').value||'기타',
+    desc: document.getElementById('extra-desc').value,
+    cost: document.getElementById('extra-cost').value,
+    shop: document.getElementById('extra-shop').value
+  };
+  if(editingExtraId !== null) {
+    const idx = D.history.findIndex(l=>l.id===editingExtraId);
+    if(idx>-1) D.history[idx] = {...D.history[idx], ...record};
+  } else {
+    D.history.push({id:Date.now(), ...record});
+  }
+  save(); closeModal('m-extra'); renderExtraSection();
+}
+
+// ─────────────────────────────────────────
+//  소모품 수정 모달
+// ─────────────────────────────────────────
+let editingCId = null;
+
+function openEditConsumable(cId) {
+  const bike = D.bikes[cState.bikeIdx];
+  const c = bike.consumables.find(x=>x.id===cId);
+  editingCId = cId;
+  document.getElementById('m-edit-c-title').textContent = c.name + ' 수정';
+  document.getElementById('edit-c-km').value = c.lastKm||0;
+  document.getElementById('edit-c-date').value = c.lastDate||todayStr();
+  document.getElementById('edit-c-interval').value = c.km;
+  document.getElementById('edit-c-memo').value = c.memo||'';
+  clearPills('edit-c-interval-pills');
+  document.querySelectorAll('#edit-c-interval-pills .pill').forEach(p=>{
+    if(parseInt(p.textContent.replace(',',''))===c.km) p.classList.add('selected');
+  });
+  openModal('m-edit-consumable');
+}
+
+function setEditCInterval(val,el) {
+  clearPills('edit-c-interval-pills'); el.classList.add('selected');
+  document.getElementById('edit-c-interval').value=val;
+}
+
+function updateConsumable() {
+  const bike = D.bikes[cState.bikeIdx];
+  const con = bike.consumables.find(x=>x.id===editingCId);
+  con.lastKm = parseInt(document.getElementById('edit-c-km').value)||0;
+  con.lastDate = document.getElementById('edit-c-date').value;
+  con.km = parseInt(document.getElementById('edit-c-interval').value)||con.km;
+  con.memo = document.getElementById('edit-c-memo').value;
+  save(); closeModal('m-edit-consumable'); renderConsumables();
+}
+
+// ─────────────────────────────────────────
+//  정비이력 수정
+// ─────────────────────────────────────────
+function openEditHistory(id) {
+  const log = D.history.find(l=>l.id===id);
+  if(!log) return;
+  editingHistoryId = id;
+  document.getElementById('edit-h-date').value = log.date||todayStr();
+  document.getElementById('edit-h-km').value = log.km||'';
+  document.getElementById('edit-h-type').value = log.type||'기타';
+  document.getElementById('edit-h-desc').value = log.desc||'';
+  document.getElementById('edit-h-cost').value = log.cost||'';
+  document.getElementById('edit-h-shop').value = log.shop||'';
+  openModal('m-edit-history');
+}
+
+function updateHistory() {
+  const idx = D.history.findIndex(l=>l.id===editingHistoryId);
+  if(idx===-1) return;
+  D.history[idx] = {
+    ...D.history[idx],
+    date: document.getElementById('edit-h-date').value,
+    km: parseInt(document.getElementById('edit-h-km').value)||0,
+    type: document.getElementById('edit-h-type').value,
+    desc: document.getElementById('edit-h-desc').value,
+    cost: document.getElementById('edit-h-cost').value,
+    shop: document.getElementById('edit-h-shop').value
+  };
+  save(); closeModal('m-edit-history');
+  renderHistory(); renderExtraSection();
+}
+
 </script>
 
 <!-- PWA INSTALL BANNER -->
@@ -1937,5 +2133,179 @@ async function gdriveLoad() {
 
 
 <div class="backup-toast" id="backup-toast"></div>
+
+<!-- ═══════════ MODAL: 기타 정비 추가/수정 ═══════════ -->
+<div class="modal-overlay" id="m-extra">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="m-extra-title">기타 정비 기록</span>
+      <button class="modal-close" onclick="closeModal('m-extra')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 유형 -->
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num active">1</span>유형</div>
+        <div class="pill-group">
+          <div class="pill" onclick="selectExtraType('정기점검',this)">🔍 정기점검</div>
+          <div class="pill" onclick="selectExtraType('수리',this)">🛠 수리</div>
+          <div class="pill" onclick="selectExtraType('세차',this)">🚿 세차</div>
+          <div class="pill" onclick="selectExtraType('튜닝',this)">⚙ 튜닝</div>
+          <div class="pill" onclick="selectExtraType('기타',this)">📝 기타</div>
+        </div>
+        <input type="hidden" id="extra-type" value="">
+      </div>
+
+      <!-- 내용 -->
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num active">2</span>내용</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="extra-desc-pills">
+          <div class="pill" onclick="setExtraDesc('전체 점검',this)">전체 점검</div>
+          <div class="pill" onclick="setExtraDesc('밸브 간극 조정',this)">밸브 간극 조정</div>
+          <div class="pill" onclick="setExtraDesc('체인 장력 조정',this)">체인 장력 조정</div>
+          <div class="pill" onclick="setExtraDesc('타이어 공기압 조정',this)">타이어 공기압</div>
+          <div class="pill" onclick="setExtraDesc('세차 및 광택',this)">세차 및 광택</div>
+          <div class="pill" onclick="setExtraDesc('사고 수리',this)">사고 수리</div>
+          <div class="pill" onclick="setExtraDesc('핸들 조정',this)">핸들 조정</div>
+          <div class="pill" onclick="setExtraDesc('서스펜션 세팅',this)">서스펜션 세팅</div>
+        </div>
+        <input type="text" class="form-input" id="extra-desc" placeholder="정비 내용 입력">
+      </div>
+
+      <!-- 날짜 -->
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num active">3</span>날짜</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="extra-date-pills">
+          <div class="pill selected" onclick="selectExtraDate('today',this)">오늘</div>
+          <div class="pill" onclick="selectExtraDate('yesterday',this)">어제</div>
+          <div class="pill" onclick="selectExtraDate('pick',this)">직접 선택</div>
+        </div>
+        <input type="date" class="form-input" id="extra-date-input" style="display:none;max-width:200px;">
+      </div>
+
+      <!-- 주행거리 + 비용 -->
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="form-group">
+          <label class="form-label">주행거리 (km)</label>
+          <input type="number" class="form-input" id="extra-km" placeholder="현재 km">
+        </div>
+        <div class="form-group">
+          <label class="form-label">비용 (₫)</label>
+          <div class="pill-group" style="margin-bottom:6px;flex-wrap:wrap;gap:4px;" id="extra-cost-pills">
+            <div class="pill" style="font-size:10px;" onclick="setExtraCost(50000,this)">50K</div>
+            <div class="pill" style="font-size:10px;" onclick="setExtraCost(100000,this)">100K</div>
+            <div class="pill" style="font-size:10px;" onclick="setExtraCost(200000,this)">200K</div>
+            <div class="pill" style="font-size:10px;" onclick="setExtraCost(500000,this)">500K</div>
+          </div>
+          <input type="number" class="form-input" id="extra-cost" placeholder="0">
+        </div>
+      </div>
+
+      <!-- 정비소 -->
+      <div>
+        <div class="step-label"><span class="step-num">4</span>정비소 (선택)</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="extra-shop-pills">
+          <div class="pill" onclick="setExtraShop('단 오토바이',this)">단 오토바이</div>
+          <div class="pill" onclick="setExtraShop('Honda 공식',this)">Honda 공식</div>
+          <div class="pill" onclick="setExtraShop('Yamaha 공식',this)">Yamaha 공식</div>
+          <div class="pill" onclick="setExtraShop('직접 교체',this)">직접</div>
+        </div>
+        <input type="text" class="form-input" id="extra-shop" placeholder="정비소 입력">
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-extra')">취소</button>
+      <button class="btn btn-primary" onclick="saveExtra()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: 소모품 수정 ═══════════ -->
+<div class="modal-overlay" id="m-edit-consumable">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="m-edit-c-title">소모품 수정</span>
+      <button class="modal-close" onclick="closeModal('m-edit-consumable')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">교체 시 주행거리 (km)</label>
+          <input type="number" class="form-input" id="edit-c-km">
+        </div>
+        <div class="form-group">
+          <label class="form-label">교체 날짜</label>
+          <input type="date" class="form-input" id="edit-c-date">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">다음 교체 주기 (km)</label>
+          <div class="pill-group" style="margin-bottom:8px;" id="edit-c-interval-pills">
+            <div class="pill" onclick="setEditCInterval(3000,this)">3,000</div>
+            <div class="pill" onclick="setEditCInterval(5000,this)">5,000</div>
+            <div class="pill" onclick="setEditCInterval(8000,this)">8,000</div>
+            <div class="pill" onclick="setEditCInterval(10000,this)">10,000</div>
+            <div class="pill" onclick="setEditCInterval(15000,this)">15,000</div>
+            <div class="pill" onclick="setEditCInterval(20000,this)">20,000</div>
+          </div>
+          <input type="number" class="form-input" id="edit-c-interval" placeholder="km">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">메모</label>
+          <input type="text" class="form-input" id="edit-c-memo" placeholder="브랜드, 정비소 등">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-edit-consumable')">취소</button>
+      <button class="btn btn-primary" onclick="updateConsumable()">수정 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: 정비이력 수정 ═══════════ -->
+<div class="modal-overlay" id="m-edit-history">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">정비 기록 수정</span>
+      <button class="modal-close" onclick="closeModal('m-edit-history')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">날짜</label>
+          <input type="date" class="form-input" id="edit-h-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">주행거리 (km)</label>
+          <input type="number" class="form-input" id="edit-h-km">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">유형</label>
+          <select class="form-select" id="edit-h-type">
+            <option>소모품교체</option><option>정기점검</option><option>수리</option><option>기타</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">내용</label>
+          <input type="text" class="form-input" id="edit-h-desc">
+        </div>
+        <div class="form-group">
+          <label class="form-label">비용 (₫)</label>
+          <input type="number" class="form-input" id="edit-h-cost">
+        </div>
+        <div class="form-group">
+          <label class="form-label">정비소</label>
+          <input type="text" class="form-input" id="edit-h-shop">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-edit-history')">취소</button>
+      <button class="btn btn-primary" onclick="updateHistory()">수정 저장</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
