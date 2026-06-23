@@ -437,7 +437,7 @@
 <nav class="nav">
   <button class="nav-btn active" onclick="showPage('dashboard',this)">📊 대시보드</button>
   <button class="nav-btn" onclick="showPage('bikes',this)">🏍 내 차량</button>
-  <button class="nav-btn" onclick="showPage('consumables',this)">🔧 소모품</button>
+  <button class="nav-btn" onclick="showPage('consumables',this)">🔧 소모품 & 정비</button>
   <button class="nav-btn" onclick="showPage('riding',this)">📍 주행 일지</button>
   <button class="nav-btn" onclick="showPage('history',this)">📋 정비 이력</button>
   <button class="nav-btn" onclick="showPage('backup',this)">☁ 백업</button>
@@ -1254,7 +1254,7 @@ function deleteBike(id) {
 // ─────────────────────────────────────────
 //  CONSUMABLES
 // ─────────────────────────────────────────
-function renderConsumables() {
+function _renderConsumablesCore() {
   const tabs=document.getElementById('c-bike-tabs');
   const el=document.getElementById('c-content');
   if(!D.bikes.length){
@@ -1931,10 +1931,9 @@ let editingExtraId = null;
 let editingConsumableHistId = null;
 let editingHistoryId = null;
 
-// 소모품 렌더링 시 기타 정비 섹션도 같이 렌더
-const _origRenderConsumables = renderConsumables;
+// 소모품 렌더링 — 소모품 카드 + 기타 정비 섹션 통합
 function renderConsumables() {
-  _origRenderConsumables();
+  _renderConsumablesCore();
   renderExtraSection();
 }
 
