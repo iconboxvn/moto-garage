@@ -1,0 +1,26 @@
+{
+  "name": "MOTO GARAGE",
+  "short_name": "MOTO",
+  "description": "오토바이 소모품·주행·정비 통합 관리 by @iconbox.lee",
+  "start_url": "/moto-garage/",
+  "scope": "/moto-garage/",
+  "display": "standalone",
+  "background_color": "#0c0c0d",
+  "theme_color": "#0c0c0d",
+  "orientation": "portrait-primary",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/moto-garage/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/moto-garage/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -11,9 +11,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MOTO GARAGE">
+<link rel="apple-touch-icon" href="/moto-garage/icon-192.png">
 <meta name="application-name" content="MOTO GARAGE">
 <meta name="description" content="오토바이 소모품·주행·정비 통합 관리 앱 by @iconbox.lee">
-<link rel="manifest" id="pwa-manifest">
+<link rel="manifest" href="/moto-garage/manifest.json">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -1531,55 +1532,7 @@ renderDash();
 //  PWA — MANIFEST (inline blob) + SW + INSTALL
 // ─────────────────────────────────────────
 
-// Inline manifest via blob URL (no server needed)
-(function(){
-  const manifest = {
-    name: "MOTO GARAGE",
-    short_name: "MOTO",
-    description: "오토바이 소모품·주행·정비 통합 관리",
-    start_url: "./",
-    display: "standalone",
-    background_color: "#0c0c0d",
-    theme_color: "#0c0c0d",
-    orientation: "portrait-primary",
-    icons: [
-      { src: makePngIcon(192), sizes:"192x192", type:"image/png", purpose:"any maskable" },
-      { src: makePngIcon(512), sizes:"512x512", type:"image/png", purpose:"any maskable" }
-    ]
-  };
-  function makePngIcon(size){
-    const cv=document.createElement('canvas');
-    cv.width=size; cv.height=size;
-    const ctx=cv.getContext('2d');
-    // background
-    const g=ctx.createLinearGradient(0,0,size,size);
-    g.addColorStop(0,'#1e2022'); g.addColorStop(1,'#0c0c0d');
-    ctx.fillStyle=g;
-    roundRect(ctx,0,0,size,size,size*0.22);
-    ctx.fill();
-    // accent stripe
-    ctx.fillStyle='#e8a020';
-    ctx.fillRect(0,0,size,size*0.045);
-    // emoji
-    ctx.font=`${size*0.52}px serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('🏍',size/2,size/2+size*0.04);
-    return cv.toDataURL('image/png');
-  }
-  function roundRect(ctx,x,y,w,h,r){
-    ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
-    ctx.closePath();
-  }
-  // resolve icons synchronously before blob
-  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  document.getElementById('pwa-manifest').href=url;
-})();
+// manifest.json served as static file
 
 // Service Worker (inline via blob)
 (function(){
