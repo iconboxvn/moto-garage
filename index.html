@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MOTO GARAGE — Iconbox.lee</title>
+
+<!-- PWA -->
+<meta name="theme-color" content="#0c0c0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MOTO GARAGE">
+<meta name="application-name" content="MOTO GARAGE">
+<meta name="description" content="오토바이 소모품·주행·정비 통합 관리 앱 by @iconbox.lee">
+<link rel="manifest" id="pwa-manifest">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0c0c0d;
+    --surface: #141517;
+    --surface2: #1b1d20;
+    --surface3: #222529;
+    --border: #272a2f;
+    --border-bright: #363b42;
+    --metal: #7a8492;
+    --metal-light: #b8c0cc;
+    --accent: #e8a020;
+    --accent-dim: #3a2808;
+    --red: #d04040;
+    --red-dim: #2e1010;
+    --green: #38a868;
+    --green-dim: #0e2a1a;
+    --blue: #4a90d8;
+    --text: #e4e8ed;
+    --text-dim: #6e7680;
+    --text-muted: #3a3f47;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; font-size:14px; min-height:100vh; overflow-x:hidden; }
+
+  /* ── HEADER ── */
+  .header {
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:0 20px;
+    height:58px;
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:200;
+  }
+  .header-left { display:flex; align-items:center; gap:16px; }
+  .logo-block { display:flex; flex-direction:column; }
+  .logo-main {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:20px; letter-spacing:3px; color:var(--accent); line-height:1;
+  }
+  .logo-sub {
+    font-family:'JetBrains Mono',monospace;
+    font-size:8px; color:var(--text-muted); letter-spacing:2px; margin-top:1px;
+  }
+  .header-divider { width:1px; height:28px; background:var(--border); }
+  .iconbox-badge {
+    display:flex; flex-direction:column; gap:1px;
+  }
+  .iconbox-label {
+    font-family:'JetBrains Mono',monospace;
+    font-size:7px; color:var(--text-muted); letter-spacing:1.5px;
+  }
+  .iconbox-name {
+    font-family:'Inter',sans-serif;
+    font-size:12px; font-weight:700; color:var(--metal-light);
+    letter-spacing:0.5px;
+  }
+  .iconbox-dot { color:var(--accent); }
+
+  /* ── NAV ── */
+  .nav {
+    display:flex; gap:0;
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:0 20px;
+    overflow-x:auto; scrollbar-width:none;
+  }
+  .nav::-webkit-scrollbar { display:none; }
+  .nav-btn {
+    background:none; border:none; border-bottom:2px solid transparent;
+    color:var(--text-dim); font-family:'Inter',sans-serif;
+    font-size:11px; font-weight:600; letter-spacing:0.8px;
+    padding:11px 18px; cursor:pointer; white-space:nowrap;
+    display:flex; align-items:center; gap:6px;
+    transition:color 0.15s, border-color 0.15s;
+  }
+  .nav-btn:hover { color:var(--text); }
+  .nav-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .nav-badge {
+    background:var(--red); color:#fff;
+    font-size:9px; font-weight:700;
+    border-radius:8px; padding:1px 5px; min-width:16px; text-align:center;
+  }
+
+  /* ── LAYOUT ── */
+  .container { max-width:860px; margin:0 auto; padding:22px 18px; }
+  .page { display:none; }
+  .page.active { display:block; animation:fadeIn 0.15s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+  /* ── SECTION TITLE ── */
+  .sec-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .sec-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:16px; letter-spacing:2.5px; color:var(--metal-light);
+    white-space:nowrap;
+  }
+  .sec-line { flex:1; height:1px; background:var(--border); margin-left:12px; }
+
+  /* ── CARD ── */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:18px; margin-bottom:12px; }
+
+  /* ── BIKE CARD ── */
+  .bike-card {
+    background:linear-gradient(135deg,#181a1d 0%,#101214 100%);
+    border:1px solid var(--border-bright); border-radius:8px;
+    padding:18px; margin-bottom:14px; position:relative; overflow:hidden;
+  }
+  .bike-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,var(--accent) 0%,transparent 70%);
+  }
+  .bike-name { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; line-height:1; }
+  .bike-meta { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent); margin-top:3px; }
+  .bike-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:0; margin:14px 0 0; }
+  .bstat { text-align:center; padding:10px 0; border-top:1px solid var(--border); }
+  .bstat + .bstat { border-left:1px solid var(--border); }
+  .bstat-val { font-family:'JetBrains Mono',monospace; font-size:18px; color:var(--text); }
+  .bstat-lbl { font-size:9px; color:var(--text-dim); letter-spacing:1px; margin-top:2px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    background:none; border:1px solid var(--border-bright); color:var(--text-dim);
+    font-family:'Inter',sans-serif; font-size:12px; font-weight:500;
+    padding:8px 14px; border-radius:4px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:5px;
+    transition:all 0.15s; white-space:nowrap;
+  }
+  .btn:hover { border-color:var(--metal); color:var(--text); }
+  .btn-primary { background:var(--accent); border-color:var(--accent); color:#000; font-weight:700; }
+  .btn-primary:hover { background:#f0b030; border-color:#f0b030; color:#000; }
+  .btn-ghost { border-color:transparent; }
+  .btn-ghost:hover { border-color:var(--border-bright); }
+  .btn-danger { border-color:transparent; color:var(--red); }
+  .btn-danger:hover { background:var(--red-dim); border-color:#5a2020; }
+  .btn-sm { padding:5px 9px; font-size:11px; }
+  .btn-full { width:100%; justify-content:center; padding:11px; }
+
+  /* ── PILL SELECT BUTTONS ── */
+  .pill-group { display:flex; gap:6px; flex-wrap:wrap; }
+  .pill {
+    background:var(--surface2); border:1px solid var(--border);
+    color:var(--text-dim); font-family:'Inter',sans-serif;
+    font-size:12px; font-weight:500; padding:6px 13px;
+    border-radius:20px; cursor:pointer; transition:all 0.15s;
+  }
+  .pill:hover { border-color:var(--border-bright); color:var(--text); }
+  .pill.selected { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); font-weight:700; }
+
+  /* ── STEP SELECTOR (wizard-style) ── */
+  .step-box {
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    padding:20px; margin-bottom:12px;
+  }
+  .step-label { font-size:10px; font-weight:700; color:var(--text-dim); letter-spacing:1.5px; margin-bottom:10px; }
+  .step-num {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:20px; height:20px; border-radius:50%;
+    background:var(--surface3); border:1px solid var(--border-bright);
+    font-size:9px; font-weight:700; color:var(--text-dim);
+    margin-right:6px; flex-shrink:0;
+  }
+  .step-num.done { background:var(--green-dim); border-color:var(--green); color:var(--green); }
+  .step-num.active { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+
+  /* ── SCROLL PICKER (year/km) ── */
+  .scroll-picker-wrap { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .num-input-styled {
+    background:var(--surface2); border:1px solid var(--border-bright);
+    border-radius:4px; color:var(--text); font-family:'JetBrains Mono',monospace;
+    font-size:16px; font-weight:500; padding:10px 14px;
+    outline:none; width:140px; text-align:center;
+    transition:border-color 0.15s;
+  }
+  .num-input-styled:focus { border-color:var(--accent); }
+  .num-stepper { display:flex; flex-direction:column; gap:2px; }
+  .num-step-btn {
+    background:var(--surface3); border:1px solid var(--border);
+    color:var(--metal); width:28px; height:22px;
+    border-radius:3px; cursor:pointer; font-size:11px;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.1s;
+  }
+  .num-step-btn:hover { background:var(--border-bright); color:var(--text); }
+
+  /* ── FORM ── */
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  .form-group.full { grid-column:1/-1; }
+  .form-label { font-size:10px; color:var(--text-dim); letter-spacing:0.5px; font-weight:600; }
+  .form-input, .form-select {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:4px; color:var(--text); font-family:'Inter',sans-serif;
+    font-size:13px; padding:9px 11px; outline:none; width:100%;
+    transition:border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus { border-color:var(--accent); }
+  .form-select { cursor:pointer; }
+  option { background:var(--surface2); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.75); z-index:300;
+    align-items:center; justify-content:center; padding:16px;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--surface); border:1px solid var(--border-bright);
+    border-radius:10px; width:100%; max-width:500px;
+    max-height:92vh; overflow-y:auto;
+  }
+  .modal-header {
+    padding:16px 18px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; background:var(--surface); z-index:1;
+  }
+  .modal-title { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:2px; color:var(--metal-light); }
+  .modal-close { background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; line-height:1; padding:2px 4px; }
+  .modal-close:hover { color:var(--text); }
+  .modal-body { padding:18px; }
+  .modal-footer { padding:13px 18px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end; }
+
+  /* ── CONSUMABLE GRID ── */
+  .c-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:9px; margin-bottom:18px; }
+  .c-item {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:6px; padding:13px; cursor:pointer;
+    transition:all 0.15s; position:relative; overflow:hidden;
+  }
+  .c-item:hover { border-color:var(--border-bright); transform:translateY(-1px); }
+  .c-item::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .c-item.ok::before { background:var(--green); }
+  .c-item.warn::before { background:var(--accent); }
+  .c-item.danger::before { background:var(--red); }
+  .c-item.ok { border-color:rgba(56,168,104,0.25); }
+  .c-item.warn { border-color:rgba(232,160,32,0.3); }
+  .c-item.danger { border-color:rgba(208,64,64,0.35); }
+  .c-icon-big { font-size:22px; margin-bottom:7px; }
+  .c-name { font-size:12px; font-weight:600; margin-bottom:4px; }
+  .c-info { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); line-height:1.6; }
+  .c-bar { height:3px; background:var(--border); border-radius:2px; margin-top:8px; overflow:hidden; }
+  .c-bar-fill { height:100%; border-radius:2px; transition:width 0.4s; }
+  .c-tag {
+    display:inline-flex; align-items:center; gap:3px;
+    font-size:9px; font-weight:700; letter-spacing:0.5px;
+    padding:2px 6px; border-radius:3px; margin-top:6px;
+  }
+  .c-tag.ok { background:var(--green-dim); color:var(--green); }
+  .c-tag.warn { background:var(--accent-dim); color:var(--accent); }
+  .c-tag.danger { background:var(--red-dim); color:var(--red); }
+
+  /* ── LOG TABLE ── */
+  .log-table { width:100%; border-collapse:collapse; }
+  .log-table th { padding:8px 12px; font-size:9px; font-weight:700; letter-spacing:1px; color:var(--text-dim); border-bottom:1px solid var(--border); text-align:left; }
+  .log-table td { padding:10px 12px; font-size:13px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .log-table tr:last-child td { border-bottom:none; }
+  .log-table tbody tr:hover td { background:var(--surface2); }
+  .mono { font-family:'JetBrains Mono',monospace; font-size:11px; }
+  .badge {
+    display:inline-block; padding:2px 7px; border-radius:3px;
+    font-size:9px; font-weight:700; letter-spacing:0.5px;
+  }
+  .badge-maint { background:#0e1e2e; color:#4a90d8; }
+  .badge-cons { background:#2a1a08; color:var(--accent); }
+  .badge-repair { background:var(--red-dim); color:var(--red); }
+  .badge-other { background:#1a2a1a; color:var(--green); }
+
+  /* ── DASH ── */
+  .dash-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:9px; margin-bottom:18px; }
+  .dash-w { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:16px; text-align:center; }
+  .dash-num { font-family:'Bebas Neue',sans-serif; font-size:34px; letter-spacing:1px; line-height:1; }
+  .dash-unit { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--accent); letter-spacing:1px; }
+  .dash-lbl { font-size:10px; color:var(--text-dim); margin-top:4px; }
+
+  /* ── ALERT ── */
+  .alert-row { border-radius:5px; padding:11px 14px; margin-bottom:8px; display:flex; align-items:center; gap:10px; font-size:12px; }
+  .alert-row.danger { background:var(--red-dim); border:1px solid rgba(208,64,64,0.3); color:#e06060; }
+  .alert-row.warn { background:var(--accent-dim); border:1px solid rgba(232,160,32,0.3); color:#d09020; }
+
+  /* ── EMPTY ── */
+  .empty { text-align:center; padding:48px 20px; }
+  .empty-icon { font-size:36px; margin-bottom:10px; }
+  .empty-text { font-size:13px; color:var(--text-dim); }
+  .empty-sub { font-size:11px; color:var(--text-muted); margin-top:4px; }
+
+  /* ── MISC ── */
+  .no-bikes-box {
+    background:var(--surface); border:1px dashed var(--border-bright);
+    border-radius:10px; padding:44px; text-align:center;
+  }
+  .tag-chip {
+    display:inline-block; background:var(--surface2); border:1px solid var(--border);
+    border-radius:4px; padding:3px 9px;
+    font-size:10px; color:var(--metal); font-family:'JetBrains Mono',monospace;
+    letter-spacing:0.5px;
+  }
+  .riding-quick-btns { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:6px; }
+  .km-quick-btn {
+    background:var(--surface2); border:1px solid var(--border); border-radius:4px;
+    color:var(--text-dim); font-family:'JetBrains Mono',monospace;
+    font-size:13px; font-weight:500; padding:9px 4px; cursor:pointer; text-align:center;
+    transition:all 0.15s;
+  }
+  .km-quick-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .km-quick-btn.selected { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); font-weight:700; }
+
+  /* ── ROUTE PILLS ── */
+  .route-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:6px; }
+  .route-pill {
+    background:var(--surface2); border:1px solid var(--border); border-radius:6px;
+    padding:10px 12px; cursor:pointer; transition:all 0.15s; text-align:left;
+  }
+  .route-pill:hover { border-color:var(--border-bright); }
+  .route-pill.selected { background:var(--accent-dim); border-color:var(--accent); }
+  .route-pill-name { font-size:12px; font-weight:600; color:var(--text); }
+  .route-pill-km { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); margin-top:2px; }
+  .route-pill.selected .route-pill-name { color:var(--accent); }
+
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border-bright); border-radius:3px; }
+
+  @media(max-width:560px){
+    .form-grid { grid-template-columns:1fr; }
+    .c-grid { grid-template-columns:1fr 1fr; }
+    .dash-grid { grid-template-columns:1fr 1fr; }
+  }
+
+  /* ── PWA INSTALL BANNER ── */
+  .pwa-banner {
+    display:none;
+    position:fixed; bottom:0; left:0; right:0; z-index:500;
+    background:var(--surface);
+    border-top:1px solid var(--border-bright);
+    padding:14px 18px 18px;
+    box-shadow:0 -8px 32px rgba(0,0,0,0.5);
+    animation:slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:none} }
+  .pwa-banner.show { display:block; }
+  .pwa-banner-inner { max-width:860px; margin:0 auto; display:flex; align-items:center; gap:14px; }
+  .pwa-banner-icon {
+    width:48px; height:48px; border-radius:12px; flex-shrink:0;
+    background:linear-gradient(135deg,#1e2022,#111214);
+    border:1px solid var(--border-bright);
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px;
+  }
+  .pwa-banner-text { flex:1; }
+  .pwa-banner-title { font-weight:700; font-size:14px; color:var(--text); }
+  .pwa-banner-sub { font-size:11px; color:var(--text-dim); margin-top:2px; }
+  .pwa-banner-actions { display:flex; gap:8px; flex-shrink:0; }
+  .pwa-installed-toast {
+    display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:var(--green); color:#fff; font-weight:600; font-size:13px;
+    padding:10px 20px; border-radius:6px; z-index:600;
+    animation:fadeInUp 0.3s ease;
+    white-space:nowrap;
+  }
+  @keyframes fadeInUp { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  .pwa-installed-toast.show { display:block; }
+  /* safe area for notch phones */
+  .pwa-banner { padding-bottom:calc(18px + env(safe-area-inset-bottom)); }
+  body { padding-bottom: env(safe-area-inset-bottom); }
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-block">
+      <span class="logo-main">MOTO GARAGE</span>
+      <span class="logo-sub">VEHICLE MANAGEMENT SYSTEM</span>
+    </div>
+    <div class="header-divider"></div>
+    <div class="iconbox-badge">
+      <span class="iconbox-label">CREATED BY</span>
+      <span class="iconbox-name">@iconbox<span class="iconbox-dot">.</span>lee</span>
+    </div>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="openModal('m-bike')">+ 차량 등록</button>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('dashboard',this)">📊 대시보드</button>
+  <button class="nav-btn" onclick="showPage('bikes',this)">🏍 내 차량</button>
+  <button class="nav-btn" onclick="showPage('consumables',this)">🔧 소모품</button>
+  <button class="nav-btn" onclick="showPage('riding',this)">📍 주행 일지</button>
+  <button class="nav-btn" onclick="showPage('history',this)">📋 정비 이력</button>
+</nav>
+
+<div class="container">
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div class="page active" id="page-dashboard">
+    <div id="dash-content"></div>
+  </div>
+
+  <!-- ═══ BIKES ═══ -->
+  <div class="page" id="page-bikes">
+    <div class="sec-header"><span class="sec-title">내 차량</span><div class="sec-line"></div></div>
+    <div id="bike-list"></div>
+    <button class="btn btn-primary btn-full" style="margin-top:4px;" onclick="openModal('m-bike')">+ 새 차량 등록</button>
+  </div>
+
+  <!-- ═══ CONSUMABLES ═══ -->
+  <div class="page" id="page-consumables">
+    <div id="c-bike-tabs" style="margin-bottom:14px;"></div>
+    <div id="c-content"></div>
+  </div>
+
+  <!-- ═══ RIDING ═══ -->
+  <div class="page" id="page-riding">
+    <div class="sec-header"><span class="sec-title">주행 일지</span><div class="sec-line"></div></div>
+
+    <!-- Quick-add card -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:14px;">새 주행 기록</div>
+
+      <!-- Step 1: 차량 -->
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;margin-bottom:8px;">
+          <span class="step-num active" id="rs1-num">1</span>
+          <span style="font-size:11px;font-weight:600;color:var(--text-dim);letter-spacing:0.5px;">차량 선택</span>
+        </div>
+        <div class="pill-group" id="ride-bike-pills"></div>
+      </div>
+
+      <!-- Step 2: 날짜 -->
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;margin-bottom:8px;">
+          <span class="step-num" id="rs2-num">2</span>
+          <span style="font-size:11px;font-weight:600;color:var(--text-dim);letter-spacing:0.5px;">날짜</span>
+        </div>
+        <div class="pill-group" id="ride-date-pills">
+          <div class="pill selected" onclick="selectRideDate('today',this)">오늘</div>
+          <div class="pill" onclick="selectRideDate('yesterday',this)">어제</div>
+          <div class="pill" onclick="selectRideDate('pick',this)">직접 선택</div>
+        </div>
+        <input type="date" class="form-input" id="ride-date-input" style="margin-top:8px;display:none;max-width:200px;">
+      </div>
+
+      <!-- Step 3: 거리 -->
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;margin-bottom:8px;">
+          <span class="step-num" id="rs3-num">3</span>
+          <span style="font-size:11px;font-weight:600;color:var(--text-dim);letter-spacing:0.5px;">주행 거리</span>
+        </div>
+        <div class="riding-quick-btns" style="margin-bottom:8px;">
+          <div class="km-quick-btn" onclick="selectKm(10,this)">10 km</div>
+          <div class="km-quick-btn" onclick="selectKm(30,this)">30 km</div>
+          <div class="km-quick-btn" onclick="selectKm(50,this)">50 km</div>
+          <div class="km-quick-btn" onclick="selectKm(100,this)">100 km</div>
+          <div class="km-quick-btn" onclick="selectKm(150,this)">150 km</div>
+          <div class="km-quick-btn" onclick="selectKm(200,this)">200 km</div>
+          <div class="km-quick-btn" onclick="selectKm(300,this)">300 km</div>
+          <div class="km-quick-btn" onclick="selectKm(0,this)" id="km-custom-btn">직접</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="number" class="num-input-styled" id="ride-km" placeholder="0" style="width:120px;" oninput="onKmInput()">
+          <span style="font-size:12px;color:var(--text-dim);">km</span>
+        </div>
+      </div>
+
+      <!-- Step 4: 루트 -->
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;margin-bottom:8px;">
+          <span class="step-num" id="rs4-num">4</span>
+          <span style="font-size:11px;font-weight:600;color:var(--text-dim);letter-spacing:0.5px;">루트 / 메모</span>
+        </div>
+        <div class="route-grid" id="route-presets" style="margin-bottom:8px;"></div>
+        <input type="text" class="form-input" id="ride-memo" placeholder="직접 입력 (선택사항)">
+      </div>
+
+      <div style="text-align:right;">
+        <button class="btn btn-primary" onclick="addRideLog()">기록 저장</button>
+      </div>
+    </div>
+
+    <div class="sec-header"><span class="sec-title">주행 기록</span><div class="sec-line"></div></div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="overflow-x:auto;" id="ride-table"></div>
+    </div>
+  </div>
+
+  <!-- ═══ HISTORY ═══ -->
+  <div class="page" id="page-history">
+    <div class="sec-header"><span class="sec-title">정비 이력</span><div class="sec-line"></div></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <select class="form-select" id="hfilt-bike" style="width:auto;flex:1;min-width:120px;" onchange="renderHistory()">
+        <option value="">전체 차량</option>
+      </select>
+      <select class="form-select" id="hfilt-type" style="width:auto;flex:1;min-width:110px;" onchange="renderHistory()">
+        <option value="">전체 유형</option>
+        <option>소모품교체</option><option>정기점검</option><option>수리</option><option>기타</option>
+      </select>
+      <button class="btn btn-primary" onclick="openModal('m-history')">+ 정비 기록</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="overflow-x:auto;" id="history-table"></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- ═══════════ MODAL: 차량 등록 ═══════════ -->
+<div class="modal-overlay" id="m-bike">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">차량 등록</span>
+      <button class="modal-close" onclick="closeModal('m-bike')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 제조사 -->
+      <div style="margin-bottom:16px;">
+        <div class="step-label"><span class="step-num active">1</span>제조사</div>
+        <div class="pill-group" id="brand-pills">
+          <div class="pill" onclick="selectBrand('Honda',this)">Honda</div>
+          <div class="pill" onclick="selectBrand('Yamaha',this)">Yamaha</div>
+          <div class="pill" onclick="selectBrand('Kawasaki',this)">Kawasaki</div>
+          <div class="pill" onclick="selectBrand('Suzuki',this)">Suzuki</div>
+          <div class="pill" onclick="selectBrand('BMW',this)">BMW</div>
+          <div class="pill" onclick="selectBrand('KTM',this)">KTM</div>
+          <div class="pill" onclick="selectBrand('Ducati',this)">Ducati</div>
+          <div class="pill" onclick="selectBrand('Triumph',this)">Triumph</div>
+          <div class="pill" onclick="selectBrand('Royal Enfield',this)">Royal Enfield</div>
+          <div class="pill" onclick="selectBrand('Harley',this)">Harley</div>
+          <div class="pill" onclick="selectBrand('other',this)">기타...</div>
+        </div>
+        <input type="text" class="form-input" id="brand-custom" placeholder="제조사 입력" style="margin-top:8px;display:none;">
+      </div>
+
+      <!-- 모델 -->
+      <div style="margin-bottom:16px;">
+        <div class="step-label"><span class="step-num" id="mn2">2</span>모델</div>
+        <div class="pill-group" id="model-pills">
+          <span style="font-size:12px;color:var(--text-muted);">제조사를 먼저 선택하세요</span>
+        </div>
+        <input type="text" class="form-input" id="model-custom" placeholder="모델명 입력" style="margin-top:8px;display:none;">
+      </div>
+
+      <!-- 연식 -->
+      <div style="margin-bottom:16px;">
+        <div class="step-label"><span class="step-num" id="mn3">3</span>연식</div>
+        <div class="pill-group" id="year-pills"></div>
+      </div>
+
+      <!-- 배기량 -->
+      <div style="margin-bottom:16px;">
+        <div class="step-label"><span class="step-num" id="mn4">4</span>배기량</div>
+        <div class="pill-group" id="cc-pills">
+          <div class="pill" data-cc="1301" onclick="selectCC(1301,this)">1301cc</div>
+          <div class="pill" data-cc="1254" onclick="selectCC(1254,this)">1254cc</div>
+          <div class="pill" data-cc="1160" onclick="selectCC(1160,this)">1160cc</div>
+          <div class="pill" data-cc="1103" onclick="selectCC(1103,this)">1103cc</div>
+          <div class="pill" data-cc="1043" onclick="selectCC(1043,this)">1043cc</div>
+          <div class="pill" data-cc="999" onclick="selectCC(999,this)">999cc</div>
+          <div class="pill" data-cc="998" onclick="selectCC(998,this)">998cc</div>
+          <div class="pill" data-cc="937" onclick="selectCC(937,this)">937cc</div>
+          <div class="pill" data-cc="895" onclick="selectCC(895,this)">895cc</div>
+          <div class="pill" data-cc="890" onclick="selectCC(890,this)">890cc</div>
+          <div class="pill" data-cc="853" onclick="selectCC(853,this)">853cc</div>
+          <div class="pill" data-cc="799" onclick="selectCC(799,this)">799cc</div>
+          <div class="pill" data-cc="776" onclick="selectCC(776,this)">776cc</div>
+          <div class="pill" data-cc="765" onclick="selectCC(765,this)">765cc</div>
+          <div class="pill" data-cc="750" onclick="selectCC(750,this)">750cc</div>
+          <div class="pill" data-cc="693" onclick="selectCC(693,this)">693cc</div>
+          <div class="pill" data-cc="689" onclick="selectCC(689,this)">689cc</div>
+          <div class="pill" data-cc="660" onclick="selectCC(660,this)">660cc</div>
+          <div class="pill" data-cc="649" onclick="selectCC(649,this)">649cc</div>
+          <div class="pill" data-cc="648" onclick="selectCC(648,this)">648cc</div>
+          <div class="pill" data-cc="500" onclick="selectCC(500,this)">500cc</div>
+          <div class="pill" data-cc="452" onclick="selectCC(452,this)">452cc</div>
+          <div class="pill" data-cc="399" onclick="selectCC(399,this)">399cc</div>
+          <div class="pill" data-cc="349" onclick="selectCC(349,this)">349cc</div>
+          <div class="pill" data-cc="321" onclick="selectCC(321,this)">321cc</div>
+          <div class="pill" data-cc="313" onclick="selectCC(313,this)">313cc</div>
+          <div class="pill" data-cc="0" onclick="selectCC('other',this)">기타 / 직접</div>
+        </div>
+        <input type="number" class="form-input" id="cc-custom" placeholder="배기량 입력 (cc)" style="margin-top:8px;display:none;max-width:180px;">
+      </div>
+
+      <!-- 현재 주행거리 -->
+      <div style="margin-bottom:16px;">
+        <div class="step-label"><span class="step-num" id="mn5">5</span>현재 주행거리 (km)</div>
+        <div class="pill-group" style="margin-bottom:8px;">
+          <div class="pill" onclick="setOdo(0,this)">신차 (0)</div>
+          <div class="pill" onclick="setOdo(1000,this)">1,000</div>
+          <div class="pill" onclick="setOdo(3000,this)">3,000</div>
+          <div class="pill" onclick="setOdo(5000,this)">5,000</div>
+          <div class="pill" onclick="setOdo(10000,this)">10,000</div>
+          <div class="pill" onclick="setOdo(20000,this)">20,000</div>
+          <div class="pill" onclick="setOdo(30000,this)">30,000</div>
+          <div class="pill" onclick="setOdo(-1,this)">직접 입력</div>
+        </div>
+        <input type="number" class="form-input" id="bike-odo" placeholder="주행거리 km" style="max-width:200px;">
+      </div>
+
+      <!-- 번호판 / 색상 (선택사항) -->
+      <div class="form-grid" style="margin-bottom:4px;">
+        <div class="form-group">
+          <label class="form-label">번호판 (선택)</label>
+          <input type="text" class="form-input" id="bike-plate" placeholder="51A-12345">
+        </div>
+        <div class="form-group">
+          <label class="form-label">색상 (선택)</label>
+          <select class="form-select" id="bike-color">
+            <option value="">선택 안 함</option>
+            <option>매트 블랙</option><option>글로시 블랙</option><option>화이트</option>
+            <option>레드</option><option>블루</option><option>그레이</option>
+            <option>실버</option><option>오렌지</option><option>그린</option>
+            <option>옐로우</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-bike')">취소</button>
+      <button class="btn btn-primary" onclick="addBike()">등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: 소모품 교체 ═══════════ -->
+<div class="modal-overlay" id="m-consumable">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="mc-title">교체 기록</span>
+      <button class="modal-close" onclick="closeModal('m-consumable')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 교체 시 km -->
+      <div style="margin-bottom:16px;">
+        <div class="step-label"><span class="step-num active">1</span>교체 시 주행거리</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">현재 오도미터: <span class="mono" id="mc-current-km" style="color:var(--accent);">—</span> km</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="mc-km-pills"></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="number" class="num-input-styled" id="mc-km" placeholder="0" style="width:140px;">
+          <span style="font-size:12px;color:var(--text-dim);">km</span>
+        </div>
+      </div>
+
+      <!-- 날짜 -->
+      <div style="margin-bottom:16px;">
+        <div class="step-label"><span class="step-num active">2</span>교체 날짜</div>
+        <div class="pill-group" style="margin-bottom:8px;">
+          <div class="pill selected" onclick="selectMcDate('today',this)">오늘</div>
+          <div class="pill" onclick="selectMcDate('yesterday',this)">어제</div>
+          <div class="pill" onclick="selectMcDate('pick',this)">직접 선택</div>
+        </div>
+        <input type="date" class="form-input" id="mc-date-input" style="display:none;max-width:200px;">
+      </div>
+
+      <!-- 다음 교체 주기 -->
+      <div style="margin-bottom:16px;">
+        <div class="step-label"><span class="step-num active">3</span>다음 교체 주기</div>
+        <div class="pill-group" id="mc-interval-pills">
+          <div class="pill" onclick="selectMcInterval(3000,this)">3,000 km</div>
+          <div class="pill" onclick="selectMcInterval(5000,this)">5,000 km</div>
+          <div class="pill" onclick="selectMcInterval(8000,this)">8,000 km</div>
+          <div class="pill" onclick="selectMcInterval(10000,this)">10,000 km</div>
+          <div class="pill" onclick="selectMcInterval(15000,this)">15,000 km</div>
+          <div class="pill" onclick="selectMcInterval(20000,this)">20,000 km</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <input type="number" class="num-input-styled" id="mc-interval" placeholder="5000" style="width:140px;">
+          <span style="font-size:12px;color:var(--text-dim);">km</span>
+        </div>
+      </div>
+
+      <!-- 메모 -->
+      <div style="margin-bottom:4px;">
+        <div class="step-label"><span class="step-num">4</span>정비소 / 제품 메모 (선택)</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="mc-shop-pills">
+          <div class="pill" onclick="setMcMemo('단 오토바이',this)">단 오토바이</div>
+          <div class="pill" onclick="setMcMemo('Honda 공식',this)">Honda 공식</div>
+          <div class="pill" onclick="setMcMemo('Yamaha 공식',this)">Yamaha 공식</div>
+          <div class="pill" onclick="setMcMemo('직접 교체',this)">직접 교체</div>
+        </div>
+        <input type="text" class="form-input" id="mc-memo" placeholder="브랜드, 정비소 등">
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-consumable')">취소</button>
+      <button class="btn btn-primary" onclick="saveConsumable()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: 정비 이력 추가 ═══════════ -->
+<div class="modal-overlay" id="m-history">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">정비 기록 추가</span>
+      <button class="modal-close" onclick="closeModal('m-history')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 차량 -->
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num active">1</span>차량</div>
+        <div class="pill-group" id="hist-bike-pills"></div>
+      </div>
+
+      <!-- 날짜 -->
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num active">2</span>날짜</div>
+        <div class="pill-group" style="margin-bottom:8px;">
+          <div class="pill selected" onclick="selectHistDate('today',this)">오늘</div>
+          <div class="pill" onclick="selectHistDate('yesterday',this)">어제</div>
+          <div class="pill" onclick="selectHistDate('pick',this)">직접 선택</div>
+        </div>
+        <input type="date" class="form-input" id="hist-date-input" style="display:none;max-width:200px;">
+      </div>
+
+      <!-- 유형 -->
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num active">3</span>유형</div>
+        <div class="pill-group">
+          <div class="pill" onclick="selectHistType('소모품교체',this)">🔧 소모품교체</div>
+          <div class="pill" onclick="selectHistType('정기점검',this)">🔍 정기점검</div>
+          <div class="pill" onclick="selectHistType('수리',this)">🛠 수리</div>
+          <div class="pill" onclick="selectHistType('기타',this)">📝 기타</div>
+        </div>
+        <input type="hidden" id="hist-type" value="">
+      </div>
+
+      <!-- 내용 -->
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num active">4</span>내용</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="hist-desc-pills">
+          <div class="pill" onclick="setHistDesc('엔진오일 교체',this)">엔진오일 교체</div>
+          <div class="pill" onclick="setHistDesc('타이어 교체',this)">타이어 교체</div>
+          <div class="pill" onclick="setHistDesc('체인 교체',this)">체인 교체</div>
+          <div class="pill" onclick="setHistDesc('브레이크패드 교체',this)">브레이크패드 교체</div>
+          <div class="pill" onclick="setHistDesc('정기 점검',this)">정기 점검</div>
+          <div class="pill" onclick="setHistDesc('사고 수리',this)">사고 수리</div>
+        </div>
+        <input type="text" class="form-input" id="hist-desc" placeholder="정비 내용">
+      </div>
+
+      <!-- 비용 + 주행거리 -->
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="form-group">
+          <label class="form-label">비용 (₫)</label>
+          <div class="pill-group" style="margin-bottom:6px;flex-wrap:wrap;gap:4px;">
+            <div class="pill" style="font-size:10px;" onclick="setHistCost(50000,this)">50K</div>
+            <div class="pill" style="font-size:10px;" onclick="setHistCost(100000,this)">100K</div>
+            <div class="pill" style="font-size:10px;" onclick="setHistCost(200000,this)">200K</div>
+            <div class="pill" style="font-size:10px;" onclick="setHistCost(500000,this)">500K</div>
+          </div>
+          <input type="number" class="form-input" id="hist-cost" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">주행거리 (km)</label>
+          <input type="number" class="form-input" id="hist-km" placeholder="현재 km">
+        </div>
+      </div>
+
+      <!-- 정비소 -->
+      <div>
+        <div class="step-label"><span class="step-num">5</span>정비소 (선택)</div>
+        <div class="pill-group" style="margin-bottom:8px;">
+          <div class="pill" onclick="setHistShop('단 오토바이',this)">단 오토바이</div>
+          <div class="pill" onclick="setHistShop('Honda 공식',this)">Honda 공식</div>
+          <div class="pill" onclick="setHistShop('Yamaha 공식',this)">Yamaha 공식</div>
+          <div class="pill" onclick="setHistShop('직접 교체',this)">직접 교체</div>
+        </div>
+        <input type="text" class="form-input" id="hist-shop" placeholder="정비소 입력">
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-history')">취소</button>
+      <button class="btn btn-primary" onclick="addHistory()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+//  DATA
+// ─────────────────────────────────────────
+let D = JSON.parse(localStorage.getItem('mg2') || 'null') || { bikes:[], rides:[], history:[] };
+const save = () => localStorage.setItem('mg2', JSON.stringify(D));
+
+const CONSUMABLES = [
+  {id:'oil',      icon:'🛢', name:'엔진오일',         km:5000 },
+  {id:'oil_f',    icon:'🔩', name:'오일 필터',         km:10000},
+  {id:'spark',    icon:'⚡', name:'점화플러그',         km:15000},
+  {id:'chain',    icon:'⛓', name:'체인/스프로킷',      km:10000},
+  {id:'brake_f',  icon:'🛑', name:'브레이크패드 전',    km:20000},
+  {id:'brake_r',  icon:'🛑', name:'브레이크패드 후',    km:15000},
+  {id:'tire_f',   icon:'⭕', name:'타이어 전',          km:15000},
+  {id:'tire_r',   icon:'⭕', name:'타이어 후',          km:12000},
+  {id:'coolant',  icon:'🌡', name:'냉각수',             km:20000},
+  {id:'air_f',    icon:'💨', name:'에어 필터',          km:15000},
+  {id:'brake_oil',icon:'💧', name:'브레이크오일',       km:20000},
+];
+
+// 각 모델: { name, cc }  — 고배기량 내림차순, 250cc 이하는 제외(기타로 통합)
+const BRAND_MODELS = {
+  Honda:[
+    {name:'CB1300',       cc:1300},
+    {name:'CBR1000RR-R',  cc:1000},
+    {name:'CBR1000RR',    cc:1000},
+    {name:'CB1000R',      cc:1000},
+    {name:'Africa Twin',  cc:1100},
+    {name:'NT1100',       cc:1100},
+    {name:'X-ADV 750',    cc:750},
+    {name:'CB750 Hornet', cc:750},
+    {name:'CB650R',       cc:650},
+    {name:'CBR650R',      cc:650},
+    {name:'CB500F',       cc:500},
+    {name:'CB500X',       cc:500},
+    {name:'CBR500R',      cc:500},
+    {name:'CB400F',       cc:400},
+    {name:'CB400X',       cc:400},
+    {name:'CRF300L',      cc:300},
+    {name:'CB300R',       cc:300},
+    {name:'기타 (250cc 이하 포함)', cc:0},
+  ],
+  Yamaha:[
+    {name:'YZF-R1',       cc:998},
+    {name:'MT-10',        cc:998},
+    {name:'MT-09',        cc:890},
+    {name:'XSR900',       cc:890},
+    {name:'Tracer 9',     cc:890},
+    {name:'MT-07',        cc:689},
+    {name:'XSR700',       cc:689},
+    {name:'Tracer 7',     cc:689},
+    {name:'Ténéré 700',   cc:689},
+    {name:'YZF-R7',       cc:689},
+    {name:'YZF-R3',       cc:321},
+    {name:'MT-03',        cc:321},
+    {name:'기타 (250cc 이하 포함)', cc:0},
+  ],
+  Kawasaki:[
+    {name:'Ninja ZX-10R',    cc:998},
+    {name:'Z1000',           cc:1043},
+    {name:'Z H2',            cc:998},
+    {name:'Ninja H2',        cc:998},
+    {name:'Versys 1000',     cc:1043},
+    {name:'Ninja 1000SX',    cc:1043},
+    {name:'Z900',            cc:948},
+    {name:'Z900RS',          cc:948},
+    {name:'Versys 650',      cc:649},
+    {name:'Ninja 650',       cc:649},
+    {name:'Z650',            cc:649},
+    {name:'Z400',            cc:399},
+    {name:'Ninja 400',       cc:399},
+    {name:'기타 (250cc 이하 포함)', cc:0},
+  ],
+  Suzuki:[
+    {name:'Hayabusa',        cc:1340},
+    {name:'GSX-S1000',       cc:999},
+    {name:'GSX-R1000',       cc:999},
+    {name:'V-Strom 1050',    cc:1037},
+    {name:'GSX-S750',        cc:749},
+    {name:'GSX-8S',          cc:776},
+    {name:'V-Strom 800',     cc:776},
+    {name:'V-Strom 650',     cc:645},
+    {name:'기타 (250cc 이하 포함)', cc:0},
+  ],
+  BMW:[
+    {name:'S1000RR',         cc:999},
+    {name:'S1000R',          cc:999},
+    {name:'S1000XR',         cc:999},
+    {name:'R1250GS',         cc:1254},
+    {name:'R1250R',          cc:1254},
+    {name:'M1000RR',         cc:999},
+    {name:'F900R',           cc:895},
+    {name:'F900XR',          cc:895},
+    {name:'F850GS',          cc:853},
+    {name:'F750GS',          cc:853},
+    {name:'G310R',           cc:313},
+    {name:'G310GS',          cc:313},
+    {name:'기타 (250cc 이하 포함)', cc:0},
+  ],
+  KTM:[
+    {name:'1290 Super Duke R', cc:1301},
+    {name:'1290 Adventure',    cc:1301},
+    {name:'890 Duke R',        cc:889},
+    {name:'890 Adventure',     cc:889},
+    {name:'790 Duke',          cc:799},
+    {name:'790 Adventure',     cc:799},
+    {name:'690 Duke',          cc:693},
+    {name:'690 SMC R',         cc:693},
+    {name:'390 Duke',          cc:399},
+    {name:'390 Adventure',     cc:399},
+    {name:'기타 (250cc 이하 포함)', cc:0},
+  ],
+  Ducati:[
+    {name:'Panigale V4',       cc:1103},
+    {name:'Streetfighter V4',  cc:1103},
+    {name:'Multistrada V4',    cc:1158},
+    {name:'Diavel V4',         cc:1158},
+    {name:'Monster 937',       cc:937},
+    {name:'Hypermotard 950',   cc:937},
+    {name:'DesertX',           cc:937},
+    {name:'기타 (250cc 이하 포함)', cc:0},
+  ],
+  Triumph:[
+    {name:'Speed Triple 1200', cc:1160},
+    {name:'Tiger 1200',        cc:1160},
+    {name:'Rocket 3',          cc:2458},
+    {name:'Street Triple 765', cc:765},
+    {name:'Tiger 900',         cc:888},
+    {name:'Speed 400',         cc:398},
+    {name:'Tiger 660',         cc:660},
+    {name:'Trident 660',       cc:660},
+    {name:'Scrambler 400',     cc:398},
+    {name:'기타 (250cc 이하 포함)', cc:0},
+  ],
+  'Royal Enfield':[
+    {name:'Super Meteor 650',  cc:648},
+    {name:'Continental GT 650',cc:648},
+    {name:'Interceptor 650',   cc:648},
+    {name:'Himalayan 450',     cc:452},
+    {name:'Guerrilla 450',     cc:452},
+    {name:'Bear 650',          cc:648},
+    {name:'Hunter 350',        cc:349},
+    {name:'Classic 350',       cc:349},
+    {name:'Meteor 350',        cc:349},
+    {name:'기타 (250cc 이하 포함)', cc:0},
+  ],
+  Harley:[
+    {name:'CVO Road Glide',    cc:1923},
+    {name:'Road Glide',        cc:1868},
+    {name:'Road King',         cc:1868},
+    {name:'Fat Boy',           cc:1868},
+    {name:'Fat Bob',           cc:1868},
+    {name:'Street Bob',        cc:1868},
+    {name:'Sportster S',       cc:1252},
+    {name:'Pan America',       cc:1252},
+    {name:'Nightster',         cc:975},
+    {name:'기타 (250cc 이하 포함)', cc:0},
+  ],
+  other:[]
+};
+
+const ROUTE_PRESETS = [
+  {name:'시내 투어',km:30},{name:'하노이 외곽',km:80},{name:'닌빈',km:180},
+  {name:'하롱베이',km:160},{name:'마이쩌우',km:130},{name:'사파',km:380},
+  {name:'달랏',km:1500},{name:'호치민',km:1700},{name:'자유 투어',km:0}
+];
+
+// temp state
+let bState = { brand:'', model:'', year:0, cc:0, odo:0 };
+let cState = { bikeIdx:0, cId:'' };
+let rideDateVal = todayStr();
+let mcDateVal = todayStr();
+let histDateVal = todayStr();
+let histBikeId = null;
+let histType = '';
+
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function yesterdayStr() { const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
+
+// ─────────────────────────────────────────
+//  NAV / PAGE
+// ─────────────────────────────────────────
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='dashboard') renderDash();
+  if(name==='bikes') renderBikes();
+  if(name==='consumables') renderConsumables();
+  if(name==='riding') renderRiding();
+  if(name==='history') renderHistory();
+}
+
+// ─────────────────────────────────────────
+//  MODAL
+// ─────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if(id==='m-bike') resetBikeModal();
+  if(id==='m-history') resetHistModal();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+});
+
+// ─────────────────────────────────────────
+//  BIKE MODAL LOGIC
+// ─────────────────────────────────────────
+function resetBikeModal() {
+  bState = {brand:'',model:'',year:0,cc:0,odo:0};
+  clearPills('brand-pills');
+  document.getElementById('brand-custom').style.display='none';
+  document.getElementById('brand-custom').value='';
+  document.getElementById('model-pills').innerHTML='<span style="font-size:12px;color:var(--text-muted);">제조사를 먼저 선택하세요</span>';
+  document.getElementById('model-custom').style.display='none';
+  document.getElementById('model-custom').value='';
+  clearPills('cc-pills');
+  document.getElementById('cc-custom').style.display='none';
+  document.getElementById('bike-odo').value='';
+  document.getElementById('bike-plate').value='';
+  document.getElementById('bike-color').value='';
+  // Year pills: current year - 10 ~ current year
+  const yr = new Date().getFullYear();
+  const yp = document.getElementById('year-pills');
+  yp.innerHTML='';
+  for(let y=yr;y>=yr-12;y--){
+    const d=document.createElement('div');
+    d.className='pill'; d.textContent=y;
+    d.onclick=()=>{ clearPills('year-pills'); d.classList.add('selected'); bState.year=y; };
+    yp.appendChild(d);
+  }
+}
+
+function selectBrand(brand, el) {
+  clearPills('brand-pills');
+  el.classList.add('selected');
+  bState.brand = brand==='other'?'':brand;
+  const custom = document.getElementById('brand-custom');
+  if(brand==='other'){ custom.style.display='block'; custom.focus(); }
+  else { custom.style.display='none'; }
+  // populate models — sorted high-cc-first in BRAND_MODELS
+  const mp = document.getElementById('model-pills');
+  const mcustom = document.getElementById('model-custom');
+  const models = BRAND_MODELS[brand] || [];
+  mp.innerHTML=''; mcustom.style.display='none'; mcustom.value='';
+  if(!models.length) {
+    mcustom.style.display='block';
+  } else {
+    models.forEach(m=>{
+      const d=document.createElement('div');
+      const isOther = m.name.startsWith('기타');
+      if(isOther){
+        d.innerHTML=`<span>${m.name}</span>`;
+      } else {
+        d.innerHTML=`<span>${m.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);margin-left:5px;">${m.cc}cc</span>`;
+      }
+      d.className='pill';
+      d.onclick=()=>{
+        clearPills('model-pills');
+        d.classList.add('selected');
+        if(isOther){
+          mcustom.style.display='block'; mcustom.focus();
+          bState.model=''; bState.cc=0;
+          clearPills('cc-pills');
+          document.getElementById('cc-custom').style.display='block';
+        } else {
+          mcustom.style.display='none';
+          bState.model=m.name; bState.cc=m.cc;
+          clearPills('cc-pills');
+          document.getElementById('cc-custom').style.display='none';
+          document.getElementById('cc-custom').value='';
+          document.querySelectorAll('#cc-pills .pill').forEach(p=>{
+            if(parseInt(p.dataset.cc)===m.cc) p.classList.add('selected');
+          });
+        }
+      };
+      mp.appendChild(d);
+    });
+  }
+}
+
+function selectCC(val, el) {
+  clearPills('cc-pills');
+  el.classList.add('selected');
+  const c=document.getElementById('cc-custom');
+  if(val==='other'){ c.style.display='block'; c.focus(); bState.cc=0; }
+  else { c.style.display='none'; bState.cc=val; }
+}
+
+function setOdo(val, el) {
+  clearPills(el.parentElement);
+  el.classList.add('selected');
+  const inp=document.getElementById('bike-odo');
+  if(val===-1){ inp.value=''; inp.focus(); }
+  else { inp.value=val; bState.odo=val; }
+}
+
+function addBike() {
+  const brand = bState.brand || document.getElementById('brand-custom').value.trim();
+  const model = bState.model || document.getElementById('model-custom').value.trim();
+  if(!brand||!model){ alert('제조사와 모델을 선택하거나 입력하세요.'); return; }
+  const cc = bState.cc || parseInt(document.getElementById('cc-custom').value)||0;
+  const odo = parseInt(document.getElementById('bike-odo').value)||0;
+  const bike = {
+    id:Date.now(), brand, model,
+    year: bState.year || new Date().getFullYear(),
+    cc, odometer:odo,
+    color: document.getElementById('bike-color').value,
+    plate: document.getElementById('bike-plate').value,
+    consumables: CONSUMABLES.map(c=>({...c, lastKm:0, lastDate:'', memo:''}))
+  };
+  D.bikes.push(bike);
+  save();
+  closeModal('m-bike');
+  renderDash();
+  renderBikes();
+}
+
+// ─────────────────────────────────────────
+//  BIKES PAGE
+// ─────────────────────────────────────────
+function renderBikes() {
+  const el=document.getElementById('bike-list');
+  if(!D.bikes.length){
+    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:40px;margin-bottom:12px;">🏍</div><div style="font-size:14px;color:var(--text-dim);">등록된 차량이 없습니다</div></div>`;
+    return;
+  }
+  el.innerHTML=D.bikes.map(b=>{
+    const alerts=countAlerts(b);
+    return `<div class="bike-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+        <div>
+          <div class="bike-name">${b.brand} ${b.model}</div>
+          <div class="bike-meta">${b.year}${b.cc?' · '+b.cc+'cc':''}${b.plate?' · '+b.plate:''}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          ${b.color?`<span class="tag-chip">${b.color}</span>`:''}
+          <button class="btn btn-sm btn-danger" onclick="deleteBike(${b.id})">삭제</button>
+        </div>
+      </div>
+      <div class="bike-stats">
+        <div class="bstat"><div class="bstat-val">${b.odometer.toLocaleString()}</div><div class="bstat-lbl">KM 누적</div></div>
+        <div class="bstat"><div class="bstat-val">${D.rides.filter(r=>r.bikeId==b.id).length}</div><div class="bstat-lbl">주행 기록</div></div>
+        <div class="bstat"><div class="bstat-val" style="color:${alerts>0?'var(--red)':'var(--green)'}">${alerts}</div><div class="bstat-lbl">알림</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteBike(id) {
+  if(!confirm('차량을 삭제하시겠습니까?')) return;
+  D.bikes=D.bikes.filter(b=>b.id!==id);
+  save(); renderBikes(); renderDash();
+}
+
+// ─────────────────────────────────────────
+//  CONSUMABLES
+// ─────────────────────────────────────────
+function renderConsumables() {
+  const tabs=document.getElementById('c-bike-tabs');
+  const el=document.getElementById('c-content');
+  if(!D.bikes.length){
+    tabs.innerHTML='';
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">차량을 먼저 등록하세요</div></div>`;
+    return;
+  }
+  if(cState.bikeIdx>=D.bikes.length) cState.bikeIdx=0;
+  tabs.innerHTML=`<div class="pill-group">${D.bikes.map((b,i)=>`<div class="pill ${i===cState.bikeIdx?'selected':''}" onclick="switchCBike(${i})">${b.brand} ${b.model}</div>`).join('')}</div>`;
+  const bike=D.bikes[cState.bikeIdx];
+  const km=bike.odometer;
+  el.innerHTML=`
+    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} 소모품</span><div class="sec-line"></div></div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px;">현재 주행거리 <span class="mono" style="color:var(--accent);">${km.toLocaleString()} km</span></div>
+    <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,km)).join('')}</div>`;
+}
+
+function consumableCard(c,km) {
+  const used=km-c.lastKm;
+  const pct=Math.min(100,Math.max(0,Math.round((used/c.km)*100)));
+  const remain=c.km-used;
+  const cls=pct>=100?'danger':pct>=80?'warn':'ok';
+  const tag=pct>=100?'⚠ 교체 필요':pct>=80?'! 곧 교체':'✓ 양호';
+  const fillColor=pct>=100?'var(--red)':pct>=80?'var(--accent)':'var(--green)';
+  return `<div class="c-item ${cls}" onclick="openConsumModal('${c.id}')">
+    <div class="c-icon-big">${c.icon}</div>
+    <div class="c-name">${c.name}</div>
+    <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'미등록'}<br>주기: ${c.km.toLocaleString()} km<br>${remain>0?'잔여: '+remain.toLocaleString()+' km':''}</div>
+    <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
+    <span class="c-tag ${cls}">${tag}</span>
+  </div>`;
+}
+
+function switchCBike(idx) { cState.bikeIdx=idx; renderConsumables(); }
+
+function openConsumModal(cId) {
+  if(!D.bikes.length) return;
+  const bike=D.bikes[cState.bikeIdx];
+  const c=bike.consumables.find(x=>x.id===cId);
+  cState.cId=cId;
+  document.getElementById('mc-title').textContent=c.name+' — 교체 기록';
+  document.getElementById('mc-current-km').textContent=bike.odometer.toLocaleString();
+  // km pills: current & -100, -200
+  const km=bike.odometer;
+  const pp=document.getElementById('mc-km-pills');
+  pp.innerHTML=[km, km>100?km-100:null, km>200?km-200:null].filter(Boolean).map(v=>`<div class="pill" onclick="setMcKm(${v},this)">${v.toLocaleString()} km</div>`).join('');
+  document.getElementById('mc-km').value=km;
+  document.getElementById('mc-interval').value=c.km;
+  document.getElementById('mc-memo').value=c.memo||'';
+  // pre-select interval pill
+  clearPills('mc-interval-pills');
+  document.querySelectorAll('#mc-interval-pills .pill').forEach(p=>{
+    if(parseInt(p.textContent)===c.km) p.classList.add('selected');
+  });
+  mcDateVal=todayStr();
+  document.getElementById('mc-date-input').style.display='none';
+  document.querySelectorAll('#m-consumable .pill-group:nth-of-type(1) .pill').forEach(p=>p.classList.remove('selected'));
+  openModal('m-consumable');
+}
+
+function setMcKm(val,el) { clearPills('mc-km-pills'); el.classList.add('selected'); document.getElementById('mc-km').value=val; }
+function selectMcDate(type,el) {
+  clearPills(el.parentElement);
+  el.classList.add('selected');
+  const inp=document.getElementById('mc-date-input');
+  if(type==='pick'){ inp.style.display='block'; inp.value=todayStr(); }
+  else { inp.style.display='none'; mcDateVal=type==='today'?todayStr():yesterdayStr(); }
+}
+function selectMcInterval(val,el) {
+  clearPills('mc-interval-pills');
+  el.classList.add('selected');
+  document.getElementById('mc-interval').value=val;
+}
+function setMcMemo(val,el) { clearPills('mc-shop-pills'); el.classList.add('selected'); document.getElementById('mc-memo').value=val; }
+
+function saveConsumable() {
+  const bike=D.bikes[cState.bikeIdx];
+  const c=bike.consumables.find(x=>x.id===cState.cId);
+  const kmVal=parseInt(document.getElementById('mc-km').value)||bike.odometer;
+  const dateInp=document.getElementById('mc-date-input');
+  const date=dateInp.style.display!=='none'?dateInp.value:mcDateVal;
+  c.lastKm=kmVal; c.lastDate=date;
+  c.km=parseInt(document.getElementById('mc-interval').value)||c.km;
+  c.memo=document.getElementById('mc-memo').value;
+  D.history.push({id:Date.now(),bikeId:bike.id,date,km:kmVal,type:'소모품교체',desc:c.name+' 교체'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
+  save();
+  closeModal('m-consumable');
+  renderConsumables();
+}
+
+// ─────────────────────────────────────────
+//  RIDING LOG
+// ─────────────────────────────────────────
+let selectedKm=0;
+let selectedBikeId=null;
+let selectedRoute='';
+
+function renderRiding() {
+  // bike pills
+  const bp=document.getElementById('ride-bike-pills');
+  bp.innerHTML=D.bikes.map(b=>`<div class="pill" onclick="selectRideBike(${b.id},this)">${b.brand} ${b.model}</div>`).join('') || '<span style="font-size:12px;color:var(--text-muted);">등록된 차량이 없습니다</span>';
+
+  // route presets
+  const rp=document.getElementById('route-presets');
+  rp.innerHTML=ROUTE_PRESETS.map(r=>`<div class="route-pill" onclick="selectRoute('${r.name}',${r.km},this)">
+    <div class="route-pill-name">${r.name}</div>
+    ${r.km?`<div class="route-pill-km">${r.km} km 기준</div>`:'<div class="route-pill-km">직접 입력</div>'}
+  </div>`).join('');
+
+  // reset
+  document.getElementById('ride-km').value='';
+  document.getElementById('ride-memo').value='';
+  selectedKm=0; selectedRoute='';
+  rideDateVal=todayStr();
+
+  renderRideTable();
+}
+
+function selectRideBike(id,el) {
+  clearPills('ride-bike-pills');
+  el.classList.add('selected');
+  selectedBikeId=id;
+}
+
+function selectRideDate(type,el) {
+  clearPills(el.parentElement);
+  el.classList.add('selected');
+  const inp=document.getElementById('ride-date-input');
+  if(type==='pick'){ inp.style.display='block'; inp.value=todayStr(); }
+  else { inp.style.display='none'; rideDateVal=type==='today'?todayStr():yesterdayStr(); }
+}
+
+function selectKm(val,el) {
+  document.querySelectorAll('.km-quick-btn').forEach(b=>b.classList.remove('selected'));
+  if(val===0){ document.getElementById('ride-km').value=''; document.getElementById('ride-km').focus(); return; }
+  el.classList.add('selected');
+  selectedKm=val;
+  document.getElementById('ride-km').value=val;
+}
+
+function onKmInput() {
+  document.querySelectorAll('.km-quick-btn').forEach(b=>b.classList.remove('selected'));
+  selectedKm=parseInt(document.getElementById('ride-km').value)||0;
+}
+
+function selectRoute(name,km,el) {
+  document.querySelectorAll('.route-pill').forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedRoute=name;
+  document.getElementById('ride-memo').value=name;
+  if(km>0){ document.getElementById('ride-km').value=km; selectedKm=km; document.querySelectorAll('.km-quick-btn').forEach(b=>b.classList.remove('selected')); }
+}
+
+function addRideLog() {
+  if(!selectedBikeId){ alert('차량을 선택하세요.'); return; }
+  const km=parseInt(document.getElementById('ride-km').value)||0;
+  if(!km){ alert('주행 거리를 입력하세요.'); return; }
+  const dateInp=document.getElementById('ride-date-input');
+  const date=dateInp.style.display!=='none'?dateInp.value:rideDateVal;
+  const memo=document.getElementById('ride-memo').value;
+  D.rides.push({id:Date.now(),bikeId:selectedBikeId,date,km,memo});
+  const bike=D.bikes.find(b=>b.id===selectedBikeId);
+  if(bike) bike.odometer+=km;
+  save();
+  renderRideTable();
+  document.getElementById('ride-km').value='';
+  document.getElementById('ride-memo').value='';
+  document.querySelectorAll('.km-quick-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.route-pill').forEach(p=>p.classList.remove('selected'));
+}
+
+function renderRideTable() {
+  const el=document.getElementById('ride-table');
+  const logs=[...D.rides].sort((a,b)=>b.date.localeCompare(a.date));
+  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📍</div><div class="empty-text">주행 기록이 없습니다</div></div>`; return; }
+  el.innerHTML=`<table class="log-table"><thead><tr><th>날짜</th><th>차량</th><th>거리</th><th>루트/메모</th><th></th></tr></thead><tbody>
+  ${logs.map(l=>{
+    const b=D.bikes.find(x=>x.id==l.bikeId);
+    return `<tr><td class="mono">${l.date}</td><td style="color:var(--text-dim);white-space:nowrap">${b?b.brand+' '+b.model:'삭제된 차량'}</td><td><span class="mono" style="color:var(--accent);">+${l.km.toLocaleString()}</span> km</td><td style="color:var(--text-dim)">${l.memo||'—'}</td><td><button class="btn btn-sm btn-danger" onclick="deleteRide(${l.id})">삭제</button></td></tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+function deleteRide(id) {
+  const l=D.rides.find(x=>x.id===id);
+  if(l){ const b=D.bikes.find(x=>x.id===l.bikeId); if(b) b.odometer-=l.km; }
+  D.rides=D.rides.filter(x=>x.id!==id);
+  save(); renderRideTable();
+}
+
+// ─────────────────────────────────────────
+//  HISTORY
+// ─────────────────────────────────────────
+function resetHistModal() {
+  histBikeId=null; histType='';
+  histDateVal=todayStr();
+  const bp=document.getElementById('hist-bike-pills');
+  bp.innerHTML=D.bikes.map(b=>`<div class="pill" onclick="selectHistBike(${b.id},this)">${b.brand} ${b.model}</div>`).join('')||'<span style="color:var(--text-muted);font-size:12px;">등록된 차량 없음</span>';
+  clearPills('hist-desc-pills');
+  document.getElementById('hist-type').value='';
+  document.getElementById('hist-desc').value='';
+  document.getElementById('hist-cost').value='';
+  document.getElementById('hist-km').value='';
+  document.getElementById('hist-shop').value='';
+  document.getElementById('hist-date-input').style.display='none';
+}
+
+function selectHistBike(id,el) { clearPills('hist-bike-pills'); el.classList.add('selected'); histBikeId=id; const b=D.bikes.find(x=>x.id===id); if(b) document.getElementById('hist-km').value=b.odometer; }
+function selectHistDate(type,el) {
+  clearPills(el.parentElement); el.classList.add('selected');
+  const inp=document.getElementById('hist-date-input');
+  if(type==='pick'){ inp.style.display='block'; inp.value=todayStr(); }
+  else { inp.style.display='none'; histDateVal=type==='today'?todayStr():yesterdayStr(); }
+}
+function selectHistType(val,el) { clearPills(el.parentElement); el.classList.add('selected'); histType=val; document.getElementById('hist-type').value=val; }
+function setHistDesc(val,el) { clearPills('hist-desc-pills'); el.classList.add('selected'); document.getElementById('hist-desc').value=val; }
+function setHistCost(val,el) { clearPills(el.parentElement); el.classList.add('selected'); document.getElementById('hist-cost').value=val; }
+function setHistShop(val,el) { clearPills(el.parentElement); el.classList.add('selected'); document.getElementById('hist-shop').value=val; }
+
+function addHistory() {
+  if(!histBikeId){ alert('차량을 선택하세요.'); return; }
+  const dateInp=document.getElementById('hist-date-input');
+  const date=dateInp.style.display!=='none'?dateInp.value:histDateVal;
+  D.history.push({
+    id:Date.now(), bikeId:histBikeId, date,
+    km:parseInt(document.getElementById('hist-km').value)||0,
+    type:histType||'기타',
+    desc:document.getElementById('hist-desc').value,
+    cost:document.getElementById('hist-cost').value,
+    shop:document.getElementById('hist-shop').value
+  });
+  save(); closeModal('m-history'); renderHistory();
+}
+
+function renderHistory() {
+  // populate bike filter
+  const bf=document.getElementById('hfilt-bike');
+  bf.innerHTML='<option value="">전체 차량</option>'+D.bikes.map(b=>`<option value="${b.id}">${b.brand} ${b.model}</option>`).join('');
+  const bfv=bf.value;
+  const tfv=document.getElementById('hfilt-type').value;
+  let logs=[...D.history].sort((a,b)=>b.date.localeCompare(a.date));
+  if(bfv) logs=logs.filter(l=>l.bikeId==bfv);
+  if(tfv) logs=logs.filter(l=>l.type===tfv);
+  const el=document.getElementById('history-table');
+  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">정비 기록이 없습니다</div></div>`; return; }
+  const tm={'소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+  el.innerHTML=`<table class="log-table"><thead><tr><th>날짜</th><th>차량</th><th>유형</th><th>내용</th><th>km</th><th>비용</th><th>정비소</th><th></th></tr></thead><tbody>
+  ${logs.map(l=>{
+    const b=D.bikes.find(x=>x.id==l.bikeId);
+    return `<tr>
+      <td class="mono">${l.date}</td>
+      <td style="color:var(--text-dim);white-space:nowrap">${b?b.brand+' '+b.model:'—'}</td>
+      <td><span class="badge ${tm[l.type]||'badge-other'}">${l.type}</span></td>
+      <td>${l.desc||'—'}</td>
+      <td class="mono">${l.km?l.km.toLocaleString():'-'}</td>
+      <td class="mono">${l.cost?'₫'+parseInt(l.cost).toLocaleString():'-'}</td>
+      <td style="color:var(--text-dim)">${l.shop||'—'}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">삭제</button></td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+function deleteHistory(id) {
+  if(!confirm('삭제하시겠습니까?')) return;
+  D.history=D.history.filter(l=>l.id!==id);
+  save(); renderHistory();
+}
+
+// ─────────────────────────────────────────
+//  DASHBOARD
+// ─────────────────────────────────────────
+function renderDash() {
+  const el=document.getElementById('dash-content');
+  if(!D.bikes.length){
+    el.innerHTML=`<div class="no-bikes-box">
+      <div style="font-size:44px;margin-bottom:14px;">🏍</div>
+      <div style="font-size:15px;color:var(--text-dim);margin-bottom:6px;">차량을 등록하면 관리가 시작됩니다</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">소모품 교체 알림 · 주행 일지 · 정비 이력</div>
+      <button class="btn btn-primary" onclick="openModal('m-bike')">첫 차량 등록하기</button>
+    </div>`;
+    return;
+  }
+  const alerts=[];
+  D.bikes.forEach(bike=>{
+    bike.consumables.forEach(c=>{
+      const pct=(bike.odometer-c.lastKm)/c.km*100;
+      if(pct>=100) alerts.push({bike,c,pct,type:'danger'});
+      else if(pct>=80) alerts.push({bike,c,pct,type:'warn'});
+    });
+  });
+  const totalKm=D.bikes.reduce((s,b)=>s+b.odometer,0);
+  const totalCost=D.history.reduce((s,l)=>s+(parseInt(l.cost)||0),0);
+  const lastRide=[...D.rides].sort((a,b)=>b.date.localeCompare(a.date))[0];
+
+  el.innerHTML=`
+    ${alerts.length?`
+    <div class="sec-header"><span class="sec-title">알림</span><div class="sec-line"></div></div>
+    ${alerts.slice(0,5).map(a=>`
+      <div class="alert-row ${a.type}">
+        ${a.type==='danger'?'🚨':'⚠️'}
+        <strong>${a.bike.brand} ${a.bike.model}</strong> &nbsp;— ${a.c.name}
+        ${a.type==='danger'?'교체가 필요합니다':'교체 시기가 다가오고 있습니다'}
+        <span class="mono" style="margin-left:auto;opacity:0.7">${Math.round(a.pct)}%</span>
+      </div>`).join('')}
+    <div style="margin-bottom:18px;"></div>`:''}
+
+    <div class="sec-header"><span class="sec-title">요약</span><div class="sec-line"></div></div>
+    <div class="dash-grid">
+      <div class="dash-w"><div class="dash-num">${D.bikes.length}</div><div class="dash-unit">대</div><div class="dash-lbl">등록 차량</div></div>
+      <div class="dash-w"><div class="dash-num">${totalKm.toLocaleString()}</div><div class="dash-unit">KM</div><div class="dash-lbl">누적 주행</div></div>
+      <div class="dash-w"><div class="dash-num">${D.rides.length}</div><div class="dash-unit">회</div><div class="dash-lbl">주행 기록</div></div>
+      <div class="dash-w"><div class="dash-num">${D.history.length}</div><div class="dash-unit">건</div><div class="dash-lbl">정비 이력</div></div>
+    </div>
+
+    <div class="sec-header" style="margin-top:6px;"><span class="sec-title">차량 현황</span><div class="sec-line"></div></div>
+    ${D.bikes.map(b=>{
+      const u=b.consumables.filter(c=>(b.odometer-c.lastKm)/c.km>=1).length;
+      const w=b.consumables.filter(c=>{const p=(b.odometer-c.lastKm)/c.km; return p>=0.8&&p<1;}).length;
+      return `<div class="bike-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div><div class="bike-name">${b.brand} ${b.model}</div><div class="bike-meta">${b.year}${b.cc?' · '+b.cc+'cc':''}${b.plate?' · '+b.plate:''}</div></div>
+          <div style="text-align:right;"><div class="bstat-val">${b.odometer.toLocaleString()}</div><div class="bstat-lbl" style="font-size:9px;">KM</div></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+          ${u?`<span class="c-tag danger">🚨 교체 필요 ${u}건</span>`:''}
+          ${w?`<span class="c-tag warn">⚠ 주의 ${w}건</span>`:''}
+          ${!u&&!w?`<span class="c-tag ok">✓ 모든 소모품 양호</span>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+
+    ${lastRide?`
+    <div class="sec-header" style="margin-top:6px;"><span class="sec-title">최근 주행</span><div class="sec-line"></div></div>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div class="mono" style="color:var(--text-dim);margin-bottom:4px;">${lastRide.date}</div>
+        <div style="font-size:14px;">${lastRide.memo||'기록 없음'}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:3px;">${(()=>{const b=D.bikes.find(x=>x.id==lastRide.bikeId); return b?b.brand+' '+b.model:'';})()}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="bstat-val">${lastRide.km.toLocaleString()}</div>
+        <div class="bstat-lbl">KM</div>
+      </div>
+    </div>`:''}
+  `;
+}
+
+// ─────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────
+function clearPills(container) {
+  const el=typeof container==='string'?document.getElementById(container):container;
+  if(el) el.querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));
+}
+function countAlerts(bike) {
+  return bike.consumables.filter(c=>(bike.odometer-c.lastKm)/c.km>=0.8).length;
+}
+
+// ─────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────
+renderDash();
+
+// ─────────────────────────────────────────
+//  PWA — MANIFEST (inline blob) + SW + INSTALL
+// ─────────────────────────────────────────
+
+// Inline manifest via blob URL (no server needed)
+(function(){
+  const manifest = {
+    name: "MOTO GARAGE",
+    short_name: "MOTO",
+    description: "오토바이 소모품·주행·정비 통합 관리",
+    start_url: "./",
+    display: "standalone",
+    background_color: "#0c0c0d",
+    theme_color: "#0c0c0d",
+    orientation: "portrait-primary",
+    icons: [
+      { src: makePngIcon(192), sizes:"192x192", type:"image/png", purpose:"any maskable" },
+      { src: makePngIcon(512), sizes:"512x512", type:"image/png", purpose:"any maskable" }
+    ]
+  };
+  function makePngIcon(size){
+    const cv=document.createElement('canvas');
+    cv.width=size; cv.height=size;
+    const ctx=cv.getContext('2d');
+    // background
+    const g=ctx.createLinearGradient(0,0,size,size);
+    g.addColorStop(0,'#1e2022'); g.addColorStop(1,'#0c0c0d');
+    ctx.fillStyle=g;
+    roundRect(ctx,0,0,size,size,size*0.22);
+    ctx.fill();
+    // accent stripe
+    ctx.fillStyle='#e8a020';
+    ctx.fillRect(0,0,size,size*0.045);
+    // emoji
+    ctx.font=`${size*0.52}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('🏍',size/2,size/2+size*0.04);
+    return cv.toDataURL('image/png');
+  }
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+    ctx.closePath();
+  }
+  // resolve icons synchronously before blob
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  document.getElementById('pwa-manifest').href=url;
+})();
+
+// Service Worker (inline via blob)
+(function(){
+  const SW_CODE=`
+const CACHE='moto-garage-v1';
+const ASSETS=[self.location.pathname||'/'];
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
+});
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+});
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET') return;
+  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
+    const c=res.clone();
+    caches.open(CACHE).then(ca=>ca.put(e.request,c));
+    return res;
+  })));
+});
+`;
+  if('serviceWorker' in navigator){
+    const blob=new Blob([SW_CODE],{type:'application/javascript'});
+    const url=URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url,{scope:'./'})
+      .then(()=>console.log('[SW] registered'))
+      .catch(e=>console.warn('[SW]',e));
+  }
+})();
+
+// Install prompt
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  const dismissed=sessionStorage.getItem('pwa-dismissed');
+  if(!dismissed && !window.matchMedia('(display-mode: standalone)').matches){
+    setTimeout(()=>document.getElementById('pwa-banner').classList.add('show'),1800);
+  }
+});
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('pwa-banner').classList.remove('show');
+  const t=document.getElementById('pwa-toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+});
+
+function installPWA(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(r=>{
+      if(r.outcome==='accepted') document.getElementById('pwa-banner').classList.remove('show');
+      deferredPrompt=null;
+    });
+  } else {
+    // iOS fallback — show instructions
+    alert('Safari에서 하단 공유 버튼 → "홈 화면에 추가"를 탭하세요.');
+  }
+}
+function dismissInstall(){
+  document.getElementById('pwa-banner').classList.remove('show');
+  sessionStorage.setItem('pwa-dismissed','1');
+}
+
+// iOS standalone detection
+if(window.navigator.standalone===true || window.matchMedia('(display-mode:standalone)').matches){
+  document.body.style.paddingTop='env(safe-area-inset-top)';
+}
+
+</script>
+
+<!-- PWA INSTALL BANNER -->
+<div class="pwa-banner" id="pwa-banner">
+  <div class="pwa-banner-inner">
+    <div class="pwa-banner-icon">🏍</div>
+    <div class="pwa-banner-text">
+      <div class="pwa-banner-title">MOTO GARAGE 앱 설치</div>
+      <div class="pwa-banner-sub">홈 화면에 추가하면 앱처럼 사용할 수 있습니다</div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button class="btn btn-sm" onclick="dismissInstall()">나중에</button>
+      <button class="btn btn-primary btn-sm" onclick="installPWA()">설치</button>
+    </div>
+  </div>
+</div>
+<div class="pwa-installed-toast" id="pwa-toast">✓ 홈 화면에 추가되었습니다!</div>
+
+</body>
+</html>
