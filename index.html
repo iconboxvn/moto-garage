@@ -1502,107 +1502,123 @@ function deleteHistory(id) {
 }
 
 // ─────────────────────────────────────────
-//  DASHBOARD
+//  DASHBOARD — 홈 화면
 // ─────────────────────────────────────────
 function renderDash() {
-  const el=document.getElementById('dash-content');
-  if(!D.bikes.length){
-    el.innerHTML=`<div class="no-bikes-box">
+  const el = document.getElementById('dash-content');
+  if (!D.bikes.length) {
+    el.innerHTML = `<div class="no-bikes-box">
       <div style="font-size:44px;margin-bottom:14px;">🏍</div>
       <div style="font-size:15px;color:var(--text-dim);margin-bottom:6px;">차량을 등록하면 관리가 시작됩니다</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">소모품 교체 알림 · 주행 일지 · 정비 이력</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">소모품 알림 · 주행거리 · 정비 이력</div>
       <button class="btn btn-primary" onclick="openModal('m-bike')">첫 차량 등록하기</button>
     </div>`;
     return;
   }
-  const alerts=[];
-  D.bikes.forEach(bike=>{
-    bike.consumables.forEach(c=>{
-      const pct=(bike.odometer-c.lastKm)/c.km*100;
-      if(pct>=100) alerts.push({bike,c,pct,type:'danger'});
-      else if(pct>=80) alerts.push({bike,c,pct,type:'warn'});
-    });
-  });
-  const totalKm=D.bikes.reduce((s,b)=>s+b.odometer,0);
-  const totalCost=D.history.reduce((s,l)=>s+(parseInt(l.cost)||0),0);
 
-  // 선택된 차량 (없으면 첫 번째)
-  if (typeof dashSelectedBikeId === 'undefined' || !D.bikes.find(b=>b.id===dashSelectedBikeId)) {
-    dashSelectedBikeId = D.bikes[0]?.id || null;
+  // 선택 차량 초기화
+  if (!dashSelectedBikeId || !D.bikes.find(b => b.id === dashSelectedBikeId)) {
+    dashSelectedBikeId = D.bikes[0].id;
   }
-  const sb = D.bikes.find(b=>b.id===dashSelectedBikeId) || D.bikes[0];
+  const sb = D.bikes.find(b => b.id === dashSelectedBikeId);
 
-  // 선택된 차량 기준 요약·알림
-  const sbKm = sb ? sb.odometer : 0;
-  const sbHistory = sb ? D.history.filter(l=>l.bikeId==sb.id) : [];
-  const sbAlerts = sb ? sb.consumables.filter(c=>{
-    const p=(sb.odometer-c.lastKm)/c.km;
-    return p>=0.8;
-  }) : [];
+  // 소모품 진행률 계산
+  const consumableRows = sb.consumables.map(c => {
+    const used = sb.odometer - c.lastKm;
+    const pct  = Math.min(100, Math.max(0, Math.round(used / c.km * 100)));
+    const remain = c.km - used;
+    const cls  = pct >= 100 ? 'danger' : pct >= 80 ? 'warn' : 'ok';
+    const fillColor = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--accent)' : 'var(--green)';
+    const tag  = pct >= 100 ? '🚨 교체 필요' : pct >= 80 ? '⚠ 곧 교체' : '✓ 양호';
+    return { c, pct, remain, cls, fillColor, tag };
+  });
 
-  el.innerHTML=`
-    <!-- 차량 현황 -->
-    <div class="sec-header"><span class="sec-title">차량 현황</span><div class="sec-line"></div></div>
+  // 최근 정비 3건
+  const recentHistory = D.history
+    .filter(l => l.bikeId == sb.id)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 3);
+
+  const typeBadge = { '소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other' };
+
+  el.innerHTML = `
     ${D.bikes.length > 1 ? `
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-      ${D.bikes.map(b=>{
+    <div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;">
+      ${D.bikes.map(b => {
         const sel = b.id === dashSelectedBikeId;
-        const u = b.consumables.filter(c=>(b.odometer-c.lastKm)/c.km>=1).length;
-        const w = b.consumables.filter(c=>{const p=(b.odometer-c.lastKm)/c.km;return p>=0.8&&p<1;}).length;
+        const urgents = b.consumables.filter(c => (b.odometer - c.lastKm) / c.km >= 1).length;
+        const warns   = b.consumables.filter(c => { const p=(b.odometer-c.lastKm)/c.km; return p>=0.8&&p<1; }).length;
         return `<div onclick="selectDashBike(${b.id})" style="
-          background:${sel?'var(--accent-dim)':'var(--surface2)'};
-          border:1px solid ${sel?'var(--accent)':'var(--border)'};
-          border-radius:8px; padding:10px 14px; cursor:pointer;
-          transition:all 0.15s; flex:1; min-width:120px; text-align:center;">
-          <div style="font-size:13px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:${sel?'var(--accent)':'var(--text)'};margin:4px 0;">${b.odometer.toLocaleString()} <span style="font-size:10px;">km</span></div>
-          ${u?`<span class="c-tag danger" style="font-size:9px;">🚨 ${u}건</span>`:w?`<span class="c-tag warn" style="font-size:9px;">⚠ ${w}건</span>`:`<span class="c-tag ok" style="font-size:9px;">✓</span>`}
+            flex-shrink:0;
+            background:${sel?'var(--accent-dim)':'var(--surface2)'};
+            border:1px solid ${sel?'var(--accent)':'var(--border)'};
+            border-radius:10px; padding:10px 16px; cursor:pointer; transition:all 0.15s;">
+          <div style="font-size:12px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:${sel?'var(--accent)':'var(--text-dim)'};margin-top:3px;">${b.odometer.toLocaleString()} km</div>
+          <div style="margin-top:5px;">
+            ${urgents ? `<span class="c-tag danger" style="font-size:9px;">🚨 ${urgents}</span>`
+              : warns ? `<span class="c-tag warn" style="font-size:9px;">⚠ ${warns}</span>`
+              : `<span class="c-tag ok" style="font-size:9px;">✓</span>`}
+          </div>
         </div>`;
       }).join('')}
     </div>` : ''}
 
-    ${sb ? `<div class="bike-card" style="margin-bottom:18px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <!-- 차량 헤더 카드 -->
+    <div class="bike-card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
           <div class="bike-name">${sb.brand} ${sb.model}</div>
           <div class="bike-meta">${sb.year}${sb.cc?' · '+sb.cc+'cc':''}${sb.plate?' · '+sb.plate:''}</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:28px;color:var(--accent);line-height:1;">${sbKm.toLocaleString()}</div>
-          <div style="font-size:10px;color:var(--text-dim);">KM</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:500;color:var(--accent);line-height:1;">${sb.odometer.toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-top:2px;">KM 누적</div>
         </div>
-      </div>
-    </div>` : ''}
-
-    <!-- 요약 -->
-    <div class="sec-header"><span class="sec-title">요약</span><div class="sec-line"></div></div>
-    <div class="dash-grid" style="grid-template-columns:1fr 1fr;margin-bottom:18px;">
-      <div class="dash-w">
-        <div class="dash-num">${sbKm.toLocaleString()}</div>
-        <div class="dash-unit">KM</div>
-        <div class="dash-lbl">누적 주행</div>
-      </div>
-      <div class="dash-w">
-        <div class="dash-num">${sbHistory.length}</div>
-        <div class="dash-unit">건</div>
-        <div class="dash-lbl">정비 이력</div>
       </div>
     </div>
 
-    <!-- 알림 -->
-    <div class="sec-header"><span class="sec-title">알림</span><div class="sec-line"></div></div>
-    ${sbAlerts.length ? sbAlerts.map(cx=>{
-      const p=(sb.odometer-cx.lastKm)/cx.km;
-      const isDanger=p>=1;
-      return `<div class="alert-row ${isDanger?'danger':'warn'}">
-        <span>${isDanger?'🚨':'⚠️'}</span>
-        <span style="flex:1;">${cx.icon} <strong>${cx.name}</strong> ${isDanger?'— 교체 필요':'— 곧 교체'}</span>
-        <span class="mono" style="opacity:0.7;font-size:11px;">${Math.round(p*100)}%</span>
-      </div>`;
-    }).join('')
-    : `<div class="card" style="text-align:center;padding:18px;">
-        <span style="font-size:13px;color:var(--green);">✓ ${sb?sb.brand+' '+sb.model+'의':''} 모든 소모품 양호</span>
-      </div>`}
+    <!-- 소모품 현황 전체 -->
+    <div class="sec-header"><span class="sec-title">소모품 현황</span><div class="sec-line"></div></div>
+    <div class="card" style="padding:8px 0;">
+      ${consumableRows.map(({ c, pct, remain, cls, fillColor, tag }) => `
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border);" onclick="showPage('consumables', document.querySelector('.nav-btn:nth-child(3)'))">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;width:24px;text-align:center;">${c.icon}</span>
+              <span style="font-size:13px;font-weight:600;">${c.name}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${remain > 0 ? '+'+remain.toLocaleString()+'km' : '초과'}</span>
+              <span class="c-tag ${cls}" style="font-size:9px;">${tag}</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+              <div style="width:${pct}%;height:100%;background:${fillColor};border-radius:2px;transition:width 0.4s;"></div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);width:32px;text-align:right;">${pct}%</span>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- 최근 정비 -->
+    <div class="sec-header" style="margin-top:8px;"><span class="sec-title">최근 정비</span><div class="sec-line"></div></div>
+    ${recentHistory.length
+      ? `<div class="card" style="padding:0;overflow:hidden;">
+          <table class="log-table">
+            <tbody>
+              ${recentHistory.map(l => `
+                <tr>
+                  <td class="mono" style="color:var(--text-dim);white-space:nowrap;">${l.date}</td>
+                  <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
+                  <td style="font-size:13px;">${l.desc||'—'}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`
+      : `<div class="card" style="text-align:center;padding:18px;font-size:12px;color:var(--text-muted);">정비 기록이 없습니다</div>`
+    }
   `;
 }
 
