@@ -1208,7 +1208,7 @@ function consumableCard(c,km){
   const cls=pct>=100?'danger':pct>=80?'warn':'ok';
   const fillColor=pct>=100?'var(--red)':pct>=80?'var(--accent)':'var(--green)';
   const tag=pct>=100?'🚨 Cần thay ngay':pct>=80?'⚠ Sắp thay':'✓ Tốt';
-  return `<div class="c-item ${cls}" onclick="openConsumModal('${c.id}')">
+  return `<div class="c-item ${cls}" onclick="openAiGuide('${c.id}')">
     <div class="c-icon-big">${c.icon}</div>
     <div class="c-name">${c.name}</div>
     <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Chưa có'}<br>주기: ${c.km.toLocaleString()} km ${c.isOfficial?'<span style="font-size:8px;background:#1a3020;color:#38a868;padding:1px 4px;border-radius:2px;margin-left:2px;">Chính hãng</span>':''}<br>${remain>0?'Còn lại: '+remain.toLocaleString()+' km':''}</div>

@@ -1208,7 +1208,7 @@ function consumableCard(c,km){
   const cls=pct>=100?'danger':pct>=80?'warn':'ok';
   const fillColor=pct>=100?'var(--red)':pct>=80?'var(--accent)':'var(--green)';
   const tag=pct>=100?'🚨 교체 필요':pct>=80?'⚠ 곧 교체':'✓ 양호';
-  return `<div class="c-item ${cls}" onclick="openConsumModal('${c.id}')">
+  return `<div class="c-item ${cls}" onclick="openAiGuide('${c.id}')">
     <div class="c-icon-big">${c.icon}</div>
     <div class="c-name">${c.name}</div>
     <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'미등록'}<br>주기: ${c.km.toLocaleString()} km ${c.isOfficial?'<span style="font-size:8px;background:#1a3020;color:#38a868;padding:1px 4px;border-radius:2px;margin-left:2px;">공식</span>':''}<br>${remain>0?'잔여: '+remain.toLocaleString()+' km':''}</div>
@@ -1525,7 +1525,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-ko-v10';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-ko-v11';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
