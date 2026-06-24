@@ -1647,7 +1647,7 @@ renderDash();
 // Service Worker (inline via blob)
 (function(){
   const SW_CODE=`
-const CACHE='moto-garage-v1';
+const CACHE='moto-garage-v3';
 const ASSETS=[self.location.pathname||'/'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
