@@ -663,12 +663,120 @@ const CONSUMABLES = [
   {id:'brake_oil', icon:'💧', name:'브레이크오일',       km:20000},
 ];
 
+// ── 카테고리별 기본 주기 (폴백용)
 const CATEGORY_INTERVALS = {
-  sport:    {oil:3000,oil_f:6000,spark:12000,chain:8000,brake_f:15000,brake_r:12000,tire_f:10000,tire_r:8000,coolant:20000,air_f:12000,brake_oil:15000},
-  naked:    {oil:5000,oil_f:10000,spark:15000,chain:10000,brake_f:20000,brake_r:15000,tire_f:15000,tire_r:12000,coolant:20000,air_f:15000,brake_oil:20000},
-  adventure:{oil:6000,oil_f:12000,spark:18000,chain:12000,brake_f:25000,brake_r:20000,tire_f:15000,tire_r:12000,coolant:24000,air_f:12000,brake_oil:20000},
-  classic:  {oil:5000,oil_f:10000,spark:10000,chain:8000,brake_f:20000,brake_r:15000,tire_f:15000,tire_r:12000,coolant:20000,air_f:15000,brake_oil:20000}
+  sport:    {oil:4000, oil_f:8000,  spark:12000, chain:8000,  brake_f:15000, brake_r:12000, tire_f:10000, tire_r:8000,  coolant:20000, air_f:12000, brake_oil:15000},
+  naked:    {oil:6000, oil_f:12000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:20000, air_f:15000, brake_oil:20000},
+  adventure:{oil:6000, oil_f:12000, spark:20000, chain:12000, brake_f:25000, brake_r:20000, tire_f:15000, tire_r:12000, coolant:24000, air_f:12000, brake_oil:20000},
+  classic:  {oil:5000, oil_f:10000, spark:10000, chain:8000,  brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:20000, air_f:15000, brake_oil:20000}
 };
+
+// ── 공식 정비 매뉴얼 기반 모델별 정확한 주기 데이터
+// 출처: 각 브랜드 공식 매뉴얼 / maintenanceschedule.com / motovault.app
+const MODEL_INTERVALS = {
+  // ── HONDA ──────────────────────────────────────────
+  'cb650r':    {oil:6400, oil_f:12800, spark:24000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:25000, brake_oil:20000},
+  'cbr650r':   {oil:6400, oil_f:12800, spark:24000, chain:10000, brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:30000, air_f:25000, brake_oil:20000},
+  'cb750 hornet':{oil:6000, oil_f:12000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'cb500f':    {oil:8000, oil_f:16000, spark:24000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:25000, brake_oil:20000},
+  'cb500x':    {oil:8000, oil_f:16000, spark:24000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'cbr500r':   {oil:6400, oil_f:12800, spark:24000, chain:8000,  brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:30000, air_f:20000, brake_oil:20000},
+  'cbr1000rr': {oil:6400, oil_f:12800, spark:16000, chain:8000,  brake_f:12000, brake_r:10000, tire_f:8000,  tire_r:6000,  coolant:30000, air_f:16000, brake_oil:15000},
+  'africa twin':{oil:8000, oil_f:16000, spark:24000, chain:12000, brake_f:25000, brake_r:20000, tire_f:15000, tire_r:12000, coolant:30000, air_f:12000, brake_oil:20000},
+  'nt1100':    {oil:8000, oil_f:16000, spark:24000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'x-adv 750': {oil:8000, oil_f:16000, spark:24000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'cb400f':    {oil:6000, oil_f:12000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'crf300l':   {oil:6000, oil_f:6000,  spark:12000, chain:6000,  brake_f:15000, brake_r:12000, tire_f:10000, tire_r:8000,  coolant:24000, air_f:6000,  brake_oil:15000},
+
+  // ── YAMAHA ──────────────────────────────────────────
+  'mt-07':     {oil:10000, oil_f:10000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'xsr700':    {oil:10000, oil_f:10000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'tracer 7':  {oil:10000, oil_f:10000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'ténéré 700':{oil:10000, oil_f:10000, spark:20000, chain:8000,  brake_f:20000, brake_r:15000, tire_f:12000, tire_r:10000, coolant:24000, air_f:8000,  brake_oil:20000},
+  'mt-09':     {oil:10000, oil_f:10000, spark:20000, chain:10000, brake_f:18000, brake_r:14000, tire_f:14000, tire_r:11000, coolant:30000, air_f:20000, brake_oil:20000},
+  'xsr900':    {oil:10000, oil_f:10000, spark:20000, chain:10000, brake_f:18000, brake_r:14000, tire_f:14000, tire_r:11000, coolant:30000, air_f:20000, brake_oil:20000},
+  'tracer 9':  {oil:10000, oil_f:10000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'yzf-r7':    {oil:10000, oil_f:10000, spark:20000, chain:8000,  brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:30000, air_f:20000, brake_oil:20000},
+  'yzf-r1':    {oil:6000,  oil_f:6000,  spark:12000, chain:6000,  brake_f:10000, brake_r:8000,  tire_f:8000,  tire_r:6000,  coolant:24000, air_f:12000, brake_oil:12000},
+
+  // ── KAWASAKI ──────────────────────────────────────────
+  'ninja zx-10r': {oil:7200, oil_f:7200, spark:12000, chain:7000,  brake_f:12000, brake_r:10000, tire_f:8000,  tire_r:6000,  coolant:24000, air_f:12000, brake_oil:15000},
+  'z900':      {oil:12000, oil_f:12000, spark:12000, chain:10000, brake_f:18000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:12000, brake_oil:20000},
+  'z900rs':    {oil:12000, oil_f:12000, spark:12000, chain:10000, brake_f:18000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:12000, brake_oil:20000},
+  'ninja 650': {oil:10000, oil_f:10000, spark:24000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'z650':      {oil:10000, oil_f:10000, spark:24000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'versys 650':{oil:10000, oil_f:10000, spark:24000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'ninja 1000sx':{oil:12000, oil_f:12000, spark:24000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:12000, brake_oil:20000},
+  'versys 1000':{oil:12000, oil_f:12000, spark:24000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:12000, brake_oil:20000},
+  'z400':      {oil:6000,  oil_f:12000, spark:15000, chain:8000,  brake_f:18000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:24000, air_f:15000, brake_oil:20000},
+  'ninja 400': {oil:6000,  oil_f:12000, spark:15000, chain:8000,  brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:24000, air_f:15000, brake_oil:20000},
+
+  // ── SUZUKI ──────────────────────────────────────────
+  'hayabusa':  {oil:6000, oil_f:12000, spark:12000, chain:8000,  brake_f:12000, brake_r:10000, tire_f:10000, tire_r:8000,  coolant:24000, air_f:12000, brake_oil:15000},
+  'gsx-s1000': {oil:6000, oil_f:12000, spark:15000, chain:8000,  brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:24000, air_f:15000, brake_oil:15000},
+  'gsx-8s':    {oil:6000, oil_f:12000, spark:20000, chain:10000, brake_f:18000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'v-strom 650':{oil:6000, oil_f:12000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:15000, brake_oil:20000},
+  'v-strom 800':{oil:6000, oil_f:12000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:15000, brake_oil:20000},
+  'v-strom 1050':{oil:6000, oil_f:12000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:12000, brake_oil:20000},
+
+  // ── BMW ──────────────────────────────────────────
+  'r1250gs':   {oil:10000, oil_f:10000, spark:20000, chain:0, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'r1250r':    {oil:10000, oil_f:10000, spark:20000, chain:0, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  's1000rr':   {oil:8000,  oil_f:8000,  spark:12000, chain:8000,  brake_f:10000, brake_r:8000,  tire_f:8000,  tire_r:6000,  coolant:24000, air_f:12000, brake_oil:12000},
+  's1000r':    {oil:8000,  oil_f:8000,  spark:12000, chain:8000,  brake_f:12000, brake_r:10000, tire_f:10000, tire_r:8000,  coolant:24000, air_f:12000, brake_oil:15000},
+  'f900r':     {oil:10000, oil_f:10000, spark:20000, chain:10000, brake_f:18000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:20000, brake_oil:20000},
+  'f850gs':    {oil:10000, oil_f:10000, spark:20000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:12000, brake_oil:20000},
+
+  // ── KTM ──────────────────────────────────────────
+  '1290 super duke r':{oil:5000, oil_f:5000, spark:10000, chain:8000, brake_f:12000, brake_r:10000, tire_f:10000, tire_r:8000, coolant:24000, air_f:10000, brake_oil:15000},
+  '890 duke r':{oil:5000, oil_f:5000, spark:15000, chain:8000, brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:24000, air_f:15000, brake_oil:15000},
+  '890 adventure':{oil:5000, oil_f:5000, spark:15000, chain:8000, brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:24000, air_f:8000,  brake_oil:15000},
+  '790 duke': {oil:5000, oil_f:5000, spark:15000, chain:8000, brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:24000, air_f:15000, brake_oil:15000},
+  '390 duke': {oil:5000, oil_f:5000, spark:10000, chain:8000, brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:24000, air_f:10000, brake_oil:15000},
+  '390 adventure':{oil:5000, oil_f:5000, spark:10000, chain:6000, brake_f:12000, brake_r:10000, tire_f:10000, tire_r:8000, coolant:24000, air_f:6000,  brake_oil:15000},
+
+  // ── DUCATI ──────────────────────────────────────────
+  'panigale v4':   {oil:12000, oil_f:12000, spark:24000, chain:8000, brake_f:12000, brake_r:10000, tire_f:8000,  tire_r:6000,  coolant:24000, air_f:24000, brake_oil:15000},
+  'streetfighter v4':{oil:12000, oil_f:12000, spark:24000, chain:8000, brake_f:12000, brake_r:10000, tire_f:10000, tire_r:8000, coolant:24000, air_f:24000, brake_oil:15000},
+  'multistrada v4':{oil:15000, oil_f:15000, spark:30000, chain:12000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:30000, brake_oil:20000},
+  'monster 937':   {oil:15000, oil_f:15000, spark:30000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:30000, air_f:30000, brake_oil:20000},
+  'desertx':       {oil:12000, oil_f:12000, spark:24000, chain:10000, brake_f:18000, brake_r:15000, tire_f:12000, tire_r:10000, coolant:24000, air_f:12000, brake_oil:20000},
+
+  // ── TRIUMPH ──────────────────────────────────────────
+  'speed triple 1200':{oil:8000, oil_f:8000, spark:16000, chain:8000, brake_f:12000, brake_r:10000, tire_f:10000, tire_r:8000, coolant:24000, air_f:16000, brake_oil:15000},
+  'tiger 1200':  {oil:8000, oil_f:8000, spark:16000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:24000, air_f:12000, brake_oil:15000},
+  'street triple 765':{oil:8000, oil_f:8000, spark:16000, chain:8000, brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:24000, air_f:16000, brake_oil:15000},
+  'tiger 900':   {oil:8000, oil_f:8000, spark:16000, chain:10000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:24000, air_f:12000, brake_oil:15000},
+  'trident 660': {oil:8000, oil_f:8000, spark:16000, chain:10000, brake_f:18000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:24000, air_f:16000, brake_oil:15000},
+  'tiger 660':   {oil:8000, oil_f:8000, spark:16000, chain:10000, brake_f:18000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:24000, air_f:12000, brake_oil:15000},
+
+  // ── ROYAL ENFIELD ──────────────────────────────────────────
+  'interceptor 650':{oil:5000, oil_f:5000, spark:10000, chain:6000, brake_f:15000, brake_r:12000, tire_f:15000, tire_r:12000, coolant:15000, air_f:10000, brake_oil:20000},
+  'continental gt 650':{oil:5000, oil_f:5000, spark:10000, chain:6000, brake_f:15000, brake_r:12000, tire_f:15000, tire_r:12000, coolant:15000, air_f:10000, brake_oil:20000},
+  'super meteor 650':{oil:5000, oil_f:5000, spark:10000, chain:6000, brake_f:15000, brake_r:12000, tire_f:15000, tire_r:12000, coolant:15000, air_f:10000, brake_oil:20000},
+  'himalayan 450':{oil:5000, oil_f:5000, spark:10000, chain:6000, brake_f:12000, brake_r:10000, tire_f:12000, tire_r:10000, coolant:15000, air_f:6000,  brake_oil:20000},
+  'hunter 350':  {oil:5000, oil_f:5000, spark:8000,  chain:5000, brake_f:12000, brake_r:10000, tire_f:12000, tire_r:10000, coolant:0,     air_f:8000,  brake_oil:20000},
+  'classic 350': {oil:5000, oil_f:5000, spark:8000,  chain:5000, brake_f:12000, brake_r:10000, tire_f:12000, tire_r:10000, coolant:0,     air_f:8000,  brake_oil:20000},
+  'meteor 350':  {oil:5000, oil_f:5000, spark:8000,  chain:5000, brake_f:12000, brake_r:10000, tire_f:12000, tire_r:10000, coolant:0,     air_f:8000,  brake_oil:20000},
+
+  // ── HARLEY-DAVIDSON ──────────────────────────────────────────
+  'road glide':  {oil:8000, oil_f:8000, spark:16000, chain:0, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:0, air_f:16000, brake_oil:20000},
+  'fat boy':     {oil:8000, oil_f:8000, spark:16000, chain:0, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:0, air_f:16000, brake_oil:20000},
+  'fat bob':     {oil:8000, oil_f:8000, spark:16000, chain:0, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:0, air_f:16000, brake_oil:20000},
+  'street bob':  {oil:8000, oil_f:8000, spark:16000, chain:0, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:0, air_f:16000, brake_oil:20000},
+  'sportster s': {oil:8000, oil_f:8000, spark:16000, chain:8000, brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:24000, air_f:16000, brake_oil:20000},
+  'pan america':  {oil:8000, oil_f:8000, spark:16000, chain:8000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, coolant:24000, air_f:12000, brake_oil:20000},
+  'nightster':   {oil:8000, oil_f:8000, spark:16000, chain:8000, brake_f:15000, brake_r:12000, tire_f:12000, tire_r:10000, coolant:24000, air_f:16000, brake_oil:20000},
+};
+
+// 모델명으로 정확한 주기 조회 (없으면 카테고리 주기 사용)
+function getModelIntervals(brand, model) {
+  const key = model.toLowerCase().trim();
+  if (MODEL_INTERVALS[key]) return MODEL_INTERVALS[key];
+  // 부분 매칭 시도
+  const found = Object.keys(MODEL_INTERVALS).find(k => key.includes(k) || k.includes(key));
+  return found ? MODEL_INTERVALS[found] : null;
+}
 
 const CAT_NAMES = {sport:'🏁 스포츠 (고회전 단축 주기)',naked:'🏙 네이키드/스트리트 (표준 주기)',adventure:'🌍 어드벤처/투어러 (장거리 연장)',classic:'🛣 클래식/크루저'};
 
@@ -682,8 +790,15 @@ function detectCategory(brand,model){
 
 function makeConsumables(brand,model){
   const cat=detectCategory(brand,model);
-  const intervals=CATEGORY_INTERVALS[cat];
-  return CONSUMABLES.map(c=>({...c,km:intervals[c.id]||c.km,lastKm:0,lastDate:'',memo:'',category:cat}));
+  // 1순위: 모델별 공식 데이터 / 2순위: 카테고리 기본값
+  const modelData = getModelIntervals(brand, model);
+  const intervals = modelData || CATEGORY_INTERVALS[cat];
+  return CONSUMABLES.map(c=>{
+    const km = intervals[c.id];
+    // chain=0 이면 샤프트 드라이브 (BMW GS, Harley 등) → 체인 항목 비활성화
+    if(c.id==='chain' && km===0) return null;
+    return {...c, km: km||c.km, lastKm:0, lastDate:'', memo:'', category:cat, isOfficial: !!modelData};
+  }).filter(Boolean);
 }
 
 // ═══════════════════════════════════════════
@@ -916,8 +1031,12 @@ function selectBrand(brand,el){
           document.getElementById('cc-custom').value='';
           document.querySelectorAll('#cc-pills .pill').forEach(p=>{ if(parseInt(p.dataset.cc)===m.cc) p.classList.add('selected'); });
           const cat=detectCategory(bState.brand,m.name);
+          const modelData=getModelIntervals(bState.brand, m.name);
           const prev=document.getElementById('cat-preview');
-          prev.textContent=CAT_NAMES[cat]||''; prev.style.display='block';
+          prev.innerHTML=modelData
+            ? `✅ <strong>공식 정비 데이터 적용</strong> — ${CAT_NAMES[cat]||cat}`
+            : `📋 ${CAT_NAMES[cat]||cat}`;
+          prev.style.display='block';
         }
       };
       mp.appendChild(d);
@@ -1019,7 +1138,7 @@ function consumableCard(c,km){
   return `<div class="c-item ${cls}" onclick="openConsumModal('${c.id}')">
     <div class="c-icon-big">${c.icon}</div>
     <div class="c-name">${c.name}</div>
-    <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'미등록'}<br>주기: ${c.km.toLocaleString()} km<br>${remain>0?'잔여: '+remain.toLocaleString()+' km':''}</div>
+    <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'미등록'}<br>주기: ${c.km.toLocaleString()} km ${c.isOfficial?'<span style="font-size:8px;background:#1a3020;color:#38a868;padding:1px 4px;border-radius:2px;margin-left:2px;">공식</span>':''}<br>${remain>0?'잔여: '+remain.toLocaleString()+' km':''}</div>
     <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
       <span class="c-tag ${cls}" style="font-size:9px;">${tag}</span>
@@ -1333,7 +1452,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-ko-v4';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-ko-v5';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
