@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MOTO GARAGE — Iconbox.lee</title>
+<meta name="theme-color" content="#0c0c0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MOTO GARAGE">
+<link rel="manifest" href="/moto-garage/manifest.json">
+<link rel="apple-touch-icon" href="/moto-garage/icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root {
+  --bg:#0c0c0d; --surface:#141517; --surface2:#1b1d20; --surface3:#222529;
+  --border:#272a2f; --border-bright:#363b42;
+  --metal:#7a8492; --metal-light:#b8c0cc;
+  --accent:#e8a020; --accent-dim:#3a2808;
+  --red:#d04040; --red-dim:#2e1010;
+  --green:#38a868; --green-dim:#0e2a1a;
+  --text:#e4e8ed; --text-dim:#6e7680; --text-muted:#3a3f47;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden;}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.header-left{display:flex;align-items:center;gap:12px;}
+.logo-block{display:flex;flex-direction:column;}
+.logo-main{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--accent);line-height:1;}
+.logo-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:2px;margin-top:1px;}
+.header-divider{width:1px;height:26px;background:var(--border);}
+.iconbox-badge{display:flex;flex-direction:column;gap:1px;}
+.iconbox-label{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--text-muted);letter-spacing:1.5px;}
+.iconbox-name{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:var(--metal-light);letter-spacing:0.5px;}
+.iconbox-dot{color:var(--accent);}
+.lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 5px;font-size:17px;line-height:1;text-decoration:none;transition:all 0.15s;opacity:0.5;display:inline-flex;align-items:center;}
+.lang-btn:hover{opacity:1;border-color:var(--border-bright);}
+.lang-btn.active{opacity:1;border-color:var(--accent);background:var(--accent-dim);}
+
+/* BOTTOM NAV */
+.nav-wrap{position:fixed;bottom:0;left:0;right:0;z-index:150;background:rgba(20,21,23,0.96);border-top:1px solid var(--border);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;padding-bottom:env(safe-area-inset-bottom);}
+.nav{display:flex;flex:1;background:none;border:none;padding:0;}
+.nav-btn{flex:1;background:none;border:none;color:var(--text-muted);font-family:'Inter',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 4px 8px;transition:color 0.15s;-webkit-tap-highlight-color:transparent;min-width:0;}
+.nav-btn.active .nav-icon{transform:translateY(-1px);}
+.nav-btn.active .nav-dot{opacity:1;}
+.nav-icon{font-size:22px;line-height:1;transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1);}
+.nav-label{font-size:9px;font-weight:700;letter-spacing:0.4px;color:var(--text-muted);transition:color 0.15s;white-space:nowrap;}
+.nav-btn.active .nav-label{color:var(--accent);}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:0;transition:opacity 0.15s;margin-top:-2px;}
+
+/* LAYOUT */
+.container{max-width:860px;margin:0 auto;padding:20px 16px calc(80px + env(safe-area-inset-bottom));}
+.page{display:none;}
+.page.active{display:block;animation:fadeIn 0.15s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* SECTION */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2.5px;color:var(--metal-light);white-space:nowrap;}
+.sec-line{flex:1;height:1px;background:var(--border);margin-left:10px;}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px;}
+
+/* BIKE CARD */
+.bike-card{background:linear-gradient(135deg,#181a1d 0%,#101214 100%);border:1px solid var(--border-bright);border-radius:8px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;}
+.bike-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent) 0%,transparent 70%);}
+.bike-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;line-height:1;}
+.bike-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);margin-top:3px;}
+.bstat-val{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--text);}
+.bstat-lbl{font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-top:2px;}
+
+/* BUTTONS */
+.btn{background:none;border:1px solid var(--border-bright);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:8px 14px;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap;}
+.btn:hover{border-color:var(--metal);color:var(--text);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
+.btn-primary:hover{background:#f0b030;border-color:#f0b030;color:#000;}
+.btn-danger{border-color:transparent;color:var(--red);}
+.btn-danger:hover{background:var(--red-dim);border-color:#5a2020;}
+.btn-sm{padding:5px 9px;font-size:11px;}
+.btn-full{width:100%;justify-content:center;padding:11px;}
+
+/* PILLS */
+.pill-group{display:flex;gap:6px;flex-wrap:wrap;}
+.pill{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:6px 12px;border-radius:20px;cursor:pointer;transition:all 0.15s;}
+.pill:hover{border-color:var(--border-bright);color:var(--text);}
+.pill.selected{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:700;}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:10px;color:var(--text-dim);letter-spacing:0.5px;font-weight:600;}
+.form-input,.form-select{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 11px;outline:none;width:100%;transition:border-color 0.15s;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);}
+.form-select{cursor:pointer;}
+option{background:var(--surface2);}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:10px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;}
+.modal-header{padding:15px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--metal-light);}
+.modal-close{background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;padding:2px 4px;}
+.modal-body{padding:18px;}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+.step-label{font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--surface3);border:1px solid var(--border-bright);font-size:9px;font-weight:700;color:var(--text-dim);flex-shrink:0;}
+
+/* CONSUMABLE GRID */
+.c-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:16px;}
+.c-item{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
+.c-item:hover{border-color:var(--border-bright);transform:translateY(-1px);}
+.c-item::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.c-item.ok::before{background:var(--green);}
+.c-item.warn::before{background:var(--accent);}
+.c-item.danger::before{background:var(--red);}
+.c-item.ok{border-color:rgba(56,168,104,0.2);}
+.c-item.warn{border-color:rgba(232,160,32,0.3);}
+.c-item.danger{border-color:rgba(208,64,64,0.35);}
+.c-icon-big{font-size:20px;margin-bottom:6px;}
+.c-name{font-size:12px;font-weight:600;margin-bottom:3px;}
+.c-info{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);line-height:1.6;}
+.c-bar{height:3px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden;}
+.c-bar-fill{height:100%;border-radius:2px;transition:width 0.4s;}
+.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-top:5px;}
+.c-tag.ok{background:var(--green-dim);color:var(--green);}
+.c-tag.warn{background:var(--accent-dim);color:var(--accent);}
+.c-tag.danger{background:var(--red-dim);color:var(--red);}
+
+/* LOG TABLE */
+.log-table{width:100%;border-collapse:collapse;}
+.log-table th{padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border);text-align:left;}
+.log-table td{padding:9px 12px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.log-table tr:last-child td{border-bottom:none;}
+.log-table tbody tr:hover td{background:var(--surface2);}
+.mono{font-family:'JetBrains Mono',monospace;font-size:11px;}
+.badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:0.5px;}
+.badge-maint{background:#0e1e2e;color:#4a90d8;}
+.badge-cons{background:#2a1a08;color:var(--accent);}
+.badge-repair{background:var(--red-dim);color:var(--red);}
+.badge-other{background:#1a2a1a;color:var(--green);}
+
+/* DASH */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px;}
+.dash-w{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;text-align:center;}
+.dash-num{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;line-height:1;}
+.dash-unit{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:1px;}
+.dash-lbl{font-size:10px;color:var(--text-dim);margin-top:4px;}
+
+/* ALERT */
+.alert-row{border-radius:5px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:12px;}
+.alert-row.danger{background:var(--red-dim);border:1px solid rgba(208,64,64,0.3);color:#e06060;}
+.alert-row.warn{background:var(--accent-dim);border:1px solid rgba(232,160,32,0.3);color:#d09020;}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;}
+.empty-icon{font-size:32px;margin-bottom:8px;}
+.empty-text{font-size:13px;color:var(--text-dim);}
+.no-bikes-box{background:var(--surface);border:1px dashed var(--border-bright);border-radius:10px;padding:40px;text-align:center;}
+.tag-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--metal);font-family:'JetBrains Mono',monospace;}
+.num-input-styled{background:var(--surface2);border:1px solid var(--border-bright);border-radius:4px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:500;padding:10px 14px;outline:none;text-align:center;transition:border-color 0.15s;}
+.num-input-styled:focus{border-color:var(--accent);}
+
+/* PWA BANNER */
+.pwa-banner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--surface);border-top:1px solid var(--border-bright);padding:14px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -8px 32px rgba(0,0,0,0.5);}
+.pwa-banner.show{display:block;}
+.pwa-banner-inner{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:12px;}
+.pwa-banner-icon{width:44px;height:44px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#1e2022,#111214);border:1px solid var(--border-bright);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.pwa-banner-text{flex:1;}
+.pwa-banner-title{font-weight:700;font-size:13px;color:var(--text);}
+.pwa-banner-sub{font-size:10px;color:var(--text-dim);margin-top:2px;}
+.backup-toast,.pwa-installed-toast{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;z-index:600;white-space:nowrap;animation:fadeInUp 0.3s ease;}
+.backup-toast.success,.pwa-installed-toast{background:var(--green);color:#fff;}
+.backup-toast.error{background:var(--red);color:#fff;}
+.backup-toast.show,.pwa-installed-toast.show{display:block;}
+@keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.backup-stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.backup-stat-row:last-child{border-bottom:none;}
+.backup-stat-val{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);}
+
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px;}
+@media(max-width:560px){.form-grid{grid-template-columns:1fr;}.c-grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-block">
+      <span class="logo-main">MOTO GARAGE</span>
+      <span class="logo-sub">QUẢN LÝ XE MÁY</span>
+    </div>
+    <div class="header-divider"></div>
+    <a href="mailto:iconbox.vn@gmail.com" style="text-decoration:none;">
+      <div class="iconbox-badge">
+        <span class="iconbox-label">CREATED BY</span>
+        <span class="iconbox-name">@iconbox<span class="iconbox-dot">.</span>lee</span>
+      </div>
+    </a>
+  </div>
+  <div style="display:flex;gap:4px;">
+    <a href="./index.html"    class="lang-btn" title="한국어">🇰🇷</a>
+    <a href="./index_vn.html" class="lang-btn active"        title="Tiếng Việt">🇻🇳</a>
+    <a href="./index_en.html" class="lang-btn"        title="English">🇺🇸</a>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="nav-wrap">
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('dashboard',this)">
+      <span class="nav-icon">📊</span><span class="nav-label">Trang chủ</span><span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" onclick="showPage('bikes',this)">
+      <span class="nav-icon">🏍</span><span class="nav-label">Xe của tôi</span><span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" onclick="showPage('consumables',this)">
+      <span class="nav-icon">🔧</span><span class="nav-label">Bảo dưỡng</span><span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" onclick="showPage('riding',this)">
+      <span class="nav-icon">📍</span><span class="nav-label">Số km</span><span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" onclick="showPage('history',this)">
+      <span class="nav-icon">📋</span><span class="nav-label">Lịch sử</span><span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" onclick="showPage('backup',this)">
+      <span class="nav-icon">☁️</span><span class="nav-label">Sao lưu</span><span class="nav-dot"></span>
+    </button>
+  </nav>
+</div>
+
+<div class="container">
+  <!-- 홈 -->
+  <div class="page active" id="page-dashboard"><div id="dash-content"></div></div>
+
+  <!-- 내 차량 -->
+  <div class="page" id="page-bikes">
+    <div class="sec-header"><span class="sec-title">Xe của tôi</span><div class="sec-line"></div></div>
+    <div id="bike-list"></div>
+    <button class="btn btn-primary btn-full" onclick="openModal('m-bike')">+ Thêm xe mới</button>
+  </div>
+
+  <!-- 소모품 & 정비 -->
+  <div class="page" id="page-consumables">
+    <div id="c-bike-tabs" style="margin-bottom:12px;"></div>
+    <div id="c-content"></div>
+    <div id="c-extra-section"></div>
+  </div>
+
+  <!-- 주행거리 -->
+  <div class="page" id="page-riding">
+    <div class="sec-header"><span class="sec-title">Quản lý tổng số km</span><div class="sec-line"></div></div>
+    <div id="odo-cards"></div>
+  </div>
+
+  <!-- 정비이력 -->
+  <div class="page" id="page-history">
+    <div class="sec-header"><span class="sec-title">Lịch sử bảo dưỡng</span><div class="sec-line"></div></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <select class="form-select" id="hfilt-bike" style="width:auto;flex:1;min-width:120px;" onchange="renderHistory()">
+        <option value="">Tất cả xe</option>
+      </select>
+      <select class="form-select" id="hfilt-type" style="width:auto;flex:1;min-width:110px;" onchange="renderHistory()">
+        <option value="">Tất cả loại</option>
+        <option>Thay phụ tùng</option><option>Kiểm tra định kỳ</option><option>Sửa chữa</option><option>Khác</option>
+      </select>
+    </div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">Thêm nhật ký tại tab <strong style="color:var(--accent);">🔧 Bảo dưỡng</strong></div>
+    <div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;" id="history-table"></div></div>
+  </div>
+
+  <!-- 백업 -->
+  <div class="page" id="page-backup">
+    <div class="sec-header"><span class="sec-title">Sao lưu dữ liệu</span><div class="sec-line"></div></div>
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="font-size:22px;">📁</div>
+        <div><div style="font-weight:700;font-size:14px;">Sao lưu / Khôi phục</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Xuất/nhập file JSON</div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="exportJSON()">⬆ Xuất JSON</button>
+        <button class="btn" onclick="document.getElementById('import-file').click()">⬇ Nhập JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:10px;">Sau khi xuất, hãy lưu file ở nơi an toàn</div>
+    </div>
+    <div class="card">
+      <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:12px;">Dữ liệu hiện tại</div>
+      <div id="backup-stats"></div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 Xóa toàn bộ dữ liệu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 차량 등록 -->
+<div class="modal-overlay" id="m-bike">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Đăng ký xe</span><button class="modal-close" onclick="closeModal('m-bike')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">1</span>Hãng xe</div>
+        <div class="pill-group" id="brand-pills">
+          <div class="pill" onclick="selectBrand('Honda',this)">Honda</div>
+          <div class="pill" onclick="selectBrand('Yamaha',this)">Yamaha</div>
+          <div class="pill" onclick="selectBrand('Kawasaki',this)">Kawasaki</div>
+          <div class="pill" onclick="selectBrand('Suzuki',this)">Suzuki</div>
+          <div class="pill" onclick="selectBrand('BMW',this)">BMW</div>
+          <div class="pill" onclick="selectBrand('KTM',this)">KTM</div>
+          <div class="pill" onclick="selectBrand('Ducati',this)">Ducati</div>
+          <div class="pill" onclick="selectBrand('Triumph',this)">Triumph</div>
+          <div class="pill" onclick="selectBrand('Royal Enfield',this)">Royal Enfield</div>
+          <div class="pill" onclick="selectBrand('Harley',this)">Harley</div>
+          <div class="pill" onclick="selectBrand('other',this)">기타...</div>
+        </div>
+        <input type="text" class="form-input" id="brand-custom" placeholder="제조사 입력" style="margin-top:8px;display:none;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">2</span>Dòng xe</div>
+        <div class="pill-group" id="model-pills"><span style="font-size:12px;color:var(--text-muted);">Chọn hãng xe trước</span></div>
+        <input type="text" class="form-input" id="model-custom" placeholder="모델명 입력" style="margin-top:8px;display:none;">
+      </div>
+      <div id="cat-preview" style="display:none;margin-bottom:10px;padding:8px 12px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:5px;font-size:12px;color:var(--accent);font-weight:600;"></div>
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">3</span>Năm sản xuất</div>
+        <div class="pill-group" id="year-pills"></div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">4</span>Dung tích</div>
+        <div class="pill-group" id="cc-pills">
+          <div class="pill" data-cc="1301" onclick="selectCC(1301,this)">1301cc</div>
+          <div class="pill" data-cc="1254" onclick="selectCC(1254,this)">1254cc</div>
+          <div class="pill" data-cc="1160" onclick="selectCC(1160,this)">1160cc</div>
+          <div class="pill" data-cc="1103" onclick="selectCC(1103,this)">1103cc</div>
+          <div class="pill" data-cc="1043" onclick="selectCC(1043,this)">1043cc</div>
+          <div class="pill" data-cc="999" onclick="selectCC(999,this)">999cc</div>
+          <div class="pill" data-cc="998" onclick="selectCC(998,this)">998cc</div>
+          <div class="pill" data-cc="937" onclick="selectCC(937,this)">937cc</div>
+          <div class="pill" data-cc="895" onclick="selectCC(895,this)">895cc</div>
+          <div class="pill" data-cc="890" onclick="selectCC(890,this)">890cc</div>
+          <div class="pill" data-cc="853" onclick="selectCC(853,this)">853cc</div>
+          <div class="pill" data-cc="799" onclick="selectCC(799,this)">799cc</div>
+          <div class="pill" data-cc="776" onclick="selectCC(776,this)">776cc</div>
+          <div class="pill" data-cc="765" onclick="selectCC(765,this)">765cc</div>
+          <div class="pill" data-cc="750" onclick="selectCC(750,this)">750cc</div>
+          <div class="pill" data-cc="693" onclick="selectCC(693,this)">693cc</div>
+          <div class="pill" data-cc="689" onclick="selectCC(689,this)">689cc</div>
+          <div class="pill" data-cc="660" onclick="selectCC(660,this)">660cc</div>
+          <div class="pill" data-cc="649" onclick="selectCC(649,this)">649cc</div>
+          <div class="pill" data-cc="648" onclick="selectCC(648,this)">648cc</div>
+          <div class="pill" data-cc="500" onclick="selectCC(500,this)">500cc</div>
+          <div class="pill" data-cc="452" onclick="selectCC(452,this)">452cc</div>
+          <div class="pill" data-cc="399" onclick="selectCC(399,this)">399cc</div>
+          <div class="pill" data-cc="349" onclick="selectCC(349,this)">349cc</div>
+          <div class="pill" data-cc="321" onclick="selectCC(321,this)">321cc</div>
+          <div class="pill" data-cc="313" onclick="selectCC(313,this)">313cc</div>
+          <div class="pill" data-cc="0" onclick="selectCC('other',this)">기타</div>
+        </div>
+        <input type="number" class="form-input" id="cc-custom" placeholder="배기량 입력 (cc)" style="margin-top:8px;display:none;max-width:180px;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">5</span>Tổng số km hiện tại</div>
+        <div class="pill-group" style="margin-bottom:8px;">
+          <div class="pill" onclick="setOdo(0,this)">Xe mới (0)</div>
+          <div class="pill" onclick="setOdo(1000,this)">1,000</div>
+          <div class="pill" onclick="setOdo(5000,this)">5,000</div>
+          <div class="pill" onclick="setOdo(10000,this)">10,000</div>
+          <div class="pill" onclick="setOdo(20000,this)">20,000</div>
+          <div class="pill" onclick="setOdo(30000,this)">30,000</div>
+          <div class="pill" onclick="setOdo(-1,this)">Nhập trực tiếp</div>
+        </div>
+        <input type="number" class="form-input" id="bike-odo" placeholder="주행거리 km" style="max-width:200px;">
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Biển số (tùy chọn)</label>
+          <input type="text" class="form-input" id="bike-plate" placeholder="51A-12345">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Màu sắc (tùy chọn)</label>
+          <select class="form-select" id="bike-color">
+            <option value="">Không chọn</option>
+            <option>Đen nhám</option><option>Đen bóng</option><option>Trắng</option>
+            <option>Đỏ</option><option>Xanh dương</option><option>Xám</option><option>Bạc</option><option>Cam</option><option>Xanh lá</option><option>Vàng</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-bike')">Hủy</button>
+      <button class="btn btn-primary" onclick="addBike()">Đăng ký</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 차량 수정 -->
+<div class="modal-overlay" id="m-edit-bike">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Chỉnh sửa thông tin xe</span><button class="modal-close" onclick="closeModal('m-edit-bike')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Hãng xe</label><input type="text" class="form-input" id="edit-bike-brand"></div>
+        <div class="form-group"><label class="form-label">Dòng xe</label><input type="text" class="form-input" id="edit-bike-model"></div>
+        <div class="form-group"><label class="form-label">Năm sản xuất</label><input type="number" class="form-input" id="edit-bike-year"></div>
+        <div class="form-group"><label class="form-label">Dung tích (cc)</label><input type="number" class="form-input" id="edit-bike-cc"></div>
+        <div class="form-group full"><label class="form-label">Tổng số km (km)</label><input type="number" class="form-input" id="edit-bike-odo"></div>
+        <div class="form-group"><label class="form-label">Biển số</label><input type="text" class="form-input" id="edit-bike-plate"></div>
+        <div class="form-group"><label class="form-label">Màu sắc</label>
+          <select class="form-select" id="edit-bike-color">
+            <option value="">Không chọn</option>
+            <option>Đen nhám</option><option>Đen bóng</option><option>Trắng</option>
+            <option>Đỏ</option><option>Xanh dương</option><option>Xám</option><option>Bạc</option><option>Cam</option><option>Xanh lá</option><option>Vàng</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-edit-bike')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveEditBike()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 소모품 교체 기록 -->
+<div class="modal-overlay" id="m-consumable">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="mc-title">Ghi nhận thay thế</span><button class="modal-close" onclick="closeModal('m-consumable')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">1</span>Số km khi thay</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Hiện tại: <span class="mono" id="mc-current-km" style="color:var(--accent);"></span> km</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="mc-km-pills"></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="number" class="num-input-styled" id="mc-km" style="width:140px;">
+          <span style="font-size:12px;color:var(--text-dim);">km</span>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">2</span>Ngày thay</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="mc-date-pills">
+          <div class="pill selected" onclick="selectMcDate('today',this)">오늘</div>
+          <div class="pill" onclick="selectMcDate('yesterday',this)">어제</div>
+          <div class="pill" onclick="selectMcDate('pick',this)">직접 선택</div>
+        </div>
+        <input type="date" class="form-input" id="mc-date-input" style="display:none;max-width:200px;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">3</span>Chu kỳ thay tiếp theo</div>
+        <div class="pill-group" id="mc-interval-pills">
+          <div class="pill" onclick="selectMcInterval(3000,this)">3,000 km</div>
+          <div class="pill" onclick="selectMcInterval(5000,this)">5,000 km</div>
+          <div class="pill" onclick="selectMcInterval(8000,this)">8,000 km</div>
+          <div class="pill" onclick="selectMcInterval(10000,this)">10,000 km</div>
+          <div class="pill" onclick="selectMcInterval(15000,this)">15,000 km</div>
+          <div class="pill" onclick="selectMcInterval(20000,this)">20,000 km</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <input type="number" class="num-input-styled" id="mc-interval" style="width:130px;">
+          <span style="font-size:12px;color:var(--text-dim);">km</span>
+        </div>
+      </div>
+      <div>
+        <div class="step-label"><span class="step-num">4</span>Nơi bảo dưỡng / Ghi chú (tùy chọn)</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="mc-shop-pills">
+          <div class="pill" onclick="setMcMemo('Garage Đan',this)">Garage Đan</div>
+          <div class="pill" onclick="setMcMemo('Honda chính hãng',this)">Honda chính hãng</div>
+          <div class="pill" onclick="setMcMemo('Tự thay',this)">Tự thay</div>
+        </div>
+        <input type="text" class="form-input" id="mc-memo" placeholder="Thương hiệu, nơi bảo dưỡng...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-consumable')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveConsumable()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 소모품 수정 -->
+<div class="modal-overlay" id="m-edit-consumable">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="m-edit-c-title">Chỉnh sửa phụ tùng</span><button class="modal-close" onclick="closeModal('m-edit-consumable')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Số km khi thay (km)</label><input type="number" class="form-input" id="edit-c-km"></div>
+        <div class="form-group"><label class="form-label">Ngày thay</label><input type="date" class="form-input" id="edit-c-date"></div>
+        <div class="form-group full">
+          <label class="form-label">Chu kỳ thay tiếp theo (km)</label>
+          <div class="pill-group" style="margin-bottom:8px;" id="edit-c-interval-pills">
+            <div class="pill" onclick="setEditCInterval(3000,this)">3,000</div>
+            <div class="pill" onclick="setEditCInterval(5000,this)">5,000</div>
+            <div class="pill" onclick="setEditCInterval(8000,this)">8,000</div>
+            <div class="pill" onclick="setEditCInterval(10000,this)">10,000</div>
+            <div class="pill" onclick="setEditCInterval(15000,this)">15,000</div>
+            <div class="pill" onclick="setEditCInterval(20000,this)">20,000</div>
+          </div>
+          <input type="number" class="form-input" id="edit-c-interval">
+        </div>
+        <div class="form-group full"><label class="form-label">Ghi chú</label><input type="text" class="form-input" id="edit-c-memo"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-edit-consumable')">Hủy</button>
+      <button class="btn btn-primary" onclick="updateConsumable()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 기타 정비 -->
+<div class="modal-overlay" id="m-extra">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="m-extra-title">Thêm bảo dưỡng khác</span><button class="modal-close" onclick="closeModal('m-extra')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">1</span>유형</div>
+        <div class="pill-group">
+          <div class="pill" onclick="selectExtraType('Kiểm tra định kỳ',this)">🔍 Kiểm tra định kỳ</div>
+          <div class="pill" onclick="selectExtraType('Sửa chữa',this)">🛠 Sửa chữa</div>
+          <div class="pill" onclick="selectExtraType('Rửa xe',this)">🚿 Rửa xe</div>
+          <div class="pill" onclick="selectExtraType('Độ xe',this)">⚙ Độ xe</div>
+          <div class="pill" onclick="selectExtraType('Khác',this)">📝 Khác</div>
+        </div>
+        <input type="hidden" id="extra-type" value="">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">2</span>내용</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="extra-desc-pills">
+          <div class="pill" onclick="setExtraDesc('Kiểm tra tổng thể',this)">Kiểm tra tổng thể</div>
+          <div class="pill" onclick="setExtraDesc('Căng xích',this)">Căng xích</div>
+          <div class="pill" onclick="setExtraDesc('Bơm lốp',this)">Bơm lốp</div>
+          <div class="pill" onclick="setExtraDesc('Rửa và đánh bóng',this)">Rửa và đánh bóng</div>
+          <div class="pill" onclick="setExtraDesc('Sửa sau tai nạn',this)">Sửa sau tai nạn</div>
+          <div class="pill" onclick="setExtraDesc('Chỉnh giảm xóc',this)">Chỉnh giảm xóc</div>
+        </div>
+        <input type="text" class="form-input" id="extra-desc" placeholder="Nhập nội dung bảo dưỡng">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">3</span>날짜</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="extra-date-pills">
+          <div class="pill selected" onclick="selectExtraDate('today',this)">오늘</div>
+          <div class="pill" onclick="selectExtraDate('yesterday',this)">어제</div>
+          <div class="pill" onclick="selectExtraDate('pick',this)">직접 선택</div>
+        </div>
+        <input type="date" class="form-input" id="extra-date-input" style="display:none;max-width:200px;">
+      </div>
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="form-group">
+          <label class="form-label">Số km</label>
+          <input type="number" class="form-input" id="extra-km">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Chi phí (₫)</label>
+          <div class="pill-group" style="margin-bottom:6px;gap:4px;" id="extra-cost-pills">
+            <div class="pill" style="font-size:10px;" onclick="setExtraCost(50000,this)">50K</div>
+            <div class="pill" style="font-size:10px;" onclick="setExtraCost(100000,this)">100K</div>
+            <div class="pill" style="font-size:10px;" onclick="setExtraCost(200000,this)">200K</div>
+            <div class="pill" style="font-size:10px;" onclick="setExtraCost(500000,this)">500K</div>
+          </div>
+          <input type="number" class="form-input" id="extra-cost">
+        </div>
+      </div>
+      <div>
+        <div class="step-label"><span class="step-num">4</span>정비소 (선택)</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="extra-shop-pills">
+          <div class="pill" onclick="setExtraShop('Garage Đan',this)">Garage Đan</div>
+          <div class="pill" onclick="setExtraShop('Honda chính hãng',this)">Honda chính hãng</div>
+          <div class="pill" onclick="setExtraShop('Tự sửa',this)">Tự sửa</div>
+        </div>
+        <input type="text" class="form-input" id="extra-shop" placeholder="Nhập nơi bảo dưỡng">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-extra')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveExtra()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 정비이력 수정 -->
+<div class="modal-overlay" id="m-edit-history">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Chỉnh sửa lịch sử</span><button class="modal-close" onclick="closeModal('m-edit-history')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Ngày</label><input type="date" class="form-input" id="edit-h-date"></div>
+        <div class="form-group"><label class="form-label">Số km</label><input type="number" class="form-input" id="edit-h-km"></div>
+        <div class="form-group full"><label class="form-label">유형</label>
+          <select class="form-select" id="edit-h-type"><option>Thay phụ tùng</option><option>Kiểm tra định kỳ</option><option>Sửa chữa</option><option>Khác</option></select>
+        </div>
+        <div class="form-group full"><label class="form-label">Nội dung</label><input type="text" class="form-input" id="edit-h-desc"></div>
+        <div class="form-group"><label class="form-label">Chi phí (₫)</label><input type="number" class="form-input" id="edit-h-cost"></div>
+        <div class="form-group"><label class="form-label">Nơi bảo dưỡng</label><input type="text" class="form-input" id="edit-h-shop"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-edit-history')">Hủy</button>
+      <button class="btn btn-primary" onclick="updateHistory()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<div class="pwa-banner" id="pwa-banner">
+  <div class="pwa-banner-inner">
+    <div class="pwa-banner-icon">🏍</div>
+    <div class="pwa-banner-text">
+      <div class="pwa-banner-title">Cài đặt ứng dụng MOTO GARAGE</div>
+      <div class="pwa-banner-sub">Thêm vào màn hình chính để dùng như ứng dụng</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="dismissInstall()">Để sau</button>
+      <button class="btn btn-primary btn-sm" onclick="installPWA()">Cài đặt</button>
+    </div>
+  </div>
+</div>
+<div class="pwa-installed-toast" id="pwa-toast">✓ Đã thêm vào màn hình chính!</div>
+<div class="backup-toast" id="backup-toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════
+var D = JSON.parse(localStorage.getItem('mg2') || 'null') || {bikes:[],rides:[],history:[]};
+var dashSelectedBikeId = null;
+var cState = {bikeIdx:0, cId:''};
+var mcDateVal = todayStr();
+var extraDateVal = todayStr();
+var editingBikeId = null;
+var editingCId = null;
+var editingExtraId = null;
+var editingHistoryId = null;
+var bState = {brand:'',model:'',year:0,cc:0};
+var deferredPrompt = null;
+
+const save = () => localStorage.setItem('mg2', JSON.stringify(D));
+
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function yesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
+
+// ═══════════════════════════════════════════
+//  소모품 기본 데이터
+// ═══════════════════════════════════════════
+const CONSUMABLES = [
+  {id:'oil',       icon:'🛢', name:'Dầu máy',         km:5000},
+  {id:'oil_f',     icon:'🔩', name:'Lọc dầu',         km:10000},
+  {id:'spark',     icon:'⚡', name:'Bugi',         km:15000},
+  {id:'chain',     icon:'⛓', name:'Xích/Đĩa',      km:10000},
+  {id:'brake_f',   icon:'🛑', name:'Má phanh trước',    km:20000},
+  {id:'brake_r',   icon:'🛑', name:'Má phanh sau',    km:15000},
+  {id:'tire_f',    icon:'⭕', name:'Lốp trước',          km:15000},
+  {id:'tire_r',    icon:'⭕', name:'Lốp sau',          km:12000},
+  {id:'coolant',   icon:'🌡', name:'Nước làm mát',             km:20000},
+  {id:'air_f',     icon:'💨', name:'Lọc gió',          km:15000},
+  {id:'brake_oil', icon:'💧', name:'Dầu phanh',       km:20000},
+];
+
+const CATEGORY_INTERVALS = {
+  sport:    {oil:3000,oil_f:6000,spark:12000,chain:8000,brake_f:15000,brake_r:12000,tire_f:10000,tire_r:8000,coolant:20000,air_f:12000,brake_oil:15000},
+  naked:    {oil:5000,oil_f:10000,spark:15000,chain:10000,brake_f:20000,brake_r:15000,tire_f:15000,tire_r:12000,coolant:20000,air_f:15000,brake_oil:20000},
+  adventure:{oil:6000,oil_f:12000,spark:18000,chain:12000,brake_f:25000,brake_r:20000,tire_f:15000,tire_r:12000,coolant:24000,air_f:12000,brake_oil:20000},
+  classic:  {oil:5000,oil_f:10000,spark:10000,chain:8000,brake_f:20000,brake_r:15000,tire_f:15000,tire_r:12000,coolant:20000,air_f:15000,brake_oil:20000}
+};
+
+const CAT_NAMES = {sport:'🏁 Sport (vòng tua cao)',naked:'🏙 Naked/Street (tiêu chuẩn)',adventure:'🌍 Adventure/Touring (đường dài)',classic:'🛣 Classic/Cruiser'};
+
+function detectCategory(brand,model){
+  const m=model.toLowerCase(), b=(brand||'').toLowerCase();
+  if(/cbr|r1|r7|yzf|ninja zx|zx-|s1000rr|panigale|gsx-r|m1000/.test(m)) return 'sport';
+  if(/gs|africa twin|v-strom|versys|tracer|tiger|multistrada|ténéré|tenere|adventure|adv|xadv|nt1100|pan america/.test(m)) return 'adventure';
+  if(/harley|davidson/.test(b)||/royal enfield/.test(b)||/bonneville|scrambler|meteor|classic|interceptor|continental|street bob|fat boy|fat bob|road king|nightster|sportster|rebel/.test(m)) return 'classic';
+  return 'naked';
+}
+
+function makeConsumables(brand,model){
+  const cat=detectCategory(brand,model);
+  const intervals=CATEGORY_INTERVALS[cat];
+  return CONSUMABLES.map(c=>({...c,km:intervals[c.id]||c.km,lastKm:0,lastDate:'',memo:'',category:cat}));
+}
+
+// ═══════════════════════════════════════════
+//  브랜드별 모델 목록
+// ═══════════════════════════════════════════
+const BRAND_MODELS = {
+  Honda:[{name:'Africa Twin',cc:1100},{name:'NT1100',cc:1100},{name:'CBR1000RR-R',cc:1000},{name:'CB1000R',cc:1000},{name:'X-ADV 750',cc:750},{name:'CB750 Hornet',cc:750},{name:'CB650R',cc:650},{name:'CBR650R',cc:650},{name:'CB500F',cc:500},{name:'CB500X',cc:500},{name:'CBR500R',cc:500},{name:'CB400F',cc:400},{name:'CRF300L',cc:300},{name:'CB300R',cc:300},{name:'기타 (250cc 이하 포함)',cc:0}],
+  Yamaha:[{name:'YZF-R1',cc:998},{name:'MT-10',cc:998},{name:'MT-09',cc:890},{name:'XSR900',cc:890},{name:'Tracer 9',cc:890},{name:'MT-07',cc:689},{name:'XSR700',cc:689},{name:'Tracer 7',cc:689},{name:'Ténéré 700',cc:689},{name:'YZF-R7',cc:689},{name:'YZF-R3',cc:321},{name:'MT-03',cc:321},{name:'기타 (250cc 이하 포함)',cc:0}],
+  Kawasaki:[{name:'Ninja ZX-10R',cc:998},{name:'Z H2',cc:998},{name:'Ninja H2',cc:998},{name:'Ninja 1000SX',cc:1043},{name:'Versys 1000',cc:1043},{name:'Z900',cc:948},{name:'Z900RS',cc:948},{name:'Versys 650',cc:649},{name:'Ninja 650',cc:649},{name:'Z650',cc:649},{name:'Z400',cc:399},{name:'Ninja 400',cc:399},{name:'기타 (250cc 이하 포함)',cc:0}],
+  Suzuki:[{name:'Hayabusa',cc:1340},{name:'GSX-S1000',cc:999},{name:'V-Strom 1050',cc:1037},{name:'GSX-8S',cc:776},{name:'V-Strom 800',cc:776},{name:'GSX-S750',cc:749},{name:'V-Strom 650',cc:645},{name:'기타 (250cc 이하 포함)',cc:0}],
+  BMW:[{name:'R1250GS',cc:1254},{name:'R1250R',cc:1254},{name:'S1000RR',cc:999},{name:'S1000R',cc:999},{name:'M1000RR',cc:999},{name:'F900R',cc:895},{name:'F850GS',cc:853},{name:'F750GS',cc:853},{name:'G310R',cc:313},{name:'G310GS',cc:313},{name:'기타 (250cc 이하 포함)',cc:0}],
+  KTM:[{name:'1290 Super Duke R',cc:1301},{name:'1290 Adventure',cc:1301},{name:'890 Duke R',cc:889},{name:'890 Adventure',cc:889},{name:'790 Duke',cc:799},{name:'690 Duke',cc:693},{name:'390 Duke',cc:399},{name:'390 Adventure',cc:399},{name:'기타 (250cc 이하 포함)',cc:0}],
+  Ducati:[{name:'Multistrada V4',cc:1158},{name:'Panigale V4',cc:1103},{name:'Streetfighter V4',cc:1103},{name:'Monster 937',cc:937},{name:'DesertX',cc:937},{name:'기타 (250cc 이하 포함)',cc:0}],
+  Triumph:[{name:'Rocket 3',cc:2458},{name:'Speed Triple 1200',cc:1160},{name:'Tiger 1200',cc:1160},{name:'Street Triple 765',cc:765},{name:'Tiger 900',cc:888},{name:'Trident 660',cc:660},{name:'Tiger 660',cc:660},{name:'Speed 400',cc:398},{name:'기타 (250cc 이하 포함)',cc:0}],
+  'Royal Enfield':[{name:'Super Meteor 650',cc:648},{name:'Continental GT 650',cc:648},{name:'Interceptor 650',cc:648},{name:'Himalayan 450',cc:452},{name:'Hunter 350',cc:349},{name:'Classic 350',cc:349},{name:'Meteor 350',cc:349},{name:'기타 (250cc 이하 포함)',cc:0}],
+  Harley:[{name:'Road Glide',cc:1868},{name:'Fat Boy',cc:1868},{name:'Fat Bob',cc:1868},{name:'Street Bob',cc:1868},{name:'Sportster S',cc:1252},{name:'Pan America',cc:1252},{name:'Nightster',cc:975},{name:'기타 (250cc 이하 포함)',cc:0}],
+  other:[]
+};
+
+// ═══════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='dashboard') renderDash();
+  if(name==='bikes') renderBikes();
+  if(name==='consumables') renderConsumables();
+  if(name==='riding') renderRiding();
+  if(name==='history') renderHistory();
+  if(name==='backup') renderBackupPage();
+}
+
+// ═══════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='m-bike') resetBikeModal();
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════
+function renderDash(){
+  const stored=localStorage.getItem('mg2');
+  if(stored){ try{ const p=JSON.parse(stored); if(p.bikes) D=p; }catch(e){} }
+  const el=document.getElementById('dash-content');
+  if(!D.bikes.length){
+    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:44px;margin-bottom:14px;">🏍</div><div style="font-size:15px;color:var(--text-dim);margin-bottom:6px;">차량을 등록하면 관리가 시작됩니다</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">소모품 알림 · 주행거리 · 정비 이력</div><button class="btn btn-primary" onclick="openModal('m-bike')">첫 차량 등록하기</button></div>`;
+    return;
+  }
+  if(!dashSelectedBikeId||!D.bikes.find(b=>b.id===dashSelectedBikeId)) dashSelectedBikeId=D.bikes[0].id;
+  const sb=D.bikes.find(b=>b.id===dashSelectedBikeId);
+  const consumableRows=sb.consumables.map(c=>{
+    const used=sb.odometer-c.lastKm;
+    const pct=Math.min(100,Math.max(0,Math.round(used/c.km*100)));
+    const remain=c.km-used;
+    const cls=pct>=100?'danger':pct>=80?'warn':'ok';
+    const fillColor=pct>=100?'var(--red)':pct>=80?'var(--accent)':'var(--green)';
+    const tag=pct>=100?'🚨 Cần thay ngay':pct>=80?'⚠ Sắp thay':'✓ Tốt';
+    return{c,pct,remain,cls,fillColor,tag};
+  });
+  const recentHistory=D.history.filter(l=>l.bikeId==sb.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  const typeBadge={'소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+  el.innerHTML=`
+    ${D.bikes.length>1?`<div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;">
+      ${D.bikes.map(b=>{
+        const sel=b.id===dashSelectedBikeId;
+        const u=b.consumables.filter(c=>(b.odometer-c.lastKm)/c.km>=1).length;
+        const w=b.consumables.filter(c=>{const p=(b.odometer-c.lastKm)/c.km;return p>=0.8&&p<1;}).length;
+        return `<div onclick="selectDashBike(${b.id})" style="flex-shrink:0;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:10px;padding:10px 14px;cursor:pointer;">
+          <div style="font-size:12px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:${sel?'var(--accent)':'var(--text-dim)'};margin-top:3px;">${b.odometer.toLocaleString()} km</div>
+          <div style="margin-top:4px;">${u?`<span class="c-tag danger" style="font-size:9px;">🚨 ${u}</span>`:w?`<span class="c-tag warn" style="font-size:9px;">⚠ ${w}</span>`:`<span class="c-tag ok" style="font-size:9px;">✓</span>`}</div>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+    <div class="bike-card" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div class="bike-name">${sb.brand} ${sb.model}</div>
+          <div class="bike-meta">${sb.year}${sb.cc?' · '+sb.cc+'cc':''}${sb.plate?' · '+sb.plate:''}</div>
+          ${sb.consumables[0]?.category?`<div style="margin-top:4px;"><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;background:var(--surface3);color:var(--metal);">${{sport:'🏁 SPORT',naked:'🏙 NAKED',adventure:'🌍 ADVENTURE',classic:'🛣 CLASSIC'}[sb.consumables[0].category]||''}</span></div>`:''}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:30px;color:var(--accent);line-height:1;">${sb.odometer.toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;">KM 누적</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec-header"><span class="sec-title">소모품 현황</span><div class="sec-line"></div></div>
+    <div class="card" style="padding:6px 0;margin-bottom:14px;">
+      ${consumableRows.map(({c,pct,remain,cls,fillColor,tag})=>`
+        <div style="padding:9px 14px;border-bottom:1px solid var(--border);" onclick="showPage('consumables',document.querySelector('.nav-btn:nth-child(3)'))">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span style="font-size:17px;width:22px;text-align:center;">${c.icon}</span>
+              <span style="font-size:12px;font-weight:600;">${c.name}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">${remain>0?'+'+remain.toLocaleString()+'km':'Quá hạn'}</span>
+              <span class="c-tag ${cls}" style="font-size:9px;">${tag}</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
+              <div style="width:${pct}%;height:100%;background:${fillColor};border-radius:2px;"></div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);width:30px;text-align:right;">${pct}%</span>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="sec-header"><span class="sec-title">최근 정비</span><div class="sec-line"></div></div>
+    ${recentHistory.length
+      ?`<div class="card" style="padding:0;overflow:hidden;"><table class="log-table"><tbody>
+          ${recentHistory.map(l=>`<tr>
+            <td class="mono" style="color:var(--text-dim);white-space:nowrap;">${l.date}</td>
+            <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
+            <td style="font-size:12px;">${l.desc||'—'}</td>
+          </tr>`).join('')}
+        </tbody></table></div>`
+      :`<div class="card" style="text-align:center;padding:16px;font-size:12px;color:var(--text-muted);">정비 기록이 없습니다</div>`
+    }`;
+}
+
+function selectDashBike(id){ dashSelectedBikeId=id; renderDash(); }
+
+// ═══════════════════════════════════════════
+//  내 차량
+// ═══════════════════════════════════════════
+function renderBikes(){
+  const el=document.getElementById('bike-list');
+  if(!D.bikes.length){
+    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:40px;margin-bottom:12px;">🏍</div><div style="font-size:14px;color:var(--text-dim);">등록된 차량이 없습니다</div></div>`;
+    return;
+  }
+  el.innerHTML=D.bikes.map(b=>`<div class="bike-card">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+      <div>
+        <div class="bike-name">${b.brand} ${b.model}</div>
+        <div class="bike-meta">${b.year}${b.cc?' · '+b.cc+'cc':''}${b.plate?' · '+b.plate:''}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        ${b.color?`<span class="tag-chip">${b.color}</span>`:''}
+        <button class="btn btn-sm" onclick="openEditBike(${b.id})">✏ 수정</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteBike(${b.id})">삭제</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:0;border-top:1px solid var(--border);margin-top:10px;">
+      <div style="flex:1;text-align:center;padding:10px 0;"><div class="bstat-val">${b.odometer.toLocaleString()}</div><div class="bstat-lbl">KM 누적</div></div>
+      <div style="flex:1;text-align:center;padding:10px 0;border-left:1px solid var(--border);"><div class="bstat-val">${D.history.filter(h=>h.bikeId==b.id).length}</div><div class="bstat-lbl">정비 이력</div></div>
+      <div style="flex:1;text-align:center;padding:10px 0;border-left:1px solid var(--border);">
+        <div class="bstat-val" style="color:${countAlerts(b)>0?'var(--red)':'var(--green)'}">${countAlerts(b)}</div>
+        <div class="bstat-lbl">알림</div>
+      </div>
+    </div>
+  </div>`).join('');
+}
+
+function deleteBike(id){
+  if(!confirm('Bạn có muốn xóa xe này không?')) return;
+  D.bikes=D.bikes.filter(b=>b.id!==id);
+  save(); renderBikes(); renderDash();
+}
+
+function countAlerts(bike){ return bike.consumables.filter(c=>(bike.odometer-c.lastKm)/c.km>=0.8).length; }
+
+// 차량 등록 모달
+function resetBikeModal(){
+  bState={brand:'',model:'',year:0,cc:0};
+  clearPills('brand-pills');
+  document.getElementById('brand-custom').style.display='none';
+  document.getElementById('brand-custom').value='';
+  document.getElementById('model-pills').innerHTML='<span style="font-size:12px;color:var(--text-muted);">Chọn hãng xe trước</span>';
+  document.getElementById('model-custom').style.display='none';
+  document.getElementById('model-custom').value='';
+  document.getElementById('cc-custom').style.display='none';
+  document.getElementById('bike-odo').value='';
+  document.getElementById('bike-plate').value='';
+  document.getElementById('bike-color').value='';
+  document.getElementById('cat-preview').style.display='none';
+  const yr=new Date().getFullYear();
+  const yp=document.getElementById('year-pills');
+  yp.innerHTML='';
+  for(let y=yr;y>=yr-12;y--){
+    const d=document.createElement('div');
+    d.className='pill'; d.textContent=y;
+    d.onclick=()=>{ clearPills('year-pills'); d.classList.add('selected'); bState.year=y; };
+    yp.appendChild(d);
+  }
+}
+
+function selectBrand(brand,el){
+  clearPills('brand-pills'); el.classList.add('selected');
+  bState.brand=brand==='other'?'':brand;
+  const custom=document.getElementById('brand-custom');
+  if(brand==='other'){ custom.style.display='block'; custom.focus(); }
+  else { custom.style.display='none'; }
+  const mp=document.getElementById('model-pills');
+  const mcustom=document.getElementById('model-custom');
+  const models=BRAND_MODELS[brand]||[];
+  mp.innerHTML=''; mcustom.style.display='none'; mcustom.value='';
+  if(!models.length){ mcustom.style.display='block'; }
+  else{
+    models.forEach(m=>{
+      const d=document.createElement('div');
+      const isOther=m.name.startsWith('기타');
+      d.innerHTML=isOther?`<span>${m.name}</span>`:`<span>${m.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);margin-left:4px;">${m.cc}cc</span>`;
+      d.className='pill';
+      d.onclick=()=>{
+        clearPills('model-pills'); d.classList.add('selected');
+        if(isOther){
+          mcustom.style.display='block'; mcustom.focus();
+          bState.model=''; bState.cc=0;
+          clearPills('cc-pills');
+          document.getElementById('cc-custom').style.display='block';
+          document.getElementById('cat-preview').style.display='none';
+        } else {
+          mcustom.style.display='none';
+          bState.model=m.name; bState.cc=m.cc;
+          clearPills('cc-pills');
+          document.getElementById('cc-custom').style.display='none';
+          document.getElementById('cc-custom').value='';
+          document.querySelectorAll('#cc-pills .pill').forEach(p=>{ if(parseInt(p.dataset.cc)===m.cc) p.classList.add('selected'); });
+          const cat=detectCategory(bState.brand,m.name);
+          const prev=document.getElementById('cat-preview');
+          prev.textContent=CAT_NAMES[cat]||''; prev.style.display='block';
+        }
+      };
+      mp.appendChild(d);
+    });
+  }
+}
+
+function selectCC(val,el){
+  clearPills('cc-pills'); el.classList.add('selected');
+  const c=document.getElementById('cc-custom');
+  if(val==='other'){ c.style.display='block'; c.focus(); bState.cc=0; }
+  else { c.style.display='none'; bState.cc=val; }
+}
+
+function setOdo(val,el){
+  clearPills(el.parentElement); el.classList.add('selected');
+  const inp=document.getElementById('bike-odo');
+  if(val===-1){ inp.value=''; inp.focus(); }
+  else { inp.value=val; }
+}
+
+function addBike(){
+  const brand=bState.brand||document.getElementById('brand-custom').value.trim();
+  const model=bState.model||document.getElementById('model-custom').value.trim();
+  if(!brand||!model){ alert('Vui lòng chọn hoặc nhập hãng xe và dòng xe.'); return; }
+  const cc=bState.cc||parseInt(document.getElementById('cc-custom').value)||0;
+  const odo=parseInt(document.getElementById('bike-odo').value)||0;
+  D.bikes.push({
+    id:Date.now(), brand, model,
+    year:bState.year||new Date().getFullYear(),
+    cc, odometer:odo,
+    color:document.getElementById('bike-color').value,
+    plate:document.getElementById('bike-plate').value,
+    consumables:makeConsumables(brand,model)
+  });
+  save(); closeModal('m-bike'); renderDash(); renderBikes();
+}
+
+// 차량 수정
+function openEditBike(id){
+  const bike=D.bikes.find(b=>b.id===id); if(!bike) return;
+  editingBikeId=id;
+  document.getElementById('edit-bike-brand').value=bike.brand||'';
+  document.getElementById('edit-bike-model').value=bike.model||'';
+  document.getElementById('edit-bike-year').value=bike.year||'';
+  document.getElementById('edit-bike-cc').value=bike.cc||'';
+  document.getElementById('edit-bike-odo').value=bike.odometer||0;
+  document.getElementById('edit-bike-plate').value=bike.plate||'';
+  document.getElementById('edit-bike-color').value=bike.color||'';
+  openModal('m-edit-bike');
+}
+
+function saveEditBike(){
+  const bike=D.bikes.find(b=>b.id===editingBikeId); if(!bike) return;
+  const brand=document.getElementById('edit-bike-brand').value.trim();
+  const model=document.getElementById('edit-bike-model').value.trim();
+  if(!brand||!model){ alert('Hãng xe và dòng xe là bắt buộc.'); return; }
+  bike.brand=brand; bike.model=model;
+  bike.year=parseInt(document.getElementById('edit-bike-year').value)||bike.year;
+  bike.cc=parseInt(document.getElementById('edit-bike-cc').value)||bike.cc;
+  bike.odometer=parseInt(document.getElementById('edit-bike-odo').value)||0;
+  bike.plate=document.getElementById('edit-bike-plate').value;
+  bike.color=document.getElementById('edit-bike-color').value;
+  save(); closeModal('m-edit-bike'); renderBikes(); renderDash();
+}
+
+// ═══════════════════════════════════════════
+//  소모품 & 정비
+// ═══════════════════════════════════════════
+function renderConsumables(){
+  _renderConsumablesCore();
+  renderExtraSection();
+}
+
+function _renderConsumablesCore(){
+  const tabs=document.getElementById('c-bike-tabs');
+  const el=document.getElementById('c-content');
+  if(!D.bikes.length){
+    tabs.innerHTML='';
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">차량을 먼저 등록하세요</div></div>`;
+    return;
+  }
+  if(cState.bikeIdx>=D.bikes.length) cState.bikeIdx=0;
+  tabs.innerHTML=`<div class="pill-group">${D.bikes.map((b,i)=>`<div class="pill ${i===cState.bikeIdx?'selected':''}" onclick="switchCBike(${i})">${b.brand} ${b.model}</div>`).join('')}</div>`;
+  const bike=D.bikes[cState.bikeIdx];
+  el.innerHTML=`
+    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} 소모품</span><div class="sec-line"></div></div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">현재 주행거리 <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
+    <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
+}
+
+function consumableCard(c,km){
+  const used=km-c.lastKm;
+  const pct=Math.min(100,Math.max(0,Math.round(used/c.km*100)));
+  const remain=c.km-used;
+  const cls=pct>=100?'danger':pct>=80?'warn':'ok';
+  const fillColor=pct>=100?'var(--red)':pct>=80?'var(--accent)':'var(--green)';
+  const tag=pct>=100?'🚨 Cần thay ngay':pct>=80?'⚠ Sắp thay':'✓ Tốt';
+  return `<div class="c-item ${cls}" onclick="openConsumModal('${c.id}')">
+    <div class="c-icon-big">${c.icon}</div>
+    <div class="c-name">${c.name}</div>
+    <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Chưa có'}<br>주기: ${c.km.toLocaleString()} km<br>${remain>0?'Còn lại: '+remain.toLocaleString()+' km':''}</div>
+    <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
+      <span class="c-tag ${cls}" style="font-size:9px;">${tag}</span>
+      <button class="btn btn-sm" style="padding:2px 6px;font-size:10px;" onclick="event.stopPropagation();openEditConsumable('${c.id}')">✏</button>
+    </div>
+  </div>`;
+}
+
+function switchCBike(idx){ cState.bikeIdx=idx; renderConsumables(); }
+
+function openConsumModal(cId){
+  if(!D.bikes.length) return;
+  const bike=D.bikes[cState.bikeIdx];
+  const c=bike.consumables.find(x=>x.id===cId);
+  cState.cId=cId;
+  document.getElementById('mc-title').textContent=c.name+' — 교체 기록';
+  document.getElementById('mc-current-km').textContent=bike.odometer.toLocaleString();
+  const km=bike.odometer;
+  const pp=document.getElementById('mc-km-pills');
+  pp.innerHTML=[km,km>100?km-100:null,km>200?km-200:null].filter(Boolean).map(v=>`<div class="pill" onclick="setMcKm(${v},this)">${v.toLocaleString()} km</div>`).join('');
+  document.getElementById('mc-km').value=km;
+  document.getElementById('mc-interval').value=c.km;
+  document.getElementById('mc-memo').value=c.memo||'';
+  clearPills('mc-interval-pills');
+  document.querySelectorAll('#mc-interval-pills .pill').forEach(p=>{ if(parseInt(p.textContent)===c.km) p.classList.add('selected'); });
+  mcDateVal=todayStr();
+  document.getElementById('mc-date-input').style.display='none';
+  openModal('m-consumable');
+}
+
+function setMcKm(val,el){ clearPills('mc-km-pills'); el.classList.add('selected'); document.getElementById('mc-km').value=val; }
+function selectMcDate(type,el){
+  clearPills(el.parentElement); el.classList.add('selected');
+  const inp=document.getElementById('mc-date-input');
+  if(type==='pick'){ inp.style.display='block'; inp.value=todayStr(); }
+  else { inp.style.display='none'; mcDateVal=type==='today'?todayStr():yesterdayStr(); }
+}
+function selectMcInterval(val,el){ clearPills('mc-interval-pills'); el.classList.add('selected'); document.getElementById('mc-interval').value=val; }
+function setMcMemo(val,el){ clearPills('mc-shop-pills'); el.classList.add('selected'); document.getElementById('mc-memo').value=val; }
+
+function saveConsumable(){
+  const bike=D.bikes[cState.bikeIdx];
+  const c=bike.consumables.find(x=>x.id===cState.cId);
+  const kmVal=parseInt(document.getElementById('mc-km').value)||bike.odometer;
+  const dateInp=document.getElementById('mc-date-input');
+  const date=dateInp.style.display!=='none'?dateInp.value:mcDateVal;
+  c.lastKm=kmVal; c.lastDate=date;
+  c.km=parseInt(document.getElementById('mc-interval').value)||c.km;
+  c.memo=document.getElementById('mc-memo').value;
+  D.history.push({id:Date.now(),bikeId:bike.id,date,km:kmVal,type:'소모품교체',desc:c.name+' 교체'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
+  save(); closeModal('m-consumable'); renderConsumables(); renderDash();
+}
+
+// 소모품 수정
+function openEditConsumable(cId){
+  const bike=D.bikes[cState.bikeIdx];
+  const c=bike.consumables.find(x=>x.id===cId);
+  editingCId=cId;
+  document.getElementById('m-edit-c-title').textContent=c.name+' 수정';
+  document.getElementById('edit-c-km').value=c.lastKm||0;
+  document.getElementById('edit-c-date').value=c.lastDate||todayStr();
+  document.getElementById('edit-c-interval').value=c.km;
+  document.getElementById('edit-c-memo').value=c.memo||'';
+  clearPills('edit-c-interval-pills');
+  document.querySelectorAll('#edit-c-interval-pills .pill').forEach(p=>{ if(parseInt(p.textContent.replace(',',''))===c.km) p.classList.add('selected'); });
+  openModal('m-edit-consumable');
+}
+function setEditCInterval(val,el){ clearPills('edit-c-interval-pills'); el.classList.add('selected'); document.getElementById('edit-c-interval').value=val; }
+function updateConsumable(){
+  const bike=D.bikes[cState.bikeIdx];
+  const c=bike.consumables.find(x=>x.id===editingCId);
+  c.lastKm=parseInt(document.getElementById('edit-c-km').value)||0;
+  c.lastDate=document.getElementById('edit-c-date').value;
+  c.km=parseInt(document.getElementById('edit-c-interval').value)||c.km;
+  c.memo=document.getElementById('edit-c-memo').value;
+  save(); closeModal('m-edit-consumable'); renderConsumables();
+}
+
+// 기타 정비 섹션
+function renderExtraSection(){
+  const el=document.getElementById('c-extra-section');
+  if(!D.bikes.length){ el.innerHTML=''; return; }
+  const bike=D.bikes[cState.bikeIdx];
+  const logs=D.history.filter(l=>l.bikeId==bike.id&&l.type!=='소모품교체').sort((a,b)=>b.date.localeCompare(a.date));
+  const typeBadge={'정기점검':'badge-maint','수리':'badge-repair','세차':'badge-other','튜닝':'badge-cons','기타':'badge-other'};
+  el.innerHTML=`
+    <div class="sec-header" style="margin-top:8px;">
+      <span class="sec-title">기타 정비</span><div class="sec-line"></div>
+      <button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ 추가</button>
+    </div>
+    ${!logs.length
+      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">기타 정비 기록이 없습니다</div>`
+      :`<div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;"><table class="log-table">
+          <thead><tr><th>날짜</th><th>유형</th><th>내용</th><th>km</th><th>비용</th><th>정비소</th><th></th></tr></thead>
+          <tbody>${logs.map(l=>`<tr>
+            <td class="mono">${l.date}</td>
+            <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
+            <td>${l.desc||'—'}</td>
+            <td class="mono">${l.km?l.km.toLocaleString():'-'}</td>
+            <td class="mono">${l.cost?'₫'+parseInt(l.cost).toLocaleString():'-'}</td>
+            <td style="color:var(--text-dim)">${l.shop||'—'}</td>
+            <td style="display:flex;gap:4px;">
+              <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">삭제</button>
+            </td>
+          </tr>`).join('')}</tbody>
+        </table></div></div>`
+    }`;
+}
+
+function openExtraModal(editId=null){
+  editingExtraId=editId;
+  document.getElementById('m-extra-title').textContent=editId?'기타 정비 수정':'기타 정비 추가';
+  clearPills('m-extra');
+  extraDateVal=todayStr();
+  document.getElementById('extra-date-input').style.display='none';
+  document.getElementById('extra-desc').value='';
+  document.getElementById('extra-type').value='';
+  document.getElementById('extra-km').value=D.bikes[cState.bikeIdx]?.odometer||'';
+  document.getElementById('extra-cost').value='';
+  document.getElementById('extra-shop').value='';
+  if(editId){
+    const log=D.history.find(l=>l.id===editId);
+    if(log){
+      document.getElementById('extra-desc').value=log.desc||'';
+      document.getElementById('extra-type').value=log.type||'';
+      document.getElementById('extra-km').value=log.km||'';
+      document.getElementById('extra-cost').value=log.cost||'';
+      document.getElementById('extra-shop').value=log.shop||'';
+      extraDateVal=log.date;
+    }
+  }
+  openModal('m-extra');
+}
+function selectExtraType(val,el){ clearPills(el.parentElement); el.classList.add('selected'); document.getElementById('extra-type').value=val; }
+function selectExtraDate(type,el){
+  clearPills(el.parentElement); el.classList.add('selected');
+  const inp=document.getElementById('extra-date-input');
+  if(type==='pick'){ inp.style.display='block'; inp.value=todayStr(); }
+  else { inp.style.display='none'; extraDateVal=type==='today'?todayStr():yesterdayStr(); }
+}
+function setExtraDesc(val,el){ clearPills('extra-desc-pills'); el.classList.add('selected'); document.getElementById('extra-desc').value=val; }
+function setExtraCost(val,el){ clearPills('extra-cost-pills'); el.classList.add('selected'); document.getElementById('extra-cost').value=val; }
+function setExtraShop(val,el){ clearPills('extra-shop-pills'); el.classList.add('selected'); document.getElementById('extra-shop').value=val; }
+function saveExtra(){
+  const bike=D.bikes[cState.bikeIdx]; if(!bike) return;
+  const dateInp=document.getElementById('extra-date-input');
+  const date=dateInp.style.display!=='none'?dateInp.value:extraDateVal;
+  const record={bikeId:bike.id,date,km:parseInt(document.getElementById('extra-km').value)||0,type:document.getElementById('extra-type').value||'기타',desc:document.getElementById('extra-desc').value,cost:document.getElementById('extra-cost').value,shop:document.getElementById('extra-shop').value};
+  if(editingExtraId!==null){
+    const idx=D.history.findIndex(l=>l.id===editingExtraId);
+    if(idx>-1) D.history[idx]={...D.history[idx],...record};
+  } else { D.history.push({id:Date.now(),...record}); }
+  save(); closeModal('m-extra'); renderExtraSection(); renderDash();
+}
+
+// ═══════════════════════════════════════════
+//  주행거리
+// ═══════════════════════════════════════════
+function renderRiding(){
+  const el=document.getElementById('odo-cards');
+  if(!D.bikes.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">🏍</div><div class="empty-text">차량을 먼저 등록하세요</div></div>`; return; }
+  el.innerHTML=D.bikes.map(bike=>{
+    const alerts=bike.consumables.filter(c=>(bike.odometer-c.lastKm)/c.km>=0.8);
+    const urgents=alerts.filter(c=>(bike.odometer-c.lastKm)/c.km>=1);
+    const warns=alerts.filter(c=>{ const p=(bike.odometer-c.lastKm)/c.km; return p>=0.8&&p<1; });
+    return `<div class="bike-card" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+        <div><div class="bike-name">${bike.brand} ${bike.model}</div><div class="bike-meta">${bike.year}${bike.cc?' · '+bike.cc+'cc':''}${bike.plate?' · '+bike.plate:''}</div></div>
+        <div style="text-align:right;"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px;">현재 누적</div><div style="font-family:'JetBrains Mono',monospace;font-size:26px;color:var(--accent);line-height:1;">${bike.odometer.toLocaleString()}</div><div style="font-size:10px;color:var(--text-dim);">km</div></div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;">
+        <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">누적 주행거리 업데이트</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <input type="number" class="num-input-styled" id="odo-input-${bike.id}" value="${bike.odometer}" style="width:150px;">
+          <span style="font-size:13px;color:var(--text-dim);">km</span>
+          <button class="btn btn-primary" onclick="updateOdometer(${bike.id})">업데이트</button>
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:7px;">계기판의 현재 누적 주행거리를 입력하세요</div>
+      </div>
+      ${alerts.length?`
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">소모품 알림</div>
+        ${urgents.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">${c.icon} ${c.name}</span><span class="c-tag danger">🚨 교체 필요</span></div>`).join('')}
+        ${warns.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">${c.icon} ${c.name}</span><span class="c-tag warn">⚠ 곧 교체</span></div>`).join('')}
+      </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--green);">✓ 모든 소모품 양호</div>`}
+    </div>`;
+  }).join('');
+}
+
+function updateOdometer(bikeId){
+  const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  const newKm=parseInt(document.getElementById('odo-input-'+bikeId).value)||0;
+  if(newKm<bike.odometer){ if(!confirm(`현재(${bike.odometer.toLocaleString()} km).\nBạn có muốn tiếp tục không?`)) return; }
+  bike.odometer=newKm; save(); renderRiding(); renderDash();
+}
+
+// ═══════════════════════════════════════════
+//  정비이력
+// ═══════════════════════════════════════════
+function renderHistory(){
+  const bf=document.getElementById('hfilt-bike');
+  bf.innerHTML='<option value="">Tất cả xe</option>'+D.bikes.map(b=>`<option value="${b.id}">${b.brand} ${b.model}</option>`).join('');
+  const bfv=bf.value, tfv=document.getElementById('hfilt-type').value;
+  let logs=[...D.history].sort((a,b)=>b.date.localeCompare(a.date));
+  if(bfv) logs=logs.filter(l=>l.bikeId==bfv);
+  if(tfv) logs=logs.filter(l=>l.type===tfv);
+  const el=document.getElementById('history-table');
+  const typeBadge={'소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">정비 기록이 없습니다</div></div>`; return; }
+  el.innerHTML=`<table class="log-table"><thead><tr><th>날짜</th><th>차량</th><th>유형</th><th>내용</th><th>km</th><th>비용</th><th>정비소</th><th></th></tr></thead><tbody>
+    ${logs.map(l=>{
+      const b=D.bikes.find(x=>x.id==l.bikeId);
+      return `<tr>
+        <td class="mono">${l.date}</td>
+        <td style="color:var(--text-dim);white-space:nowrap;">${b?b.brand+' '+b.model:'Xe đã xóa'}</td>
+        <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
+        <td>${l.desc||'—'}</td>
+        <td class="mono">${l.km?l.km.toLocaleString():'-'}</td>
+        <td class="mono">${l.cost?'₫'+parseInt(l.cost).toLocaleString():'-'}</td>
+        <td style="color:var(--text-dim)">${l.shop||'—'}</td>
+        <td style="display:flex;gap:4px;">
+          <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">삭제</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+function openEditHistory(id){
+  const log=D.history.find(l=>l.id===id); if(!log) return;
+  editingHistoryId=id;
+  document.getElementById('edit-h-date').value=log.date||todayStr();
+  document.getElementById('edit-h-km').value=log.km||'';
+  document.getElementById('edit-h-type').value=log.type||'기타';
+  document.getElementById('edit-h-desc').value=log.desc||'';
+  document.getElementById('edit-h-cost').value=log.cost||'';
+  document.getElementById('edit-h-shop').value=log.shop||'';
+  openModal('m-edit-history');
+}
+function updateHistory(){
+  const idx=D.history.findIndex(l=>l.id===editingHistoryId); if(idx===-1) return;
+  D.history[idx]={...D.history[idx],date:document.getElementById('edit-h-date').value,km:parseInt(document.getElementById('edit-h-km').value)||0,type:document.getElementById('edit-h-type').value,desc:document.getElementById('edit-h-desc').value,cost:document.getElementById('edit-h-cost').value,shop:document.getElementById('edit-h-shop').value};
+  save(); closeModal('m-edit-history'); renderHistory(); renderExtraSection();
+}
+function deleteHistory(id){
+  if(!confirm('Bạn có muốn xóa lịch sử này không?')) return;
+  D.history=D.history.filter(l=>l.id!==id);
+  save(); renderHistory(); renderExtraSection();
+}
+
+// ═══════════════════════════════════════════
+//  백업
+// ═══════════════════════════════════════════
+function renderBackupPage(){
+  const el=document.getElementById('backup-stats');
+  const lastBackup=localStorage.getItem('mg2-last-backup');
+  el.innerHTML=`
+    <div class="backup-stat-row"><span>등록 차량</span><span class="backup-stat-val">${D.bikes.length}대</span></div>
+    <div class="backup-stat-row"><span>정비 이력</span><span class="backup-stat-val">${D.history.length}건</span></div>
+    <div class="backup-stat-row"><span>마지막 백업</span><span class="backup-stat-val" style="font-size:11px;">${lastBackup||'Chưa có'}</span></div>`;
+}
+function showBackupToast(msg,type='success'){
+  const t=document.getElementById('backup-toast');
+  t.textContent=msg; t.className=`backup-toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`moto-garage-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  localStorage.setItem('mg2-last-backup',new Date().toLocaleString('ko-KR'));
+  showBackupToast('✓ File đã được tải xuống');
+  renderBackupPage();
+}
+function importJSON(event){
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const imported=JSON.parse(e.target.result);
+      if(!imported.bikes||!imported.history) throw new Error('형식 오류');
+      if(!confirm(`백업을 불러오면 현재 데이터가 교체됩니다.\n차량 ${imported.bikes.length} xe, bảo dưỡng: ${imported.history.length} bản\n\nBạn có muốn tiếp tục không?`)) return;
+      D=imported; save();
+      showBackupToast('✓ Dữ liệu đã được khôi phục');
+      renderBackupPage(); renderDash();
+    } catch(err){ showBackupToast('✗ Định dạng file không hợp lệ','error'); }
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+function confirmReset(){
+  if(!confirm('Xóa toàn bộ dữ liệu?\nKhông thể hoàn tác.')) return;
+  if(!confirm('Bạn đã sao lưu chưa?')) return;
+  D={bikes:[],rides:[],history:[]}; save();
+  showBackupToast('Dữ liệu đã được xóa','error');
+  renderBackupPage(); renderDash(); renderBikes();
+}
+
+// ═══════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════
+function clearPills(container){
+  const el=typeof container==='string'?document.getElementById(container):container;
+  if(el) el.querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));
+}
+
+// ═══════════════════════════════════════════
+//  PWA
+// ═══════════════════════════════════════════
+(function(){
+  const SW=`const CACHE='moto-vn-v1';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  if('serviceWorker' in navigator){
+    const blob=new Blob([SW],{type:'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
+  }
+})();
+
+// Manifest
+(function(){
+  const m={name:'MOTO GARAGE',short_name:'MOTO',start_url:'/moto-garage/',display:'standalone',background_color:'#0c0c0d',theme_color:'#0c0c0d',icons:[{src:'/moto-garage/icon-192.png',sizes:'192x192',type:'image/png'},{src:'/moto-garage/icon-512.png',sizes:'512x512',type:'image/png'}]};
+  const el=document.querySelector('link[rel="manifest"]');
+  if(el){ const b=new Blob([JSON.stringify(m)],{type:'application/json'}); el.href=URL.createObjectURL(b); }
+})();
+
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(!sessionStorage.getItem('pwa-dismissed')&&!window.matchMedia('(display-mode:standalone)').matches){ setTimeout(()=>document.getElementById('pwa-banner').classList.add('show'),2000); } });
+window.addEventListener('appinstalled',()=>{ document.getElementById('pwa-banner').classList.remove('show'); const t=document.getElementById('pwa-toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); });
+function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(r=>{ if(r.outcome==='accepted') document.getElementById('pwa-banner').classList.remove('show'); deferredPrompt=null; }); } else { alert('Trên Safari, nhấn nút Chia sẻ → "Thêm vào màn hình chính".'); } }
+function dismissInstall(){ document.getElementById('pwa-banner').classList.remove('show'); sessionStorage.setItem('pwa-dismissed','1'); }
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+renderDash();
+</script>
+</body>
+</html>
