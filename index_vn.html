@@ -248,6 +248,89 @@ option{background:var(--surface2);}
     text-align:center; padding:24px;
     color:var(--text-dim); font-size:13px;
   }
+
+  /* ── WEATHER MODAL ── */
+  .weather-modal {
+    background:var(--surface);
+    border:1px solid var(--border-bright);
+    border-radius:14px;
+    width:calc(100% - 32px);
+    max-width:420px;
+    overflow:hidden;
+    animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes slideUp {
+    from{opacity:0;transform:translateY(30px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  .weather-header {
+    padding:18px 18px 14px;
+    display:flex;align-items:flex-start;justify-content:space-between;
+  }
+  .weather-city {
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:4px;
+  }
+  .weather-main {
+    display:flex;align-items:center;gap:12px;
+  }
+  .weather-icon { font-size:44px;line-height:1; }
+  .weather-temp {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:48px;line-height:1;color:var(--text);
+  }
+  .weather-temp-unit {
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;color:var(--accent);vertical-align:super;
+  }
+  .weather-desc {
+    font-size:13px;color:var(--text-dim);margin-top:2px;
+  }
+  .weather-meta {
+    display:flex;gap:12px;margin-top:8px;
+  }
+  .weather-meta-item {
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;color:var(--text-dim);
+    display:flex;align-items:center;gap:4px;
+  }
+  .weather-body { padding:0 18px 16px; }
+  .riding-condition {
+    border-radius:8px;padding:14px;margin-bottom:10px;
+  }
+  .riding-condition.good {
+    background:var(--green-dim);border:1px solid rgba(56,168,104,0.25);
+  }
+  .riding-condition.caution {
+    background:var(--accent-dim);border:1px solid rgba(232,160,32,0.3);
+  }
+  .riding-condition.danger {
+    background:var(--red-dim);border:1px solid rgba(208,64,64,0.35);
+  }
+  .riding-condition-title {
+    font-size:13px;font-weight:700;margin-bottom:8px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .riding-tip {
+    font-size:12px;line-height:1.7;color:var(--text-dim);
+  }
+  .riding-tip-item {
+    display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;
+  }
+  .weather-footer {
+    padding:12px 18px 16px;
+    border-top:1px solid var(--border);
+    display:flex;gap:8px;justify-content:flex-end;align-items:center;
+  }
+  .weather-dismiss {
+    font-size:11px;color:var(--text-muted);
+    background:none;border:none;cursor:pointer;padding:4px 8px;
+    text-decoration:underline;
+  }
+  .weather-dismiss:hover{color:var(--text-dim);}
+  .weather-loading {
+    padding:40px 20px;text-align:center;
+  }
 </style>
 </head>
 <body>
@@ -710,6 +793,321 @@ function yesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return d.
 // ═══════════════════════════════════════════
 //  소모품 기본 데이터
 // ═══════════════════════════════════════════
+// ─────────────────────────────────────────
+//  오프라인 AI 가이드 데이터
+// ─────────────────────────────────────────
+const GUIDE_DATA = {
+  oil: {
+    sport: {
+      why: '고회전 스포츠 엔진은 오일이 빠르게 열화됩니다. 오래된 오일은 윤활 성능이 떨어져 엔진 마모가 급격히 증가하고, 최악의 경우 엔진 고착으로 이어질 수 있습니다.',
+      check: '① 오일 레벨 게이지로 양 확인 (MIN~MAX 사이 유지)\n② 오일 색이 검게 탁하거나 금속 입자가 보이면 즉시 교체',
+      cost: '오일 + 필터 교체: 200,000 ~ 400,000 ₫\n(Motul 7100, Shell Advance Ultra 등 풀합성유 권장)',
+      tip: '스포츠 바이크는 트랙 주행 시 일반 주기의 절반으로 줄이세요. 풀합성 10W-40 또는 제조사 권장 점도를 사용하세요.'
+    },
+    naked: {
+      why: '엔진오일은 엔진 내부 부품을 보호하는 가장 기본적인 소모품입니다. 교체 시기를 놓치면 슬러지가 쌓여 엔진 수명이 크게 단축됩니다.',
+      check: '① 오일 창(sight glass) 또는 레벨 게이지로 양 확인\n② 색이 검고 탁하면 교체 시기 초과',
+      cost: '오일 + 필터 교체: 150,000 ~ 300,000 ₫\n(반합성 또는 풀합성 10W-40)',
+      tip: '엔진이 식은 상태에서 측정해야 정확한 양을 확인할 수 있습니다.'
+    },
+    adventure: {
+      why: '장거리 투어 바이크는 다양한 조건에서 혹독하게 사용됩니다. 오일 교체를 장거리 출발 전에 반드시 점검하세요.',
+      check: '① 출발 전 차가운 상태에서 레벨 확인\n② 오일이 탁하거나 유백색이면 냉각수 혼입 의심 — 즉시 점검 필요',
+      cost: '오일 + 필터 교체: 200,000 ~ 350,000 ₫\n(장거리용 고급 합성유 권장)',
+      tip: '오프로드 주행이 잦다면 주기를 20% 단축하세요.'
+    },
+    classic: {
+      why: '공기냉각/저회전 엔진이라도 오일 열화는 진행됩니다. 오래된 오일은 방청 성능이 떨어져 내부 부식이 생길 수 있습니다.',
+      check: '① 딥스틱으로 오일 양과 색 확인\n② 탄 냄새가 나면 교체 시기 초과',
+      cost: '오일 + 필터 교체: 120,000 ~ 250,000 ₫',
+      tip: '주행거리가 적어도 최소 연 1회는 교체하세요. 오일은 시간이 지나도 산화됩니다.'
+    }
+  },
+  oil_f: {
+    sport: {
+      why: '막힌 오일 필터는 오일 순환을 방해해 엔진 오일 압력을 떨어뜨립니다. 고회전 스포츠 엔진에서는 치명적인 손상으로 이어질 수 있습니다.',
+      check: '① 오일 교체 시 필터도 함께 확인\n② 필터에 금속 이물질이 많으면 엔진 내부 점검 필요',
+      cost: '오일 필터 단품: 30,000 ~ 80,000 ₫\n(오일 교체와 함께 할 때 공임 절약)',
+      tip: '오일 교체 2회당 1회 필터 교체가 기본이지만, 스포츠 바이크는 매 오일 교체마다 교체 권장합니다.'
+    },
+    naked: {
+      why: '오일 필터는 엔진에서 나온 금속 입자와 오염 물질을 걸러줍니다. 필터가 막히면 바이패스 밸브가 열려 오염된 오일이 그대로 순환됩니다.',
+      check: '① 오일 교체 시 필터 상태 확인\n② 오래된 필터는 외부에서 변형이나 누유 흔적 확인',
+      cost: '오일 필터: 25,000 ~ 60,000 ₫',
+      tip: 'OEM 필터 또는 신뢰할 수 있는 브랜드 제품을 사용하세요. 저가 필터는 내부 체크밸브가 불량할 수 있습니다.'
+    },
+    adventure: {
+      why: '오프로드나 먼지 많은 환경에서는 오일 오염이 빠릅니다. 필터 막힘은 엔진 보호를 완전히 무력화시킵니다.',
+      check: '① 비포장 주행 후 오일 상태와 함께 점검\n② 오일이 빨리 까맣게 변하면 필터 막힘 의심',
+      cost: '오일 필터: 30,000 ~ 70,000 ₫',
+      tip: '오프로드 주행 비중이 높다면 오일 교체마다 필터도 함께 교체하세요.'
+    },
+    classic: {
+      why: '필터 교체 주기를 놓치면 오염된 오일이 계속 순환되어 엔진 수명이 단축됩니다.',
+      check: '① 오일 교체 시 함께 교체\n② 1만km 이상 교체하지 않았다면 즉시 교체',
+      cost: '오일 필터: 20,000 ~ 50,000 ₫',
+      tip: '오일 교체할 때 필터도 같이 교체하는 습관을 들이면 공임을 아낄 수 있습니다.'
+    }
+  },
+  spark: {
+    sport: {
+      why: '불량한 점화플러그는 불완전 연소를 일으켜 출력 저하, 연비 악화, 시동 불량의 원인이 됩니다. 고회전 엔진에서는 미스파이어로 엔진 충격까지 발생할 수 있습니다.',
+      check: '① 플러그 전극 색 확인: 밝은 회색=정상, 검정=연료과다, 흰색=희박혼합\n② 전극 간격이 규정치에서 벗어났는지 확인',
+      cost: '이리듐 플러그 교체: 80,000 ~ 200,000 ₫\n(스포츠 바이크는 이리듐/백금 플러그 권장)',
+      tip: '고성능 이리듐 플러그는 일반 플러그보다 수명이 2~3배 길고 점화 안정성이 높습니다.'
+    },
+    naked: {
+      why: '점화플러그가 마모되면 점화 에너지가 약해져 연비가 나빠지고 시동이 잘 안 걸립니다.',
+      check: '① 시동 걸기 힘들거나 공회전 불안정하면 점검\n② 플러그 전극 소모 및 갭 확인',
+      cost: '일반 플러그: 30,000 ~ 60,000 ₫\n이리듐 플러그: 60,000 ~ 120,000 ₫',
+      tip: '이리듐 플러그로 교체하면 일반 플러그 대비 수명이 길고 연비가 개선됩니다.'
+    },
+    adventure: {
+      why: '장거리 투어 중 점화플러그 불량으로 인한 엔진 문제는 외진 곳에서 발생할 수 있어 매우 위험합니다. 출발 전 반드시 점검하세요.',
+      check: '① 장거리 출발 전 점화플러그 상태 확인\n② 색 및 전극 마모 점검',
+      cost: '이리듐/백금 플러그: 60,000 ~ 150,000 ₫',
+      tip: '장거리 투어 전에는 플러그가 절반 이상 소진됐다면 미리 교체하는 것이 안전합니다.'
+    },
+    classic: {
+      why: '공냉/저배기량 엔진은 점화플러그 상태에 성능이 민감합니다. 오래된 플러그는 시동 불량의 주원인입니다.',
+      check: '① 시동이 잘 안 걸리면 플러그 먼저 확인\n② 탄소 퇴적 심하면 세척 또는 교체',
+      cost: '일반 플러그: 20,000 ~ 50,000 ₫',
+      tip: '플러그 교체는 DIY로도 쉽게 할 수 있습니다. 토크렌치로 규정 토크로 조이는 것이 중요합니다.'
+    }
+  },
+  chain: {
+    sport: {
+      why: '늘어진 체인은 주행 중 끊어질 수 있어 매우 위험합니다. 스프로킷도 함께 마모되므로 세트 교체가 기본입니다. 체인 절단 시 뒷바퀴 잠김으로 전복 사고로 이어집니다.',
+      check: '① 체인 중간 아래쪽 올렸을 때 25mm 이상 움직이면 교체\n② 스프로킷 이빨이 뾰족해졌거나 한쪽으로 마모됐으면 교체\n③ 체인에 뻑뻑한 링크(stiff link)가 있으면 교체',
+      cost: '체인+스프로킷 세트: 600,000 ~ 1,500,000 ₫\n(DID, RK, EK 등 품질 브랜드 권장)',
+      tip: '1,000km마다 체인 오일을 치고, 500km마다 장력을 점검하세요. 우천 후에는 반드시 윤활하세요.'
+    },
+    naked: {
+      why: '체인 장력 불량은 엔진 출력 손실과 연비 저하를 일으킵니다. 끊어지면 뒷바퀴 잠김으로 전복 위험이 있습니다.',
+      check: '① 체인 처짐 25~35mm 이내 유지\n② 스프로킷 이빨 마모 확인\n③ 체인 길이 방향으로 당겼을 때 늘어짐 확인',
+      cost: '체인+스프로킷 세트: 500,000 ~ 1,200,000 ₫',
+      tip: '체인 오일은 주행 후 체인이 따뜻할 때 치면 침투력이 좋습니다.'
+    },
+    adventure: {
+      why: '비포장도로 주행은 체인 마모를 빠르게 진행시킵니다. 진흙, 모래, 물이 체인에 들어가면 마모가 2~3배 빠릅니다.',
+      check: '① 비포장 주행 후 반드시 체인 세척 및 윤활\n② 장거리 투어 전 장력 및 마모 상태 확인',
+      cost: '체인+스프로킷 세트: 600,000 ~ 1,400,000 ₫',
+      tip: '오프로드 주행이 많다면 O링/X링 체인을 사용하고 주기를 단축하세요.'
+    },
+    classic: {
+      why: '오래된 체인은 소음 증가와 진동의 원인이 됩니다. 단계적으로 늘어나다가 갑자기 끊어질 수 있습니다.',
+      check: '① 체인 처짐량 확인 (모델별 규정값 참조)\n② 녹이나 링크 뻑뻑함 확인',
+      cost: '체인+스프로킷 세트: 400,000 ~ 900,000 ₫',
+      tip: '체인 윤활을 주기적으로 해주면 수명을 크게 연장할 수 있습니다.'
+    }
+  },
+  brake_f: {
+    sport: {
+      why: '브레이크패드는 안전에 직결된 부품입니다. 마모된 패드는 제동력이 급격히 떨어지고, 금속이 디스크에 직접 닿으면 디스크까지 손상됩니다. 특히 고속 주행 중 브레이크 불량은 치명적입니다.',
+      check: '① 패드 잔량 확인: 홈이 1~2mm 이하면 즉시 교체\n② 브레이크 잡을 때 금속 긁히는 소리가 나면 즉시 교체\n③ 브레이크 레버 유격이 늘어났는지 확인',
+      cost: '전방 브레이크패드 교체: 150,000 ~ 400,000 ₫\n(신터드 패드 권장)',
+      tip: '브레이크패드는 양쪽을 동시에 교체하세요. 한쪽만 교체하면 제동력 불균형이 생깁니다.'
+    },
+    naked: {
+      why: '마모된 브레이크패드는 제동 거리를 크게 늘립니다. 시내 주행에서도 갑작스러운 상황에 대응하지 못할 수 있습니다.',
+      check: '① 패드 두께 2mm 이하면 교체\n② 브레이크 잡을 때 진동이나 소음이 생기면 점검',
+      cost: '전방 브레이크패드: 100,000 ~ 300,000 ₫',
+      tip: '시내 주행이 많으면 패드 마모가 빠릅니다. 3~6개월에 한 번씩 육안으로 확인하는 습관을 들이세요.'
+    },
+    adventure: {
+      why: '비포장도로와 내리막에서 브레이크를 많이 사용합니다. 마모된 패드는 오프로드에서 특히 위험합니다.',
+      check: '① 장거리 투어 전 패드 잔량 반드시 확인\n② 비포장 주행 후 디스크와 패드에 이물질 끼었는지 확인',
+      cost: '전방 브레이크패드: 150,000 ~ 350,000 ₫',
+      tip: '어드벤처 투어 전 패드가 절반 이상 소진됐다면 미리 교체하세요.'
+    },
+    classic: {
+      why: '크루저/클래식 바이크는 차체가 무거워 브레이크 부하가 큽니다. 패드 상태가 제동 안전에 직결됩니다.',
+      check: '① 패드 잔량 시각적 확인\n② 드럼 브레이크의 경우 조정 레버 위치로 마모 확인',
+      cost: '브레이크패드: 80,000 ~ 250,000 ₫',
+      tip: '크루저는 뒷 브레이크를 많이 사용하므로 후방 패드도 함께 점검하세요.'
+    }
+  },
+  brake_r: {
+    sport: {
+      why: '후방 브레이크는 코너링 안정성과 직결됩니다. 스포츠 주행 시 전후 브레이크 밸런스가 중요하므로 후방 패드 상태도 반드시 관리하세요.',
+      check: '① 후방 패드 홈 깊이 확인\n② 브레이크 페달 유격 확인\n③ 리어 디스크에 깊은 홈이 생겼는지 확인',
+      cost: '후방 브레이크패드: 100,000 ~ 300,000 ₫',
+      tip: '서킷 주행 시 전방 패드 마모가 빠릅니다. 서킷 후에는 반드시 점검하세요.'
+    },
+    naked: {
+      why: '후방 브레이크 마모를 방치하면 디스크 손상으로 이어져 수리비가 크게 증가합니다.',
+      check: '① 후방 패드 두께 확인\n② 페달 밟을 때 떨림이나 소음 확인',
+      cost: '후방 브레이크패드: 80,000 ~ 250,000 ₫',
+      tip: '전방 패드 교체 시 후방도 함께 점검하면 공임을 절약할 수 있습니다.'
+    },
+    adventure: {
+      why: '오프로드에서는 후방 브레이크를 전방보다 더 많이 사용합니다. 마모가 전방보다 빠를 수 있습니다.',
+      check: '① 오프로드 주행 후 후방 패드 상태 확인\n② 모래/진흙이 패드에 박혀있는지 확인',
+      cost: '후방 브레이크패드: 100,000 ~ 300,000 ₫',
+      tip: '오프로드 후에는 브레이크 캘리퍼에 이물질이 끼었는지 세척하세요.'
+    },
+    classic: {
+      why: '크루저는 후방 브레이크 의존도가 높습니다. 마모된 패드는 제동 거리를 크게 늘립니다.',
+      check: '① 드럼 브레이크는 조정 와이어 위치로 마모 확인\n② 디스크 브레이크는 패드 두께 육안 확인',
+      cost: '후방 브레이크패드: 60,000 ~ 200,000 ₫',
+      tip: '후방 드럼 브레이크는 정기적인 캠 조정이 필요합니다.'
+    }
+  },
+  tire_f: {
+    sport: {
+      why: '타이어는 지면과 바이크를 연결하는 유일한 접점입니다. 마모된 타이어는 코너링 그립이 급격히 떨어져 미끄러짐 사고의 가장 큰 원인입니다. 특히 젖은 노면에서 위험합니다.',
+      check: '① 트레드 깊이 1.6mm 이하면 즉시 교체 (트레드 마모 지시선 확인)\n② 타이어 옆면 균열이나 불룩 튀어나온 부분 확인\n③ 공기압: 냉간 기준 전방 권장값 유지',
+      cost: '전방 타이어 교체: 600,000 ~ 1,500,000 ₫\n(Michelin Power, Pirelli Diablo 등)',
+      tip: '스포츠 타이어는 예열이 중요합니다. 처음 10km는 급격한 기울임을 삼가세요.'
+    },
+    naked: {
+      why: '트레드가 닳은 타이어는 빗길에서 수막현상(하이드로플래닝)이 발생해 제어 불능이 됩니다.',
+      check: '① 트레드 마모 지시선이 보이면 즉시 교체\n② 한쪽만 비정상적으로 마모됐으면 얼라인먼트 점검\n③ 공기압 주 1회 확인',
+      cost: '전방 타이어: 500,000 ~ 1,200,000 ₫',
+      tip: '공기압은 차가울 때 규정값으로 맞추세요. 공기압 부족은 타이어 수명을 크게 단축시킵니다.'
+    },
+    adventure: {
+      why: '비포장도로에서 마모된 타이어는 접지력이 없어 낙차 사고로 이어집니다. 장거리 출발 전 반드시 확인하세요.',
+      check: '① 트레드 깊이와 마모 상태 확인\n② 옆면 손상(가시, 돌 박힘)이 없는지 확인\n③ 비포장 주행용은 오프로드 패턴 남은 깊이 확인',
+      cost: '전방 타이어: 600,000 ~ 1,400,000 ₫\n(Metzeler Karoo, Michelin Anakee 등)',
+      tip: '온/오프로드 겸용 타이어는 공기압을 주행 환경에 따라 조절하세요.'
+    },
+    classic: {
+      why: '크루저 타이어는 차체 무게로 인해 마모가 고르게 진행됩니다. 마모된 타이어는 무거운 차체 제어를 어렵게 합니다.',
+      check: '① 트레드 마모 지시선 확인\n② 공기압 정기 점검 (저압 주행은 타이어 파손 위험)',
+      cost: '전방 타이어: 500,000 ~ 1,200,000 ₫',
+      tip: '크루저 타이어는 투어링용 장거리 타이어를 선택하면 수명이 길어집니다.'
+    }
+  },
+  tire_r: {
+    sport: {
+      why: '후방 타이어는 구동력을 전달하므로 전방보다 마모가 1.5~2배 빠릅니다. 마모된 후방 타이어는 가속 시 미끄러짐과 코너링 불안정을 일으킵니다.',
+      check: '① 트레드 중앙부가 평평해지면 교체 (스퀘어링 아웃)\n② 트레드 깊이 1.6mm 이하면 즉시 교체\n③ 공기압: 후방은 전방보다 높게 설정',
+      cost: '후방 타이어 교체: 700,000 ~ 1,800,000 ₫',
+      tip: '후방 타이어는 전방보다 약 2배 빠르게 마모됩니다. 전방 2회 교체 시 후방은 3회 교체가 기준입니다.'
+    },
+    naked: {
+      why: '후방 타이어 마모는 직선 가속 시 바퀴 떨림, 코너링 불안정, 빗길 미끄러짐의 원인입니다.',
+      check: '① 트레드 중앙부 평탄도 확인\n② 트레드 마모 지시선 확인',
+      cost: '후방 타이어: 600,000 ~ 1,400,000 ₫',
+      tip: '후방 타이어 교체 시 전방 상태도 함께 확인하세요.'
+    },
+    adventure: {
+      why: '어드벤처 바이크의 후방 타이어는 짐 적재 시 하중이 커서 마모가 빠릅니다. 비포장에서는 더욱 빠르게 닳습니다.',
+      check: '① 트레드 깊이와 비포장 패턴 마모 확인\n② 적재 상태에서 타이어 옆면 팽창 이상 없는지 확인',
+      cost: '후방 타이어: 700,000 ~ 1,600,000 ₫',
+      tip: '장거리 투어 전 후방 타이어가 절반 이상 닳았다면 미리 교체하세요.'
+    },
+    classic: {
+      why: '크루저의 후방 타이어는 넓고 무거워 마모 패턴이 고르지 않을 수 있습니다. 마모된 타이어는 핸들링 이상의 원인이 됩니다.',
+      check: '① 트레드 전체 마모 균일성 확인\n② 공기압 점검 (저압은 연비 저하 및 타이어 손상 원인)',
+      cost: '후방 타이어: 700,000 ~ 1,500,000 ₫',
+      tip: '넓은 후방 타이어는 공기압 부족 시 핸들이 무겁게 느껴집니다. 정기적으로 공기압을 확인하세요.'
+    }
+  },
+  coolant: {
+    sport: {
+      why: '냉각수는 시간이 지나면 방청 성분이 약해져 냉각 계통이 부식됩니다. 오래된 냉각수는 끓는점이 낮아져 과열(오버히트)을 일으킬 수 있습니다.',
+      check: '① 리저버 탱크 레벨이 MIN~MAX 사이인지 확인\n② 냉각수 색이 갈색으로 변했으면 교체 시기\n③ 라디에이터 호스에 균열이나 팽창 없는지 확인',
+      cost: '냉각수 교체: 100,000 ~ 200,000 ₫\n(Honda/Yamaha 순정 또는 동급 혼합 냉각수)',
+      tip: '냉각수는 반드시 증류수와 혼합하세요. 수돗물 사용은 스케일 형성으로 냉각 효율을 떨어뜨립니다.'
+    },
+    naked: {
+      why: '냉각수 부족이나 열화는 엔진 과열의 직접 원인입니다. 특히 정체 구간 저속 주행 시 과열 위험이 높아집니다.',
+      check: '① 정기적으로 리저버 탱크 레벨 확인\n② 냉각수 색 변화 확인 (초록/파랑에서 갈색으로 변하면 교체)',
+      cost: '냉각수 교체: 80,000 ~ 180,000 ₫',
+      tip: '냉각수 부족 시 절대 엔진이 뜨거울 때 라디에이터 캡을 열지 마세요. 화상 위험이 있습니다.'
+    },
+    adventure: {
+      why: '장거리 투어나 고지대 주행에서 냉각 계통이 중요합니다. 냉각수 열화는 고온 환경에서 과열을 일으킵니다.',
+      check: '① 장거리 투어 전 냉각수 레벨과 상태 확인\n② 호스 연결 부위 누수 흔적 확인',
+      cost: '냉각수 교체: 100,000 ~ 200,000 ₫',
+      tip: '예비 냉각수(소량)를 투어 시 지참하는 것이 좋습니다.'
+    },
+    classic: {
+      why: '수냉식 클래식 바이크의 냉각수 열화는 냉각 효율 저하와 내부 부식의 원인입니다.',
+      check: '① 리저버 레벨 확인\n② 라디에이터 외부 핀 막힘 없는지 확인',
+      cost: '냉각수 교체: 80,000 ~ 180,000 ₫',
+      tip: '냉각수는 주행거리보다 시간 기준(2년마다)으로 교체하는 것이 좋습니다.'
+    }
+  },
+  air_f: {
+    sport: {
+      why: '막힌 에어 필터는 흡기 저항을 증가시켜 출력 손실과 연비 악화를 일으킵니다. 더러운 공기가 엔진에 들어가면 실린더와 피스톤 마모가 가속됩니다.',
+      check: '① 필터를 꺼내 빛에 비춰봐서 빛이 통하지 않으면 교체\n② 손으로 두드렸을 때 먼지가 많이 나오면 교체\n③ 오일이나 습기에 젖어 있으면 즉시 교체',
+      cost: '에어 필터 교체: 80,000 ~ 200,000 ₫\n(K&N 리유저블 필터로 업그레이드 가능)',
+      tip: '비포장도로 주행 후에는 더 자주 점검하세요. K&N 타입 세척식 필터는 장기적으로 경제적입니다.'
+    },
+    naked: {
+      why: '에어 필터가 막히면 공연비가 틀어져 출력 저하와 연비 악화가 발생합니다.',
+      check: '① 필터 색이 많이 검게 변했으면 교체\n② 빛에 비춰 많이 막혔으면 교체',
+      cost: '에어 필터: 60,000 ~ 150,000 ₫',
+      tip: '먼지 많은 환경에서 자주 타면 주기를 절반으로 줄이세요.'
+    },
+    adventure: {
+      why: '비포장도로 주행 시 먼지와 모래가 에어 필터를 빠르게 막습니다. 막힌 필터는 출력 손실과 연료 소모 증가의 원인입니다.',
+      check: '① 비포장 주행 후 반드시 필터 점검\n② 먼지 많은 환경 주행 후 세척 또는 교체',
+      cost: '에어 필터: 80,000 ~ 200,000 ₫',
+      tip: '오프로드용 폼(foam) 타입 에어 필터는 세척 재사용이 가능해 장거리 투어에 경제적입니다.'
+    },
+    classic: {
+      why: '에어 필터 막힘은 공기 흡입 부족으로 연소 효율을 떨어뜨립니다. 연비가 나빠지고 검은 배기 연기가 나올 수 있습니다.',
+      check: '① 연비가 갑자기 나빠지면 에어 필터 확인\n② 검은 배기 연기가 나오면 필터 점검',
+      cost: '에어 필터: 40,000 ~ 120,000 ₫',
+      tip: '에어 클리너 박스도 함께 청소하면 효과적입니다.'
+    }
+  },
+  brake_oil: {
+    sport: {
+      why: '브레이크오일(DOT 4/5.1)은 흡습성이 있어 시간이 지나면 수분을 흡수합니다. 수분이 섞인 오일은 고온에서 기포를 발생시켜 베이퍼 록(브레이크 불량)을 일으킵니다. 고속 주행 중 브레이크 불량은 매우 위험합니다.',
+      check: '① 브레이크 레버/페달을 반복해서 빠르게 잡았다 놓았다 해서 스펀지 느낌이 나면 교체\n② 오일 색이 어둡게 변했으면 교체\n③ DOT4 기준 2년마다 교체 권장',
+      cost: '브레이크오일 교체: 80,000 ~ 200,000 ₫\n(Motul RBF 600/660, Castrol SRF 등 고비점 제품 권장)',
+      tip: '서킷 주행이나 고속 주행을 자주 한다면 DOT5.1 또는 레이싱용 고비점 오일을 사용하세요.'
+    },
+    naked: {
+      why: '브레이크오일 열화는 제동력 저하와 브레이크 페이드(브레이크 밟아도 안 서는 현상)의 원인입니다.',
+      check: '① 브레이크 레버 유격이 갑자기 늘어났으면 점검\n② 오일 창에서 색 확인 (투명→노란색→갈색으로 열화 진행)',
+      cost: '브레이크오일 교체: 60,000 ~ 150,000 ₫',
+      tip: '브레이크오일 교체는 에어 빼기(블리딩) 작업이 필요하므로 정비소에서 하는 것을 권장합니다.'
+    },
+    adventure: {
+      why: '장거리 투어나 내리막에서 브레이크를 많이 사용하면 오일 온도가 올라갑니다. 열화된 오일은 베이퍼 록을 일으킬 수 있습니다.',
+      check: '① 장거리 투어 전 브레이크오일 상태 확인\n② 오일 창에서 색과 레벨 확인',
+      cost: '브레이크오일 교체: 80,000 ~ 180,000 ₫',
+      tip: '투어 전 브레이크 성능이 이상하다면 반드시 오일 교체 후 출발하세요.'
+    },
+    classic: {
+      why: '브레이크오일은 시간이 지나면 수분을 흡수해 끓는점이 낮아집니다. 이는 오래된 클래식 바이크에서도 마찬가지입니다.',
+      check: '① 2년이 지났다면 무조건 교체\n② 브레이크 느낌이 스펀지처럼 물렁물렁하면 즉시 교체',
+      cost: '브레이크오일 교체: 60,000 ~ 150,000 ₫',
+      tip: '브레이크오일은 개봉 후 남은 것은 보관하지 말고 버리세요. 흡습성 때문에 빠르게 열화됩니다.'
+    }
+  }
+};
+
+function getGuide(consumableId, category) {
+  const catData = GUIDE_DATA[consumableId];
+  if (!catData) return null;
+  return catData[category] || catData['naked'] || null;
+}
+
+// 소모품 이름 맵 (localStorage 언어 무관)
+const C_NAMES = {
+  'oil':'Dầu máy',
+  'oil_f':'Lọc dầu',
+  'spark':'Bugi',
+  'chain':'Xích/Đĩa',
+  'brake_f':'Má phanh trước',
+  'brake_r':'Má phanh sau',
+  'tire_f':'Lốp trước',
+  'tire_r':'Lốp sau',
+  'coolant':'Nước làm mát',
+  'air_f':'Lọc gió',
+  'brake_oil':'Dầu phanh'
+};
+function getCName(id){ return C_NAMES[id] || id; }
+
+
 const CONSUMABLES = [
   {id:'oil',       icon:'🛢', name:'Dầu máy',         km:5000},
   {id:'oil_f',     icon:'🔩', name:'Lọc dầu',         km:10000},
@@ -1525,7 +1923,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-vn-v8';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-vn-v10';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
@@ -1577,13 +1975,16 @@ function migrateConsumableIntervals() {
 // ═══════════════════════════════════════════
 migrateConsumableIntervals(); // 기존 차량 공식 데이터 자동 적용
 renderDash();
+// 날씨 모달 자동 표시 (약간 딜레이)
+setTimeout(showWeatherModal, 800);
+
 
 // ─────────────────────────────────────────
 //  AI 가이드
 // ─────────────────────────────────────────
 var currentGuideId = null;
 
-async function openAiGuide(cId) {
+function openAiGuide(cId) {
   if(!D.bikes.length) return;
   const bike = D.bikes[cState.bikeIdx];
   const con = bike.consumables.find(x => x.id === cId);
@@ -1597,82 +1998,33 @@ async function openAiGuide(cId) {
 
   // 헤더 세팅
   document.getElementById('ai-guide-icon').textContent = con.icon;
-  document.getElementById('ai-guide-name').textContent = con.name;
+  document.getElementById('ai-guide-name').textContent = getCName(con.id);
   document.getElementById('ai-guide-status-badge').innerHTML =
     `<span class="${statusCls}">${status} (${pct}%)</span>`;
 
-  // 로딩 표시
-  document.getElementById('ai-guide-body').innerHTML = `
-    <div class="ai-guide-loading">
-      <div class="ai-spinner"></div>
-      <div style="font-size:13px;color:var(--text-dim);">AI 분석 중...</div>
-    </div>`;
-
   openModal('m-ai-guide');
 
-  // Claude API 호출
-  try {
-    const prompt = `오토바이 정비 전문가로서 아래 차량의 소모품 상태를 분석하고 가이드해줘.
+  // 오프라인 가이드 데이터 조회
+  const cat = con.category || detectCategory(bike.brand, bike.model);
+  const guide = getGuide(con.id, cat);
 
-차량: ${bike.brand} ${bike.model} (${bike.year}년식, ${bike.cc}cc)
-현재 주행거리: ${bike.odometer.toLocaleString()} km
-소모품: ${con.name}
-교체 주기: ${con.km.toLocaleString()} km
-마지막 교체: ${con.lastKm ? con.lastKm.toLocaleString() + ' km' : '기록 없음'}
-현재 상태: ${status} (${pct}% 소진)
-${pct >= 100 ? '⚠ 교체 주기 초과 상태!' : ''}
-
-Trả lời 4 phần sau bằng tiếng Việt, ngắn gọn. 각 섹션은 정확히 이 형식으로:
-
-[WHY]
-(Tại sao cần thay ngay và rủi ro nếu bỏ qua, 2-3 câu)
-
-[CHECK]
-(1-2 cách người lái có thể tự kiểm tra)
-
-[COST]
-(Chi phí dự kiến tại Hà Nội, tính bằng ₫)
-
-[TIP]
-(Một mẹo hữu ích về phụ tùng này)`;
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 800,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    const data = await res.json();
-    const text = data.content?.[0]?.text || '';
-    renderAiGuide(text, con, pct);
-  } catch(err) {
+  if (!guide) {
     document.getElementById('ai-guide-body').innerHTML = `
       <div class="ai-error">
-        <div style="font-size:28px;margin-bottom:10px;">⚠️</div>
-        <div>AI 가이드를 불러올 수 없습니다</div>
-        <div style="font-size:11px;margin-top:6px;color:var(--text-muted);">인터넷 연결을 확인하세요</div>
+        <div style="font-size:28px;margin-bottom:10px;">🔧</div>
+        <div>가이드 데이터 준비 중입니다</div>
       </div>`;
+    return;
   }
+
+  renderAiGuide(guide, con, pct, bike);
 }
 
-function renderAiGuide(text, con, pct) {
-  const parse = (tag) => {
-    const marker = '[' + tag + ']';
-    const start = text.indexOf(marker);
-    if (start === -1) return '';
-    const after = text.indexOf('[', start + marker.length);
-    const chunk = after === -1 ? text.slice(start + marker.length) : text.slice(start + marker.length, after);
-    return chunk.trim();
-  };
-
-  const why   = parse('WHY');
-  const check = parse('CHECK');
-  const cost  = parse('COST');
-  const tip   = parse('TIP');
+function renderAiGuide(guide, con, pct, bike) {
+  const why   = guide.why   || '';
+  const check = guide.check || '';
+  const cost  = guide.cost  || '';
+  const tip   = guide.tip   || '';
 
   const urgentBanner = pct >= 100 ? `
     <div style="background:var(--red-dim);border:1px solid rgba(208,64,64,0.4);border-radius:8px;
@@ -1711,8 +2063,174 @@ function renderAiGuide(text, con, pct) {
       <div class="ai-guide-text">${tip.split('\n').join('<br>')}</div>
     </div>` : ''}
     <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:8px;">
-      ✦ Claude AI 분석 · ${bike ? bike.brand+' '+bike.model : ''} · ${new Date().toLocaleDateString('ko-KR')}
+      ✦ 정비 가이드 · ${bike ? bike.brand+' '+bike.model : ''} · ${new Date().toLocaleDateString('ko-KR')}
     </div>`;
+}
+
+
+// ─────────────────────────────────────────
+//  날씨 & 라이딩 컨디션
+// ─────────────────────────────────────────
+const OWM_KEY = '2ada65daac7051c6dda621ccff724063';
+
+function shouldShowWeather() {
+  const dismissed = localStorage.getItem('mg2-weather-dismissed');
+  if (!dismissed) return true;
+  const today = new Date().toISOString().split('T')[0];
+  return dismissed !== today;
+}
+
+function dismissWeatherToday() {
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem('mg2-weather-dismissed', today);
+  closeModal('m-weather');
+}
+
+async function showWeatherModal() {
+  if (!shouldShowWeather()) return;
+  openModal('m-weather');
+
+  // 위치 권한 요청
+  if (!navigator.geolocation) {
+    showWeatherError('Dịch vụ vị trí không khả dụng');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      try {
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=kr`
+        );
+        const data = await res.json();
+        if (data.cod !== 200) throw new Error(data.message);
+        renderWeather(data);
+      } catch(e) {
+        showWeatherError('Không thể tải thông tin thời tiết');
+      }
+    },
+    () => showWeatherError('위치 접근이 거부됐습니다\n설정에서 위치 권한을 허용해주세요'),
+    { timeout: 8000 }
+  );
+}
+
+function getRidingCondition(weather) {
+  const id = weather.weather[0].id;
+  const windSpeed = weather.wind?.speed || 0;
+  const humidity = weather.main?.humidity || 0;
+  const temp = weather.main?.temp || 25;
+  const visibility = weather.visibility || 10000;
+
+  // 위험 — 비, 폭풍, 안개
+  if (id >= 200 && id < 300) return {
+    level: 'danger', emoji: '⛈',
+    title: '🚨 Sấm sét — Nguy hiểm khi lái xe',
+    tips: ['Tìm nơi trú ẩn an toàn ngay lập tức', 'Mặt đường cực kỳ trơn trượt', 'Nguy cơ sét đánh']
+  };
+  if ((id >= 500 && id < 600) || id === 771 || id === 781) return {
+    level: 'danger', emoji: '🌧',
+    title: '⚠️ Dự báo mưa — Cần chú ý',
+    tips: ['Đường ướt: quãng đường phanh tăng gấp đôi', 'Giảm tốc độ vào cua đáng kể', 'Mặc trang bị chống thấm nước', 'Vạch kẻ đường màu trắng cực kỳ trơn khi ướt']
+  };
+  if (id >= 600 && id < 700) return {
+    level: 'danger', emoji: '🌨',
+    title: '🚨 Tuyết rơi — Không nên lái xe',
+    tips: ['Đường tuyết rất nguy hiểm cho xe máy', 'Nếu bắt buộc, hãy đi với tốc độ rất thấp']
+  };
+  if (id >= 700 && id < 800 && visibility < 1000) return {
+    level: 'danger', emoji: '🌫',
+    title: '⚠️ Sương mù dày — Tầm nhìn kém',
+    tips: ['Bật đèn pha hoặc đèn sương mù', 'Giảm tốc độ đáng kể', 'Giữ khoảng cách gấp 3 lần bình thường']
+  };
+
+  // 주의
+  if (windSpeed > 10) return {
+    level: 'caution', emoji: '💨',
+    title: '⚠️ Cảnh báo gió mạnh',
+    tips: [`풍속 ${Math.round(windSpeed)}m/s — 고속도로 주행 자제`, 'Nắm chặt tay lái khi có gió ngang', 'Đặc biệt nguy hiểm khi đi cạnh xe tải lớn']
+  };
+  if (humidity > 85) return {
+    level: 'caution', emoji: '💧',
+    title: '⚠️ Độ ẩm cao — Đường trơn',
+    tips: ['Độ ẩm cao có thể làm đường trơn', 'Chú ý đường trơn ở cửa hầm', 'Kiểm tra áp suất lốp']
+  };
+  if (temp > 38) return {
+    level: 'caution', emoji: '🌡',
+    title: '⚠️ Cảnh báo nắng nóng',
+    tips: ['Chú ý động cơ quá nhiệt', 'Uống đủ nước', 'Nghỉ ngơi thường xuyên khi đi đường dài', 'Kiểm tra thông gió mũ bảo hiểm']
+  };
+
+  // 양호
+  return {
+    level: 'good', emoji: '✅',
+    title: '🏍 Thời tiết tuyệt vời để lái xe!',
+    tips: temp < 20
+      ? ['Thời tiết mát — hãy mang găng tay và áo khoác', 'Đường buổi sáng có thể lạnh']
+      : ['Điều kiện lái xe trong lành và dễ chịu', 'Chúc bạn lái xe vui vẻ!']
+  };
+}
+
+function getWeatherIcon(id) {
+  if (id >= 200 && id < 300) return '⛈';
+  if (id >= 300 && id < 400) return '🌦';
+  if (id >= 500 && id < 600) return '🌧';
+  if (id >= 600 && id < 700) return '❄️';
+  if (id >= 700 && id < 800) return '🌫';
+  if (id === 800) return '☀️';
+  if (id === 801) return '🌤';
+  if (id === 802) return '⛅';
+  if (id >= 803) return '☁️';
+  return '🌡';
+}
+
+function renderWeather(data) {
+  const cond = getRidingCondition(data);
+  const icon = getWeatherIcon(data.weather[0].id);
+  const temp = Math.round(data.main.temp);
+  const feels = Math.round(data.main.feels_like);
+  const desc = data.weather[0].description;
+  const city = data.name;
+  const humidity = data.main.humidity;
+  const windSpeed = Math.round((data.wind?.speed || 0) * 3.6); // m/s → km/h
+  const now = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'});
+
+  document.getElementById('weather-content').innerHTML = `
+    <div class="weather-header">
+      <div>
+        <div class="weather-city">📍 ${city} · ${now}</div>
+        <div class="weather-main">
+          <div class="weather-icon">${icon}</div>
+          <div>
+            <div><span class="weather-temp">${temp}</span><span class="weather-temp-unit">°C</span></div>
+            <div class="weather-desc">${desc} · Cảm giác như ${feels}°C</div>
+          </div>
+        </div>
+        <div class="weather-meta">
+          <div class="weather-meta-item">💧 ${humidity}%</div>
+          <div class="weather-meta-item">💨 ${windSpeed}km/h</div>
+        </div>
+      </div>
+    </div>
+    <div class="weather-body">
+      <div class="riding-condition ${cond.level}">
+        <div class="riding-condition-title">${cond.title}</div>
+        <div class="riding-tip">
+          ${cond.tips.map(t => `<div class="riding-tip-item"><span>·</span><span>${t}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('weather-footer').style.display = 'flex';
+}
+
+function showWeatherError(msg) {
+  document.getElementById('weather-content').innerHTML = `
+    <div class="weather-loading">
+      <div style="font-size:28px;margin-bottom:10px;">🌐</div>
+      <div style="font-size:13px;color:var(--text-dim);white-space:pre-line;">${msg}</div>
+    </div>`;
+  document.getElementById('weather-footer').style.display = 'flex';
 }
 
 </script>
@@ -1744,6 +2262,23 @@ function renderAiGuide(text, con, pct) {
       <button class="btn btn-primary" onclick="closeModal('m-ai-guide');openConsumModal(currentGuideId)">
         🔧 교체 기록 입력
       </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ MODAL: 날씨 & 라이딩 컨디션 ═══════════ -->
+<div class="modal-overlay" id="m-weather" style="align-items:flex-end;padding-bottom:calc(90px + env(safe-area-inset-bottom));">
+  <div class="weather-modal">
+    <div id="weather-content">
+      <div class="weather-loading">
+        <div class="ai-spinner"></div>
+        <div style="margin-top:12px;font-size:13px;color:var(--text-dim);">Đang tải thời tiết...</div>
+      </div>
+    </div>
+    <div class="weather-footer" id="weather-footer" style="display:none;">
+      <button class="weather-dismiss" onclick="dismissWeatherToday()">Không hiển thị hôm nay</button>
+      <button class="btn btn-sm" onclick="closeModal('m-weather')">Đóng</button>
     </div>
   </div>
 </div>

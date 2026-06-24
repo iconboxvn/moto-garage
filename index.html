@@ -248,6 +248,89 @@ option{background:var(--surface2);}
     text-align:center; padding:24px;
     color:var(--text-dim); font-size:13px;
   }
+
+  /* ── WEATHER MODAL ── */
+  .weather-modal {
+    background:var(--surface);
+    border:1px solid var(--border-bright);
+    border-radius:14px;
+    width:calc(100% - 32px);
+    max-width:420px;
+    overflow:hidden;
+    animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes slideUp {
+    from{opacity:0;transform:translateY(30px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  .weather-header {
+    padding:18px 18px 14px;
+    display:flex;align-items:flex-start;justify-content:space-between;
+  }
+  .weather-city {
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:4px;
+  }
+  .weather-main {
+    display:flex;align-items:center;gap:12px;
+  }
+  .weather-icon { font-size:44px;line-height:1; }
+  .weather-temp {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:48px;line-height:1;color:var(--text);
+  }
+  .weather-temp-unit {
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;color:var(--accent);vertical-align:super;
+  }
+  .weather-desc {
+    font-size:13px;color:var(--text-dim);margin-top:2px;
+  }
+  .weather-meta {
+    display:flex;gap:12px;margin-top:8px;
+  }
+  .weather-meta-item {
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;color:var(--text-dim);
+    display:flex;align-items:center;gap:4px;
+  }
+  .weather-body { padding:0 18px 16px; }
+  .riding-condition {
+    border-radius:8px;padding:14px;margin-bottom:10px;
+  }
+  .riding-condition.good {
+    background:var(--green-dim);border:1px solid rgba(56,168,104,0.25);
+  }
+  .riding-condition.caution {
+    background:var(--accent-dim);border:1px solid rgba(232,160,32,0.3);
+  }
+  .riding-condition.danger {
+    background:var(--red-dim);border:1px solid rgba(208,64,64,0.35);
+  }
+  .riding-condition-title {
+    font-size:13px;font-weight:700;margin-bottom:8px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .riding-tip {
+    font-size:12px;line-height:1.7;color:var(--text-dim);
+  }
+  .riding-tip-item {
+    display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;
+  }
+  .weather-footer {
+    padding:12px 18px 16px;
+    border-top:1px solid var(--border);
+    display:flex;gap:8px;justify-content:flex-end;align-items:center;
+  }
+  .weather-dismiss {
+    font-size:11px;color:var(--text-muted);
+    background:none;border:none;cursor:pointer;padding:4px 8px;
+    text-decoration:underline;
+  }
+  .weather-dismiss:hover{color:var(--text-dim);}
+  .weather-loading {
+    padding:40px 20px;text-align:center;
+  }
 </style>
 </head>
 <body>
@@ -1840,7 +1923,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-ko-v13';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-ko-v14';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
@@ -1892,6 +1975,8 @@ function migrateConsumableIntervals() {
 // ═══════════════════════════════════════════
 migrateConsumableIntervals(); // 기존 차량 공식 데이터 자동 적용
 renderDash();
+// 날씨 모달 자동 표시 (약간 딜레이)
+setTimeout(showWeatherModal, 800);
 
 
 // ─────────────────────────────────────────
@@ -1982,6 +2067,172 @@ function renderAiGuide(guide, con, pct, bike) {
     </div>`;
 }
 
+
+// ─────────────────────────────────────────
+//  날씨 & 라이딩 컨디션
+// ─────────────────────────────────────────
+const OWM_KEY = '2ada65daac7051c6dda621ccff724063';
+
+function shouldShowWeather() {
+  const dismissed = localStorage.getItem('mg2-weather-dismissed');
+  if (!dismissed) return true;
+  const today = new Date().toISOString().split('T')[0];
+  return dismissed !== today;
+}
+
+function dismissWeatherToday() {
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem('mg2-weather-dismissed', today);
+  closeModal('m-weather');
+}
+
+async function showWeatherModal() {
+  if (!shouldShowWeather()) return;
+  openModal('m-weather');
+
+  // 위치 권한 요청
+  if (!navigator.geolocation) {
+    showWeatherError('위치 서비스를 사용할 수 없습니다');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      try {
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=kr`
+        );
+        const data = await res.json();
+        if (data.cod !== 200) throw new Error(data.message);
+        renderWeather(data);
+      } catch(e) {
+        showWeatherError('날씨 정보를 불러올 수 없습니다');
+      }
+    },
+    () => showWeatherError('위치 접근이 거부됐습니다\n설정에서 위치 권한을 허용해주세요'),
+    { timeout: 8000 }
+  );
+}
+
+function getRidingCondition(weather) {
+  const id = weather.weather[0].id;
+  const windSpeed = weather.wind?.speed || 0;
+  const humidity = weather.main?.humidity || 0;
+  const temp = weather.main?.temp || 25;
+  const visibility = weather.visibility || 10000;
+
+  // 위험 — 비, 폭풍, 안개
+  if (id >= 200 && id < 300) return {
+    level: 'danger', emoji: '⛈',
+    title: '🚨 천둥번개 — 라이딩 위험',
+    tips: ['즉시 안전한 곳으로 대피하세요', '노면이 극도로 미끄럽습니다', '번개 위험이 있습니다']
+  };
+  if ((id >= 500 && id < 600) || id === 771 || id === 781) return {
+    level: 'danger', emoji: '🌧',
+    title: '⚠️ 강수 예보 — 주의 필요',
+    tips: ['젖은 노면: 제동거리 2배 이상', '코너링 속도를 크게 줄이세요', '방수 장비를 착용하세요', '배수로 위 흰색 차선은 극도로 미끄러움']
+  };
+  if (id >= 600 && id < 700) return {
+    level: 'danger', emoji: '🌨',
+    title: '🚨 강설 — 라이딩 금지 권장',
+    tips: ['눈길은 오토바이 라이딩에 매우 위험합니다', '불가피하면 극저속 운행하세요']
+  };
+  if (id >= 700 && id < 800 && visibility < 1000) return {
+    level: 'danger', emoji: '🌫',
+    title: '⚠️ 짙은 안개 — 시야 불량',
+    tips: ['전조등 상향등 또는 안개등 켜세요', '속도를 크게 줄이세요', '차간 거리 3배 이상 유지']
+  };
+
+  // 주의
+  if (windSpeed > 10) return {
+    level: 'caution', emoji: '💨',
+    title: '⚠️ 강한 바람 주의',
+    tips: [`풍속 ${Math.round(windSpeed)}m/s — 고속도로 주행 자제`, '측풍에 대비해 핸들을 꽉 잡으세요', '대형 차량 옆 주행 시 특히 위험']
+  };
+  if (humidity > 85) return {
+    level: 'caution', emoji: '💧',
+    title: '⚠️ 고습도 — 노면 주의',
+    tips: ['습도가 높아 노면이 끈적할 수 있습니다', '터널 출입구 노면 미끄러움 주의', '타이어 공기압을 확인하세요']
+  };
+  if (temp > 38) return {
+    level: 'caution', emoji: '🌡',
+    title: '⚠️ 폭염 주의',
+    tips: ['엔진 과열에 주의하세요', '수분을 충분히 섭취하세요', '장거리 주행 시 자주 휴식 취하세요', '헬멧 통풍 확인']
+  };
+
+  // 양호
+  return {
+    level: 'good', emoji: '✅',
+    title: '🏍 라이딩하기 좋은 날씨!',
+    tips: temp < 20
+      ? ['선선한 날씨 — 장갑과 재킷을 챙기세요', '아침엔 노면이 차가울 수 있습니다']
+      : ['맑고 쾌적한 라이딩 컨디션입니다', '즐거운 라이딩 되세요!']
+  };
+}
+
+function getWeatherIcon(id) {
+  if (id >= 200 && id < 300) return '⛈';
+  if (id >= 300 && id < 400) return '🌦';
+  if (id >= 500 && id < 600) return '🌧';
+  if (id >= 600 && id < 700) return '❄️';
+  if (id >= 700 && id < 800) return '🌫';
+  if (id === 800) return '☀️';
+  if (id === 801) return '🌤';
+  if (id === 802) return '⛅';
+  if (id >= 803) return '☁️';
+  return '🌡';
+}
+
+function renderWeather(data) {
+  const cond = getRidingCondition(data);
+  const icon = getWeatherIcon(data.weather[0].id);
+  const temp = Math.round(data.main.temp);
+  const feels = Math.round(data.main.feels_like);
+  const desc = data.weather[0].description;
+  const city = data.name;
+  const humidity = data.main.humidity;
+  const windSpeed = Math.round((data.wind?.speed || 0) * 3.6); // m/s → km/h
+  const now = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'});
+
+  document.getElementById('weather-content').innerHTML = `
+    <div class="weather-header">
+      <div>
+        <div class="weather-city">📍 ${city} · ${now} 기준</div>
+        <div class="weather-main">
+          <div class="weather-icon">${icon}</div>
+          <div>
+            <div><span class="weather-temp">${temp}</span><span class="weather-temp-unit">°C</span></div>
+            <div class="weather-desc">${desc} · 체감 ${feels}°C</div>
+          </div>
+        </div>
+        <div class="weather-meta">
+          <div class="weather-meta-item">💧 ${humidity}%</div>
+          <div class="weather-meta-item">💨 ${windSpeed}km/h</div>
+        </div>
+      </div>
+    </div>
+    <div class="weather-body">
+      <div class="riding-condition ${cond.level}">
+        <div class="riding-condition-title">${cond.title}</div>
+        <div class="riding-tip">
+          ${cond.tips.map(t => `<div class="riding-tip-item"><span>·</span><span>${t}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('weather-footer').style.display = 'flex';
+}
+
+function showWeatherError(msg) {
+  document.getElementById('weather-content').innerHTML = `
+    <div class="weather-loading">
+      <div style="font-size:28px;margin-bottom:10px;">🌐</div>
+      <div style="font-size:13px;color:var(--text-dim);white-space:pre-line;">${msg}</div>
+    </div>`;
+  document.getElementById('weather-footer').style.display = 'flex';
+}
+
 </script>
 
 <!-- ═══════════ MODAL: AI 가이드 ═══════════ -->
@@ -2011,6 +2262,23 @@ function renderAiGuide(guide, con, pct, bike) {
       <button class="btn btn-primary" onclick="closeModal('m-ai-guide');openConsumModal(currentGuideId)">
         🔧 교체 기록 입력
       </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ MODAL: 날씨 & 라이딩 컨디션 ═══════════ -->
+<div class="modal-overlay" id="m-weather" style="align-items:flex-end;padding-bottom:calc(90px + env(safe-area-inset-bottom));">
+  <div class="weather-modal">
+    <div id="weather-content">
+      <div class="weather-loading">
+        <div class="ai-spinner"></div>
+        <div style="margin-top:12px;font-size:13px;color:var(--text-dim);">날씨 정보를 불러오는 중...</div>
+      </div>
+    </div>
+    <div class="weather-footer" id="weather-footer" style="display:none;">
+      <button class="weather-dismiss" onclick="dismissWeatherToday()">오늘은 그만 보기</button>
+      <button class="btn btn-sm" onclick="closeModal('m-weather')">닫기</button>
     </div>
   </div>
 </div>
