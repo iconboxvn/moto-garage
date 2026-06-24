@@ -1333,19 +1333,14 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-v15';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-ko-v4';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
   }
 })();
 
-// Manifest
-(function(){
-  const m={name:'MOTO GARAGE',short_name:'MOTO',start_url:'/moto-garage/',display:'standalone',background_color:'#0c0c0d',theme_color:'#0c0c0d',icons:[{src:'/moto-garage/icon-192.png',sizes:'192x192',type:'image/png'},{src:'/moto-garage/icon-512.png',sizes:'512x512',type:'image/png'}]};
-  const el=document.querySelector('link[rel="manifest"]');
-  if(el){ const b=new Blob([JSON.stringify(m)],{type:'application/json'}); el.href=URL.createObjectURL(b); }
-})();
+// manifest: /moto-garage/manifest.json (static)
 
 window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(!sessionStorage.getItem('pwa-dismissed')&&!window.matchMedia('(display-mode:standalone)').matches){ setTimeout(()=>document.getElementById('pwa-banner').classList.add('show'),2000); } });
 window.addEventListener('appinstalled',()=>{ document.getElementById('pwa-banner').classList.remove('show'); const t=document.getElementById('pwa-toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); });

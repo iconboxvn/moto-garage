@@ -649,6 +649,22 @@ function yesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return d.
 // ═══════════════════════════════════════════
 //  소모품 기본 데이터
 // ═══════════════════════════════════════════
+// 소모품 이름 맵 (localStorage 언어 무관)
+const C_NAMES = {
+  'oil':'Dầu máy',
+  'oil_f':'Lọc dầu',
+  'spark':'Bugi',
+  'chain':'Xích/Đĩa',
+  'brake_f':'Má phanh trước',
+  'brake_r':'Má phanh sau',
+  'tire_f':'Lốp trước',
+  'tire_r':'Lốp sau',
+  'coolant':'Nước làm mát',
+  'air_f':'Lọc gió',
+  'brake_oil':'Dầu phanh'
+};
+function getCName(id){ return C_NAMES[id] || id; }
+
 const CONSUMABLES = [
   {id:'oil',       icon:'🛢', name:'Dầu máy',         km:5000},
   {id:'oil_f',     icon:'🔩', name:'Lọc dầu',         km:10000},
@@ -788,7 +804,7 @@ function renderDash(){
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
             <div style="display:flex;align-items:center;gap:7px;">
               <span style="font-size:17px;width:22px;text-align:center;">${c.icon}</span>
-              <span style="font-size:12px;font-weight:600;">${c.name}</span>
+              <span style="font-size:12px;font-weight:600;">${getCName(c.id)}</span>
             </div>
             <div style="display:flex;align-items:center;gap:7px;">
               <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">${remain>0?'+'+remain.toLocaleString()+'km':'Quá hạn'}</span>
@@ -1018,7 +1034,7 @@ function consumableCard(c,km){
   const tag=pct>=100?'🚨 Cần thay ngay':pct>=80?'⚠ Sắp thay':'✓ Tốt';
   return `<div class="c-item ${cls}" onclick="openConsumModal('${c.id}')">
     <div class="c-icon-big">${c.icon}</div>
-    <div class="c-name">${c.name}</div>
+    <div class="c-name">${getCName(c.id)}</div>
     <div class="c-info">Lần cuối: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Chưa có'}<br>Chu kỳ: ${c.km.toLocaleString()} km<br>${remain>0?'Còn lại: '+remain.toLocaleString()+' km':''}</div>
     <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
@@ -1035,7 +1051,7 @@ function openConsumModal(cId){
   const bike=D.bikes[cState.bikeIdx];
   const c=bike.consumables.find(x=>x.id===cId);
   cState.cId=cId;
-  document.getElementById('mc-title').textContent=c.name+' — Ghi nhận thay thế';
+  document.getElementById('mc-title').textContent=getCName(c.id)+' — Ghi nhận thay thế';
   document.getElementById('mc-current-km').textContent=bike.odometer.toLocaleString();
   const km=bike.odometer;
   const pp=document.getElementById('mc-km-pills');
@@ -1069,7 +1085,7 @@ function saveConsumable(){
   c.lastKm=kmVal; c.lastDate=date;
   c.km=parseInt(document.getElementById('mc-interval').value)||c.km;
   c.memo=document.getElementById('mc-memo').value;
-  D.history.push({id:Date.now(),bikeId:bike.id,date,km:kmVal,type:'Thay phụ tùng',desc:c.name+' thay thế'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
+  D.history.push({id:Date.now(),bikeId:bike.id,date,km:kmVal,type:'Thay phụ tùng',desc:getCName(c.id)+' thay thế'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
   save(); closeModal('m-consumable'); renderConsumables(); renderDash();
 }
 
@@ -1078,7 +1094,7 @@ function openEditConsumable(cId){
   const bike=D.bikes[cState.bikeIdx];
   const c=bike.consumables.find(x=>x.id===cId);
   editingCId=cId;
-  document.getElementById('m-edit-c-title').textContent=c.name+' Sửa';
+  document.getElementById('m-edit-c-title').textContent=getCName(c.id)+' Sửa';
   document.getElementById('edit-c-km').value=c.lastKm||0;
   document.getElementById('edit-c-date').value=c.lastDate||todayStr();
   document.getElementById('edit-c-interval').value=c.km;
@@ -1333,19 +1349,14 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-vn-v3';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-vn-v4';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
   }
 })();
 
-// Manifest
-(function(){
-  const m={name:'MOTO GARAGE',short_name:'MOTO',start_url:'/moto-garage/',display:'standalone',background_color:'#0c0c0d',theme_color:'#0c0c0d',icons:[{src:'/moto-garage/icon-192.png',sizes:'192x192',type:'image/png'},{src:'/moto-garage/icon-512.png',sizes:'512x512',type:'image/png'}]};
-  const el=document.querySelector('link[rel="manifest"]');
-  if(el){ const b=new Blob([JSON.stringify(m)],{type:'application/json'}); el.href=URL.createObjectURL(b); }
-})();
+// manifest: /moto-garage/manifest.json (static)
 
 window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(!sessionStorage.getItem('pwa-dismissed')&&!window.matchMedia('(display-mode:standalone)').matches){ setTimeout(()=>document.getElementById('pwa-banner').classList.add('show'),2000); } });
 window.addEventListener('appinstalled',()=>{ document.getElementById('pwa-banner').classList.remove('show'); const t=document.getElementById('pwa-toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); });
