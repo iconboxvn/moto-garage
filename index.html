@@ -76,30 +76,58 @@
   }
   .iconbox-dot { color:var(--accent); }
 
-  /* ── NAV ── */
+  /* ── NAV — 하단 탭바 ── */
+  .nav-wrap {
+    position:fixed; bottom:0; left:0; right:0; z-index:150;
+    background:rgba(20,21,23,0.96);
+    border-top:1px solid var(--border);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    display:flex;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
   .nav {
-    display:flex; gap:0;
-    background:var(--surface);
-    border-bottom:1px solid var(--border);
-    padding:0 20px;
-    overflow-x:auto; scrollbar-width:none;
+    display:flex; flex:1;
+    background:none; border:none; padding:0;
   }
-  .nav::-webkit-scrollbar { display:none; }
   .nav-btn {
-    background:none; border:none; border-bottom:2px solid transparent;
-    color:var(--text-dim); font-family:'Inter',sans-serif;
-    font-size:11px; font-weight:600; letter-spacing:0.8px;
-    padding:11px 18px; cursor:pointer; white-space:nowrap;
-    display:flex; align-items:center; gap:6px;
-    transition:color 0.15s, border-color 0.15s;
+    flex:1; background:none; border:none;
+    color:var(--text-muted); font-family:'Inter',sans-serif;
+    cursor:pointer;
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:4px;
+    padding:10px 4px 8px;
+    transition:color 0.15s;
+    -webkit-tap-highlight-color:transparent;
+    min-width:0;
   }
-  .nav-btn:hover { color:var(--text); }
-  .nav-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .nav-btn:active { opacity:0.7; }
+  .nav-btn.active .nav-icon { transform:translateY(-1px); }
+  .nav-btn.active .nav-dot { opacity:1; }
+  .nav-icon {
+    font-size:24px; line-height:1;
+    transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .nav-label {
+    font-size:9px; font-weight:700; letter-spacing:0.4px;
+    color:var(--text-muted); transition:color 0.15s;
+    white-space:nowrap;
+  }
+  .nav-btn.active .nav-label { color:var(--accent); }
+  .nav-dot {
+    width:4px; height:4px; border-radius:50%;
+    background:var(--accent); opacity:0;
+    transition:opacity 0.15s;
+    margin-top:-2px;
+  }
   .nav-badge {
+    position:absolute; top:6px;
     background:var(--red); color:#fff;
-    font-size:9px; font-weight:700;
-    border-radius:8px; padding:1px 5px; min-width:16px; text-align:center;
+    font-size:8px; font-weight:700;
+    border-radius:8px; padding:1px 4px; min-width:14px; text-align:center;
   }
+  /* 하단 탭바 높이만큼 본문 패딩 */
+  .container { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 
   /* ── LAYOUT ── */
   .container { max-width:860px; margin:0 auto; padding:22px 18px; }
@@ -433,15 +461,41 @@
   <button class="btn btn-primary btn-sm" onclick="openModal('m-bike')">+ 차량 등록</button>
 </div>
 
-<!-- NAV -->
-<nav class="nav">
-  <button class="nav-btn active" onclick="showPage('dashboard',this)">📊 대시보드</button>
-  <button class="nav-btn" onclick="showPage('bikes',this)">🏍 내 차량</button>
-  <button class="nav-btn" onclick="showPage('consumables',this)">🔧 소모품 & 정비</button>
-  <button class="nav-btn" onclick="showPage('riding',this)">📍 주행 일지</button>
-  <button class="nav-btn" onclick="showPage('history',this)">📋 정비 이력</button>
-  <button class="nav-btn" onclick="showPage('backup',this)">☁ 백업</button>
-</nav>
+<!-- NAV — 하단 탭바 -->
+<div class="nav-wrap">
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('dashboard',this)">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">홈</span>
+      <span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" onclick="showPage('bikes',this)">
+      <span class="nav-icon">🏍</span>
+      <span class="nav-label">내 차량</span>
+      <span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" onclick="showPage('consumables',this)">
+      <span class="nav-icon">🔧</span>
+      <span class="nav-label">소모품</span>
+      <span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" onclick="showPage('riding',this)">
+      <span class="nav-icon">📍</span>
+      <span class="nav-label">주행거리</span>
+      <span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" onclick="showPage('history',this)">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">정비이력</span>
+      <span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" onclick="showPage('backup',this)">
+      <span class="nav-icon">☁️</span>
+      <span class="nav-label">백업</span>
+      <span class="nav-dot"></span>
+    </button>
+  </nav>
+</div>
 
 <div class="container">
 
@@ -466,76 +520,8 @@
 
   <!-- ═══ RIDING ═══ -->
   <div class="page" id="page-riding">
-    <div class="sec-header"><span class="sec-title">주행 일지</span><div class="sec-line"></div></div>
-
-    <!-- Quick-add card -->
-    <div class="card" style="margin-bottom:16px;">
-      <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:14px;">새 주행 기록</div>
-
-      <!-- Step 1: 차량 -->
-      <div style="margin-bottom:14px;">
-        <div style="display:flex;align-items:center;margin-bottom:8px;">
-          <span class="step-num active" id="rs1-num">1</span>
-          <span style="font-size:11px;font-weight:600;color:var(--text-dim);letter-spacing:0.5px;">차량 선택</span>
-        </div>
-        <div class="pill-group" id="ride-bike-pills"></div>
-      </div>
-
-      <!-- Step 2: 날짜 -->
-      <div style="margin-bottom:14px;">
-        <div style="display:flex;align-items:center;margin-bottom:8px;">
-          <span class="step-num" id="rs2-num">2</span>
-          <span style="font-size:11px;font-weight:600;color:var(--text-dim);letter-spacing:0.5px;">날짜</span>
-        </div>
-        <div class="pill-group" id="ride-date-pills">
-          <div class="pill selected" onclick="selectRideDate('today',this)">오늘</div>
-          <div class="pill" onclick="selectRideDate('yesterday',this)">어제</div>
-          <div class="pill" onclick="selectRideDate('pick',this)">직접 선택</div>
-        </div>
-        <input type="date" class="form-input" id="ride-date-input" style="margin-top:8px;display:none;max-width:200px;">
-      </div>
-
-      <!-- Step 3: 거리 -->
-      <div style="margin-bottom:14px;">
-        <div style="display:flex;align-items:center;margin-bottom:8px;">
-          <span class="step-num" id="rs3-num">3</span>
-          <span style="font-size:11px;font-weight:600;color:var(--text-dim);letter-spacing:0.5px;">주행 거리</span>
-        </div>
-        <div class="riding-quick-btns" style="margin-bottom:8px;">
-          <div class="km-quick-btn" onclick="selectKm(10,this)">10 km</div>
-          <div class="km-quick-btn" onclick="selectKm(30,this)">30 km</div>
-          <div class="km-quick-btn" onclick="selectKm(50,this)">50 km</div>
-          <div class="km-quick-btn" onclick="selectKm(100,this)">100 km</div>
-          <div class="km-quick-btn" onclick="selectKm(150,this)">150 km</div>
-          <div class="km-quick-btn" onclick="selectKm(200,this)">200 km</div>
-          <div class="km-quick-btn" onclick="selectKm(300,this)">300 km</div>
-          <div class="km-quick-btn" onclick="selectKm(0,this)" id="km-custom-btn">직접</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <input type="number" class="num-input-styled" id="ride-km" placeholder="0" style="width:120px;" oninput="onKmInput()">
-          <span style="font-size:12px;color:var(--text-dim);">km</span>
-        </div>
-      </div>
-
-      <!-- Step 4: 루트 -->
-      <div style="margin-bottom:14px;">
-        <div style="display:flex;align-items:center;margin-bottom:8px;">
-          <span class="step-num" id="rs4-num">4</span>
-          <span style="font-size:11px;font-weight:600;color:var(--text-dim);letter-spacing:0.5px;">루트 / 메모</span>
-        </div>
-        <div class="route-grid" id="route-presets" style="margin-bottom:8px;"></div>
-        <input type="text" class="form-input" id="ride-memo" placeholder="직접 입력 (선택사항)">
-      </div>
-
-      <div style="text-align:right;">
-        <button class="btn btn-primary" onclick="addRideLog()">기록 저장</button>
-      </div>
-    </div>
-
-    <div class="sec-header"><span class="sec-title">주행 기록</span><div class="sec-line"></div></div>
-    <div class="card" style="padding:0;overflow:hidden;">
-      <div style="overflow-x:auto;" id="ride-table"></div>
-    </div>
+    <div class="sec-header"><span class="sec-title">누적 주행거리 관리</span><div class="sec-line"></div></div>
+    <div id="odo-cards"></div>
   </div>
 
   <!-- ═══ HISTORY ═══ -->
@@ -1351,100 +1337,90 @@ function saveConsumable() {
 // ─────────────────────────────────────────
 //  RIDING LOG
 // ─────────────────────────────────────────
-let selectedKm=0;
-let selectedBikeId=null;
-let selectedRoute='';
-
+// ─────────────────────────────────────────
+//  주행거리 — 누적 오도미터 업데이트
+// ─────────────────────────────────────────
 function renderRiding() {
-  // bike pills
-  const bp=document.getElementById('ride-bike-pills');
-  bp.innerHTML=D.bikes.map(b=>`<div class="pill" onclick="selectRideBike(${b.id},this)">${b.brand} ${b.model}</div>`).join('') || '<span style="font-size:12px;color:var(--text-muted);">등록된 차량이 없습니다</span>';
-
-  // route presets
-  const rp=document.getElementById('route-presets');
-  rp.innerHTML=ROUTE_PRESETS.map(r=>`<div class="route-pill" onclick="selectRoute('${r.name}',${r.km},this)">
-    <div class="route-pill-name">${r.name}</div>
-    ${r.km?`<div class="route-pill-km">${r.km} km 기준</div>`:'<div class="route-pill-km">직접 입력</div>'}
-  </div>`).join('');
-
-  // reset
-  document.getElementById('ride-km').value='';
-  document.getElementById('ride-memo').value='';
-  selectedKm=0; selectedRoute='';
-  rideDateVal=todayStr();
-
-  renderRideTable();
+  const el = document.getElementById('odo-cards');
+  if (!D.bikes.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🏍</div><div class="empty-text">차량을 먼저 등록하세요</div></div>`;
+    return;
+  }
+  el.innerHTML = D.bikes.map(bike => renderOdoCard(bike)).join('');
 }
 
-function selectRideBike(id,el) {
-  clearPills('ride-bike-pills');
-  el.classList.add('selected');
-  selectedBikeId=id;
+function renderOdoCard(bike) {
+  const alerts = bike.consumables.filter(c => {
+    const pct = (bike.odometer - c.lastKm) / c.km * 100;
+    return pct >= 80;
+  });
+  const urgents = alerts.filter(c => (bike.odometer - c.lastKm) / c.km >= 1);
+  const warns   = alerts.filter(c => {
+    const p = (bike.odometer - c.lastKm) / c.km;
+    return p >= 0.8 && p < 1;
+  });
+
+  const alertHTML = alerts.length ? `
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">소모품 알림</div>
+      ${urgents.map(c=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:12px;">${c.icon} ${c.name}</span>
+          <span class="c-tag danger">🚨 교체 필요</span>
+        </div>`).join('')}
+      ${warns.map(c=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:12px;">${c.icon} ${c.name}</span>
+          <span class="c-tag warn">⚠ 곧 교체</span>
+        </div>`).join('')}
+    </div>` : `
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--green);">✓ 모든 소모품 양호</div>`;
+
+  return `
+  <div class="bike-card" style="margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+      <div>
+        <div class="bike-name">${bike.brand} ${bike.model}</div>
+        <div class="bike-meta">${bike.year}${bike.cc?' · '+bike.cc+'cc':''}${bike.plate?' · '+bike.plate:''}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:4px;">현재 누적</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:500;color:var(--accent);line-height:1;">${bike.odometer.toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:2px;">km</div>
+      </div>
+    </div>
+
+    <!-- 오도미터 업데이트 -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:10px;">누적 주행거리 업데이트</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <input type="number"
+          class="num-input-styled"
+          id="odo-input-${bike.id}"
+          placeholder="${bike.odometer.toLocaleString()}"
+          value="${bike.odometer}"
+          style="width:160px;font-size:20px;">
+        <span style="font-size:13px;color:var(--text-dim);">km</span>
+        <button class="btn btn-primary" onclick="updateOdometer(${bike.id})">업데이트</button>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:8px;">계기판의 현재 누적 주행거리를 입력하세요</div>
+    </div>
+
+    ${alertHTML}
+  </div>`;
 }
 
-function selectRideDate(type,el) {
-  clearPills(el.parentElement);
-  el.classList.add('selected');
-  const inp=document.getElementById('ride-date-input');
-  if(type==='pick'){ inp.style.display='block'; inp.value=todayStr(); }
-  else { inp.style.display='none'; rideDateVal=type==='today'?todayStr():yesterdayStr(); }
-}
-
-function selectKm(val,el) {
-  document.querySelectorAll('.km-quick-btn').forEach(b=>b.classList.remove('selected'));
-  if(val===0){ document.getElementById('ride-km').value=''; document.getElementById('ride-km').focus(); return; }
-  el.classList.add('selected');
-  selectedKm=val;
-  document.getElementById('ride-km').value=val;
-}
-
-function onKmInput() {
-  document.querySelectorAll('.km-quick-btn').forEach(b=>b.classList.remove('selected'));
-  selectedKm=parseInt(document.getElementById('ride-km').value)||0;
-}
-
-function selectRoute(name,km,el) {
-  document.querySelectorAll('.route-pill').forEach(p=>p.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedRoute=name;
-  document.getElementById('ride-memo').value=name;
-  if(km>0){ document.getElementById('ride-km').value=km; selectedKm=km; document.querySelectorAll('.km-quick-btn').forEach(b=>b.classList.remove('selected')); }
-}
-
-function addRideLog() {
-  if(!selectedBikeId){ alert('차량을 선택하세요.'); return; }
-  const km=parseInt(document.getElementById('ride-km').value)||0;
-  if(!km){ alert('주행 거리를 입력하세요.'); return; }
-  const dateInp=document.getElementById('ride-date-input');
-  const date=dateInp.style.display!=='none'?dateInp.value:rideDateVal;
-  const memo=document.getElementById('ride-memo').value;
-  D.rides.push({id:Date.now(),bikeId:selectedBikeId,date,km,memo});
-  const bike=D.bikes.find(b=>b.id===selectedBikeId);
-  if(bike) bike.odometer+=km;
+function updateOdometer(bikeId) {
+  const bike = D.bikes.find(b => b.id === bikeId);
+  if (!bike) return;
+  const newKm = parseInt(document.getElementById('odo-input-' + bikeId).value) || 0;
+  if (newKm < bike.odometer) {
+    if (!confirm(`현재(${bike.odometer.toLocaleString()} km)보다 낮은 값입니다.\n그래도 업데이트하시겠습니까?`)) return;
+  }
+  bike.odometer = newKm;
   save();
-  renderRideTable();
-  document.getElementById('ride-km').value='';
-  document.getElementById('ride-memo').value='';
-  document.querySelectorAll('.km-quick-btn').forEach(b=>b.classList.remove('selected'));
-  document.querySelectorAll('.route-pill').forEach(p=>p.classList.remove('selected'));
-}
-
-function renderRideTable() {
-  const el=document.getElementById('ride-table');
-  const logs=[...D.rides].sort((a,b)=>b.date.localeCompare(a.date));
-  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📍</div><div class="empty-text">주행 기록이 없습니다</div></div>`; return; }
-  el.innerHTML=`<table class="log-table"><thead><tr><th>날짜</th><th>차량</th><th>거리</th><th>루트/메모</th><th></th></tr></thead><tbody>
-  ${logs.map(l=>{
-    const b=D.bikes.find(x=>x.id==l.bikeId);
-    return `<tr><td class="mono">${l.date}</td><td style="color:var(--text-dim);white-space:nowrap">${b?b.brand+' '+b.model:'삭제된 차량'}</td><td><span class="mono" style="color:var(--accent);">+${l.km.toLocaleString()}</span> km</td><td style="color:var(--text-dim)">${l.memo||'—'}</td><td><button class="btn btn-sm btn-danger" onclick="deleteRide(${l.id})">삭제</button></td></tr>`;
-  }).join('')}</tbody></table>`;
-}
-
-function deleteRide(id) {
-  const l=D.rides.find(x=>x.id===id);
-  if(l){ const b=D.bikes.find(x=>x.id===l.bikeId); if(b) b.odometer-=l.km; }
-  D.rides=D.rides.filter(x=>x.id!==id);
-  save(); renderRideTable();
+  renderRiding();
+  renderDash();
 }
 
 // ─────────────────────────────────────────
@@ -1549,58 +1525,84 @@ function renderDash() {
   });
   const totalKm=D.bikes.reduce((s,b)=>s+b.odometer,0);
   const totalCost=D.history.reduce((s,l)=>s+(parseInt(l.cost)||0),0);
-  const lastRide=[...D.rides].sort((a,b)=>b.date.localeCompare(a.date))[0];
+
+  // 선택된 차량 (없으면 첫 번째)
+  if (typeof dashSelectedBikeId === 'undefined' || !D.bikes.find(b=>b.id===dashSelectedBikeId)) {
+    dashSelectedBikeId = D.bikes[0]?.id || null;
+  }
+  const sb = D.bikes.find(b=>b.id===dashSelectedBikeId) || D.bikes[0];
+
+  // 선택된 차량 기준 요약·알림
+  const sbKm = sb ? sb.odometer : 0;
+  const sbHistory = sb ? D.history.filter(l=>l.bikeId==sb.id) : [];
+  const sbAlerts = sb ? sb.consumables.filter(c=>{
+    const p=(sb.odometer-c.lastKm)/c.km;
+    return p>=0.8;
+  }) : [];
 
   el.innerHTML=`
-    ${alerts.length?`
-    <div class="sec-header"><span class="sec-title">알림</span><div class="sec-line"></div></div>
-    ${alerts.slice(0,5).map(a=>`
-      <div class="alert-row ${a.type}">
-        ${a.type==='danger'?'🚨':'⚠️'}
-        <strong>${a.bike.brand} ${a.bike.model}</strong> &nbsp;— ${a.c.name}
-        ${a.type==='danger'?'교체가 필요합니다':'교체 시기가 다가오고 있습니다'}
-        <span class="mono" style="margin-left:auto;opacity:0.7">${Math.round(a.pct)}%</span>
-      </div>`).join('')}
-    <div style="margin-bottom:18px;"></div>`:''}
+    <!-- 차량 현황 -->
+    <div class="sec-header"><span class="sec-title">차량 현황</span><div class="sec-line"></div></div>
+    ${D.bikes.length > 1 ? `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      ${D.bikes.map(b=>{
+        const sel = b.id === dashSelectedBikeId;
+        const u = b.consumables.filter(c=>(b.odometer-c.lastKm)/c.km>=1).length;
+        const w = b.consumables.filter(c=>{const p=(b.odometer-c.lastKm)/c.km;return p>=0.8&&p<1;}).length;
+        return `<div onclick="selectDashBike(${b.id})" style="
+          background:${sel?'var(--accent-dim)':'var(--surface2)'};
+          border:1px solid ${sel?'var(--accent)':'var(--border)'};
+          border-radius:8px; padding:10px 14px; cursor:pointer;
+          transition:all 0.15s; flex:1; min-width:120px; text-align:center;">
+          <div style="font-size:13px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:${sel?'var(--accent)':'var(--text)'};margin:4px 0;">${b.odometer.toLocaleString()} <span style="font-size:10px;">km</span></div>
+          ${u?`<span class="c-tag danger" style="font-size:9px;">🚨 ${u}건</span>`:w?`<span class="c-tag warn" style="font-size:9px;">⚠ ${w}건</span>`:`<span class="c-tag ok" style="font-size:9px;">✓</span>`}
+        </div>`;
+      }).join('')}
+    </div>` : ''}
 
+    ${sb ? `<div class="bike-card" style="margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="bike-name">${sb.brand} ${sb.model}</div>
+          <div class="bike-meta">${sb.year}${sb.cc?' · '+sb.cc+'cc':''}${sb.plate?' · '+sb.plate:''}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:28px;color:var(--accent);line-height:1;">${sbKm.toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--text-dim);">KM</div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    <!-- 요약 -->
     <div class="sec-header"><span class="sec-title">요약</span><div class="sec-line"></div></div>
-    <div class="dash-grid">
-      <div class="dash-w"><div class="dash-num">${D.bikes.length}</div><div class="dash-unit">대</div><div class="dash-lbl">등록 차량</div></div>
-      <div class="dash-w"><div class="dash-num">${totalKm.toLocaleString()}</div><div class="dash-unit">KM</div><div class="dash-lbl">누적 주행</div></div>
-      <div class="dash-w"><div class="dash-num">${D.rides.length}</div><div class="dash-unit">회</div><div class="dash-lbl">주행 기록</div></div>
-      <div class="dash-w"><div class="dash-num">${D.history.length}</div><div class="dash-unit">건</div><div class="dash-lbl">정비 이력</div></div>
+    <div class="dash-grid" style="grid-template-columns:1fr 1fr;margin-bottom:18px;">
+      <div class="dash-w">
+        <div class="dash-num">${sbKm.toLocaleString()}</div>
+        <div class="dash-unit">KM</div>
+        <div class="dash-lbl">누적 주행</div>
+      </div>
+      <div class="dash-w">
+        <div class="dash-num">${sbHistory.length}</div>
+        <div class="dash-unit">건</div>
+        <div class="dash-lbl">정비 이력</div>
+      </div>
     </div>
 
-    <div class="sec-header" style="margin-top:6px;"><span class="sec-title">차량 현황</span><div class="sec-line"></div></div>
-    ${D.bikes.map(b=>{
-      const u=b.consumables.filter(c=>(b.odometer-c.lastKm)/c.km>=1).length;
-      const w=b.consumables.filter(c=>{const p=(b.odometer-c.lastKm)/c.km; return p>=0.8&&p<1;}).length;
-      return `<div class="bike-card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><div class="bike-name">${b.brand} ${b.model}</div><div class="bike-meta">${b.year}${b.cc?' · '+b.cc+'cc':''}${b.plate?' · '+b.plate:''}</div></div>
-          <div style="text-align:right;"><div class="bstat-val">${b.odometer.toLocaleString()}</div><div class="bstat-lbl" style="font-size:9px;">KM</div></div>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
-          ${u?`<span class="c-tag danger">🚨 교체 필요 ${u}건</span>`:''}
-          ${w?`<span class="c-tag warn">⚠ 주의 ${w}건</span>`:''}
-          ${!u&&!w?`<span class="c-tag ok">✓ 모든 소모품 양호</span>`:''}
-        </div>
+    <!-- 알림 -->
+    <div class="sec-header"><span class="sec-title">알림</span><div class="sec-line"></div></div>
+    ${sbAlerts.length ? sbAlerts.map(cx=>{
+      const p=(sb.odometer-cx.lastKm)/cx.km;
+      const isDanger=p>=1;
+      return `<div class="alert-row ${isDanger?'danger':'warn'}">
+        <span>${isDanger?'🚨':'⚠️'}</span>
+        <span style="flex:1;">${cx.icon} <strong>${cx.name}</strong> ${isDanger?'— 교체 필요':'— 곧 교체'}</span>
+        <span class="mono" style="opacity:0.7;font-size:11px;">${Math.round(p*100)}%</span>
       </div>`;
-    }).join('')}
-
-    ${lastRide?`
-    <div class="sec-header" style="margin-top:6px;"><span class="sec-title">최근 주행</span><div class="sec-line"></div></div>
-    <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div class="mono" style="color:var(--text-dim);margin-bottom:4px;">${lastRide.date}</div>
-        <div style="font-size:14px;">${lastRide.memo||'기록 없음'}</div>
-        <div style="font-size:11px;color:var(--text-dim);margin-top:3px;">${(()=>{const b=D.bikes.find(x=>x.id==lastRide.bikeId); return b?b.brand+' '+b.model:'';})()}</div>
-      </div>
-      <div style="text-align:right;">
-        <div class="bstat-val">${lastRide.km.toLocaleString()}</div>
-        <div class="bstat-lbl">KM</div>
-      </div>
-    </div>`:''}
+    }).join('')
+    : `<div class="card" style="text-align:center;padding:18px;">
+        <span style="font-size:13px;color:var(--green);">✓ ${sb?sb.brand+' '+sb.model+'의':''} 모든 소모품 양호</span>
+      </div>`}
   `;
 }
 
@@ -2112,6 +2114,13 @@ function updateHistory() {
   renderHistory(); renderExtraSection();
 }
 
+
+let dashSelectedBikeId = null;
+
+function selectDashBike(id) {
+  dashSelectedBikeId = id;
+  renderDash();
+}
 </script>
 
 <!-- PWA INSTALL BANNER -->
