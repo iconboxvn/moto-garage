@@ -885,6 +885,7 @@
 // ─────────────────────────────────────────
 let D = JSON.parse(localStorage.getItem('mg2') || 'null') || { bikes:[], rides:[], history:[] };
 const save = () => localStorage.setItem('mg2', JSON.stringify(D));
+let dashSelectedBikeId = null;
 
 const CONSUMABLES = [
   {id:'oil',      icon:'🛢', name:'엔진오일',         km:5000 },
@@ -1653,7 +1654,7 @@ renderDash();
 // Service Worker (inline via blob)
 (function(){
   const SW_CODE=`
-const CACHE='moto-garage-v4';
+const CACHE='moto-garage-v5';
 const ASSETS=[self.location.pathname||'/'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
@@ -2136,8 +2137,6 @@ function updateHistory() {
   renderHistory(); renderExtraSection();
 }
 
-
-let dashSelectedBikeId = null;
 
 function selectDashBike(id) {
   dashSelectedBikeId = id;
