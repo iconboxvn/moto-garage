@@ -453,12 +453,13 @@
       <span class="logo-sub">VEHICLE MANAGEMENT SYSTEM</span>
     </div>
     <div class="header-divider"></div>
-    <div class="iconbox-badge">
-      <span class="iconbox-label">CREATED BY</span>
-      <span class="iconbox-name">@iconbox<span class="iconbox-dot">.</span>lee</span>
-    </div>
+    <a href="mailto:iconbox.vn@gmail.com" style="text-decoration:none;">
+      <div class="iconbox-badge">
+        <span class="iconbox-label">CREATED BY</span>
+        <span class="iconbox-name">@iconbox<span class="iconbox-dot">.</span>lee</span>
+      </div>
+    </a>
   </div>
-  <button class="btn btn-primary btn-sm" onclick="openModal('m-bike')">+ 차량 등록</button>
 </div>
 
 <!-- NAV — 하단 탭바 -->
@@ -1505,6 +1506,11 @@ function deleteHistory(id) {
 //  DASHBOARD — 홈 화면
 // ─────────────────────────────────────────
 function renderDash() {
+  // localStorage에서 최신 데이터 재동기화
+  const stored = localStorage.getItem('mg2');
+  if (stored) {
+    try { const parsed = JSON.parse(stored); if (parsed.bikes) D = parsed; } catch(e) {}
+  }
   const el = document.getElementById('dash-content');
   if (!D.bikes.length) {
     el.innerHTML = `<div class="no-bikes-box">
@@ -1647,7 +1653,7 @@ renderDash();
 // Service Worker (inline via blob)
 (function(){
   const SW_CODE=`
-const CACHE='moto-garage-v3';
+const CACHE='moto-garage-v4';
 const ASSETS=[self.location.pathname||'/'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
