@@ -207,7 +207,7 @@ option{background:var(--surface2);}
     </a>
   </div>
   <div style="display:flex;gap:4px;">
-    <a href="./index.html"    class="lang-btn" title="한국어">🇰🇷</a>
+    <a href="./index.html"    class="lang-btn" title="Tiếng Hàn">🇰🇷</a>
     <a href="./index_vn.html" class="lang-btn active"        title="Tiếng Việt">🇻🇳</a>
     <a href="./index_en.html" class="lang-btn"        title="English">🇺🇸</a>
   </div>
@@ -321,14 +321,14 @@ option{background:var(--surface2);}
           <div class="pill" onclick="selectBrand('Triumph',this)">Triumph</div>
           <div class="pill" onclick="selectBrand('Royal Enfield',this)">Royal Enfield</div>
           <div class="pill" onclick="selectBrand('Harley',this)">Harley</div>
-          <div class="pill" onclick="selectBrand('other',this)">기타...</div>
+          <div class="pill" onclick="selectBrand('other',this)">Khác...</div>
         </div>
-        <input type="text" class="form-input" id="brand-custom" placeholder="제조사 입력" style="margin-top:8px;display:none;">
+        <input type="text" class="form-input" id="brand-custom" placeholder="Nhập hãng xe" style="margin-top:8px;display:none;">
       </div>
       <div style="margin-bottom:14px;">
         <div class="step-label"><span class="step-num">2</span>Dòng xe</div>
         <div class="pill-group" id="model-pills"><span style="font-size:12px;color:var(--text-muted);">Chọn hãng xe trước</span></div>
-        <input type="text" class="form-input" id="model-custom" placeholder="모델명 입력" style="margin-top:8px;display:none;">
+        <input type="text" class="form-input" id="model-custom" placeholder="Nhập dòng xe" style="margin-top:8px;display:none;">
       </div>
       <div id="cat-preview" style="display:none;margin-bottom:10px;padding:8px 12px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:5px;font-size:12px;color:var(--accent);font-weight:600;"></div>
       <div style="margin-bottom:14px;">
@@ -364,9 +364,9 @@ option{background:var(--surface2);}
           <div class="pill" data-cc="349" onclick="selectCC(349,this)">349cc</div>
           <div class="pill" data-cc="321" onclick="selectCC(321,this)">321cc</div>
           <div class="pill" data-cc="313" onclick="selectCC(313,this)">313cc</div>
-          <div class="pill" data-cc="0" onclick="selectCC('other',this)">기타</div>
+          <div class="pill" data-cc="0" onclick="selectCC('other',this)">Khác</div>
         </div>
-        <input type="number" class="form-input" id="cc-custom" placeholder="배기량 입력 (cc)" style="margin-top:8px;display:none;max-width:180px;">
+        <input type="number" class="form-input" id="cc-custom" placeholder="Nhập dung tích (cc)" style="margin-top:8px;display:none;max-width:180px;">
       </div>
       <div style="margin-bottom:14px;">
         <div class="step-label"><span class="step-num">5</span>Tổng số km hiện tại</div>
@@ -379,7 +379,7 @@ option{background:var(--surface2);}
           <div class="pill" onclick="setOdo(30000,this)">30,000</div>
           <div class="pill" onclick="setOdo(-1,this)">Nhập trực tiếp</div>
         </div>
-        <input type="number" class="form-input" id="bike-odo" placeholder="주행거리 km" style="max-width:200px;">
+        <input type="number" class="form-input" id="bike-odo" placeholder="Số km" style="max-width:200px;">
       </div>
       <div class="form-grid">
         <div class="form-group">
@@ -448,9 +448,9 @@ option{background:var(--surface2);}
       <div style="margin-bottom:14px;">
         <div class="step-label"><span class="step-num">2</span>Ngày thay</div>
         <div class="pill-group" style="margin-bottom:8px;" id="mc-date-pills">
-          <div class="pill selected" onclick="selectMcDate('today',this)">오늘</div>
-          <div class="pill" onclick="selectMcDate('yesterday',this)">어제</div>
-          <div class="pill" onclick="selectMcDate('pick',this)">직접 선택</div>
+          <div class="pill selected" onclick="selectMcDate('today',this)">Hôm nay</div>
+          <div class="pill" onclick="selectMcDate('yesterday',this)">Hôm qua</div>
+          <div class="pill" onclick="selectMcDate('pick',this)">Chọn ngày</div>
         </div>
         <input type="date" class="form-input" id="mc-date-input" style="display:none;max-width:200px;">
       </div>
@@ -522,7 +522,7 @@ option{background:var(--surface2);}
     <div class="modal-header"><span class="modal-title" id="m-extra-title">Thêm bảo dưỡng khác</span><button class="modal-close" onclick="closeModal('m-extra')">✕</button></div>
     <div class="modal-body">
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">1</span>유형</div>
+        <div class="step-label"><span class="step-num">1</span>Loại</div>
         <div class="pill-group">
           <div class="pill" onclick="selectExtraType('Kiểm tra định kỳ',this)">🔍 Kiểm tra định kỳ</div>
           <div class="pill" onclick="selectExtraType('Sửa chữa',this)">🛠 Sửa chữa</div>
@@ -533,7 +533,7 @@ option{background:var(--surface2);}
         <input type="hidden" id="extra-type" value="">
       </div>
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">2</span>내용</div>
+        <div class="step-label"><span class="step-num">2</span>Nội dung</div>
         <div class="pill-group" style="margin-bottom:8px;" id="extra-desc-pills">
           <div class="pill" onclick="setExtraDesc('Kiểm tra tổng thể',this)">Kiểm tra tổng thể</div>
           <div class="pill" onclick="setExtraDesc('Căng xích',this)">Căng xích</div>
@@ -545,11 +545,11 @@ option{background:var(--surface2);}
         <input type="text" class="form-input" id="extra-desc" placeholder="Nhập nội dung bảo dưỡng">
       </div>
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">3</span>날짜</div>
+        <div class="step-label"><span class="step-num">3</span>Ngày</div>
         <div class="pill-group" style="margin-bottom:8px;" id="extra-date-pills">
-          <div class="pill selected" onclick="selectExtraDate('today',this)">오늘</div>
-          <div class="pill" onclick="selectExtraDate('yesterday',this)">어제</div>
-          <div class="pill" onclick="selectExtraDate('pick',this)">직접 선택</div>
+          <div class="pill selected" onclick="selectExtraDate('today',this)">Hôm nay</div>
+          <div class="pill" onclick="selectExtraDate('yesterday',this)">Hôm qua</div>
+          <div class="pill" onclick="selectExtraDate('pick',this)">Chọn ngày</div>
         </div>
         <input type="date" class="form-input" id="extra-date-input" style="display:none;max-width:200px;">
       </div>
@@ -570,7 +570,7 @@ option{background:var(--surface2);}
         </div>
       </div>
       <div>
-        <div class="step-label"><span class="step-num">4</span>정비소 (선택)</div>
+        <div class="step-label"><span class="step-num">4</span>Nơi bảo dưỡng (tùy chọn)</div>
         <div class="pill-group" style="margin-bottom:8px;" id="extra-shop-pills">
           <div class="pill" onclick="setExtraShop('Garage Đan',this)">Garage Đan</div>
           <div class="pill" onclick="setExtraShop('Honda chính hãng',this)">Honda chính hãng</div>
@@ -594,7 +594,7 @@ option{background:var(--surface2);}
       <div class="form-grid">
         <div class="form-group"><label class="form-label">Ngày</label><input type="date" class="form-input" id="edit-h-date"></div>
         <div class="form-group"><label class="form-label">Số km</label><input type="number" class="form-input" id="edit-h-km"></div>
-        <div class="form-group full"><label class="form-label">유형</label>
+        <div class="form-group full"><label class="form-label">Loại</label>
           <select class="form-select" id="edit-h-type"><option>Thay phụ tùng</option><option>Kiểm tra định kỳ</option><option>Sửa chữa</option><option>Khác</option></select>
         </div>
         <div class="form-group full"><label class="form-label">Nội dung</label><input type="text" class="form-input" id="edit-h-desc"></div>
@@ -739,7 +739,7 @@ function renderDash(){
   if(stored){ try{ const p=JSON.parse(stored); if(p.bikes) D=p; }catch(e){} }
   const el=document.getElementById('dash-content');
   if(!D.bikes.length){
-    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:44px;margin-bottom:14px;">🏍</div><div style="font-size:15px;color:var(--text-dim);margin-bottom:6px;">차량을 등록하면 관리가 시작됩니다</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">소모품 알림 · 주행거리 · 정비 이력</div><button class="btn btn-primary" onclick="openModal('m-bike')">첫 차량 등록하기</button></div>`;
+    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:44px;margin-bottom:14px;">🏍</div><div style="font-size:15px;color:var(--text-dim);margin-bottom:6px;">Đăng ký xe để bắt đầu quản lý</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">Cảnh báo · Số km · Lịch sử</div><button class="btn btn-primary" onclick="openModal('m-bike')">Đăng ký xe đầu tiên</button></div>`;
     return;
   }
   if(!dashSelectedBikeId||!D.bikes.find(b=>b.id===dashSelectedBikeId)) dashSelectedBikeId=D.bikes[0].id;
@@ -754,7 +754,7 @@ function renderDash(){
     return{c,pct,remain,cls,fillColor,tag};
   });
   const recentHistory=D.history.filter(l=>l.bikeId==sb.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  const typeBadge={'소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+  const typeBadge={'Thay phụ tùng':'badge-cons','Kiểm tra định kỳ':'badge-maint','Sửa chữa':'badge-repair','Khác':'badge-other'};
   el.innerHTML=`
     ${D.bikes.length>1?`<div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;">
       ${D.bikes.map(b=>{
@@ -777,11 +777,11 @@ function renderDash(){
         </div>
         <div style="text-align:right;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:30px;color:var(--accent);line-height:1;">${sb.odometer.toLocaleString()}</div>
-          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;">KM 누적</div>
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;">Tổng KM</div>
         </div>
       </div>
     </div>
-    <div class="sec-header"><span class="sec-title">소모품 현황</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">Tình trạng phụ tùng</span><div class="sec-line"></div></div>
     <div class="card" style="padding:6px 0;margin-bottom:14px;">
       ${consumableRows.map(({c,pct,remain,cls,fillColor,tag})=>`
         <div style="padding:9px 14px;border-bottom:1px solid var(--border);" onclick="showPage('consumables',document.querySelector('.nav-btn:nth-child(3)'))">
@@ -803,7 +803,7 @@ function renderDash(){
           </div>
         </div>`).join('')}
     </div>
-    <div class="sec-header"><span class="sec-title">최근 정비</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">Bảo dưỡng gần đây</span><div class="sec-line"></div></div>
     ${recentHistory.length
       ?`<div class="card" style="padding:0;overflow:hidden;"><table class="log-table"><tbody>
           ${recentHistory.map(l=>`<tr>
@@ -812,7 +812,7 @@ function renderDash(){
             <td style="font-size:12px;">${l.desc||'—'}</td>
           </tr>`).join('')}
         </tbody></table></div>`
-      :`<div class="card" style="text-align:center;padding:16px;font-size:12px;color:var(--text-muted);">정비 기록이 없습니다</div>`
+      :`<div class="card" style="text-align:center;padding:16px;font-size:12px;color:var(--text-muted);">Chưa có lịch sử bảo dưỡng</div>`
     }`;
 }
 
@@ -824,7 +824,7 @@ function selectDashBike(id){ dashSelectedBikeId=id; renderDash(); }
 function renderBikes(){
   const el=document.getElementById('bike-list');
   if(!D.bikes.length){
-    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:40px;margin-bottom:12px;">🏍</div><div style="font-size:14px;color:var(--text-dim);">등록된 차량이 없습니다</div></div>`;
+    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:40px;margin-bottom:12px;">🏍</div><div style="font-size:14px;color:var(--text-dim);">Chưa có xe nào được đăng ký</div></div>`;
     return;
   }
   el.innerHTML=D.bikes.map(b=>`<div class="bike-card">
@@ -835,16 +835,16 @@ function renderBikes(){
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
         ${b.color?`<span class="tag-chip">${b.color}</span>`:''}
-        <button class="btn btn-sm" onclick="openEditBike(${b.id})">✏ 수정</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteBike(${b.id})">삭제</button>
+        <button class="btn btn-sm" onclick="openEditBike(${b.id})">✏ Sửa</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteBike(${b.id})">Xóa</button>
       </div>
     </div>
     <div style="display:flex;gap:0;border-top:1px solid var(--border);margin-top:10px;">
-      <div style="flex:1;text-align:center;padding:10px 0;"><div class="bstat-val">${b.odometer.toLocaleString()}</div><div class="bstat-lbl">KM 누적</div></div>
-      <div style="flex:1;text-align:center;padding:10px 0;border-left:1px solid var(--border);"><div class="bstat-val">${D.history.filter(h=>h.bikeId==b.id).length}</div><div class="bstat-lbl">정비 이력</div></div>
+      <div style="flex:1;text-align:center;padding:10px 0;"><div class="bstat-val">${b.odometer.toLocaleString()}</div><div class="bstat-lbl">Tổng KM</div></div>
+      <div style="flex:1;text-align:center;padding:10px 0;border-left:1px solid var(--border);"><div class="bstat-val">${D.history.filter(h=>h.bikeId==b.id).length}</div><div class="bstat-lbl">Lịch sử</div></div>
       <div style="flex:1;text-align:center;padding:10px 0;border-left:1px solid var(--border);">
         <div class="bstat-val" style="color:${countAlerts(b)>0?'var(--red)':'var(--green)'}">${countAlerts(b)}</div>
-        <div class="bstat-lbl">알림</div>
+        <div class="bstat-lbl">Cảnh báo</div>
       </div>
     </div>
   </div>`).join('');
@@ -897,7 +897,7 @@ function selectBrand(brand,el){
   else{
     models.forEach(m=>{
       const d=document.createElement('div');
-      const isOther=m.name.startsWith('기타');
+      const isOther=m.name.startsWith('기타 (250cc');
       d.innerHTML=isOther?`<span>${m.name}</span>`:`<span>${m.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);margin-left:4px;">${m.cc}cc</span>`;
       d.className='pill';
       d.onclick=()=>{
@@ -997,15 +997,15 @@ function _renderConsumablesCore(){
   const el=document.getElementById('c-content');
   if(!D.bikes.length){
     tabs.innerHTML='';
-    el.innerHTML=`<div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">차량을 먼저 등록하세요</div></div>`;
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">Vui lòng đăng ký xe trước</div></div>`;
     return;
   }
   if(cState.bikeIdx>=D.bikes.length) cState.bikeIdx=0;
   tabs.innerHTML=`<div class="pill-group">${D.bikes.map((b,i)=>`<div class="pill ${i===cState.bikeIdx?'selected':''}" onclick="switchCBike(${i})">${b.brand} ${b.model}</div>`).join('')}</div>`;
   const bike=D.bikes[cState.bikeIdx];
   el.innerHTML=`
-    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} 소모품</span><div class="sec-line"></div></div>
-    <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">현재 주행거리 <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
+    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} Phụ tùng</span><div class="sec-line"></div></div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">Tổng số km hiện tại <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
     <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
 }
 
@@ -1019,7 +1019,7 @@ function consumableCard(c,km){
   return `<div class="c-item ${cls}" onclick="openConsumModal('${c.id}')">
     <div class="c-icon-big">${c.icon}</div>
     <div class="c-name">${c.name}</div>
-    <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Chưa có'}<br>주기: ${c.km.toLocaleString()} km<br>${remain>0?'Còn lại: '+remain.toLocaleString()+' km':''}</div>
+    <div class="c-info">Lần cuối: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Chưa có'}<br>Chu kỳ: ${c.km.toLocaleString()} km<br>${remain>0?'Còn lại: '+remain.toLocaleString()+' km':''}</div>
     <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
       <span class="c-tag ${cls}" style="font-size:9px;">${tag}</span>
@@ -1035,7 +1035,7 @@ function openConsumModal(cId){
   const bike=D.bikes[cState.bikeIdx];
   const c=bike.consumables.find(x=>x.id===cId);
   cState.cId=cId;
-  document.getElementById('mc-title').textContent=c.name+' — 교체 기록';
+  document.getElementById('mc-title').textContent=c.name+' — Ghi nhận thay thế';
   document.getElementById('mc-current-km').textContent=bike.odometer.toLocaleString();
   const km=bike.odometer;
   const pp=document.getElementById('mc-km-pills');
@@ -1069,7 +1069,7 @@ function saveConsumable(){
   c.lastKm=kmVal; c.lastDate=date;
   c.km=parseInt(document.getElementById('mc-interval').value)||c.km;
   c.memo=document.getElementById('mc-memo').value;
-  D.history.push({id:Date.now(),bikeId:bike.id,date,km:kmVal,type:'소모품교체',desc:c.name+' 교체'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
+  D.history.push({id:Date.now(),bikeId:bike.id,date,km:kmVal,type:'Thay phụ tùng',desc:c.name+' thay thế'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
   save(); closeModal('m-consumable'); renderConsumables(); renderDash();
 }
 
@@ -1078,7 +1078,7 @@ function openEditConsumable(cId){
   const bike=D.bikes[cState.bikeIdx];
   const c=bike.consumables.find(x=>x.id===cId);
   editingCId=cId;
-  document.getElementById('m-edit-c-title').textContent=c.name+' 수정';
+  document.getElementById('m-edit-c-title').textContent=c.name+' Sửa';
   document.getElementById('edit-c-km').value=c.lastKm||0;
   document.getElementById('edit-c-date').value=c.lastDate||todayStr();
   document.getElementById('edit-c-interval').value=c.km;
@@ -1103,17 +1103,17 @@ function renderExtraSection(){
   const el=document.getElementById('c-extra-section');
   if(!D.bikes.length){ el.innerHTML=''; return; }
   const bike=D.bikes[cState.bikeIdx];
-  const logs=D.history.filter(l=>l.bikeId==bike.id&&l.type!=='소모품교체').sort((a,b)=>b.date.localeCompare(a.date));
-  const typeBadge={'정기점검':'badge-maint','수리':'badge-repair','세차':'badge-other','튜닝':'badge-cons','기타':'badge-other'};
+  const logs=D.history.filter(l=>l.bikeId==bike.id&&l.type!=='Thay phụ tùng').sort((a,b)=>b.date.localeCompare(a.date));
+  const typeBadge={'Kiểm tra định kỳ':'badge-maint','Sửa chữa':'badge-repair','Rửa xe':'badge-other','Độ xe':'badge-cons','Khác':'badge-other'};
   el.innerHTML=`
     <div class="sec-header" style="margin-top:8px;">
-      <span class="sec-title">기타 정비</span><div class="sec-line"></div>
-      <button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ 추가</button>
+      <span class="sec-title">Bảo dưỡng khác</span><div class="sec-line"></div>
+      <button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ Thêm</button>
     </div>
     ${!logs.length
-      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">기타 정비 기록이 없습니다</div>`
+      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">Chưa có lịch sử bảo dưỡng khác</div>`
       :`<div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;"><table class="log-table">
-          <thead><tr><th>날짜</th><th>유형</th><th>내용</th><th>km</th><th>비용</th><th>정비소</th><th></th></tr></thead>
+          <thead><tr><th>Ngày</th><th>Loại</th><th>Nội dung</th><th>km</th><th>Chi phí</th><th>Nơi bảo dưỡng</th><th></th></tr></thead>
           <tbody>${logs.map(l=>`<tr>
             <td class="mono">${l.date}</td>
             <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
@@ -1123,7 +1123,7 @@ function renderExtraSection(){
             <td style="color:var(--text-dim)">${l.shop||'—'}</td>
             <td style="display:flex;gap:4px;">
               <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">삭제</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button>
             </td>
           </tr>`).join('')}</tbody>
         </table></div></div>`
@@ -1132,7 +1132,7 @@ function renderExtraSection(){
 
 function openExtraModal(editId=null){
   editingExtraId=editId;
-  document.getElementById('m-extra-title').textContent=editId?'기타 정비 수정':'기타 정비 추가';
+  document.getElementById('m-extra-title').textContent=editId?'Chỉnh sửa bảo dưỡng':'Thêm bảo dưỡng khác';
   clearPills('m-extra');
   extraDateVal=todayStr();
   document.getElementById('extra-date-input').style.display='none';
@@ -1168,7 +1168,7 @@ function saveExtra(){
   const bike=D.bikes[cState.bikeIdx]; if(!bike) return;
   const dateInp=document.getElementById('extra-date-input');
   const date=dateInp.style.display!=='none'?dateInp.value:extraDateVal;
-  const record={bikeId:bike.id,date,km:parseInt(document.getElementById('extra-km').value)||0,type:document.getElementById('extra-type').value||'기타',desc:document.getElementById('extra-desc').value,cost:document.getElementById('extra-cost').value,shop:document.getElementById('extra-shop').value};
+  const record={bikeId:bike.id,date,km:parseInt(document.getElementById('extra-km').value)||0,type:document.getElementById('extra-type').value||'Khác',desc:document.getElementById('extra-desc').value,cost:document.getElementById('extra-cost').value,shop:document.getElementById('extra-shop').value};
   if(editingExtraId!==null){
     const idx=D.history.findIndex(l=>l.id===editingExtraId);
     if(idx>-1) D.history[idx]={...D.history[idx],...record};
@@ -1181,7 +1181,7 @@ function saveExtra(){
 // ═══════════════════════════════════════════
 function renderRiding(){
   const el=document.getElementById('odo-cards');
-  if(!D.bikes.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">🏍</div><div class="empty-text">차량을 먼저 등록하세요</div></div>`; return; }
+  if(!D.bikes.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">🏍</div><div class="empty-text">Vui lòng đăng ký xe trước</div></div>`; return; }
   el.innerHTML=D.bikes.map(bike=>{
     const alerts=bike.consumables.filter(c=>(bike.odometer-c.lastKm)/c.km>=0.8);
     const urgents=alerts.filter(c=>(bike.odometer-c.lastKm)/c.km>=1);
@@ -1189,23 +1189,23 @@ function renderRiding(){
     return `<div class="bike-card" style="margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
         <div><div class="bike-name">${bike.brand} ${bike.model}</div><div class="bike-meta">${bike.year}${bike.cc?' · '+bike.cc+'cc':''}${bike.plate?' · '+bike.plate:''}</div></div>
-        <div style="text-align:right;"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px;">현재 누적</div><div style="font-family:'JetBrains Mono',monospace;font-size:26px;color:var(--accent);line-height:1;">${bike.odometer.toLocaleString()}</div><div style="font-size:10px;color:var(--text-dim);">km</div></div>
+        <div style="text-align:right;"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px;">Tổng hiện tại</div><div style="font-family:'JetBrains Mono',monospace;font-size:26px;color:var(--accent);line-height:1;">${bike.odometer.toLocaleString()}</div><div style="font-size:10px;color:var(--text-dim);">km</div></div>
       </div>
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;">
-        <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">누적 주행거리 업데이트</div>
+        <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Cập nhật tổng số km</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <input type="number" class="num-input-styled" id="odo-input-${bike.id}" value="${bike.odometer}" style="width:150px;">
           <span style="font-size:13px;color:var(--text-dim);">km</span>
-          <button class="btn btn-primary" onclick="updateOdometer(${bike.id})">업데이트</button>
+          <button class="btn btn-primary" onclick="updateOdometer(${bike.id})">Cập nhật</button>
         </div>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:7px;">계기판의 현재 누적 주행거리를 입력하세요</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:7px;">Nhập số km hiện tại trên đồng hồ xe</div>
       </div>
       ${alerts.length?`
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-        <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">소모품 알림</div>
-        ${urgents.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">${c.icon} ${c.name}</span><span class="c-tag danger">🚨 교체 필요</span></div>`).join('')}
-        ${warns.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">${c.icon} ${c.name}</span><span class="c-tag warn">⚠ 곧 교체</span></div>`).join('')}
-      </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--green);">✓ 모든 소모품 양호</div>`}
+        <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Cảnh báo phụ tùng</div>
+        ${urgents.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">${c.icon} ${c.name}</span><span class="c-tag danger">🚨 Cần thay ngay</span></div>`).join('')}
+        ${warns.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">${c.icon} ${c.name}</span><span class="c-tag warn">⚠ Sắp thay</span></div>`).join('')}
+      </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--green);">✓ Tất cả phụ tùng đều tốt</div>`}
     </div>`;
   }).join('');
 }
@@ -1213,7 +1213,7 @@ function renderRiding(){
 function updateOdometer(bikeId){
   const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
   const newKm=parseInt(document.getElementById('odo-input-'+bikeId).value)||0;
-  if(newKm<bike.odometer){ if(!confirm(`현재(${bike.odometer.toLocaleString()} km).\nBạn có muốn tiếp tục không?`)) return; }
+  if(newKm<bike.odometer){ if(!confirm(`Hiện tại: ${bike.odometer.toLocaleString()} km\nBạn có muốn tiếp tục không?`)) return; }
   bike.odometer=newKm; save(); renderRiding(); renderDash();
 }
 
@@ -1228,9 +1228,9 @@ function renderHistory(){
   if(bfv) logs=logs.filter(l=>l.bikeId==bfv);
   if(tfv) logs=logs.filter(l=>l.type===tfv);
   const el=document.getElementById('history-table');
-  const typeBadge={'소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
-  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">정비 기록이 없습니다</div></div>`; return; }
-  el.innerHTML=`<table class="log-table"><thead><tr><th>날짜</th><th>차량</th><th>유형</th><th>내용</th><th>km</th><th>비용</th><th>정비소</th><th></th></tr></thead><tbody>
+  const typeBadge={'Thay phụ tùng':'badge-cons','Kiểm tra định kỳ':'badge-maint','Sửa chữa':'badge-repair','Khác':'badge-other'};
+  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Chưa có lịch sử bảo dưỡng</div></div>`; return; }
+  el.innerHTML=`<table class="log-table"><thead><tr><th>Ngày</th><th>Xe</th><th>Loại</th><th>Nội dung</th><th>km</th><th>Chi phí</th><th>Nơi bảo dưỡng</th><th></th></tr></thead><tbody>
     ${logs.map(l=>{
       const b=D.bikes.find(x=>x.id==l.bikeId);
       return `<tr>
@@ -1243,7 +1243,7 @@ function renderHistory(){
         <td style="color:var(--text-dim)">${l.shop||'—'}</td>
         <td style="display:flex;gap:4px;">
           <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">삭제</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button>
         </td>
       </tr>`;
     }).join('')}</tbody></table>`;
@@ -1254,7 +1254,7 @@ function openEditHistory(id){
   editingHistoryId=id;
   document.getElementById('edit-h-date').value=log.date||todayStr();
   document.getElementById('edit-h-km').value=log.km||'';
-  document.getElementById('edit-h-type').value=log.type||'기타';
+  document.getElementById('edit-h-type').value=log.type||'Khác';
   document.getElementById('edit-h-desc').value=log.desc||'';
   document.getElementById('edit-h-cost').value=log.cost||'';
   document.getElementById('edit-h-shop').value=log.shop||'';
@@ -1278,9 +1278,9 @@ function renderBackupPage(){
   const el=document.getElementById('backup-stats');
   const lastBackup=localStorage.getItem('mg2-last-backup');
   el.innerHTML=`
-    <div class="backup-stat-row"><span>등록 차량</span><span class="backup-stat-val">${D.bikes.length}대</span></div>
-    <div class="backup-stat-row"><span>정비 이력</span><span class="backup-stat-val">${D.history.length}건</span></div>
-    <div class="backup-stat-row"><span>마지막 백업</span><span class="backup-stat-val" style="font-size:11px;">${lastBackup||'Chưa có'}</span></div>`;
+    <div class="backup-stat-row"><span>Xe đã đăng ký</span><span class="backup-stat-val">${D.bikes.length}대</span></div>
+    <div class="backup-stat-row"><span>Lịch sử</span><span class="backup-stat-val">${D.history.length}건</span></div>
+    <div class="backup-stat-row"><span>Sao lưu lần cuối</span><span class="backup-stat-val" style="font-size:11px;">${lastBackup||'Chưa có'}</span></div>`;
 }
 function showBackupToast(msg,type='success'){
   const t=document.getElementById('backup-toast');
@@ -1303,8 +1303,8 @@ function importJSON(event){
   reader.onload=e=>{
     try{
       const imported=JSON.parse(e.target.result);
-      if(!imported.bikes||!imported.history) throw new Error('형식 오류');
-      if(!confirm(`백업을 불러오면 현재 데이터가 교체됩니다.\n차량 ${imported.bikes.length} xe, bảo dưỡng: ${imported.history.length} bản\n\nBạn có muốn tiếp tục không?`)) return;
+      if(!imported.bikes||!imported.history) throw new Error('Định dạng không hợp lệ');
+      if(!confirm(`Dữ liệu hiện tại sẽ bị thay thế.\nXe: ${imported.bikes.length}, bảo dưỡng: ${imported.history.length} bản\n\nBạn có muốn tiếp tục không?`)) return;
       D=imported; save();
       showBackupToast('✓ Dữ liệu đã được khôi phục');
       renderBackupPage(); renderDash();
@@ -1333,7 +1333,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-vn-v1';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-vn-v3';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
