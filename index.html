@@ -441,6 +441,18 @@
   .backup-toast.error { background:var(--red); color:#fff; }
   .backup-toast.show { display:block; }
 
+
+  /* ── LANG SELECTOR ── */
+  .lang-btn {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:6px; padding:4px 6px;
+    font-size:18px; cursor:pointer; line-height:1;
+    transition:all 0.15s; opacity:0.6;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .lang-btn:hover { opacity:1; border-color:var(--border-bright); background:var(--surface3); }
+  .lang-btn.active { opacity:1; border-color:var(--accent); background:var(--accent-dim); }
+
 </style>
 </head>
 <body>
@@ -459,6 +471,11 @@
         <span class="iconbox-name">@iconbox<span class="iconbox-dot">.</span>lee</span>
       </div>
     </a>
+    <div style="display:flex;gap:4px;margin-left:12px;" id="lang-selector">
+      <button onclick="setLang('ko')" id="lang-ko" class="lang-btn" title="한국어">🇰🇷</button>
+      <button onclick="setLang('vi')" id="lang-vi" class="lang-btn" title="Tiếng Việt">🇻🇳</button>
+      <button onclick="setLang('en')" id="lang-en" class="lang-btn" title="English">🇺🇸</button>
+    </div>
   </div>
 </div>
 
@@ -888,6 +905,152 @@
 // ─────────────────────────────────────────
 //  DATA
 // ─────────────────────────────────────────
+
+// ─────────────────────────────────────────
+//  다국어 지원
+// ─────────────────────────────────────────
+const LANGS = {
+  ko: {
+    // 네비
+    nav_home:'홈', nav_bikes:'내 차량', nav_consumables:'소모품',
+    nav_riding:'주행거리', nav_history:'정비이력', nav_backup:'백업',
+    // 대시보드
+    dash_status:'차량 현황', dash_summary:'소모품 현황', dash_recent:'최근 정비',
+    dash_km:'KM 누적', dash_no_history:'정비 기록이 없습니다',
+    dash_no_bikes_title:'차량을 등록하면 관리가 시작됩니다',
+    dash_no_bikes_sub:'소모품 알림 · 주행거리 · 정비 이력',
+    dash_register:'첫 차량 등록하기',
+    // 소모품 상태
+    c_ok:'✓ 양호', c_warn:'⚠ 곧 교체', c_danger:'🚨 교체 필요',
+    c_remain:'잔여', c_over:'초과',
+    // 내 차량
+    bikes_title:'내 차량', bikes_empty:'등록된 차량이 없습니다',
+    bikes_add:'+ 새 차량 등록', bike_km:'KM 누적',
+    bike_edit:'✏ 수정', bike_delete:'삭제',
+    // 소모품 탭
+    c_tab_title:'소모품 현황', c_last:'마지막', c_cycle:'주기',
+    c_extra:'기타 정비', c_extra_add:'+ 추가', c_no_extra:'기타 정비 기록이 없습니다',
+    // 주행거리
+    riding_title:'누적 주행거리 관리', riding_update:'누적 주행거리 업데이트',
+    riding_hint:'계기판의 현재 누적 주행거리를 입력하세요',
+    riding_btn:'업데이트', riding_c_title:'소모품 알림', riding_all_ok:'모든 소모품 양호',
+    // 정비이력
+    history_title:'정비 이력', history_all_bikes:'전체 차량', history_all_type:'전체 유형',
+    history_hint:'정비 기록은', history_hint2:'소모품·정비 탭에서 추가하세요',
+    history_no:'정비 기록이 없습니다',
+    // 백업
+    backup_title:'데이터 백업', backup_export:'⬆ JSON 내보내기',
+    backup_import:'⬇ JSON 가져오기', backup_reset:'🗑 전체 데이터 초기화',
+    backup_stats:'현재 저장된 데이터', backup_last:'마지막 백업', backup_none:'없음',
+    backup_bikes:'등록 차량', backup_rides:'주행 기록', backup_history:'정비 이력',
+    // 모달
+    modal_add_bike:'차량 등록', modal_edit_bike:'차량 정보 수정',
+    modal_brand:'제조사', modal_model:'모델', modal_year:'연식',
+    modal_cc:'배기량 (cc)', modal_odo:'누적 주행거리 (km)',
+    modal_plate:'번호판 (선택)', modal_color:'색상 (선택)',
+    modal_cancel:'취소', modal_save:'저장', modal_register:'등록',
+    // 공통
+    today:'오늘', yesterday:'어제', pick_date:'직접 선택',
+    confirm_delete:'차량을 삭제하시겠습니까?',
+  },
+  vi: {
+    nav_home:'Trang chủ', nav_bikes:'Xe của tôi', nav_consumables:'Bảo dưỡng',
+    nav_riding:'Số km', nav_history:'Lịch sử', nav_backup:'Sao lưu',
+    dash_status:'Tình trạng xe', dash_summary:'Tình trạng bảo dưỡng', dash_recent:'Bảo dưỡng gần đây',
+    dash_km:'KM tổng', dash_no_history:'Chưa có lịch sử bảo dưỡng',
+    dash_no_bikes_title:'Đăng ký xe để bắt đầu quản lý',
+    dash_no_bikes_sub:'Nhắc bảo dưỡng · Số km · Lịch sử sửa chữa',
+    dash_register:'Đăng ký xe đầu tiên',
+    c_ok:'✓ Tốt', c_warn:'⚠ Sắp thay', c_danger:'🚨 Cần thay ngay',
+    c_remain:'còn lại', c_over:'quá hạn',
+    bikes_title:'Xe của tôi', bikes_empty:'Chưa có xe nào được đăng ký',
+    bikes_add:'+ Thêm xe mới', bike_km:'KM tổng',
+    bike_edit:'✏ Sửa', bike_delete:'Xóa',
+    c_tab_title:'Tình trạng phụ tùng', c_last:'Lần cuối', c_cycle:'Chu kỳ',
+    c_extra:'Bảo dưỡng khác', c_extra_add:'+ Thêm', c_no_extra:'Chưa có lịch sử bảo dưỡng khác',
+    riding_title:'Quản lý số km', riding_update:'Cập nhật tổng số km',
+    riding_hint:'Nhập số km hiện tại trên đồng hồ xe',
+    riding_btn:'Cập nhật', riding_c_title:'Cảnh báo bảo dưỡng', riding_all_ok:'Tất cả phụ tùng đều tốt',
+    history_title:'Lịch sử bảo dưỡng', history_all_bikes:'Tất cả xe', history_all_type:'Tất cả loại',
+    history_hint:'Ghi chép tại tab', history_hint2:'Bảo dưỡng',
+    history_no:'Chưa có lịch sử bảo dưỡng',
+    backup_title:'Sao lưu dữ liệu', backup_export:'⬆ Xuất JSON',
+    backup_import:'⬇ Nhập JSON', backup_reset:'🗑 Xóa toàn bộ dữ liệu',
+    backup_stats:'Dữ liệu hiện tại', backup_last:'Sao lưu lần cuối', backup_none:'Chưa có',
+    backup_bikes:'Xe đã đăng ký', backup_rides:'Lịch sử đi', backup_history:'Lịch sử bảo dưỡng',
+    modal_add_bike:'Đăng ký xe', modal_edit_bike:'Chỉnh sửa thông tin xe',
+    modal_brand:'Hãng xe', modal_model:'Dòng xe', modal_year:'Năm sản xuất',
+    modal_cc:'Dung tích (cc)', modal_odo:'Tổng số km hiện tại',
+    modal_plate:'Biển số (tùy chọn)', modal_color:'Màu sắc (tùy chọn)',
+    modal_cancel:'Hủy', modal_save:'Lưu', modal_register:'Đăng ký',
+    today:'Hôm nay', yesterday:'Hôm qua', pick_date:'Chọn ngày',
+    confirm_delete:'Bạn có muốn xóa xe này không?',
+  },
+  en: {
+    nav_home:'Home', nav_bikes:'My Bikes', nav_consumables:'Service',
+    nav_riding:'Mileage', nav_history:'History', nav_backup:'Backup',
+    dash_status:'Vehicle Status', dash_summary:'Consumable Status', dash_recent:'Recent Service',
+    dash_km:'Total KM', dash_no_history:'No service records yet',
+    dash_no_bikes_title:'Register a vehicle to get started',
+    dash_no_bikes_sub:'Service alerts · Mileage · Maintenance history',
+    dash_register:'Register First Vehicle',
+    c_ok:'✓ Good', c_warn:'⚠ Due Soon', c_danger:'🚨 Replace Now',
+    c_remain:'remaining', c_over:'overdue',
+    bikes_title:'My Bikes', bikes_empty:'No vehicles registered',
+    bikes_add:'+ Add New Vehicle', bike_km:'Total KM',
+    bike_edit:'✏ Edit', bike_delete:'Delete',
+    c_tab_title:'Consumable Status', c_last:'Last replaced', c_cycle:'Interval',
+    c_extra:'Other Maintenance', c_extra_add:'+ Add', c_no_extra:'No other maintenance records',
+    riding_title:'Mileage Management', riding_update:'Update Odometer',
+    riding_hint:'Enter the current odometer reading from your dashboard',
+    riding_btn:'Update', riding_c_title:'Service Alerts', riding_all_ok:'All consumables are good',
+    history_title:'Service History', history_all_bikes:'All Vehicles', history_all_type:'All Types',
+    history_hint:'Add records in the', history_hint2:'Service tab',
+    history_no:'No service records yet',
+    backup_title:'Data Backup', backup_export:'⬆ Export JSON',
+    backup_import:'⬇ Import JSON', backup_reset:'🗑 Reset All Data',
+    backup_stats:'Current Data', backup_last:'Last Backup', backup_none:'None',
+    backup_bikes:'Registered Vehicles', backup_rides:'Ride Logs', backup_history:'Service Records',
+    modal_add_bike:'Register Vehicle', modal_edit_bike:'Edit Vehicle Info',
+    modal_brand:'Brand', modal_model:'Model', modal_year:'Year',
+    modal_cc:'Engine (cc)', modal_odo:'Current Odometer (km)',
+    modal_plate:'Plate No. (optional)', modal_color:'Color (optional)',
+    modal_cancel:'Cancel', modal_save:'Save', modal_register:'Register',
+    today:'Today', yesterday:'Yesterday', pick_date:'Pick date',
+    confirm_delete:'Are you sure you want to delete this vehicle?',
+  }
+};
+
+var currentLang = localStorage.getItem('mg2-lang') || 'ko';
+function t(key) { return LANGS[currentLang][key] || LANGS['ko'][key] || key; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('mg2-lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('lang-' + lang);
+  if(btn) btn.classList.add('active');
+  applyLang();
+}
+
+function applyLang() {
+  // 네비 라벨
+  const navLabels = document.querySelectorAll('.nav-label');
+  const navKeys = ['nav_home','nav_bikes','nav_consumables','nav_riding','nav_history','nav_backup'];
+  navLabels.forEach((el, i) => { if(navKeys[i]) el.textContent = t(navKeys[i]); });
+  // 현재 페이지 리렌더
+  const activePage = document.querySelector('.page.active');
+  if(activePage) {
+    const id = activePage.id.replace('page-','');
+    if(id==='dashboard') renderDash();
+    if(id==='bikes') renderBikes();
+    if(id==='consumables') renderConsumables();
+    if(id==='riding') renderRiding();
+    if(id==='history') renderHistory();
+    if(id==='backup') renderBackupPage();
+  }
+}
+
 let D = JSON.parse(localStorage.getItem('mg2') || 'null') || { bikes:[], rides:[], history:[] };
 const save = () => localStorage.setItem('mg2', JSON.stringify(D));
 let dashSelectedBikeId = null;
@@ -1266,7 +1429,7 @@ function addBike() {
 function renderBikes() {
   const el=document.getElementById('bike-list');
   if(!D.bikes.length){
-    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:40px;margin-bottom:12px;">🏍</div><div style="font-size:14px;color:var(--text-dim);">등록된 차량이 없습니다</div></div>`;
+    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:40px;margin-bottom:12px;">🏍</div><div style="font-size:14px;color:var(--text-dim);">${t('bikes_empty')}</div></div>`;
     return;
   }
   el.innerHTML=D.bikes.map(b=>{
@@ -1279,8 +1442,8 @@ function renderBikes() {
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
           ${b.color?`<span class="tag-chip">${b.color}</span>`:''}
-          <button class="btn btn-sm" onclick="openEditBike(${b.id})">✏ 수정</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteBike(${b.id})">삭제</button>
+          <button class="btn btn-sm" onclick="openEditBike(${b.id})">${t('bike_edit')}</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteBike(${b.id})">${t('bike_delete')}</button>
         </div>
       </div>
       <div class="bike-stats">
@@ -1293,7 +1456,7 @@ function renderBikes() {
 }
 
 function deleteBike(id) {
-  if(!confirm('차량을 삭제하시겠습니까?')) return;
+  if(!confirm(t('confirm_delete'))) return;
   D.bikes=D.bikes.filter(b=>b.id!==id);
   save(); renderBikes(); renderDash();
 }
@@ -1462,7 +1625,7 @@ function renderOdoCard(bike) {
           value="${bike.odometer}"
           style="width:160px;font-size:20px;">
         <span style="font-size:13px;color:var(--text-dim);">km</span>
-        <button class="btn btn-primary" onclick="updateOdometer(${bike.id})">업데이트</button>
+        <button class="btn btn-primary" onclick="updateOdometer(${bike.id})">${t('riding_btn')}</button>
       </div>
       <div style="font-size:10px;color:var(--text-muted);margin-top:8px;">계기판의 현재 누적 주행거리를 입력하세요</div>
     </div>
@@ -1646,7 +1809,7 @@ function renderDash() {
     </div>
 
     <!-- 소모품 현황 전체 -->
-    <div class="sec-header"><span class="sec-title">소모품 현황</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title" id="dash-c-title">소모품 현황</span><div class="sec-line"></div></div>
     <div class="card" style="padding:8px 0;">
       ${consumableRows.map(({ c, pct, remain, cls, fillColor, tag }) => `
         <div style="padding:10px 16px;border-bottom:1px solid var(--border);" onclick="showPage('consumables', document.querySelector('.nav-btn:nth-child(3)'))">
@@ -1714,7 +1877,7 @@ renderDash();
 // Service Worker (inline via blob)
 (function(){
   const SW_CODE=`
-const CACHE='moto-garage-v7';
+const CACHE='moto-garage-v10';
 const ASSETS=[self.location.pathname||'/'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
