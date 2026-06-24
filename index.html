@@ -644,6 +644,11 @@
         <div class="pill-group" id="year-pills"></div>
       </div>
 
+      <!-- 카테고리 미리보기 -->
+      <div id="cat-preview" style="display:none;margin-bottom:10px;padding:8px 12px;
+        background:var(--accent-dim);border:1px solid var(--accent);border-radius:5px;
+        font-size:12px;color:var(--accent);font-weight:600;"></div>
+
       <!-- 배기량 -->
       <div style="margin-bottom:16px;">
         <div class="step-label"><span class="step-num" id="mn4">4</span>배기량</div>
@@ -900,6 +905,59 @@ const CONSUMABLES = [
   {id:'air_f',    icon:'💨', name:'에어 필터',          km:15000},
   {id:'brake_oil',icon:'💧', name:'브레이크오일',       km:20000},
 ];
+
+// ─── 카테고리별 소모품 교체 주기 (km) ───────────────────────────
+// sport: 스포츠/SS  naked: 네이키드/스트리트
+// adventure: 어드벤처/투어러  classic: 클래식/크루저
+const CATEGORY_INTERVALS = {
+  sport: {
+    oil:3000, oil_f:6000, spark:12000, chain:8000,
+    brake_f:15000, brake_r:12000, tire_f:10000, tire_r:8000,
+    coolant:20000, air_f:12000, brake_oil:15000
+  },
+  naked: {
+    oil:5000, oil_f:10000, spark:15000, chain:10000,
+    brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000,
+    coolant:20000, air_f:15000, brake_oil:20000
+  },
+  adventure: {
+    oil:6000, oil_f:12000, spark:18000, chain:12000,
+    brake_f:25000, brake_r:20000, tire_f:15000, tire_r:12000,
+    coolant:24000, air_f:12000, brake_oil:20000
+  },
+  classic: {
+    oil:5000, oil_f:10000, spark:10000, chain:8000,
+    brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000,
+    coolant:20000, air_f:15000, brake_oil:20000
+  }
+};
+
+// 브랜드+모델명으로 카테고리 자동 판별
+function detectCategory(brand, model) {
+  const m = model.toLowerCase();
+  const b = brand.toLowerCase();
+  // 스포츠 SS
+  if (/cbr|r1|r7|yzf|ninja zx|zx-|s1000rr|panigale|gsx-r|fireblade|m1000/.test(m)) return 'sport';
+  // 어드벤처/투어러
+  if (/gs|africa twin|v-strom|vstrom|versys|tracer|tiger|multistrada|ténéré|tenere|xt|adventure|adv|xadv|x-adv|nt1100|pan america/.test(m)) return 'adventure';
+  // 클래식/크루저
+  if (/harley|davidson/.test(b) || /royal enfield/.test(b) ||
+      /bonneville|scrambler|meteor|classic|interceptor|continental|street bob|fat boy|fat bob|road king|road glide|nightster|sportster|iron|softail|street glide|rebel|shadow|vulcan/.test(m)) return 'classic';
+  // 네이키드/스트리트 (기본)
+  return 'naked';
+}
+
+// 카테고리에 맞는 소모품 배열 생성
+function makeConsumables(brand, model) {
+  const cat = detectCategory(brand, model);
+  const intervals = CATEGORY_INTERVALS[cat];
+  return CONSUMABLES.map(c => ({
+    ...c,
+    km: intervals[c.id] || c.km,
+    lastKm: 0, lastDate: '', memo: '',
+    category: cat
+  }));
+}
 
 // 각 모델: { name, cc }  — 고배기량 내림차순, 250cc 이하는 제외(기타로 통합)
 const BRAND_MODELS = {
@@ -1193,7 +1251,7 @@ function addBike() {
     cc, odometer:odo,
     color: document.getElementById('bike-color').value,
     plate: document.getElementById('bike-plate').value,
-    consumables: CONSUMABLES.map(c=>({...c, lastKm:0, lastDate:'', memo:''}))
+    consumables: makeConsumables(brand, model)
   };
   D.bikes.push(bike);
   save();
@@ -1577,6 +1635,7 @@ function renderDash() {
         <div>
           <div class="bike-name">${sb.brand} ${sb.model}</div>
           <div class="bike-meta">${sb.year}${sb.cc?' · '+sb.cc+'cc':''}${sb.plate?' · '+sb.plate:''}</div>
+          ${sb.consumables[0]?.category ? `<div style="margin-top:4px;"><span style="font-size:9px;font-weight:700;letter-spacing:0.5px;padding:2px 7px;border-radius:3px;background:var(--surface3);color:var(--metal);">${{sport:'🏁 SPORT',naked:'🏙 NAKED',adventure:'🌍 ADVENTURE',classic:'🛣 CLASSIC'}[sb.consumables[0].category]||''}</span></div>` : ''}
         </div>
         <div style="text-align:right;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:500;color:var(--accent);line-height:1;">${sb.odometer.toLocaleString()}</div>
@@ -1654,7 +1713,7 @@ renderDash();
 // Service Worker (inline via blob)
 (function(){
   const SW_CODE=`
-const CACHE='moto-garage-v5';
+const CACHE='moto-garage-v6';
 const ASSETS=[self.location.pathname||'/'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
