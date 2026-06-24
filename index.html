@@ -1452,7 +1452,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-ko-v5';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-ko-v6';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
@@ -1466,9 +1466,57 @@ window.addEventListener('appinstalled',()=>{ document.getElementById('pwa-banner
 function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(r=>{ if(r.outcome==='accepted') document.getElementById('pwa-banner').classList.remove('show'); deferredPrompt=null; }); } else { alert('Safari에서 하단 공유 버튼 → "홈 화면에 추가"를 탭하세요.'); } }
 function dismissInstall(){ document.getElementById('pwa-banner').classList.remove('show'); sessionStorage.setItem('pwa-dismissed','1'); }
 
+
+// ─────────────────────────────────────────
+//  데이터 마이그레이션 — 기존 차량에 공식 주기 자동 적용
+// ─────────────────────────────────────────
+function migrateConsumableIntervals() {
+  let updated = false;
+  D.bikes.forEach(bike => {
+    const modelData = getModelIntervals(bike.brand, bike.model);
+    const cat = detectCategory(bike.brand, bike.model);
+    const intervals = modelData || CATEGORY_INTERVALS[cat];
+
+    // 새 공식 데이터 기반 전체 소모품 목록 생성
+    const newConsumables = CONSUMABLES.map(c => {
+      const km = intervals[c.id];
+      if (c.id === 'chain' && km === 0) return null; // 샤프트 드라이브
+      return { ...c, km: km || c.km, lastKm: 0, lastDate: '', memo: '', category: cat, isOfficial: !!modelData };
+    }).filter(Boolean);
+
+    // 기존 소모품과 병합 — lastKm, lastDate, memo는 기존 값 유지, km(주기)만 업데이트
+    const merged = newConsumables.map(newC => {
+      const existing = bike.consumables ? bike.consumables.find(e => e.id === newC.id) : null;
+      if (existing) {
+        // 주기(km)만 새 값으로 업데이트, 교체 기록은 유지
+        return {
+          ...newC,
+          lastKm: existing.lastKm || 0,
+          lastDate: existing.lastDate || '',
+          memo: existing.memo || '',
+        };
+      }
+      return newC; // 새로 추가된 소모품
+    });
+
+    // 변경 여부 확인
+    const hasChange = JSON.stringify(bike.consumables) !== JSON.stringify(merged);
+    if (hasChange) {
+      bike.consumables = merged;
+      updated = true;
+    }
+  });
+
+  if (updated) {
+    save();
+    console.log('[MOTO] 소모품 주기 데이터 업데이트 완료');
+  }
+}
+
 // ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
+migrateConsumableIntervals(); // 기존 차량 공식 데이터 자동 적용
 renderDash();
 </script>
 </body>
