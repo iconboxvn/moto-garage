@@ -1279,6 +1279,7 @@ function renderBikes() {
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
           ${b.color?`<span class="tag-chip">${b.color}</span>`:''}
+          <button class="btn btn-sm" onclick="openEditBike(${b.id})">✏ 수정</button>
           <button class="btn btn-sm btn-danger" onclick="deleteBike(${b.id})">삭제</button>
         </div>
       </div>
@@ -1713,7 +1714,7 @@ renderDash();
 // Service Worker (inline via blob)
 (function(){
   const SW_CODE=`
-const CACHE='moto-garage-v6';
+const CACHE='moto-garage-v7';
 const ASSETS=[self.location.pathname||'/'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
@@ -2201,6 +2202,45 @@ function selectDashBike(id) {
   dashSelectedBikeId = id;
   renderDash();
 }
+
+// ─────────────────────────────────────────
+//  차량 수정
+// ─────────────────────────────────────────
+let editingBikeId = null;
+
+function openEditBike(id) {
+  const bike = D.bikes.find(b => b.id === id);
+  if (!bike) return;
+  editingBikeId = id;
+  document.getElementById('edit-bike-brand').value = bike.brand || '';
+  document.getElementById('edit-bike-model').value = bike.model || '';
+  document.getElementById('edit-bike-year').value  = bike.year  || '';
+  document.getElementById('edit-bike-cc').value    = bike.cc    || '';
+  document.getElementById('edit-bike-odo').value   = bike.odometer || 0;
+  document.getElementById('edit-bike-plate').value = bike.plate || '';
+  document.getElementById('edit-bike-color').value = bike.color || '';
+  openModal('m-edit-bike');
+}
+
+function saveEditBike() {
+  const bike = D.bikes.find(b => b.id === editingBikeId);
+  if (!bike) return;
+  const brand = document.getElementById('edit-bike-brand').value.trim();
+  const model = document.getElementById('edit-bike-model').value.trim();
+  if (!brand || !model) { alert('제조사와 모델은 필수입니다.'); return; }
+  bike.brand     = brand;
+  bike.model     = model;
+  bike.year      = parseInt(document.getElementById('edit-bike-year').value) || bike.year;
+  bike.cc        = parseInt(document.getElementById('edit-bike-cc').value)   || bike.cc;
+  bike.odometer  = parseInt(document.getElementById('edit-bike-odo').value)  || 0;
+  bike.plate     = document.getElementById('edit-bike-plate').value;
+  bike.color     = document.getElementById('edit-bike-color').value;
+  save();
+  closeModal('m-edit-bike');
+  renderBikes();
+  renderDash();
+}
+
 </script>
 
 <!-- PWA INSTALL BANNER -->
@@ -2391,6 +2431,58 @@ function selectDashBike(id) {
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('m-edit-history')">취소</button>
       <button class="btn btn-primary" onclick="updateHistory()">수정 저장</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ MODAL: 차량 수정 ═══════════ -->
+<div class="modal-overlay" id="m-edit-bike">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">차량 정보 수정</span>
+      <button class="modal-close" onclick="closeModal('m-edit-bike')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">제조사</label>
+          <input type="text" class="form-input" id="edit-bike-brand" placeholder="Honda">
+        </div>
+        <div class="form-group">
+          <label class="form-label">모델</label>
+          <input type="text" class="form-input" id="edit-bike-model" placeholder="CB650R">
+        </div>
+        <div class="form-group">
+          <label class="form-label">연식</label>
+          <input type="number" class="form-input" id="edit-bike-year" placeholder="2023">
+        </div>
+        <div class="form-group">
+          <label class="form-label">배기량 (cc)</label>
+          <input type="number" class="form-input" id="edit-bike-cc" placeholder="650">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">누적 주행거리 (km)</label>
+          <input type="number" class="form-input" id="edit-bike-odo" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">번호판</label>
+          <input type="text" class="form-input" id="edit-bike-plate" placeholder="51A-12345">
+        </div>
+        <div class="form-group">
+          <label class="form-label">색상</label>
+          <select class="form-select" id="edit-bike-color">
+            <option value="">선택 안 함</option>
+            <option>매트 블랙</option><option>글로시 블랙</option><option>화이트</option>
+            <option>레드</option><option>블루</option><option>그레이</option>
+            <option>실버</option><option>오렌지</option><option>그린</option><option>옐로우</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-edit-bike')">취소</button>
+      <button class="btn btn-primary" onclick="saveEditBike()">저장</button>
     </div>
   </div>
 </div>
