@@ -127,7 +127,7 @@ option{background:var(--surface2);}
 .c-info{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-dim);line-height:1.6;}
 .c-bar{height:3px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden;}
 .c-bar-fill{height:100%;border-radius:2px;transition:width 0.4s;}
-.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-top:5px;}
+.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-top:5px;}
 .c-tag.ok{background:var(--green-dim);color:var(--green);}
 .c-tag.warn{background:var(--accent-dim);color:var(--accent);}
 .c-tag.danger{background:var(--red-dim);color:var(--red);}
@@ -1622,18 +1622,31 @@ function consumableCard(c,km){
   const cls=pct>=100?'danger':pct>=80?'warn':'ok';
   const fillColor=pct>=100?'var(--red)':pct>=80?'var(--accent)':'var(--green)';
   const tag=pct>=100?'🚨 교체 필요':pct>=80?'⚠ 곧 교체':'✓ 양호';
+  const officialBadge=c.isOfficial?'<span style="font-size:10px;background:#1a3020;color:#38a868;padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:middle;">공식</span>':'';
   return `<div class="c-item ${cls}" onclick="openAiGuide('${c.id}')">
-    <div class="c-icon-big">${c.icon}</div>
-    <div class="c-name">${c.name}</div>
-    <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'미등록'}<br>주기: ${c.km.toLocaleString()} km ${c.isOfficial?'<span style="font-size:16px;background:#1a3020;color:#38a868;padding:1px 4px;border-radius:2px;margin-left:2px;">공식</span>':''}<br>${remain>0?'잔여: '+remain.toLocaleString()+' km':''}</div>
-    <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
-      <span class="c-tag ${cls}" style="font-size:15px;">${tag}</span>
-      <button class="btn btn-sm" style="padding:2px 6px;font-size:16px;" onclick="event.stopPropagation();openEditConsumable('${c.id}')">✏</button>
+    <div style="width:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span style="font-size:19px;line-height:1;">${c.icon}</span>
+          <span style="font-size:16px;font-weight:700;">${getCName(c.id)}</span>
+          ${officialBadge}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <span class="c-tag ${cls}">${tag}</span>
+          <button class="btn btn-sm" style="padding:3px 8px;font-size:12px;" onclick="event.stopPropagation();openEditConsumable('${c.id}')">✏</button>
+        </div>
+      </div>
+      <div style="padding-left:26px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:7px;flex-wrap:wrap;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'미등록'}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);">주기: ${c.km.toLocaleString()} km</span>
+          ${remain>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:${fillColor};font-weight:600;">잔여 ${remain.toLocaleString()} km</span>`:''}
+        </div>
+        <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
+      </div>
     </div>
   </div>`;
 }
-
 function switchCBike(idx){ cState.bikeIdx=idx; renderConsumables(); }
 
 function openConsumModal(cId){
