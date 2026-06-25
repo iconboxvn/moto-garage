@@ -331,6 +331,19 @@ option{background:var(--surface2);}
   .weather-loading {
     padding:40px 20px;text-align:center;
   }
+
+  /* ── SUCCESS TOAST ── */
+  .success-toast {
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+    background:var(--green); color:#fff;
+    padding:11px 22px; border-radius:8px;
+    font-size:13px; font-weight:700;
+    z-index:700; white-space:nowrap;
+    box-shadow:0 4px 20px rgba(0,0,0,0.4);
+    display:none;
+    animation:fadeInUp 0.3s ease;
+  }
+  .success-toast.show { display:block; }
 </style>
 </head>
 <body>
@@ -768,6 +781,7 @@ option{background:var(--surface2);}
 </div>
 <div class="pwa-installed-toast" id="pwa-toast">✓ Đã thêm vào màn hình chính!</div>
 <div class="backup-toast" id="backup-toast"></div>
+<div class="success-toast" id="success-toast"></div>
 
 <script>
 // ═══════════════════════════════════════════
@@ -1544,6 +1558,7 @@ function addBike(){
     consumables:makeConsumables(brand,model)
   });
   save(); closeModal('m-bike'); renderDash(); renderBikes();
+  showToast(`✓ Đã đăng ký ${brand} ${model}`);
 }
 
 // 차량 수정
@@ -1572,6 +1587,7 @@ function saveEditBike(){
   bike.plate=document.getElementById('edit-bike-plate').value;
   bike.color=document.getElementById('edit-bike-color').value;
   save(); closeModal('m-edit-bike'); renderBikes(); renderDash();
+  showToast(`✓ Đã cập nhật ${brand} ${model}`);
 }
 
 // ═══════════════════════════════════════════
@@ -1661,6 +1677,7 @@ function saveConsumable(){
   c.memo=document.getElementById('mc-memo').value;
   D.history.push({id:Date.now(),bikeId:bike.id,date,km:kmVal,type:'Thay phụ tùng',desc:c.name+' thay thế'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
   save(); closeModal('m-consumable'); renderConsumables(); renderDash();
+  showToast(`✓ Đã lưu nhật ký thay ${c.name}`);
 }
 
 // 소모품 수정
@@ -1686,6 +1703,7 @@ function updateConsumable(){
   c.km=parseInt(document.getElementById('edit-c-interval').value)||c.km;
   c.memo=document.getElementById('edit-c-memo').value;
   save(); closeModal('m-edit-consumable'); renderConsumables();
+  showToast('✓ Đã cập nhật thông tin phụ tùng');
 }
 
 // 기타 정비 섹션
@@ -1764,6 +1782,7 @@ function saveExtra(){
     if(idx>-1) D.history[idx]={...D.history[idx],...record};
   } else { D.history.push({id:Date.now(),...record}); }
   save(); closeModal('m-extra'); renderExtraSection(); renderDash();
+  showToast('✓ Đã lưu nhật ký bảo dưỡng');
 }
 
 // ═══════════════════════════════════════════
@@ -1804,7 +1823,9 @@ function updateOdometer(bikeId){
   const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
   const newKm=parseInt(document.getElementById('odo-input-'+bikeId).value)||0;
   if(newKm<bike.odometer){ if(!confirm(`현재(${bike.odometer.toLocaleString()} km).\nBạn có muốn tiếp tục không?`)) return; }
+  const oldKm = bike.odometer;
   bike.odometer=newKm; save(); renderRiding(); renderDash();
+  showToast(`✓ ${bike.brand} ${bike.model} · ${newKm.toLocaleString()} km đã cập nhật`);
 }
 
 // ═══════════════════════════════════════════
@@ -1854,6 +1875,7 @@ function updateHistory(){
   const idx=D.history.findIndex(l=>l.id===editingHistoryId); if(idx===-1) return;
   D.history[idx]={...D.history[idx],date:document.getElementById('edit-h-date').value,km:parseInt(document.getElementById('edit-h-km').value)||0,type:document.getElementById('edit-h-type').value,desc:document.getElementById('edit-h-desc').value,cost:document.getElementById('edit-h-cost').value,shop:document.getElementById('edit-h-shop').value};
   save(); closeModal('m-edit-history'); renderHistory(); renderExtraSection();
+  showToast('✓ Đã cập nhật nhật ký bảo dưỡng');
 }
 function deleteHistory(id){
   if(!confirm('Bạn có muốn xóa lịch sử này không?')) return;
@@ -1911,6 +1933,14 @@ function confirmReset(){
   renderBackupPage(); renderDash(); renderBikes();
 }
 
+
+function showToast(msg, type='success') {
+  const el = document.getElementById('success-toast');
+  el.textContent = msg;
+  el.style.background = type === 'success' ? 'var(--green)' : type === 'warn' ? 'var(--accent)' : 'var(--red)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
 // ═══════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════
@@ -2092,7 +2122,7 @@ async function showWeatherModal() {
 
   // 위치 권한 요청
   if (!navigator.geolocation) {
-    showWeatherError('Dịch vụ vị trí không khả dụng');
+    showWeatherError('위치 서비스를 사용할 수 없습니다');
     return;
   }
 
@@ -2107,7 +2137,7 @@ async function showWeatherModal() {
         if (data.cod !== 200) throw new Error(data.message);
         renderWeather(data);
       } catch(e) {
-        showWeatherError('Không thể tải thông tin thời tiết');
+        showWeatherError('날씨 정보를 불러올 수 없습니다');
       }
     },
     () => showWeatherError('위치 접근이 거부됐습니다\n설정에서 위치 권한을 허용해주세요'),
@@ -2125,49 +2155,49 @@ function getRidingCondition(weather) {
   // 위험 — 비, 폭풍, 안개
   if (id >= 200 && id < 300) return {
     level: 'danger', emoji: '⛈',
-    title: '🚨 Sấm sét — Nguy hiểm khi lái xe',
-    tips: ['Tìm nơi trú ẩn an toàn ngay lập tức', 'Mặt đường cực kỳ trơn trượt', 'Nguy cơ sét đánh']
+    title: '🚨 천둥번개 — 라이딩 위험',
+    tips: ['즉시 안전한 곳으로 대피하세요', '노면이 극도로 미끄럽습니다', '번개 위험이 있습니다']
   };
   if ((id >= 500 && id < 600) || id === 771 || id === 781) return {
     level: 'danger', emoji: '🌧',
-    title: '⚠️ Dự báo mưa — Cần chú ý',
-    tips: ['Đường ướt: quãng đường phanh tăng gấp đôi', 'Giảm tốc độ vào cua đáng kể', 'Mặc trang bị chống thấm nước', 'Vạch kẻ đường màu trắng cực kỳ trơn khi ướt']
+    title: '⚠️ 강수 예보 — 주의 필요',
+    tips: ['젖은 노면: 제동거리 2배 이상', '코너링 속도를 크게 줄이세요', '방수 장비를 착용하세요', '배수로 위 흰색 차선은 극도로 미끄러움']
   };
   if (id >= 600 && id < 700) return {
     level: 'danger', emoji: '🌨',
-    title: '🚨 Tuyết rơi — Không nên lái xe',
-    tips: ['Đường tuyết rất nguy hiểm cho xe máy', 'Nếu bắt buộc, hãy đi với tốc độ rất thấp']
+    title: '🚨 강설 — 라이딩 금지 권장',
+    tips: ['눈길은 오토바이 라이딩에 매우 위험합니다', '불가피하면 극저속 운행하세요']
   };
   if (id >= 700 && id < 800 && visibility < 1000) return {
     level: 'danger', emoji: '🌫',
-    title: '⚠️ Sương mù dày — Tầm nhìn kém',
-    tips: ['Bật đèn pha hoặc đèn sương mù', 'Giảm tốc độ đáng kể', 'Giữ khoảng cách gấp 3 lần bình thường']
+    title: '⚠️ 짙은 안개 — 시야 불량',
+    tips: ['전조등 상향등 또는 안개등 켜세요', '속도를 크게 줄이세요', '차간 거리 3배 이상 유지']
   };
 
   // 주의
   if (windSpeed > 10) return {
     level: 'caution', emoji: '💨',
-    title: '⚠️ Cảnh báo gió mạnh',
-    tips: [`풍속 ${Math.round(windSpeed)}m/s — 고속도로 주행 자제`, 'Nắm chặt tay lái khi có gió ngang', 'Đặc biệt nguy hiểm khi đi cạnh xe tải lớn']
+    title: '⚠️ 강한 바람 주의',
+    tips: [`풍속 ${Math.round(windSpeed)}m/s — 고속도로 주행 자제`, '측풍에 대비해 핸들을 꽉 잡으세요', '대형 차량 옆 주행 시 특히 위험']
   };
   if (humidity > 85) return {
     level: 'caution', emoji: '💧',
-    title: '⚠️ Độ ẩm cao — Đường trơn',
-    tips: ['Độ ẩm cao có thể làm đường trơn', 'Chú ý đường trơn ở cửa hầm', 'Kiểm tra áp suất lốp']
+    title: '⚠️ 고습도 — 노면 주의',
+    tips: ['습도가 높아 노면이 끈적할 수 있습니다', '터널 출입구 노면 미끄러움 주의', '타이어 공기압을 확인하세요']
   };
   if (temp > 38) return {
     level: 'caution', emoji: '🌡',
-    title: '⚠️ Cảnh báo nắng nóng',
-    tips: ['Chú ý động cơ quá nhiệt', 'Uống đủ nước', 'Nghỉ ngơi thường xuyên khi đi đường dài', 'Kiểm tra thông gió mũ bảo hiểm']
+    title: '⚠️ 폭염 주의',
+    tips: ['엔진 과열에 주의하세요', '수분을 충분히 섭취하세요', '장거리 주행 시 자주 휴식 취하세요', '헬멧 통풍 확인']
   };
 
   // 양호
   return {
     level: 'good', emoji: '✅',
-    title: '🏍 Thời tiết tuyệt vời để lái xe!',
+    title: '🏍 라이딩하기 좋은 날씨!',
     tips: temp < 20
-      ? ['Thời tiết mát — hãy mang găng tay và áo khoác', 'Đường buổi sáng có thể lạnh']
-      : ['Điều kiện lái xe trong lành và dễ chịu', 'Chúc bạn lái xe vui vẻ!']
+      ? ['선선한 날씨 — 장갑과 재킷을 챙기세요', '아침엔 노면이 차가울 수 있습니다']
+      : ['맑고 쾌적한 라이딩 컨디션입니다', '즐거운 라이딩 되세요!']
   };
 }
 
@@ -2198,12 +2228,12 @@ function renderWeather(data) {
   document.getElementById('weather-content').innerHTML = `
     <div class="weather-header">
       <div>
-        <div class="weather-city">📍 ${city} · ${now}</div>
+        <div class="weather-city">📍 ${city} · ${now} 기준</div>
         <div class="weather-main">
           <div class="weather-icon">${icon}</div>
           <div>
             <div><span class="weather-temp">${temp}</span><span class="weather-temp-unit">°C</span></div>
-            <div class="weather-desc">${desc} · Cảm giác như ${feels}°C</div>
+            <div class="weather-desc">${desc} · 체감 ${feels}°C</div>
           </div>
         </div>
         <div class="weather-meta">
@@ -2273,11 +2303,11 @@ function showWeatherError(msg) {
     <div id="weather-content">
       <div class="weather-loading">
         <div class="ai-spinner"></div>
-        <div style="margin-top:12px;font-size:13px;color:var(--text-dim);">Đang tải thời tiết...</div>
+        <div style="margin-top:12px;font-size:13px;color:var(--text-dim);">날씨 정보를 불러오는 중...</div>
       </div>
     </div>
     <div class="weather-footer" id="weather-footer" style="display:none;">
-      <button class="weather-dismiss" onclick="dismissWeatherToday()">Không hiển thị hôm nay</button>
+      <button class="weather-dismiss" onclick="dismissWeatherToday()">오늘은 그만 보기</button>
       <button class="btn btn-sm" onclick="closeModal('m-weather')">Đóng</button>
     </div>
   </div>
