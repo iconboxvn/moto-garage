@@ -26,17 +26,17 @@
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden;}
 
 /* HEADER */
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
 .header-left{display:flex;align-items:center;gap:12px;}
 .logo-block{display:flex;flex-direction:column;}
-.logo-main{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:3px;color:var(--accent);line-height:1;}
-.logo-sub{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-muted);letter-spacing:2px;margin-top:1px;}
+.logo-main{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--accent);line-height:1;}
+.logo-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:2px;margin-top:1px;}
 .header-divider{width:1px;height:26px;background:var(--border);}
 .iconbox-badge{display:flex;flex-direction:column;gap:1px;}
-.iconbox-label{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-muted);letter-spacing:1.5px;}
-.iconbox-name{font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--metal-light);letter-spacing:0.5px;}
+.iconbox-label{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:1.5px;}
+.iconbox-name{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:var(--metal-light);letter-spacing:0.5px;}
 .iconbox-dot{color:var(--accent);}
-.lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 5px;font-size:17px;line-height:1;text-decoration:none;transition:all 0.15s;opacity:0.5;display:inline-flex;align-items:center;}
+.lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-size:16px;line-height:1;text-decoration:none;transition:all 0.15s;opacity:0.5;display:inline-flex;align-items:center;}
 .lang-btn:hover{opacity:1;border-color:var(--border-bright);}
 .lang-btn.active{opacity:1;border-color:var(--accent);background:var(--accent-dim);}
 
@@ -47,8 +47,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .nav-btn.active .nav-icon{transform:translateY(-1px);}
 .nav-btn.active .nav-dot{opacity:1;}
 .nav-icon{font-size:21px;line-height:1;transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1);}
-.nav-label{font-size:15px;font-weight:700;letter-spacing:0.4px;color:var(--text-muted);transition:color 0.15s;white-space:nowrap;}
-.nav-btn.active .nav-label{color:var(--accent);}
+.nav-label{font-size:11px;font-weight:700;letter-spacing:0.4px;color:var(--metal);transition:color 0.15s;white-space:nowrap;}
+.nav-btn.active .nav-label{color:var(--accent);font-weight:800;}
 .nav-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:0;transition:opacity 0.15s;margin-top:-2px;}
 
 /* LAYOUT */
@@ -69,7 +69,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .bike-card{background:linear-gradient(135deg,#181a1d 0%,#101214 100%);border:1px solid var(--border-bright);border-radius:8px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;}
 .bike-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent) 0%,transparent 70%);}
 .bike-name{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;line-height:1;}
-.bike-meta{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--accent);margin-top:3px;}
+.bike-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);margin-top:3px;}
 .bstat-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);}
 .bstat-lbl{font-size:15px;color:var(--text-dim);letter-spacing:1px;margin-top:2px;}
 
@@ -127,7 +127,7 @@ option{background:var(--surface2);}
 .c-info{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-dim);line-height:1.6;}
 .c-bar{height:3px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden;}
 .c-bar-fill{height:100%;border-radius:2px;transition:width 0.4s;}
-.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:15px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-top:5px;}
+.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-top:5px;}
 .c-tag.ok{background:var(--green-dim);color:var(--green);}
 .c-tag.warn{background:var(--accent-dim);color:var(--accent);}
 .c-tag.danger{background:var(--red-dim);color:var(--red);}
@@ -1953,7 +1953,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-ko-v17';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-ko-v18';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
