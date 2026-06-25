@@ -1387,8 +1387,8 @@ function _renderConsumablesCore(){
   tabs.innerHTML=`<div class="pill-group">${D.bikes.map((b,i)=>`<div class="pill ${i===cState.bikeIdx?'selected':''}" onclick="switchCBike(${i})">${b.brand} ${b.model}</div>`).join('')}</div>`;
   const bike=D.bikes[cState.bikeIdx];
   el.innerHTML=`
-    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} 소모품</span><div class="sec-line"></div></div>
-    <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">현재 주행거리 <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
+    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} Consumables</span><div class="sec-line"></div></div>
+    <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">Current Mileage <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
     <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
 }
 
@@ -1505,11 +1505,11 @@ function renderExtraSection(){
   const typeBadge={'정기점검':'badge-maint','수리':'badge-repair','세차':'badge-other','튜닝':'badge-cons','기타':'badge-other'};
   el.innerHTML=`
     <div class="sec-header" style="margin-top:8px;">
-      <span class="sec-title">기타 정비</span><div class="sec-line"></div>
+      <span class="sec-title">Other Services</span><div class="sec-line"></div>
       <button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ Add</button>
     </div>
     ${!logs.length
-      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:15px;">기타 정비 기록이 없습니다</div>`
+      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:15px;">No service records</div>`
       :`<div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;"><table class="log-table">
           <thead><tr><th>Date</th><th>Type</th><th>Description</th><th>km</th><th>Cost</th><th>Shop</th><th></th></tr></thead>
           <tbody>${logs.map(l=>`<tr>
@@ -1604,7 +1604,7 @@ function renderRiding(){
         <div style="font-size:16px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Service Alerts</div>
         ${urgents.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:15px;">${c.icon} ${c.name}</span><span class="c-tag danger">🚨 Replace Now</span></div>`).join('')}
         ${warns.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:15px;">${c.icon} ${c.name}</span><span class="c-tag warn">⚠ Due Soon</span></div>`).join('')}
-      </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:15px;color:var(--green);">✓ 모든 소모품 양호</div>`}
+      </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:15px;color:var(--green);">✓ All consumables in good condition</div>`}
     </div>`;
   }).join('');
 }
