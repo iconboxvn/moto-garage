@@ -26,16 +26,13 @@
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden;}
 
 /* HEADER */
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:env(safe-area-inset-top) 14px 0;height:calc(56px + env(safe-area-inset-top));display:flex;align-items:flex-end;padding-bottom:8px;justify-content:space-between;position:sticky;top:0;z-index:200;}
-.header-left{display:flex;align-items:center;gap:12px;}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:env(safe-area-inset-top) 14px 0;height:calc(52px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.header-left{display:flex;align-items:center;}
 .logo-block{display:flex;flex-direction:column;}
 .logo-main{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--accent);line-height:1;}
-.logo-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:2px;margin-top:1px;}
-.header-divider{width:1px;height:26px;background:var(--border);}
-.iconbox-badge{display:flex;flex-direction:column;gap:1px;}
-.iconbox-label{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:1.5px;}
-.iconbox-name{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:var(--metal-light);letter-spacing:0.5px;}
-.iconbox-dot{color:var(--accent);}
+.logo-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:2px;margin-top:2px;}
+.created-by{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 64px);right:14px;font-size:11px;color:var(--text-muted);z-index:100;pointer-events:none;}
+.created-by a{color:var(--metal-light);text-decoration:none;pointer-events:auto;}
 .lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-size:16px;line-height:1;text-decoration:none;transition:all 0.15s;opacity:0.5;display:inline-flex;align-items:center;}
 .lang-btn:hover{opacity:1;border-color:var(--border-bright);}
 .lang-btn.active{opacity:1;border-color:var(--accent);background:var(--accent-dim);}
@@ -355,13 +352,6 @@ option{background:var(--surface2);}
       <span class="logo-main">MOTO GARAGE</span>
       <span class="logo-sub">VEHICLE MANAGEMENT</span>
     </div>
-    <div class="header-divider"></div>
-    <a href="mailto:iconbox.vn@gmail.com" style="text-decoration:none;">
-      <div class="iconbox-badge">
-        <span class="iconbox-label">CREATED BY</span>
-        <span class="iconbox-name">@iconbox<span class="iconbox-dot">.</span>lee</span>
-      </div>
-    </a>
   </div>
   <div style="display:flex;gap:4px;">
     <a href="./index.html"    class="lang-btn active" title="한국어">🇰🇷</a>
@@ -2325,6 +2315,8 @@ function showWeatherError(msg) {
     </div>
   </div>
 </div>
+
+<div class="created-by">Created by <a href="mailto:iconbox.vn@gmail.com">@iconbox.lee</a></div>
 
 </body>
 </html>
