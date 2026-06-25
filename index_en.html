@@ -878,6 +878,11 @@ const GUIDE_DATA = {
     classic: { why: 'Brake fluid absorbs moisture over time, lowering its boiling point.', check: '① Replace unconditionally if over 2 years old\n② Replace immediately if brake feel is spongy', cost: 'Brake fluid: 60,000 ~ 150,000 ₫', tip: 'Dispose of leftover brake fluid after opening — do not store it.' }
   }
 };
+function getGuide(consumableId, category) {
+  const catData = GUIDE_DATA[consumableId];
+  if (!catData) return null;
+  return catData[category] || catData['naked'] || null;
+}
 const C_NAMES = {
   'oil':'Engine Oil',
   'oil_f':'Oil Filter',
@@ -1827,7 +1832,7 @@ function openAiGuide(cId) {
     document.getElementById('ai-guide-body').innerHTML = `
       <div class="ai-error">
         <div style="font-size:27px;margin-bottom:10px;">🔧</div>
-        <div>가이드 데이터 준비 중입니다</div>
+        <div>Guide data unavailable</div>
       </div>`;
     return;
   }
@@ -1862,23 +1867,23 @@ function renderAiGuide(guide, con, pct, bike) {
   document.getElementById('ai-guide-body').innerHTML = `
     ${urgentBanner}
     ${why ? `<div class="ai-guide-section danger">
-      <div class="ai-guide-section-title">🔥 왜 교체해야 하나요?</div>
+      <div class="ai-guide-section-title">🔥 Why replace it?</div>
       <div class="ai-guide-text">${why.split('\n').join('<br>')}</div>
     </div>` : ''}
     ${check ? `<div class="ai-guide-section tip">
-      <div class="ai-guide-section-title">🔍 직접 점검 방법</div>
+      <div class="ai-guide-section-title">🔍 How to inspect</div>
       <div class="ai-guide-text">${check.split('\n').join('<br>')}</div>
     </div>` : ''}
     ${cost ? `<div class="ai-guide-section cost">
-      <div class="ai-guide-section-title">💰 예상 비용 (하노이 기준)</div>
+      <div class="ai-guide-section-title">💰 Estimated cost (Hanoi)</div>
       <div class="ai-guide-text">${cost.split('\n').join('<br>')}</div>
     </div>` : ''}
     ${tip ? `<div class="ai-guide-section">
-      <div class="ai-guide-section-title">💡 관리 팁</div>
+      <div class="ai-guide-section-title">💡 Maintenance tip</div>
       <div class="ai-guide-text">${tip.split('\n').join('<br>')}</div>
     </div>` : ''}
     <div style="font-size:16px;color:var(--text-muted);text-align:center;margin-top:8px;">
-      ✦ 정비 가이드 · ${bike ? bike.brand+' '+bike.model : ''} · ${new Date().toLocaleDateString('ko-KR')}
+      ✦ Service Guide · ${bike ? bike.brand+' '+bike.model : ''} · ${new Date().toLocaleDateString('en-US')}
     </div>`;
 }
 
@@ -2069,7 +2074,7 @@ function showWeatherError(msg) {
     <div class="ai-guide-body" id="ai-guide-body">
       <div class="ai-guide-loading">
         <div class="ai-spinner"></div>
-        <div style="font-size:16px;color:var(--text-dim);">AI 분석 중...</div>
+        <div style="font-size:16px;color:var(--text-dim);">Loading guide...</div>
       </div>
     </div>
     <div class="ai-guide-footer">
