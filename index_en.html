@@ -878,6 +878,19 @@ const GUIDE_DATA = {
     classic: { why: 'Brake fluid absorbs moisture over time, lowering its boiling point.', check: '① Replace unconditionally if over 2 years old\n② Replace immediately if brake feel is spongy', cost: 'Brake fluid: 60,000 ~ 150,000 ₫', tip: 'Dispose of leftover brake fluid after opening — do not store it.' }
   }
 };
+const C_NAMES = {
+  'oil':'Engine Oil',
+  'oil_f':'Oil Filter',
+  'spark':'Spark Plug',
+  'chain':'Chain/Sprocket',
+  'brake_f':'Brake Pad (Front)',
+  'brake_r':'Brake Pad (Rear)',
+  'tire_f':'Tire (Front)',
+  'tire_r':'Tire (Rear)',
+  'coolant':'Coolant',
+  'air_f':'Air Filter',
+  'brake_oil':'Brake Fluid'
+};
 function getCName(id){ return C_NAMES[id] || id; }
 
 
