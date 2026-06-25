@@ -31,8 +31,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .logo-block{display:flex;flex-direction:column;}
 .logo-main{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--accent);line-height:1;}
 .logo-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:2px;margin-top:2px;}
-.created-by{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 64px);right:14px;font-size:11px;color:var(--text-muted);z-index:100;pointer-events:none;}
-.created-by a{color:var(--metal-light);text-decoration:none;pointer-events:auto;}
+.created-by{display:block;text-align:right;padding:8px 0 4px;font-size:11px;color:var(--text-muted);}
+.created-by a{color:var(--metal-light);text-decoration:none;}
 .lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-size:16px;line-height:1;text-decoration:none;transition:all 0.15s;opacity:0.5;display:inline-flex;align-items:center;}
 .lang-btn:hover{opacity:1;border-color:var(--border-bright);}
 .lang-btn.active{opacity:1;border-color:var(--accent);background:var(--accent-dim);}
@@ -2091,9 +2091,8 @@ function showWeatherError(msg) {
       <button class="btn btn-sm" onclick="closeModal('m-weather')">Close</button>
     </div>
   </div>
+  <div class="created-by">Created by <a href="mailto:iconbox.vn@gmail.com">@iconbox.lee</a></div>
 </div>
-
-<div class="created-by">Created by <a href="mailto:iconbox.vn@gmail.com">@iconbox.lee</a></div>
 
 </body>
 </html>
