@@ -16,11 +16,11 @@
 :root {
   --bg:#0c0c0d; --surface:#141517; --surface2:#1b1d20; --surface3:#222529;
   --border:#272a2f; --border-bright:#363b42;
-  --metal:#7a8492; --metal-light:#b8c0cc;
+  --metal:#8e99a4; --metal-light:#c4ccd6;
   --accent:#e8a020; --accent-dim:#3a2808;
   --red:#d04040; --red-dim:#2e1010;
   --green:#38a868; --green-dim:#0e2a1a;
-  --text:#e4e8ed; --text-dim:#6e7680; --text-muted:#3a3f47;
+  --text:#e8ecf0; --text-dim:#9aa3ad; --text-muted:#5a6270;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden;}
@@ -113,7 +113,7 @@ option{background:var(--surface2);}
 
 /* CONSUMABLE GRID */
 .c-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
-.c-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:13px 15px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;}
+.c-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
 .c-item:hover{border-color:var(--border-bright);transform:translateY(-1px);}
 .c-item::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;}
 .c-item.ok::before{background:var(--green);}
@@ -1953,7 +1953,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-ko-v19';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-ko-v21';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
