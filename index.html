@@ -1364,7 +1364,7 @@ function renderDash(){
         return `<div onclick="selectDashBike(${b.id})" style="flex-shrink:0;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:10px;padding:10px 14px;cursor:pointer;">
           <div style="font-size:15px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>
           <div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:${sel?'var(--accent)':'var(--text-dim)'};margin-top:3px;">${b.odometer.toLocaleString()} km</div>
-          <div style="margin-top:4px;">${u?`<span class="c-tag danger" style="font-size:15px;">🚨 ${u}</span>`:w?`<span class="c-tag warn" style="font-size:15px;">⚠ ${w}</span>`:`<span class="c-tag ok" style="font-size:15px;">✓</span>`}</div>
+          <div style="margin-top:4px;">${u?`<span class="c-tag danger" style="font-size:11px;">🚨 ${u}</span>`:w?`<span class="c-tag warn" style="font-size:11px;">⚠ ${w}</span>`:`<span class="c-tag ok" style="font-size:11px;">✓</span>`}</div>
         </div>`;
       }).join('')}
     </div>`:''}
@@ -1638,9 +1638,9 @@ function consumableCard(c,km){
       </div>
       <div style="padding-left:26px;">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:7px;flex-wrap:wrap;">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'미등록'}</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);">주기: ${c.km.toLocaleString()} km</span>
-          ${remain>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:${fillColor};font-weight:600;">잔여 ${remain.toLocaleString()} km</span>`:''}
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'미등록'}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">주기: ${c.km.toLocaleString()} km</span>
+          ${remain>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:${fillColor};font-weight:600;">잔여 ${remain.toLocaleString()} km</span>`:''}
         </div>
         <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
       </div>
@@ -1966,7 +1966,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-ko-v22';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-ko-v23';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
