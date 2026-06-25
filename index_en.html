@@ -1410,9 +1410,9 @@ function consumableCard(c,km){
       </div>
       <div style="padding-left:26px;">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:7px;flex-wrap:wrap;">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Not recorded'}</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">주기: ${c.km.toLocaleString()} km</span>
-          ${remain>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:${fillColor};font-weight:600;">잔여 ${remain.toLocaleString()} km</span>`:''}
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">Last: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Not recorded'}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">Interval: ${c.km.toLocaleString()} km</span>
+          ${remain>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:${fillColor};font-weight:600;">${remain.toLocaleString()} km left</span>`:''}
         </div>
         <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
       </div>
@@ -1846,16 +1846,16 @@ function renderAiGuide(guide, con, pct, bike) {
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:19px;">🚨</span>
       <div>
-        <div style="font-size:16px;font-weight:700;color:var(--red);">교체 주기 초과!</div>
-        <div style="font-size:16px;color:#c06060;margin-top:2px;">즉시 교체를 권장합니다</div>
+        <div style="font-size:16px;font-weight:700;color:var(--red);">Replacement interval exceeded!</div>
+        <div style="font-size:16px;color:#c06060;margin-top:2px;">Immediate replacement recommended</div>
       </div>
     </div>` : pct >= 80 ? `
     <div style="background:var(--accent-dim);border:1px solid rgba(232,160,32,0.4);border-radius:8px;
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:19px;">⚠️</span>
       <div>
-        <div style="font-size:16px;font-weight:700;color:var(--accent);">교체 시기가 다가왔습니다</div>
-        <div style="font-size:16px;color:#b08030;margin-top:2px;">다음 정비 시 교체 예정으로 잡으세요</div>
+        <div style="font-size:16px;font-weight:700;color:var(--accent);">Replacement due soon</div>
+        <div style="font-size:16px;color:#b08030;margin-top:2px;">Schedule for your next service</div>
       </div>
     </div>` : '';
 
