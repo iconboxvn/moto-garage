@@ -23,20 +23,20 @@
   --text:#e4e8ed; --text-dim:#6e7680; --text-muted:#3a3f47;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:16px;min-height:100vh;overflow-x:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden;}
 
 /* HEADER */
 .header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
 .header-left{display:flex;align-items:center;gap:12px;}
 .logo-block{display:flex;flex-direction:column;}
-.logo-main{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--accent);line-height:1;}
-.logo-sub{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--text-muted);letter-spacing:2px;margin-top:1px;}
+.logo-main{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:3px;color:var(--accent);line-height:1;}
+.logo-sub{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-muted);letter-spacing:2px;margin-top:1px;}
 .header-divider{width:1px;height:26px;background:var(--border);}
 .iconbox-badge{display:flex;flex-direction:column;gap:1px;}
-.iconbox-label{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--text-muted);letter-spacing:1.5px;}
-.iconbox-name{font-family:'Inter',sans-serif;font-size:16px;font-weight:700;color:var(--metal-light);letter-spacing:0.5px;}
+.iconbox-label{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-muted);letter-spacing:1.5px;}
+.iconbox-name{font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--metal-light);letter-spacing:0.5px;}
 .iconbox-dot{color:var(--accent);}
-.lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 5px;font-size:18px;line-height:1;text-decoration:none;transition:all 0.15s;opacity:0.5;display:inline-flex;align-items:center;}
+.lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 5px;font-size:17px;line-height:1;text-decoration:none;transition:all 0.15s;opacity:0.5;display:inline-flex;align-items:center;}
 .lang-btn:hover{opacity:1;border-color:var(--border-bright);}
 .lang-btn.active{opacity:1;border-color:var(--accent);background:var(--accent-dim);}
 
@@ -46,8 +46,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .nav-btn{flex:1;background:none;border:none;color:var(--text-muted);font-family:'Inter',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 4px 8px;transition:color 0.15s;-webkit-tap-highlight-color:transparent;min-width:0;}
 .nav-btn.active .nav-icon{transform:translateY(-1px);}
 .nav-btn.active .nav-dot{opacity:1;}
-.nav-icon{font-size:22px;line-height:1;transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1);}
-.nav-label{font-size:16px;font-weight:700;letter-spacing:0.4px;color:var(--text-muted);transition:color 0.15s;white-space:nowrap;}
+.nav-icon{font-size:21px;line-height:1;transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1);}
+.nav-label{font-size:15px;font-weight:700;letter-spacing:0.4px;color:var(--text-muted);transition:color 0.15s;white-space:nowrap;}
 .nav-btn.active .nav-label{color:var(--accent);}
 .nav-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:0;transition:opacity 0.15s;margin-top:-2px;}
 
@@ -59,7 +59,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 
 /* SECTION */
 .sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.sec-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2.5px;color:var(--metal-light);white-space:nowrap;}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2.5px;color:var(--metal-light);white-space:nowrap;}
 .sec-line{flex:1;height:1px;background:var(--border);margin-left:10px;}
 
 /* CARD */
@@ -68,24 +68,24 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 /* BIKE CARD */
 .bike-card{background:linear-gradient(135deg,#181a1d 0%,#101214 100%);border:1px solid var(--border-bright);border-radius:8px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;}
 .bike-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent) 0%,transparent 70%);}
-.bike-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;line-height:1;}
-.bike-meta{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--accent);margin-top:3px;}
-.bstat-val{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--text);}
-.bstat-lbl{font-size:16px;color:var(--text-dim);letter-spacing:1px;margin-top:2px;}
+.bike-name{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;line-height:1;}
+.bike-meta{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--accent);margin-top:3px;}
+.bstat-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);}
+.bstat-lbl{font-size:15px;color:var(--text-dim);letter-spacing:1px;margin-top:2px;}
 
 /* BUTTONS */
-.btn{background:none;border:1px solid var(--border-bright);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:16px;font-weight:500;padding:8px 14px;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap;}
+.btn{background:none;border:1px solid var(--border-bright);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:15px;font-weight:500;padding:8px 14px;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap;}
 .btn:hover{border-color:var(--metal);color:var(--text);}
 .btn-primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
 .btn-primary:hover{background:#f0b030;border-color:#f0b030;color:#000;}
 .btn-danger{border-color:transparent;color:var(--red);}
 .btn-danger:hover{background:var(--red-dim);border-color:#5a2020;}
-.btn-sm{padding:5px 9px;font-size:18px;}
+.btn-sm{padding:5px 9px;font-size:17px;}
 .btn-full{width:100%;justify-content:center;padding:11px;}
 
 /* PILLS */
 .pill-group{display:flex;gap:6px;flex-wrap:wrap;}
-.pill{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:16px;font-weight:500;padding:6px 12px;border-radius:20px;cursor:pointer;transition:all 0.15s;}
+.pill{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:15px;font-weight:500;padding:6px 12px;border-radius:20px;cursor:pointer;transition:all 0.15s;}
 .pill:hover{border-color:var(--border-bright);color:var(--text);}
 .pill.selected{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:700;}
 
@@ -93,8 +93,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .form-group{display:flex;flex-direction:column;gap:5px;}
 .form-group.full{grid-column:1/-1;}
-.form-label{font-size:18px;color:var(--text-dim);letter-spacing:0.5px;font-weight:600;}
-.form-input,.form-select{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Inter',sans-serif;font-size:18px;padding:9px 11px;outline:none;width:100%;transition:border-color 0.15s;}
+.form-label{font-size:17px;color:var(--text-dim);letter-spacing:0.5px;font-weight:600;}
+.form-input,.form-select{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Inter',sans-serif;font-size:17px;padding:9px 11px;outline:none;width:100%;transition:border-color 0.15s;}
 .form-input:focus,.form-select:focus{border-color:var(--accent);}
 .form-select{cursor:pointer;}
 option{background:var(--surface2);}
@@ -104,12 +104,12 @@ option{background:var(--surface2);}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:10px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;}
 .modal-header{padding:15px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1;}
-.modal-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--metal-light);}
-.modal-close{background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;padding:2px 4px;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;color:var(--metal-light);}
+.modal-close{background:none;border:none;color:var(--text-dim);font-size:17px;cursor:pointer;padding:2px 4px;}
 .modal-body{padding:18px;}
 .modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
-.step-label{font-size:18px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
-.step-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--surface3);border:1px solid var(--border-bright);font-size:16px;font-weight:700;color:var(--text-dim);flex-shrink:0;}
+.step-label{font-size:17px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--surface3);border:1px solid var(--border-bright);font-size:15px;font-weight:700;color:var(--text-dim);flex-shrink:0;}
 
 /* CONSUMABLE GRID */
 .c-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:16px;}
@@ -122,24 +122,24 @@ option{background:var(--surface2);}
 .c-item.ok{border-color:rgba(56,168,104,0.2);}
 .c-item.warn{border-color:rgba(232,160,32,0.3);}
 .c-item.danger{border-color:rgba(208,64,64,0.35);}
-.c-icon-big{font-size:20px;margin-bottom:6px;}
-.c-name{font-size:16px;font-weight:600;margin-bottom:3px;}
-.c-info{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--text-dim);line-height:1.6;}
+.c-icon-big{font-size:19px;margin-bottom:6px;}
+.c-name{font-size:15px;font-weight:600;margin-bottom:3px;}
+.c-info{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-dim);line-height:1.6;}
 .c-bar{height:3px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden;}
 .c-bar-fill{height:100%;border-radius:2px;transition:width 0.4s;}
-.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:16px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-top:5px;}
+.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:15px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-top:5px;}
 .c-tag.ok{background:var(--green-dim);color:var(--green);}
 .c-tag.warn{background:var(--accent-dim);color:var(--accent);}
 .c-tag.danger{background:var(--red-dim);color:var(--red);}
 
 /* LOG TABLE */
 .log-table{width:100%;border-collapse:collapse;}
-.log-table th{padding:8px 12px;font-size:16px;font-weight:700;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border);text-align:left;}
-.log-table td{padding:9px 12px;font-size:16px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.log-table th{padding:8px 12px;font-size:15px;font-weight:700;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border);text-align:left;}
+.log-table td{padding:9px 12px;font-size:15px;border-bottom:1px solid var(--border);vertical-align:middle;}
 .log-table tr:last-child td{border-bottom:none;}
 .log-table tbody tr:hover td{background:var(--surface2);}
-.mono{font-family:'JetBrains Mono',monospace;font-size:18px;}
-.badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:16px;font-weight:700;letter-spacing:0.5px;}
+.mono{font-family:'JetBrains Mono',monospace;font-size:17px;}
+.badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:15px;font-weight:700;letter-spacing:0.5px;}
 .badge-maint{background:#0e1e2e;color:#4a90d8;}
 .badge-cons{background:#2a1a08;color:var(--accent);}
 .badge-repair{background:var(--red-dim);color:var(--red);}
@@ -148,40 +148,40 @@ option{background:var(--surface2);}
 /* DASH */
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px;}
 .dash-w{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;text-align:center;}
-.dash-num{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;line-height:1;}
-.dash-unit{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--accent);letter-spacing:1px;}
-.dash-lbl{font-size:18px;color:var(--text-dim);margin-top:4px;}
+.dash-num{font-family:'Bebas Neue',sans-serif;font-size:31px;letter-spacing:1px;line-height:1;}
+.dash-unit{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--accent);letter-spacing:1px;}
+.dash-lbl{font-size:17px;color:var(--text-dim);margin-top:4px;}
 
 /* ALERT */
-.alert-row{border-radius:5px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:16px;}
+.alert-row{border-radius:5px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:15px;}
 .alert-row.danger{background:var(--red-dim);border:1px solid rgba(208,64,64,0.3);color:#e06060;}
 .alert-row.warn{background:var(--accent-dim);border:1px solid rgba(232,160,32,0.3);color:#d09020;}
 
 /* EMPTY */
 .empty{text-align:center;padding:40px 20px;}
-.empty-icon{font-size:32px;margin-bottom:8px;}
-.empty-text{font-size:18px;color:var(--text-dim);}
+.empty-icon{font-size:31px;margin-bottom:8px;}
+.empty-text{font-size:17px;color:var(--text-dim);}
 .no-bikes-box{background:var(--surface);border:1px dashed var(--border-bright);border-radius:10px;padding:40px;text-align:center;}
-.tag-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:18px;color:var(--metal);font-family:'JetBrains Mono',monospace;}
-.num-input-styled{background:var(--surface2);border:1px solid var(--border-bright);border-radius:4px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:500;padding:10px 14px;outline:none;text-align:center;transition:border-color 0.15s;}
+.tag-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:17px;color:var(--metal);font-family:'JetBrains Mono',monospace;}
+.num-input-styled{background:var(--surface2);border:1px solid var(--border-bright);border-radius:4px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:500;padding:10px 14px;outline:none;text-align:center;transition:border-color 0.15s;}
 .num-input-styled:focus{border-color:var(--accent);}
 
 /* PWA BANNER */
 .pwa-banner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--surface);border-top:1px solid var(--border-bright);padding:14px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -8px 32px rgba(0,0,0,0.5);}
 .pwa-banner.show{display:block;}
 .pwa-banner-inner{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:12px;}
-.pwa-banner-icon{width:44px;height:44px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#1e2022,#111214);border:1px solid var(--border-bright);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.pwa-banner-icon{width:44px;height:44px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#1e2022,#111214);border:1px solid var(--border-bright);display:flex;align-items:center;justify-content:center;font-size:21px;}
 .pwa-banner-text{flex:1;}
-.pwa-banner-title{font-weight:700;font-size:18px;color:var(--text);}
-.pwa-banner-sub{font-size:18px;color:var(--text-dim);margin-top:2px;}
-.backup-toast,.pwa-installed-toast{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:6px;font-size:18px;font-weight:600;z-index:600;white-space:nowrap;animation:fadeInUp 0.3s ease;}
+.pwa-banner-title{font-weight:700;font-size:17px;color:var(--text);}
+.pwa-banner-sub{font-size:17px;color:var(--text-dim);margin-top:2px;}
+.backup-toast,.pwa-installed-toast{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:6px;font-size:17px;font-weight:600;z-index:600;white-space:nowrap;animation:fadeInUp 0.3s ease;}
 .backup-toast.success,.pwa-installed-toast{background:var(--green);color:#fff;}
 .backup-toast.error{background:var(--red);color:#fff;}
 .backup-toast.show,.pwa-installed-toast.show{display:block;}
 @keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-.backup-stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:18px;}
+.backup-stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:17px;}
 .backup-stat-row:last-child{border-bottom:none;}
-.backup-stat-val{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--accent);}
+.backup-stat-val{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--accent);}
 
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
@@ -207,7 +207,7 @@ option{background:var(--surface2);}
     display:inline-flex; align-items:center; gap:5px;
     background:linear-gradient(135deg,#1a2a4a,#0e1a30);
     border:1px solid #2a4a7a; border-radius:20px;
-    padding:3px 10px; font-size:18px; font-weight:700;
+    padding:3px 10px; font-size:17px; font-weight:700;
     color:#6ab0f5; letter-spacing:0.5px;
   }
   .ai-guide-body { padding:18px; }
@@ -220,12 +220,12 @@ option{background:var(--surface2);}
   .ai-guide-section.tip { border-left-color:#4a90d8; }
   .ai-guide-section.cost { border-left-color:var(--green); }
   .ai-guide-section-title {
-    font-size:18px; font-weight:700; color:var(--text-dim);
+    font-size:17px; font-weight:700; color:var(--text-dim);
     letter-spacing:1px; margin-bottom:8px;
     display:flex; align-items:center; gap:6px;
   }
   .ai-guide-text {
-    font-size:18px; line-height:1.7; color:var(--text);
+    font-size:17px; line-height:1.7; color:var(--text);
   }
   .ai-guide-loading {
     display:flex; flex-direction:column; align-items:center;
@@ -246,7 +246,7 @@ option{background:var(--surface2);}
   }
   .ai-error {
     text-align:center; padding:24px;
-    color:var(--text-dim); font-size:18px;
+    color:var(--text-dim); font-size:17px;
   }
 
   /* ── WEATHER MODAL ── */
@@ -269,29 +269,29 @@ option{background:var(--surface2);}
   }
   .weather-city {
     font-family:'JetBrains Mono',monospace;
-    font-size:18px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:4px;
+    font-size:17px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:4px;
   }
   .weather-main {
     display:flex;align-items:center;gap:12px;
   }
-  .weather-icon { font-size:44px;line-height:1; }
+  .weather-icon { font-size:43px;line-height:1; }
   .weather-temp {
     font-family:'Bebas Neue',sans-serif;
-    font-size:48px;line-height:1;color:var(--text);
+    font-size:47px;line-height:1;color:var(--text);
   }
   .weather-temp-unit {
     font-family:'JetBrains Mono',monospace;
-    font-size:16px;color:var(--accent);vertical-align:super;
+    font-size:15px;color:var(--accent);vertical-align:super;
   }
   .weather-desc {
-    font-size:18px;color:var(--text-dim);margin-top:2px;
+    font-size:17px;color:var(--text-dim);margin-top:2px;
   }
   .weather-meta {
     display:flex;gap:12px;margin-top:8px;
   }
   .weather-meta-item {
     font-family:'JetBrains Mono',monospace;
-    font-size:18px;color:var(--text-dim);
+    font-size:17px;color:var(--text-dim);
     display:flex;align-items:center;gap:4px;
   }
   .weather-body { padding:0 18px 16px; }
@@ -308,11 +308,11 @@ option{background:var(--surface2);}
     background:var(--red-dim);border:1px solid rgba(208,64,64,0.35);
   }
   .riding-condition-title {
-    font-size:18px;font-weight:700;margin-bottom:8px;
+    font-size:17px;font-weight:700;margin-bottom:8px;
     display:flex;align-items:center;gap:6px;
   }
   .riding-tip {
-    font-size:16px;line-height:1.7;color:var(--text-dim);
+    font-size:15px;line-height:1.7;color:var(--text-dim);
   }
   .riding-tip-item {
     display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;
@@ -323,7 +323,7 @@ option{background:var(--surface2);}
     display:flex;gap:8px;justify-content:flex-end;align-items:center;
   }
   .weather-dismiss {
-    font-size:18px;color:var(--text-muted);
+    font-size:17px;color:var(--text-muted);
     background:none;border:none;cursor:pointer;padding:4px 8px;
     text-decoration:underline;
   }
@@ -337,7 +337,7 @@ option{background:var(--surface2);}
     position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
     background:var(--green); color:#fff;
     padding:11px 22px; border-radius:8px;
-    font-size:18px; font-weight:700;
+    font-size:17px; font-weight:700;
     z-index:700; white-space:nowrap;
     box-shadow:0 4px 20px rgba(0,0,0,0.4);
     display:none;
@@ -1339,7 +1339,7 @@ function renderDash(){
   if(stored){ try{ const p=JSON.parse(stored); if(p.bikes) D=p; }catch(e){} }
   const el=document.getElementById('dash-content');
   if(!D.bikes.length){
-    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:44px;margin-bottom:14px;">🏍</div><div style="font-size:17px;color:var(--text-dim);margin-bottom:6px;">Register a vehicle to get started</div><div style="font-size:16px;color:var(--text-muted);margin-bottom:20px;">Service alerts · Mileage · History</div><button class="btn btn-primary" onclick="openModal('m-bike')">Register First Vehicle</button></div>`;
+    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:43px;margin-bottom:14px;">🏍</div><div style="font-size:16px;color:var(--text-dim);margin-bottom:6px;">Register a vehicle to get started</div><div style="font-size:15px;color:var(--text-muted);margin-bottom:20px;">Service alerts · Mileage · History</div><button class="btn btn-primary" onclick="openModal('m-bike')">Register First Vehicle</button></div>`;
     return;
   }
   if(!dashSelectedBikeId||!D.bikes.find(b=>b.id===dashSelectedBikeId)) dashSelectedBikeId=D.bikes[0].id;
@@ -1362,9 +1362,9 @@ function renderDash(){
         const u=b.consumables.filter(c=>(b.odometer-c.lastKm)/c.km>=1).length;
         const w=b.consumables.filter(c=>{const p=(b.odometer-c.lastKm)/c.km;return p>=0.8&&p<1;}).length;
         return `<div onclick="selectDashBike(${b.id})" style="flex-shrink:0;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:10px;padding:10px 14px;cursor:pointer;">
-          <div style="font-size:16px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:17px;color:${sel?'var(--accent)':'var(--text-dim)'};margin-top:3px;">${b.odometer.toLocaleString()} km</div>
-          <div style="margin-top:4px;">${u?`<span class="c-tag danger" style="font-size:16px;">🚨 ${u}</span>`:w?`<span class="c-tag warn" style="font-size:16px;">⚠ ${w}</span>`:`<span class="c-tag ok" style="font-size:16px;">✓</span>`}</div>
+          <div style="font-size:15px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:${sel?'var(--accent)':'var(--text-dim)'};margin-top:3px;">${b.odometer.toLocaleString()} km</div>
+          <div style="margin-top:4px;">${u?`<span class="c-tag danger" style="font-size:15px;">🚨 ${u}</span>`:w?`<span class="c-tag warn" style="font-size:15px;">⚠ ${w}</span>`:`<span class="c-tag ok" style="font-size:15px;">✓</span>`}</div>
         </div>`;
       }).join('')}
     </div>`:''}
@@ -1373,11 +1373,11 @@ function renderDash(){
         <div>
           <div class="bike-name">${sb.brand} ${sb.model}</div>
           <div class="bike-meta">${sb.year}${sb.cc?' · '+sb.cc+'cc':''}${sb.plate?' · '+sb.plate:''}</div>
-          ${sb.consumables[0]?.category?`<div style="margin-top:4px;"><span style="font-size:16px;font-weight:700;padding:2px 7px;border-radius:3px;background:var(--surface3);color:var(--metal);">${{sport:'🏁 SPORT',naked:'🏙 NAKED',adventure:'🌍 ADVENTURE',classic:'🛣 CLASSIC'}[sb.consumables[0].category]||''}</span></div>`:''}
+          ${sb.consumables[0]?.category?`<div style="margin-top:4px;"><span style="font-size:15px;font-weight:700;padding:2px 7px;border-radius:3px;background:var(--surface3);color:var(--metal);">${{sport:'🏁 SPORT',naked:'🏙 NAKED',adventure:'🌍 ADVENTURE',classic:'🛣 CLASSIC'}[sb.consumables[0].category]||''}</span></div>`:''}
         </div>
         <div style="text-align:right;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:30px;color:var(--accent);line-height:1;">${sb.odometer.toLocaleString()}</div>
-          <div style="font-size:17px;color:var(--text-dim);letter-spacing:1px;">Total KM</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:29px;color:var(--accent);line-height:1;">${sb.odometer.toLocaleString()}</div>
+          <div style="font-size:16px;color:var(--text-dim);letter-spacing:1px;">Total KM</div>
         </div>
       </div>
     </div>
@@ -1387,19 +1387,19 @@ function renderDash(){
         <div style="padding:9px 14px;border-bottom:1px solid var(--border);" onclick="showPage('consumables',document.querySelector('.nav-btn:nth-child(3)'))">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
             <div style="display:flex;align-items:center;gap:7px;">
-              <span style="font-size:17px;width:22px;text-align:center;">${c.icon}</span>
-              <span style="font-size:16px;font-weight:600;">${c.name}</span>
+              <span style="font-size:16px;width:22px;text-align:center;">${c.icon}</span>
+              <span style="font-size:15px;font-weight:600;">${c.name}</span>
             </div>
             <div style="display:flex;align-items:center;gap:7px;">
-              <span style="font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-dim);">${remain>0?'+'+remain.toLocaleString()+'km':'Overdue'}</span>
-              <span class="c-tag ${cls}" style="font-size:16px;">${tag}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--text-dim);">${remain>0?'+'+remain.toLocaleString()+'km':'Overdue'}</span>
+              <span class="c-tag ${cls}" style="font-size:15px;">${tag}</span>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:7px;">
             <div style="flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
               <div style="width:${pct}%;height:100%;background:${fillColor};border-radius:2px;"></div>
             </div>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-dim);width:30px;text-align:right;">${pct}%</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--text-dim);width:30px;text-align:right;">${pct}%</span>
           </div>
         </div>`).join('')}
     </div>
@@ -1409,10 +1409,10 @@ function renderDash(){
           ${recentHistory.map(l=>`<tr>
             <td class="mono" style="color:var(--text-dim);white-space:nowrap;">${l.date}</td>
             <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
-            <td style="font-size:16px;">${l.desc||'—'}</td>
+            <td style="font-size:15px;">${l.desc||'—'}</td>
           </tr>`).join('')}
         </tbody></table></div>`
-      :`<div class="card" style="text-align:center;padding:16px;font-size:16px;color:var(--text-muted);">정비 기록이 없습니다</div>`
+      :`<div class="card" style="text-align:center;padding:16px;font-size:15px;color:var(--text-muted);">정비 기록이 없습니다</div>`
     }`;
 }
 
@@ -1424,7 +1424,7 @@ function selectDashBike(id){ dashSelectedBikeId=id; renderDash(); }
 function renderBikes(){
   const el=document.getElementById('bike-list');
   if(!D.bikes.length){
-    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:40px;margin-bottom:12px;">🏍</div><div style="font-size:16px;color:var(--text-dim);">No vehicles registered</div></div>`;
+    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:39px;margin-bottom:12px;">🏍</div><div style="font-size:15px;color:var(--text-dim);">No vehicles registered</div></div>`;
     return;
   }
   el.innerHTML=D.bikes.map(b=>`<div class="bike-card">
@@ -1464,7 +1464,7 @@ function resetBikeModal(){
   clearPills('brand-pills');
   document.getElementById('brand-custom').style.display='none';
   document.getElementById('brand-custom').value='';
-  document.getElementById('model-pills').innerHTML='<span style="font-size:16px;color:var(--text-muted);">제조사를 먼저 선택하세요</span>';
+  document.getElementById('model-pills').innerHTML='<span style="font-size:15px;color:var(--text-muted);">제조사를 먼저 선택하세요</span>';
   document.getElementById('model-custom').style.display='none';
   document.getElementById('model-custom').value='';
   document.getElementById('cc-custom').style.display='none';
@@ -1498,7 +1498,7 @@ function selectBrand(brand,el){
     models.forEach(m=>{
       const d=document.createElement('div');
       const isOther=m.name.startsWith('기타 (250cc');
-      d.innerHTML=isOther?`<span>${m.name}</span>`:`<span>${m.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--text-muted);margin-left:4px;">${m.cc}cc</span>`;
+      d.innerHTML=isOther?`<span>${m.name}</span>`:`<span>${m.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text-muted);margin-left:4px;">${m.cc}cc</span>`;
       d.className='pill';
       d.onclick=()=>{
         clearPills('model-pills'); d.classList.add('selected');
@@ -1611,7 +1611,7 @@ function _renderConsumablesCore(){
   const bike=D.bikes[cState.bikeIdx];
   el.innerHTML=`
     <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} 소모품</span><div class="sec-line"></div></div>
-    <div style="font-size:17px;color:var(--text-dim);margin-bottom:10px;">현재 주행거리 <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
+    <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">현재 주행거리 <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
     <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
 }
 
@@ -1625,11 +1625,11 @@ function consumableCard(c,km){
   return `<div class="c-item ${cls}" onclick="openAiGuide('${c.id}')">
     <div class="c-icon-big">${c.icon}</div>
     <div class="c-name">${c.name}</div>
-    <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Not recorded'}<br>주기: ${c.km.toLocaleString()} km ${c.isOfficial?'<span style="font-size:17px;background:#1a3020;color:#38a868;padding:1px 4px;border-radius:2px;margin-left:2px;">Official</span>':''}<br>${remain>0?'Remaining: '+remain.toLocaleString()+' km':''}</div>
+    <div class="c-info">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Not recorded'}<br>주기: ${c.km.toLocaleString()} km ${c.isOfficial?'<span style="font-size:16px;background:#1a3020;color:#38a868;padding:1px 4px;border-radius:2px;margin-left:2px;">Official</span>':''}<br>${remain>0?'Remaining: '+remain.toLocaleString()+' km':''}</div>
     <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
-      <span class="c-tag ${cls}" style="font-size:16px;">${tag}</span>
-      <button class="btn btn-sm" style="padding:2px 6px;font-size:17px;" onclick="event.stopPropagation();openEditConsumable('${c.id}')">✏</button>
+      <span class="c-tag ${cls}" style="font-size:15px;">${tag}</span>
+      <button class="btn btn-sm" style="padding:2px 6px;font-size:16px;" onclick="event.stopPropagation();openEditConsumable('${c.id}')">✏</button>
     </div>
   </div>`;
 }
@@ -1719,7 +1719,7 @@ function renderExtraSection(){
       <button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ Add</button>
     </div>
     ${!logs.length
-      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:16px;">기타 정비 기록이 없습니다</div>`
+      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:15px;">기타 정비 기록이 없습니다</div>`
       :`<div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;"><table class="log-table">
           <thead><tr><th>Date</th><th>Type</th><th>Description</th><th>km</th><th>Cost</th><th>Shop</th><th></th></tr></thead>
           <tbody>${logs.map(l=>`<tr>
@@ -1798,23 +1798,23 @@ function renderRiding(){
     return `<div class="bike-card" style="margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
         <div><div class="bike-name">${bike.brand} ${bike.model}</div><div class="bike-meta">${bike.year}${bike.cc?' · '+bike.cc+'cc':''}${bike.plate?' · '+bike.plate:''}</div></div>
-        <div style="text-align:right;"><div style="font-size:17px;color:var(--text-dim);margin-bottom:3px;">Current Total</div><div style="font-family:'JetBrains Mono',monospace;font-size:26px;color:var(--accent);line-height:1;">${bike.odometer.toLocaleString()}</div><div style="font-size:17px;color:var(--text-dim);">km</div></div>
+        <div style="text-align:right;"><div style="font-size:16px;color:var(--text-dim);margin-bottom:3px;">Current Total</div><div style="font-family:'JetBrains Mono',monospace;font-size:25px;color:var(--accent);line-height:1;">${bike.odometer.toLocaleString()}</div><div style="font-size:16px;color:var(--text-dim);">km</div></div>
       </div>
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;">
-        <div style="font-size:17px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Update Odometer</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Update Odometer</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <input type="number" class="num-input-styled" id="odo-input-${bike.id}" value="${bike.odometer}" style="width:150px;">
-          <span style="font-size:17px;color:var(--text-dim);">km</span>
+          <span style="font-size:16px;color:var(--text-dim);">km</span>
           <button class="btn btn-primary" onclick="updateOdometer(${bike.id})">Update</button>
         </div>
-        <div style="font-size:17px;color:var(--text-muted);margin-top:7px;">Enter the current odometer reading</div>
+        <div style="font-size:16px;color:var(--text-muted);margin-top:7px;">Enter the current odometer reading</div>
       </div>
       ${alerts.length?`
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-        <div style="font-size:17px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Service Alerts</div>
-        ${urgents.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:16px;">${c.icon} ${c.name}</span><span class="c-tag danger">🚨 Replace Now</span></div>`).join('')}
-        ${warns.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:16px;">${c.icon} ${c.name}</span><span class="c-tag warn">⚠ Due Soon</span></div>`).join('')}
-      </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:16px;color:var(--green);">✓ 모든 소모품 양호</div>`}
+        <div style="font-size:16px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Service Alerts</div>
+        ${urgents.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:15px;">${c.icon} ${c.name}</span><span class="c-tag danger">🚨 Replace Now</span></div>`).join('')}
+        ${warns.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:15px;">${c.icon} ${c.name}</span><span class="c-tag warn">⚠ Due Soon</span></div>`).join('')}
+      </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:15px;color:var(--green);">✓ 모든 소모품 양호</div>`}
     </div>`;
   }).join('');
 }
@@ -1892,7 +1892,7 @@ function renderBackupPage(){
   el.innerHTML=`
     <div class="backup-stat-row"><span>Registered Vehicles</span><span class="backup-stat-val">${D.bikes.length}대</span></div>
     <div class="backup-stat-row"><span>History</span><span class="backup-stat-val">${D.history.length}건</span></div>
-    <div class="backup-stat-row"><span>Last Backup</span><span class="backup-stat-val" style="font-size:17px;">${lastBackup||'None'}</span></div>`;
+    <div class="backup-stat-row"><span>Last Backup</span><span class="backup-stat-val" style="font-size:16px;">${lastBackup||'None'}</span></div>`;
 }
 function showBackupToast(msg,type='success'){
   const t=document.getElementById('backup-toast');
@@ -2041,7 +2041,7 @@ function openAiGuide(cId) {
   if (!guide) {
     document.getElementById('ai-guide-body').innerHTML = `
       <div class="ai-error">
-        <div style="font-size:28px;margin-bottom:10px;">🔧</div>
+        <div style="font-size:27px;margin-bottom:10px;">🔧</div>
         <div>가이드 데이터 준비 중입니다</div>
       </div>`;
     return;
@@ -2059,18 +2059,18 @@ function renderAiGuide(guide, con, pct, bike) {
   const urgentBanner = pct >= 100 ? `
     <div style="background:var(--red-dim);border:1px solid rgba(208,64,64,0.4);border-radius:8px;
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
-      <span style="font-size:20px;">🚨</span>
+      <span style="font-size:19px;">🚨</span>
       <div>
-        <div style="font-size:17px;font-weight:700;color:var(--red);">교체 주기 초과!</div>
-        <div style="font-size:17px;color:#c06060;margin-top:2px;">즉시 교체를 권장합니다</div>
+        <div style="font-size:16px;font-weight:700;color:var(--red);">교체 주기 초과!</div>
+        <div style="font-size:16px;color:#c06060;margin-top:2px;">즉시 교체를 권장합니다</div>
       </div>
     </div>` : pct >= 80 ? `
     <div style="background:var(--accent-dim);border:1px solid rgba(232,160,32,0.4);border-radius:8px;
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
-      <span style="font-size:20px;">⚠️</span>
+      <span style="font-size:19px;">⚠️</span>
       <div>
-        <div style="font-size:17px;font-weight:700;color:var(--accent);">교체 시기가 다가왔습니다</div>
-        <div style="font-size:17px;color:#b08030;margin-top:2px;">다음 정비 시 교체 예정으로 잡으세요</div>
+        <div style="font-size:16px;font-weight:700;color:var(--accent);">교체 시기가 다가왔습니다</div>
+        <div style="font-size:16px;color:#b08030;margin-top:2px;">다음 정비 시 교체 예정으로 잡으세요</div>
       </div>
     </div>` : '';
 
@@ -2092,7 +2092,7 @@ function renderAiGuide(guide, con, pct, bike) {
       <div class="ai-guide-section-title">💡 관리 팁</div>
       <div class="ai-guide-text">${tip.split('\n').join('<br>')}</div>
     </div>` : ''}
-    <div style="font-size:17px;color:var(--text-muted);text-align:center;margin-top:8px;">
+    <div style="font-size:16px;color:var(--text-muted);text-align:center;margin-top:8px;">
       ✦ 정비 가이드 · ${bike ? bike.brand+' '+bike.model : ''} · ${new Date().toLocaleDateString('ko-KR')}
     </div>`;
 }
@@ -2257,8 +2257,8 @@ function renderWeather(data) {
 function showWeatherError(msg) {
   document.getElementById('weather-content').innerHTML = `
     <div class="weather-loading">
-      <div style="font-size:28px;margin-bottom:10px;">🌐</div>
-      <div style="font-size:17px;color:var(--text-dim);white-space:pre-line;">${msg}</div>
+      <div style="font-size:27px;margin-bottom:10px;">🌐</div>
+      <div style="font-size:16px;color:var(--text-dim);white-space:pre-line;">${msg}</div>
     </div>`;
   document.getElementById('weather-footer').style.display = 'flex';
 }
@@ -2270,9 +2270,9 @@ function showWeatherError(msg) {
   <div class="ai-guide-modal">
     <div class="ai-guide-header">
       <div style="display:flex;align-items:center;gap:10px;">
-        <span id="ai-guide-icon" style="font-size:22px;"></span>
+        <span id="ai-guide-icon" style="font-size:21px;"></span>
         <div>
-          <div style="font-size:16px;font-weight:700;" id="ai-guide-name"></div>
+          <div style="font-size:15px;font-weight:700;" id="ai-guide-name"></div>
           <div id="ai-guide-status-badge" style="margin-top:3px;"></div>
         </div>
       </div>
@@ -2284,7 +2284,7 @@ function showWeatherError(msg) {
     <div class="ai-guide-body" id="ai-guide-body">
       <div class="ai-guide-loading">
         <div class="ai-spinner"></div>
-        <div style="font-size:17px;color:var(--text-dim);">AI 분석 중...</div>
+        <div style="font-size:16px;color:var(--text-dim);">AI 분석 중...</div>
       </div>
     </div>
     <div class="ai-guide-footer">
@@ -2303,7 +2303,7 @@ function showWeatherError(msg) {
     <div id="weather-content">
       <div class="weather-loading">
         <div class="ai-spinner"></div>
-        <div style="margin-top:12px;font-size:17px;color:var(--text-dim);">날씨 정보를 불러오는 중...</div>
+        <div style="margin-top:12px;font-size:16px;color:var(--text-dim);">날씨 정보를 불러오는 중...</div>
       </div>
     </div>
     <div class="weather-footer" id="weather-footer" style="display:none;">
