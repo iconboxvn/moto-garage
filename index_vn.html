@@ -341,6 +341,46 @@ option{background:var(--surface2);}
     animation:fadeInUp 0.3s ease;
   }
   .success-toast.show { display:block; }
+
+  /* ── SOS ── */
+  .sos-fab{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom) + 12px);right:16px;z-index:400;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#e03030,#b02020);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(208,48,48,0.5);animation:sosPulse 2s ease-in-out infinite;-webkit-tap-highlight-color:transparent;}
+  .sos-fab:active{transform:scale(0.93);}
+  @keyframes sosPulse{0%,100%{box-shadow:0 4px 20px rgba(208,48,48,0.5);}50%{box-shadow:0 4px 30px rgba(208,48,48,0.9),0 0 0 8px rgba(208,48,48,0.15);}}
+  .sos-fab-text{font-size:13px;font-weight:900;color:#fff;letter-spacing:0.5px;}
+  .sos-modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:14px 14px 0 0;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;}
+  .sos-header{background:linear-gradient(135deg,#c02020,#8a1010);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;}
+  .sos-title{font-family:"Bebas Neue",sans-serif;font-size:22px;letter-spacing:3px;color:#fff;}
+  .sos-body{padding:16px;}
+  .sos-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .sos-choice-btn{background:var(--surface2);border:2px solid var(--border-bright);border-radius:10px;padding:18px 12px;cursor:pointer;text-align:center;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
+  .sos-choice-btn.selected{border-color:var(--red);background:var(--red-dim);}
+  .sos-choice-icon{font-size:32px;margin-bottom:8px;}
+  .sos-choice-label{font-size:15px;font-weight:700;color:var(--text);}
+  .sos-choice-sub{font-size:11px;color:var(--text-dim);margin-top:3px;}
+  .sos-section{margin-bottom:14px;}
+  .sos-section-title{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .sos-step{width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+  .sos-call-btn{width:100%;background:var(--surface2);border:1px solid var(--border-bright);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:8px;transition:all 0.15s;-webkit-tap-highlight-color:transparent;text-decoration:none;}
+  .sos-call-btn:active{background:var(--surface3);}
+  .sos-call-btn.emergency{border-color:rgba(208,64,64,0.4);background:var(--red-dim);}
+  .sos-call-btn.korea{border-color:rgba(74,144,216,0.4);background:#0e1e2e;}
+  .sos-call-name{font-size:15px;font-weight:700;color:var(--text);}
+  .sos-call-sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .sos-call-num{font-family:"JetBrains Mono",monospace;font-size:17px;font-weight:700;color:var(--accent);}
+  .sos-tts-btn{width:100%;background:linear-gradient(135deg,#1a2a4a,#0e1a30);border:1px solid #2a4a7a;border-radius:8px;padding:14px 16px;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;gap:12px;-webkit-tap-highlight-color:transparent;}
+  .sos-tts-vi{font-size:14px;font-weight:700;color:#6ab0f5;}
+  .sos-tts-ko{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .sos-location-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--text-dim);cursor:pointer;}
+  .sos-checklist-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+  .sos-checklist-item:last-child{border-bottom:none;}
+  .sos-check{width:22px;height:22px;border-radius:5px;border:2px solid var(--border-bright);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all 0.15s;}
+  .sos-check.checked{background:var(--green);border-color:var(--green);}
+  .sos-checklist-text{font-size:14px;color:var(--text);}
+  .medical-card{background:linear-gradient(135deg,#0e1e30,#061018);border:1px solid #2a4a7a;border-radius:10px;padding:18px;margin-bottom:10px;}
+  .medical-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1a3040;}
+  .medical-row:last-child{border-bottom:none;}
+  .medical-label{font-size:12px;color:var(--text-dim);}
+  .medical-value{font-size:14px;font-weight:600;color:var(--text);}
 </style>
 </head>
 <body>
@@ -404,7 +444,7 @@ option{background:var(--surface2);}
 
   <!-- 주행거리 -->
   <div class="page" id="page-riding">
-    <div class="sec-header"><span class="sec-title">Quản lý số km</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">누적 주행거리 관리</span><div class="sec-line"></div></div>
     <div id="odo-cards"></div>
   </div>
 
@@ -869,11 +909,9 @@ const GUIDE_DATA = {
     classic: { why: 'Dầu phanh hấp thụ hơi ẩm theo thời gian, hạ điểm sôi.', check: '① Thay vô điều kiện nếu hơn 2 năm chưa thay\n② Thay ngay nếu cảm giác phanh xốp', cost: 'Thay dầu phanh: 60,000 ~ 150,000 ₫', tip: 'Vứt bỏ dầu phanh còn thừa sau khi mở nắp — không lưu trữ.' }
   }
 };
-function getGuide(consumableId, category) {
-  const catData = GUIDE_DATA[consumableId];
-  if (!catData) return null;
-  return catData[category] || catData['naked'] || null;
-}
+
+
+// Bản đồ tên phụ tùng
 const C_NAMES = {
   'oil':'Dầu máy',
   'oil_f':'Lọc dầu',
@@ -888,7 +926,6 @@ const C_NAMES = {
   'brake_oil':'Dầu phanh'
 };
 function getCName(id){ return C_NAMES[id] || id; }
-
 
 const CONSUMABLES = [
   {id:'oil',       icon:'🛢', name:'Dầu máy',         km:5000},
@@ -1378,8 +1415,8 @@ function _renderConsumablesCore(){
   tabs.innerHTML=`<div class="pill-group">${D.bikes.map((b,i)=>`<div class="pill ${i===cState.bikeIdx?'selected':''}" onclick="switchCBike(${i})">${b.brand} ${b.model}</div>`).join('')}</div>`;
   const bike=D.bikes[cState.bikeIdx];
   el.innerHTML=`
-    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} Phụ tùng</span><div class="sec-line"></div></div>
-    <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">Số km hiện tại <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
+    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} 소모품</span><div class="sec-line"></div></div>
+    <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">현재 주행거리 <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
     <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
 }
 
@@ -1406,9 +1443,9 @@ function consumableCard(c,km){
       </div>
       <div style="padding-left:26px;">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:7px;flex-wrap:wrap;">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">Lần cuối: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Chưa có'}</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">Chu kỳ: ${c.km.toLocaleString()} km</span>
-          ${remain>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:${fillColor};font-weight:600;">Còn ${remain.toLocaleString()} km</span>`:''}
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Chưa có'}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">주기: ${c.km.toLocaleString()} km</span>
+          ${remain>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:${fillColor};font-weight:600;">잔여 ${remain.toLocaleString()} km</span>`:''}
         </div>
         <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
       </div>
@@ -1496,11 +1533,11 @@ function renderExtraSection(){
   const typeBadge={'정기점검':'badge-maint','수리':'badge-repair','세차':'badge-other','튜닝':'badge-cons','기타':'badge-other'};
   el.innerHTML=`
     <div class="sec-header" style="margin-top:8px;">
-      <span class="sec-title">Bảo dưỡng khác</span><div class="sec-line"></div>
+      <span class="sec-title">기타 정비</span><div class="sec-line"></div>
       <button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ Thêm</button>
     </div>
     ${!logs.length
-      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:15px;">Chưa có lịch sử bảo dưỡng</div>`
+      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:15px;">기타 정비 기록이 없습니다</div>`
       :`<div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;"><table class="log-table">
           <thead><tr><th>Ngày</th><th>Loại</th><th>Nội dung</th><th>km</th><th>Chi phí</th><th>Nơi bảo dưỡng</th><th></th></tr></thead>
           <tbody>${logs.map(l=>`<tr>
@@ -1595,7 +1632,7 @@ function renderRiding(){
         <div style="font-size:16px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Cảnh báo phụ tùng</div>
         ${urgents.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:15px;">${c.icon} ${c.name}</span><span class="c-tag danger">🚨 Cần thay ngay</span></div>`).join('')}
         ${warns.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:15px;">${c.icon} ${c.name}</span><span class="c-tag warn">⚠ Sắp thay</span></div>`).join('')}
-      </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:15px;color:var(--green);">✓ Tất cả phụ tùng đều tốt</div>`}
+      </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:15px;color:var(--green);">✓ 모든 소모품 양호</div>`}
     </div>`;
   }).join('');
 }
@@ -1734,7 +1771,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-vn-v10';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-vn-v11';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
@@ -1790,6 +1827,11 @@ renderDash();
 setTimeout(showWeatherModal, 800);
 
 
+function getGuide(consumableId, category) {
+  const catData = GUIDE_DATA[consumableId];
+  if (!catData) return null;
+  return catData[category] || catData['naked'] || null;
+}
 // ─────────────────────────────────────────
 //  AI 가이드
 // ─────────────────────────────────────────
@@ -1823,7 +1865,7 @@ function openAiGuide(cId) {
     document.getElementById('ai-guide-body').innerHTML = `
       <div class="ai-error">
         <div style="font-size:27px;margin-bottom:10px;">🔧</div>
-        <div>Không có dữ liệu hướng dẫn</div>
+        <div>가이드 데이터 준비 중입니다</div>
       </div>`;
     return;
   }
@@ -1842,39 +1884,39 @@ function renderAiGuide(guide, con, pct, bike) {
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:19px;">🚨</span>
       <div>
-        <div style="font-size:16px;font-weight:700;color:var(--red);">Đã quá hạn thay thế!</div>
-        <div style="font-size:16px;color:#c06060;margin-top:2px;">Cần thay ngay lập tức</div>
+        <div style="font-size:16px;font-weight:700;color:var(--red);">교체 주기 초과!</div>
+        <div style="font-size:16px;color:#c06060;margin-top:2px;">즉시 교체를 권장합니다</div>
       </div>
     </div>` : pct >= 80 ? `
     <div style="background:var(--accent-dim);border:1px solid rgba(232,160,32,0.4);border-radius:8px;
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:19px;">⚠️</span>
       <div>
-        <div style="font-size:16px;font-weight:700;color:var(--accent);">Sắp đến hạn thay thế</div>
-        <div style="font-size:16px;color:#b08030;margin-top:2px;">Hãy lên kế hoạch thay trong lần bảo dưỡng tới</div>
+        <div style="font-size:16px;font-weight:700;color:var(--accent);">교체 시기가 다가왔습니다</div>
+        <div style="font-size:16px;color:#b08030;margin-top:2px;">다음 정비 시 교체 예정으로 잡으세요</div>
       </div>
     </div>` : '';
 
   document.getElementById('ai-guide-body').innerHTML = `
     ${urgentBanner}
     ${why ? `<div class="ai-guide-section danger">
-      <div class="ai-guide-section-title">🔥 Tại sao phải thay?</div>
+      <div class="ai-guide-section-title">🔥 왜 교체해야 하나요?</div>
       <div class="ai-guide-text">${why.split('\n').join('<br>')}</div>
     </div>` : ''}
     ${check ? `<div class="ai-guide-section tip">
-      <div class="ai-guide-section-title">🔍 Cách tự kiểm tra</div>
+      <div class="ai-guide-section-title">🔍 직접 점검 방법</div>
       <div class="ai-guide-text">${check.split('\n').join('<br>')}</div>
     </div>` : ''}
     ${cost ? `<div class="ai-guide-section cost">
-      <div class="ai-guide-section-title">💰 Chi phí dự kiến (Hà Nội)</div>
+      <div class="ai-guide-section-title">💰 예상 비용 (하노이 기준)</div>
       <div class="ai-guide-text">${cost.split('\n').join('<br>')}</div>
     </div>` : ''}
     ${tip ? `<div class="ai-guide-section">
-      <div class="ai-guide-section-title">💡 Mẹo bảo dưỡng</div>
+      <div class="ai-guide-section-title">💡 관리 팁</div>
       <div class="ai-guide-text">${tip.split('\n').join('<br>')}</div>
     </div>` : ''}
     <div style="font-size:16px;color:var(--text-muted);text-align:center;margin-top:8px;">
-      ✦ Hướng dẫn bảo dưỡng · ${bike ? bike.brand+' '+bike.model : ''} · ${new Date().toLocaleDateString('vi-VN')}
+      ✦ 정비 가이드 · ${bike ? bike.brand+' '+bike.model : ''} · ${new Date().toLocaleDateString('ko-KR')}
     </div>`;
 }
 
@@ -2044,6 +2086,125 @@ function showWeatherError(msg) {
   document.getElementById('weather-footer').style.display = 'flex';
 }
 
+
+// ─────────────────────────────────────────
+//  SOS 긴급 기능
+// ─────────────────────────────────────────
+function openSOS() {
+  document.querySelectorAll('#sos-checklist .sos-check').forEach(function(el){ el.classList.remove('checked'); el.textContent='☐'; });
+  document.getElementById('sos-colleague').style.display='none';
+  document.getElementById('sos-medical').style.display='none';
+  document.querySelectorAll('.sos-choice-btn').forEach(function(b){ b.classList.remove('selected'); });
+  var med=getMedical();
+  var insBtn=document.getElementById('sos-insurance-btn');
+  if(med.insurance){
+    insBtn.innerHTML='<a href="tel:'+med.insurance.replace(/[^0-9+]/g,'')+ '" class="sos-call-btn korea"><div><div class="sos-call-name">📋 내 여행자보험</div><div class="sos-call-sub">'+med.insurance+'</div></div><div style="font-size:20px;">📞</div></a>';
+  } else {
+    insBtn.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:8px;text-align:center;">보험사 연락처를 의료 정보 카드에 등록해두세요</div>';
+  }
+  loadSOSLocation();
+  openModal('m-sos');
+}
+
+function selectSOS(type,el){
+  document.querySelectorAll('.sos-choice-btn').forEach(function(b){b.classList.remove('selected');});
+  el.classList.add('selected');
+  document.getElementById('sos-colleague').style.display=type==='colleague'?'block':'none';
+  document.getElementById('sos-medical').style.display=type==='medical'?'block':'none';
+  if(type==='medical') renderMedicalCard();
+}
+
+function speakVietnamese(text){
+  if(!('speechSynthesis' in window)){alert('이 브라우저는 음성을 지원하지 않습니다');return;}
+  window.speechSynthesis.cancel();
+  var utt=new SpeechSynthesisUtterance(text);
+  utt.lang='vi-VN'; utt.rate=0.85; utt.volume=1;
+  window.speechSynthesis.speak(utt);
+}
+
+var sosLocationData=null;
+function loadSOSLocation(){
+  var el=document.getElementById('sos-location');
+  if(!el||!navigator.geolocation){if(el)el.textContent='위치 서비스 불가';return;}
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      var lat=pos.coords.latitude.toFixed(6);
+      var lng=pos.coords.longitude.toFixed(6);
+      sosLocationData=lat+', '+lng;
+      el.innerHTML='📍 <strong style="color:var(--accent);">'+lat+', '+lng+'</strong><br><span style="font-size:11px;">탭하면 복사 · Google Maps 열기</span>';
+    },
+    function(){ if(el) el.textContent='📍 위치를 불러올 수 없습니다'; }
+  );
+}
+
+function copySOSLocation(){
+  if(!sosLocationData) return;
+  if(navigator.clipboard) navigator.clipboard.writeText(sosLocationData).then(function(){showToast('✓ 위치가 복사됐습니다');});
+  window.open('https://maps.google.com/?q='+sosLocationData,'_blank');
+}
+
+function toggleCheck(item){
+  var check=item.querySelector('.sos-check');
+  var checked=check.classList.toggle('checked');
+  check.textContent=checked?'✓':'☐';
+}
+
+function getMedical(){ return JSON.parse(localStorage.getItem('mg2-medical')||'{}'); }
+
+function saveMedical(){
+  var data={
+    name:document.getElementById('med-name').value,
+    blood:document.getElementById('med-blood').value,
+    nationality:document.getElementById('med-nationality').value,
+    allergy:document.getElementById('med-allergy').value,
+    medicine:document.getElementById('med-medicine').value,
+    history:document.getElementById('med-history').value,
+    emergency:document.getElementById('med-emergency').value,
+    insurance:document.getElementById('med-insurance').value,
+  };
+  localStorage.setItem('mg2-medical',JSON.stringify(data));
+  closeModal('m-medical');
+  showToast('✓ 의료 정보가 저장됐습니다');
+  renderMedicalCard();
+}
+
+function openMedicalEdit(){
+  var d=getMedical();
+  document.getElementById('med-name').value=d.name||'';
+  document.getElementById('med-blood').value=d.blood||'';
+  document.getElementById('med-nationality').value=d.nationality||'한국 / Korean';
+  document.getElementById('med-allergy').value=d.allergy||'';
+  document.getElementById('med-medicine').value=d.medicine||'';
+  document.getElementById('med-history').value=d.history||'';
+  document.getElementById('med-emergency').value=d.emergency||'';
+  document.getElementById('med-insurance').value=d.insurance||'';
+  openModal('m-medical');
+}
+
+function renderMedicalCard(){
+  var d=getMedical();
+  var el=document.getElementById('medical-card-display');
+  if(!d.name&&!d.blood){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-dim);"><div style="font-size:32px;margin-bottom:10px;">🏥</div><div style="font-size:14px;">의료 정보를 입력해두면</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px;">사고 시 병원에 바로 보여줄 수 있어요</div></div>';
+    return;
+  }
+  el.innerHTML='<div class="medical-card">'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #1a3040;">'
+    +'<span style="font-size:24px;">🏥</span>'
+    +'<div><div style="font-size:14px;font-weight:700;color:#6ab0f5;">MEDICAL INFORMATION · 의료 정보</div>'
+    +'<div style="font-size:10px;color:#4a7a9a;">Thông tin y tế</div></div></div>'
+    +(d.name?'<div class="medical-row"><span class="medical-label">이름 / Name / Tên</span><span class="medical-value">'+d.name+'</span></div>':'')
+    +(d.blood?'<div class="medical-row"><span class="medical-label">혈액형 / Blood Type / Nhóm máu</span><span class="medical-value" style="color:var(--red);font-size:18px;font-weight:800;">'+d.blood+'</span></div>':'')
+    +(d.nationality?'<div class="medical-row"><span class="medical-label">국적 / Nationality</span><span class="medical-value">'+d.nationality+'</span></div>':'')
+    +'<div class="medical-row"><span class="medical-label">⚠️ 알레르기 / Allergy / Dị ứng</span><span class="medical-value" style="color:var(--accent);">'+(d.allergy||'없음 / None')+'</span></div>'
+    +'<div class="medical-row"><span class="medical-label">💊 복용약 / Medication / Thuốc</span><span class="medical-value">'+(d.medicine||'없음 / None')+'</span></div>'
+    +(d.history?'<div class="medical-row"><span class="medical-label">🩺 지병 / History</span><span class="medical-value">'+d.history+'</span></div>':'')
+    +(d.emergency?'<div class="medical-row"><span class="medical-label">📞 비상연락처 / Emergency</span><span class="medical-value" style="font-size:13px;">'+d.emergency+'</span></div>':'')
+    +(d.insurance?'<div class="medical-row"><span class="medical-label">📋 보험사 / Insurance</span><span class="medical-value" style="font-size:13px;">'+d.insurance+'</span></div>':'')
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;">🇰🇷 한국인 라이더 · Korean Motorcycle Rider</div>';
+}
+
 </script>
 
 <!-- ═══════════ MODAL: AI 가이드 ═══════════ -->
@@ -2065,7 +2226,7 @@ function showWeatherError(msg) {
     <div class="ai-guide-body" id="ai-guide-body">
       <div class="ai-guide-loading">
         <div class="ai-spinner"></div>
-        <div style="font-size:16px;color:var(--text-dim);">Đang tải hướng dẫn...</div>
+        <div style="font-size:16px;color:var(--text-dim);">AI 분석 중...</div>
       </div>
     </div>
     <div class="ai-guide-footer">
@@ -2094,5 +2255,114 @@ function showWeatherError(msg) {
   </div>
 </div>
 
+
+<!-- SOS FAB -->
+<button class="sos-fab" onclick="openSOS()"><span class="sos-fab-text">SOS</span></button>
+
+<!-- SOS 모달 -->
+<div class="modal-overlay" id="m-sos" style="align-items:flex-end;padding:0;">
+  <div class="sos-modal">
+    <div class="sos-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:24px;">🚨</span>
+        <div><div class="sos-title">긴급 SOS</div><div style="font-size:11px;color:rgba(255,255,255,0.7);">누가 사고났나요?</div></div>
+      </div>
+      <button class="modal-close" style="color:#fff;" onclick="closeModal('m-sos')">✕</button>
+    </div>
+    <div class="sos-body">
+      <div class="sos-choice">
+        <div class="sos-choice-btn" onclick="selectSOS('colleague',this)">
+          <div class="sos-choice-icon">👤</div>
+          <div class="sos-choice-label">동료 사고</div>
+          <div class="sos-choice-sub">내가 도와야 해요</div>
+        </div>
+        <div class="sos-choice-btn" onclick="selectSOS('medical',this)">
+          <div class="sos-choice-icon">🏥</div>
+          <div class="sos-choice-label">의료 정보 카드</div>
+          <div class="sos-choice-sub">병원에 보여주세요</div>
+        </div>
+      </div>
+      <!-- 동료 사고 -->
+      <div id="sos-colleague" style="display:none;">
+        <div class="sos-section">
+          <div class="sos-section-title"><span class="sos-step">1</span>즉시 신고</div>
+          <a href="tel:115" class="sos-call-btn emergency"><div><div class="sos-call-name">🚑 구급차</div><div class="sos-call-sub">Xe cấp cứu</div></div><div class="sos-call-num">115</div></a>
+          <a href="tel:113" class="sos-call-btn emergency"><div><div class="sos-call-name">🚔 경찰</div><div class="sos-call-sub">Cảnh sát</div></div><div class="sos-call-num">113</div></a>
+          <a href="tel:18001567" class="sos-call-btn"><div><div class="sos-call-name">🌐 관광경찰</div><div class="sos-call-sub">영어 가능 · Tourist Police</div></div><div class="sos-call-num" style="font-size:14px;">1800-1567</div></a>
+        </div>
+        <div class="sos-section">
+          <div class="sos-section-title"><span class="sos-step">2</span>베트남어로 도움 요청</div>
+          <button class="sos-tts-btn" onclick="speakVietnamese('Có người bị tai nạn! Gọi xe cấp cứu ngay! Xin hãy giúp đỡ!')">
+            <span style="font-size:24px;">🔊</span>
+            <div><div class="sos-tts-vi">Có người bị tai nạn!</div><div class="sos-tts-ko">사람이 사고났어요! 구급차 불러주세요!</div></div>
+          </button>
+          <button class="sos-tts-btn" onclick="speakVietnamese('Vui lòng gọi 115 ngay bây giờ!')">
+            <span style="font-size:24px;">🔊</span>
+            <div><div class="sos-tts-vi">Gọi 115 ngay!</div><div class="sos-tts-ko">지금 바로 115에 전화해주세요!</div></div>
+          </button>
+          <div class="sos-location-box" id="sos-location" onclick="copySOSLocation()">📍 위치 불러오는 중... (탭하면 복사)</div>
+        </div>
+        <div class="sos-section">
+          <div class="sos-section-title"><span class="sos-step">3</span>한국어 통역 연결</div>
+          <a href="tel:+8223210404" class="sos-call-btn korea"><div><div class="sos-call-name">🇰🇷 영사콜센터</div><div class="sos-call-sub">24시간 · 한국어 · 무료 · 통역 연결</div></div><div class="sos-call-num" style="font-size:12px;">+82-2-3210-0404</div></a>
+          <a href="tel:+842438315111" class="sos-call-btn korea"><div><div class="sos-call-name">🇰🇷 주하노이 한국대사관</div><div class="sos-call-sub">긴급 영사 서비스</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3831-5111</div></a>
+          <div id="sos-insurance-btn"></div>
+        </div>
+        <div class="sos-section">
+          <div class="sos-section-title"><span class="sos-step">4</span>하노이 국제병원 (한국어·영어)</div>
+          <a href="tel:+842439743556" class="sos-call-btn"><div><div class="sos-call-name">🏥 Vinmec International</div><div class="sos-call-sub">한국어 통역 가능</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3974-3556</div></a>
+          <a href="tel:+842439275568" class="sos-call-btn"><div><div class="sos-call-name">🏥 Hong Ngoc Hospital</div><div class="sos-call-sub">한국어 통역 가능</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3927-5568</div></a>
+          <a href="tel:+842438430748" class="sos-call-btn"><div><div class="sos-call-name">🏥 Family Medical Practice</div><div class="sos-call-sub">영어 전용</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3843-0748</div></a>
+          <div style="font-size:11px;color:var(--text-dim);padding:6px 0;">⚠️ 하노이 밖: 가까운 병원 응급처치 → 안정 후 하노이 이송</div>
+        </div>
+        <div class="sos-section">
+          <div class="sos-section-title"><span class="sos-step">5</span>사고 기록 (보험 처리용)</div>
+          <div id="sos-checklist">
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 상대 차량 번호판 사진</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 차량 전체 사진</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 부상 부위 사진</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 도로 상황 사진</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 신호등/표지판 사진</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 목격자 연락처 확보</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 사고 일시/장소 메모</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- 의료 정보 카드 -->
+      <div id="sos-medical" style="display:none;">
+        <div id="medical-card-display"></div>
+        <button class="btn btn-primary btn-full" onclick="openMedicalEdit()" style="margin-top:8px;">✏ 의료 정보 입력/수정</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 의료 정보 입력 모달 -->
+<div class="modal-overlay" id="m-medical">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">🏥 나의 의료 정보</span><button class="modal-close" onclick="closeModal('m-medical')">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px;padding:10px;background:var(--surface2);border-radius:6px;">💡 병원에서 이 화면을 보여주면 의료진이 도움을 줄 수 있어요</div>
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">이름 / Name</label><input type="text" class="form-input" id="med-name" placeholder="홍길동 / Hong Gil-dong"></div>
+        <div class="form-group"><label class="form-label">혈액형 / Blood Type</label>
+          <select class="form-select" id="med-blood"><option value="">모름</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">국적 / Nationality</label>
+          <select class="form-select" id="med-nationality"><option value="한국 / Korean">한국 / Korean</option><option value="베트남 / Vietnamese">베트남 / Vietnamese</option><option value="기타 / Other">기타 / Other</option></select>
+        </div>
+        <div class="form-group full"><label class="form-label">⚠️ 알레르기 / Allergy</label><input type="text" class="form-input" id="med-allergy" placeholder="페니실린 / Penicillin (없으면 공백)"></div>
+        <div class="form-group full"><label class="form-label">💊 복용 중인 약 / Medication</label><input type="text" class="form-input" id="med-medicine" placeholder="없음 / None"></div>
+        <div class="form-group full"><label class="form-label">🩺 지병 / Medical History</label><input type="text" class="form-input" id="med-history" placeholder="없음 / None"></div>
+        <div class="form-group full"><label class="form-label">📞 비상연락처 / Emergency Contact</label><input type="text" class="form-input" id="med-emergency" placeholder="홍길순 (배우자) 010-xxxx-xxxx"></div>
+        <div class="form-group full"><label class="form-label">🏥 여행자보험사 연락처</label><input type="text" class="form-input" id="med-insurance" placeholder="삼성화재 1588-xxxx"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-medical')">취소</button>
+      <button class="btn btn-primary" onclick="saveMedical()">저장</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
