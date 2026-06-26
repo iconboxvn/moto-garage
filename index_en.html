@@ -246,6 +246,21 @@ option{background:var(--surface2);}
     color:var(--text-dim); font-size:17px;
   }
 
+
+  .aqi-box {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 14px; border-radius:8px; margin:0 18px 14px;
+    border:1px solid var(--border);
+  }
+  .aqi-box.good    { background:#0e2a1a; border-color:rgba(56,168,104,0.3); }
+  .aqi-box.moderate{ background:#2a2000; border-color:rgba(232,160,32,0.3); }
+  .aqi-box.bad     { background:#2a1000; border-color:rgba(232,100,32,0.3); }
+  .aqi-box.very-bad{ background:#2e1010; border-color:rgba(208,64,64,0.35); }
+  .aqi-level { font-size:22px; }
+  .aqi-info  { flex:1; }
+  .aqi-title { font-size:13px; font-weight:700; color:var(--text); }
+  .aqi-sub   { font-size:11px; color:var(--text-dim); margin-top:2px; }
+  .aqi-value { font-family:"JetBrains Mono",monospace; font-size:13px; font-weight:700; }
   /* ── WEATHER MODAL ── */
   .weather-modal {
     background:var(--surface);
@@ -1140,6 +1155,55 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{
 // ═══════════════════════════════════════════
 //  DASHBOARD
 // ═══════════════════════════════════════════
+
+// ─────────────────────────────────────────
+//  오늘의 라이딩 팁
+// ─────────────────────────────────────────
+const RIDING_TIPS = [
+  { icon:'🌧', tag:'빗길', tip:'빗길 흰색 차선은 아이스링크만큼 미끄럽습니다. 차선 위에서는 절대 브레이크를 잡지 마세요.' },
+  { icon:'🛢', tag:'엔진오일', tip:'엔진오일은 색이 검게 변하기 전에 교체하세요. 투명한 갈색이 정상, 검은색은 교체 시기입니다.' },
+  { icon:'🏍', tag:'타이어', tip:'타이어 공기압은 주 1회 체크하세요. 저압은 연비 저하와 핸들링 불안정의 원인입니다.' },
+  { icon:'⛓', tag:'체인', tip:'체인은 1,000km마다 윤활하세요. 우천 후 주행했다면 반드시 당일 윤활이 필요합니다.' },
+  { icon:'🌡', tag:'여름', tip:'폭염 주행 시 30분마다 휴식을 취하세요. 탈수는 판단력을 흐리게 합니다.' },
+  { icon:'🌙', tag:'야간', tip:'야간 주행 시 반사 조끼나 밝은 색 재킷을 착용하면 사고 위험이 크게 줄어듭니다.' },
+  { icon:'🛑', tag:'브레이크', tip:'브레이크 잡을 때 금속 긁히는 소리가 나면 즉시 교체하세요. 디스크 손상으로 이어집니다.' },
+  { icon:'👁', tag:'시야', tip:'2초 룰: 앞차와의 거리는 최소 2초 이상 유지하세요. 빗길엔 4초 이상이 안전합니다.' },
+  { icon:'🔦', tag:'전조등', tip:'낮에도 전조등을 켜면 다른 차량에서의 인식률이 2배 이상 높아집니다.' },
+  { icon:'💨', tag:'바람', tip:'강한 측풍 구간에서는 핸들을 살짝 바람 방향으로 기울여 균형을 잡으세요.' },
+  { icon:'🏥', tag:'안전', tip:'장거리 라이딩 전에는 차량 상태뿐 아니라 본인의 컨디션도 확인하세요. 피로는 사고의 주원인입니다.' },
+  { icon:'⚡', tag:'점화플러그', tip:'시동이 잘 안 걸린다면 점화플러그를 먼저 확인하세요. 교체 비용 대비 효과가 큽니다.' },
+  { icon:'🔩', tag:'볼트', tip:'진동이 느껴진다면 핸들바 볼트와 미러 볼트를 점검하세요. 풀림 방지 나사로 교체를 권장합니다.' },
+  { icon:'🌫', tag:'안개', tip:'짙은 안개 속에서는 안개등을 켜고 속도를 50% 줄이세요. 상향등은 오히려 시야를 방해합니다.' },
+  { icon:'🔋', tag:'배터리', tip:'배터리 수명은 보통 2~3년입니다. 시동이 느리게 걸린다면 배터리 전압을 점검하세요.' },
+  { icon:'🌊', tag:'빗길', tip:'비 온 직후 첫 10분이 가장 위험합니다. 도로의 기름과 빗물이 섞여 미끄러움이 최대가 됩니다.' },
+  { icon:'🏁', tag:'타이어', tip:'새 타이어는 처음 200km 동안 예열이 필요합니다. 급격한 기울임을 피하세요.' },
+  { icon:'🎯', tag:'시야', tip:'커브 진입 전 출구를 먼저 보세요. 시선이 가는 방향으로 바이크가 따라갑니다.' },
+  { icon:'💧', tag:'냉각수', tip:'냉각수 레벨은 월 1회 점검하세요. 부족 시 절대 수돗물을 넣지 말고 전용 냉각수를 사용하세요.' },
+  { icon:'🧤', tag:'안전', tip:'장갑은 낙차 시 손을 보호하는 필수 장비입니다. 여름에도 메시 장갑 착용을 권장합니다.' },
+  { icon:'🛣', tag:'주행', tip:'교차로 통과 시 속도를 줄이고 좌우를 반드시 확인하세요. 베트남에서는 신호를 무시하는 차량이 많습니다.' },
+  { icon:'🔧', tag:'정비', tip:'정기점검은 주행거리와 관계없이 6개월마다 한 번씩 받으세요. 시간이 지나도 부품은 열화됩니다.' },
+];
+
+function getTodayTip() {
+  // 날짜 기반으로 매일 다른 팁 표시
+  const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  return RIDING_TIPS[dayOfYear % RIDING_TIPS.length];
+}
+
+function renderTodayTip() {
+  const el = document.getElementById('today-tip');
+  if (!el) return;
+  const tip = getTodayTip();
+  el.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:10px;">
+      <span style="font-size:22px;flex-shrink:0;">${tip.icon}</span>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:4px;">💡 Today's Riding Tip · ${tip.tag}</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.6;">${tip.tip}</div>
+      </div>
+    </div>`;
+}
+
 function renderDash(){
   const stored=localStorage.getItem('mg2');
   if(stored){ try{ const p=JSON.parse(stored); if(p.bikes) D=p; }catch(e){} }
@@ -1772,7 +1836,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-en-v12';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-en-v13';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
@@ -1955,12 +2019,15 @@ async function showWeatherModal() {
     async (pos) => {
       const { latitude: lat, longitude: lon } = pos.coords;
       try {
-        const res = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=kr`
-        );
+        // 날씨 + AQI 동시 호출
+        const [res, aqiRes] = await Promise.all([
+          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=kr`),
+          fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`)
+        ]);
         const data = await res.json();
+        const aqiData = await aqiRes.json();
         if (data.cod !== 200) throw new Error(data.message);
-        renderWeather(data);
+        renderWeather(data, aqiData);
       } catch(e) {
         showWeatherError('Could not load weather');
       }
@@ -2039,7 +2106,23 @@ function getWeatherIcon(id) {
   return '🌡';
 }
 
-function renderWeather(data) {
+function getAqiInfo(aqiData) {
+  try {
+    const aqi = aqiData.list[0].main.aqi;
+    const pm25 = Math.round(aqiData.list[0].components.pm2_5);
+    const levels = [
+      null,
+      { cls:'good',     icon:'😊', label:'좋음',     sub:'라이딩하기 좋은 대기질', color:'#38a868', mask:false },
+      { cls:'moderate', icon:'🙂', label:'보통',     sub:'민감한 분은 주의',       color:'#e8a020', mask:false },
+      { cls:'bad',      icon:'😷', label:'나쁨',     sub:'마스크 착용 권장',       color:'#e86420', mask:true  },
+      { cls:'very-bad', icon:'🤢', label:'매우 나쁨', sub:'장시간 라이딩 자제',     color:'#d04040', mask:true  },
+      { cls:'very-bad', icon:'☠️', label:'최악',     sub:'외출 자제 권장',         color:'#d04040', mask:true  },
+    ];
+    return { ...levels[aqi], aqi, pm25 };
+  } catch(e) { return null; }
+}
+
+function renderWeather(data, aqiData) {
   const cond = getRidingCondition(data);
   const icon = getWeatherIcon(data.weather[0].id);
   const temp = Math.round(data.main.temp);
@@ -2047,8 +2130,20 @@ function renderWeather(data) {
   const desc = data.weather[0].description;
   const city = data.name;
   const humidity = data.main.humidity;
-  const windSpeed = Math.round((data.wind?.speed || 0) * 3.6); // m/s → km/h
+  const windSpeed = Math.round((data.wind?.speed || 0) * 3.6);
   const now = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'});
+  const aqi = aqiData ? getAqiInfo(aqiData) : null;
+
+  // AQI 박스 HTML
+  const aqiHtml = aqi ? `
+    <div class="aqi-box ${aqi.cls}">
+      <div class="aqi-level">${aqi.icon}</div>
+      <div class="aqi-info">
+        <div class="aqi-title">대기질 <span style="color:${aqi.color};">${aqi.label}</span>${aqi.mask ? ' · 😷 마스크 권장' : ''}</div>
+        <div class="aqi-sub">${aqi.sub}</div>
+      </div>
+      <div class="aqi-value" style="color:${aqi.color};">PM2.5<br>${aqi.pm25}㎍</div>
+    </div>` : '';
 
   document.getElementById('weather-content').innerHTML = `
     <div class="weather-header">
@@ -2067,6 +2162,7 @@ function renderWeather(data) {
         </div>
       </div>
     </div>
+    ${aqiHtml}
     <div class="weather-body">
       <div class="riding-condition ${cond.level}">
         <div class="riding-condition-title">${cond.title}</div>
