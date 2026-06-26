@@ -343,8 +343,9 @@ option{background:var(--surface2);}
   .success-toast.show { display:block; }
 
   /* ── SOS ── */
-  .sos-fab{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom) + 12px);right:16px;z-index:400;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#e03030,#b02020);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(208,48,48,0.5);animation:sosPulse 2s ease-in-out infinite;-webkit-tap-highlight-color:transparent;}
-  .sos-fab:active{transform:scale(0.93);}
+  .sos-fab{position:fixed;right:16px;bottom:calc(80px + env(safe-area-inset-bottom) + 12px);z-index:400;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#e03030,#b02020);border:none;cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(208,48,48,0.5);animation:sosPulse 2s ease-in-out infinite;-webkit-tap-highlight-color:transparent;touch-action:none;user-select:none;}
+  .sos-fab:active{cursor:grabbing;}
+  .sos-fab.dragging{animation:none;box-shadow:0 8px 30px rgba(208,48,48,0.7);transform:scale(1.05);}
   @keyframes sosPulse{0%,100%{box-shadow:0 4px 20px rgba(208,48,48,0.5);}50%{box-shadow:0 4px 30px rgba(208,48,48,0.9),0 0 0 8px rgba(208,48,48,0.15);}}
   .sos-fab-text{font-size:13px;font-weight:900;color:#fff;letter-spacing:0.5px;}
   .sos-modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:14px 14px 0 0;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;}
@@ -1997,7 +1998,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-ko-v24';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-ko-v25';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
@@ -2425,6 +2426,87 @@ function renderMedicalCard(){
     +'</div>'
     +'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;">🇰🇷 한국인 라이더 · Korean Motorcycle Rider</div>';
 }
+
+
+// ── SOS FAB 드래그
+(function(){
+  var fab, isDragging=false, startY=0, startTop=0, moved=false;
+
+  function initSOSDrag(){
+    fab = document.querySelector('.sos-fab');
+    if(!fab) return;
+
+    // 저장된 위치 복원
+    var saved = localStorage.getItem('mg2-sos-pos');
+    if(saved){
+      var pos = JSON.parse(saved);
+      fab.style.bottom = 'auto';
+      fab.style.top = pos.top + 'px';
+      fab.style.right = pos.right + 'px';
+      fab.style.left = 'auto';
+    }
+
+    // 터치 이벤트
+    fab.addEventListener('touchstart', onStart, {passive:false});
+    fab.addEventListener('touchmove',  onMove,  {passive:false});
+    fab.addEventListener('touchend',   onEnd,   {passive:false});
+    // 마우스 이벤트 (PC)
+    fab.addEventListener('mousedown',  onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onEnd);
+  }
+
+  function getClientY(e){ return e.touches ? e.touches[0].clientY : e.clientY; }
+
+  function onStart(e){
+    isDragging = false; moved = false;
+    startY = getClientY(e);
+    var rect = fab.getBoundingClientRect();
+    startTop = rect.top;
+    fab.style.bottom = 'auto';
+    fab.style.top = startTop + 'px';
+  }
+
+  function onMove(e){
+    var dy = getClientY(e) - startY;
+    if(Math.abs(dy) > 5){
+      isDragging = true; moved = true;
+      fab.classList.add('dragging');
+      e.preventDefault();
+      var newTop = Math.max(10, Math.min(window.innerHeight - 64, startTop + dy));
+      fab.style.top = newTop + 'px';
+    }
+  }
+
+  function onEnd(e){
+    if(!isDragging){ fab.classList.remove('dragging'); return; }
+    fab.classList.remove('dragging');
+    isDragging = false;
+
+    // 좌우 자동 스냅
+    var rect = fab.getBoundingClientRect();
+    var centerX = rect.left + rect.width/2;
+    var snapRight = centerX > window.innerWidth/2;
+    fab.style.right = snapRight ? '16px' : 'auto';
+    fab.style.left  = snapRight ? 'auto' : '16px';
+
+    // 위치 저장
+    localStorage.setItem('mg2-sos-pos', JSON.stringify({
+      top: parseFloat(fab.style.top),
+      right: snapRight ? 16 : -1
+    }));
+
+    // 클릭 방지 (드래그 후 openSOS 실행 안 되도록)
+    if(moved){
+      fab.addEventListener('click', function stopClick(ev){
+        ev.stopImmediatePropagation();
+        fab.removeEventListener('click', stopClick, true);
+      }, true);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', initSOSDrag);
+})();
 
 </script>
 
