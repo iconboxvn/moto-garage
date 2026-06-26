@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "838742335191",
+    "project_id": "moto-garage-8da30",
+    "storage_bucket": "moto-garage-8da30.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:838742335191:android:cbceb49f864155fe9f9a92",
+        "android_client_info": {
+          "package_name": "com.iconbox.motogarage"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAO9ieZvzkBKwPCrumreLzYVSs_OuRWWEw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

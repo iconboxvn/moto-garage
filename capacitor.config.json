@@ -1,0 +1,30 @@
+{
+  "appId": "com.iconbox.motogarage",
+  "appName": "MOTO GARAGE",
+  "webDir": "www",
+  "android": {
+    "buildOptions": {
+      "keystorePath": "moto-garage.keystore",
+      "keystoreAlias": "moto-garage"
+    }
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#0c0c0d",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
+    },
+    "StatusBar": {
+      "style": "Dark",
+      "backgroundColor": "#141517"
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#e8a020"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}
