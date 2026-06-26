@@ -130,11 +130,8 @@ option{background:var(--surface2);}
 .c-tag.danger{background:var(--red-dim);color:var(--red);}
 
 /* LOG TABLE */
-.log-table{width:100%;border-collapse:collapse;}
-.log-table th{padding:8px 12px;font-size:15px;font-weight:700;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border);text-align:left;}
-.log-table td{padding:9px 12px;font-size:15px;border-bottom:1px solid var(--border);vertical-align:middle;}
-.log-table tr:last-child td{border-bottom:none;}
-.log-table tbody tr:hover td{background:var(--surface2);}
+.h-card{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:14px 16px;margin-bottom:8px;}
+.h-card:last-child{margin-bottom:0;}
 .mono{font-family:'JetBrains Mono',monospace;font-size:17px;}
 .badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:15px;font-weight:700;letter-spacing:0.5px;}
 .badge-maint{background:#0e1e2e;color:#4a90d8;}
@@ -477,7 +474,7 @@ option{background:var(--surface2);}
       </select>
     </div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">정비 기록은 <strong style="color:var(--accent);">🔧 소모품</strong> 탭에서 추가하세요</div>
-    <div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;" id="history-table"></div></div>
+    <div id="history-list"></div>
   </div>
 
   <!-- 백업 -->
@@ -1950,26 +1947,26 @@ function renderHistory(){
   let logs=[...D.history].sort((a,b)=>b.date.localeCompare(a.date));
   if(bfv) logs=logs.filter(l=>l.bikeId==bfv);
   if(tfv) logs=logs.filter(l=>l.type===tfv);
-  const el=document.getElementById('history-table');
-  const typeBadge={'소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+  const el=document.getElementById('history-list');
+  const typeColor={'소모품교체':{border:'var(--accent)',badge:'badge-cons'},'정기점검':{border:'#4a90d8',badge:'badge-maint'},'수리':{border:'var(--red)',badge:'badge-repair'},'기타':{border:'var(--green)',badge:'badge-other'}};
   if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">정비 기록이 없습니다</div></div>`; return; }
-  el.innerHTML=`<table class="log-table"><thead><tr><th>날짜</th><th>차량</th><th>유형</th><th>내용</th><th>km</th><th>비용</th><th>정비소</th><th></th></tr></thead><tbody>
-    ${logs.map(l=>{
-      const b=D.bikes.find(x=>x.id==l.bikeId);
-      return `<tr>
-        <td class="mono">${l.date}</td>
-        <td style="color:var(--text-dim);white-space:nowrap;">${b?b.brand+' '+b.model:'삭제된 차량'}</td>
-        <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
-        <td>${l.desc||'—'}</td>
-        <td class="mono">${l.km?l.km.toLocaleString():'-'}</td>
-        <td class="mono">${l.cost?'₫'+parseInt(l.cost).toLocaleString():'-'}</td>
-        <td style="color:var(--text-dim)">${l.shop||'—'}</td>
-        <td style="display:flex;gap:4px;">
-          <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">삭제</button>
-        </td>
-      </tr>`;
-    }).join('')}</tbody></table>`;
+  el.innerHTML=logs.map(l=>{
+    const b=D.bikes.find(x=>x.id==l.bikeId);
+    const tc=typeColor[l.type]||{border:'var(--green)',badge:'badge-other'};
+    const meta=[l.desc||null,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop||null].filter(Boolean).join(' · ');
+    return `<div class="h-card" style="border-left-color:${tc.border};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span class="badge ${tc.badge}">${l.type}</span>
+        <span class="mono" style="font-size:13px;color:var(--text-dim);">${l.date}</span>
+      </div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px;">${b?b.brand+' '+b.model:'삭제된 차량'}</div>
+      <div style="font-size:13px;color:var(--text-dim);">${meta||'—'}</div>
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+        <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function openEditHistory(id){
