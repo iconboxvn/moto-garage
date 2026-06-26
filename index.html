@@ -397,6 +397,18 @@ option{background:var(--surface2);}
   .medical-row:last-child{border-bottom:none;}
   .medical-label{font-size:12px;color:var(--text-dim);}
   .medical-value{font-size:14px;font-weight:600;color:var(--text);}
+
+  /* ── 자동 SOS / 라이딩 감지 ── */
+  @keyframes ridingPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.8)}}
+  .riding-ctrl{margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .riding-ctrl.on{background:linear-gradient(135deg,#0a2018,#061410);border-color:rgba(56,168,104,0.35);}
+  .riding-dot{width:9px;height:9px;border-radius:50%;background:var(--border-bright);flex-shrink:0;}
+  .riding-dot.on{background:var(--green);animation:ridingPulse 1.5s ease-in-out infinite;}
+  .riding-stop-btn{background:transparent;border:1px solid rgba(208,64,64,0.5);color:var(--red);font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:8px 14px;border-radius:4px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+  .auto-sos-overlay{display:none;position:fixed;inset:0;z-index:1000;background:linear-gradient(180deg,#8a0808 0%,#4a0404 100%);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+  .auto-sos-overlay.show{display:flex;}
+  .auto-sos-num{font-family:'Bebas Neue',sans-serif;font-size:120px;color:#fff;line-height:1;text-shadow:0 0 60px rgba(255,80,80,0.5);}
+  .auto-sos-cancel{background:#fff;color:#7a0606;font-family:'Inter',sans-serif;font-size:17px;font-weight:800;padding:16px 56px;border-radius:50px;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:28px;}
 </style>
 </head>
 <body>
@@ -442,7 +454,21 @@ option{background:var(--surface2);}
 
 <div class="container">
   <!-- 홈 -->
-  <div class="page active" id="page-dashboard"><div id="dash-content"></div></div>
+  <div class="page active" id="page-dashboard">
+    <div id="riding-ctrl-bar" class="riding-ctrl" style="margin-top:16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="riding-ctrl-dot" class="riding-dot"></div>
+        <div>
+          <div id="riding-ctrl-title" style="font-size:14px;font-weight:700;color:var(--text-dim);">라이딩 대기중</div>
+          <div id="riding-ctrl-sub" style="font-size:11px;color:var(--text-muted);">출발 전 시작 → 사고 시 자동 SOS</div>
+        </div>
+      </div>
+      <div id="riding-ctrl-btn">
+        <button class="btn btn-primary" style="font-size:13px;padding:8px 14px;" onclick="startRiding()">▶ 시작</button>
+      </div>
+    </div>
+    <div id="dash-content"></div>
+  </div>
 
   <!-- 내 차량 -->
   <div class="page" id="page-bikes">
@@ -2110,10 +2136,279 @@ function migrateConsumableIntervals() {
 }
 
 // ═══════════════════════════════════════════
+//  자동 SOS — 충격/낙차 감지
+// ═══════════════════════════════════════════
+var ridingState = {active: false};
+var _sos = {
+  phase: 'IDLE',   // IDLE | MONITORING | FREEFALL | IMPACT | COUNTDOWN
+  speedOk: false,
+  ffStart: null,
+  phaseT: null,
+  stillStart: null,
+  buf: [],
+  gpsId: null,
+  cdTimer: null,
+  cdVal: 60,
+  motAdded: false
+};
+var _FF_MAG    = 3;
+var _FF_DUR    = 300;
+var _IMP_MAG   = 39.2;
+var _STILL_DUR = 5000;
+var _MIN_SPD   = 20;
+
+function updateRidingBar() {
+  var bar   = document.getElementById('riding-ctrl-bar');
+  var dot   = document.getElementById('riding-ctrl-dot');
+  var title = document.getElementById('riding-ctrl-title');
+  var sub   = document.getElementById('riding-ctrl-sub');
+  var btn   = document.getElementById('riding-ctrl-btn');
+  if (!bar) return;
+  if (ridingState.active) {
+    bar.className = 'riding-ctrl on';
+    dot.className = 'riding-dot on';
+    title.style.color = 'var(--green)';
+    title.textContent = '라이딩 중 · 충격 감지 활성';
+    sub.textContent = '속도 20 km/h+ 시 충격 자동 감지';
+    btn.innerHTML = '<button class="riding-stop-btn" onclick="stopRiding()">■ 종료</button>';
+  } else {
+    bar.className = 'riding-ctrl';
+    dot.className = 'riding-dot';
+    title.style.color = 'var(--text-dim)';
+    title.textContent = '라이딩 대기중';
+    sub.textContent = '출발 전 시작 → 사고 시 자동 SOS';
+    btn.innerHTML = '<button class="btn btn-primary" style="font-size:13px;padding:8px 14px;" onclick="startRiding()">▶ 시작</button>';
+  }
+}
+
+function toggleRiding() { ridingState.active ? stopRiding() : startRiding(); }
+
+function startRiding() {
+  ridingState.active = true;
+  localStorage.setItem('mg2-riding', '1');
+  _sos.phase = 'MONITORING';
+  _sos.speedOk = false;
+  _sosBufReset();
+  _sosGPSStart();
+  _sosMotionStart();
+  updateRidingBar();
+  showToast('🏍 라이딩 시작! 충격 감지 활성');
+}
+
+function stopRiding() {
+  ridingState.active = false;
+  localStorage.removeItem('mg2-riding');
+  _sosCountdownCancel();
+  _sosGPSStop();
+  _sosMotionStop();
+  _sos.phase = 'IDLE';
+  _sos.speedOk = false;
+  _sosBufReset();
+  var ov = document.getElementById('auto-sos-overlay');
+  if (ov) ov.classList.remove('show');
+  updateRidingBar();
+  showToast('■ 라이딩 종료');
+}
+
+function _sosBufReset() {
+  _sos.buf = []; _sos.ffStart = null; _sos.phaseT = null; _sos.stillStart = null;
+}
+
+function _sosGPSStart() {
+  if (!navigator.geolocation) return;
+  _sos.gpsId = navigator.geolocation.watchPosition(
+    function(p) { _sos.speedOk = ((p.coords.speed || 0) * 3.6) >= _MIN_SPD; },
+    null,
+    {enableHighAccuracy: true, maximumAge: 2000}
+  );
+}
+
+function _sosGPSStop() {
+  if (_sos.gpsId !== null) { navigator.geolocation.clearWatch(_sos.gpsId); _sos.gpsId = null; }
+  _sos.speedOk = false;
+}
+
+function _sosMotionStart() {
+  try {
+    var M = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Motion;
+    if (M) {
+      M.addListener('accel', function(e) {
+        var a = e.accelerationIncludingGravity || e.acceleration;
+        if (a) _sosAccel(a.x || 0, a.y || 0, a.z || 0);
+      });
+      return;
+    }
+  } catch (e) {}
+  if (typeof DeviceMotionEvent === 'undefined') return;
+  function addDM() { window.addEventListener('devicemotion', _sosDMHandler); _sos.motAdded = true; }
+  if (typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(function(s) { if (s === 'granted') addDM(); }).catch(addDM);
+  } else { addDM(); }
+}
+
+function _sosMotionStop() {
+  try {
+    var M = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Motion;
+    if (M) { M.removeAllListeners(); return; }
+  } catch (e) {}
+  if (_sos.motAdded) { window.removeEventListener('devicemotion', _sosDMHandler); _sos.motAdded = false; }
+}
+
+function _sosDMHandler(e) {
+  var a = e.accelerationIncludingGravity;
+  if (a) _sosAccel(a.x || 0, a.y || 0, a.z || 0);
+}
+
+function _sosAccel(x, y, z) {
+  var mag = Math.sqrt(x * x + y * y + z * z);
+  var now = Date.now();
+  _sos.buf.push({mag: mag, t: now});
+  _sos.buf = _sos.buf.filter(function(r) { return now - r.t < 6000; });
+
+  if (_sos.phase === 'COUNTDOWN') {
+    var r1s = _sos.buf.filter(function(r) { return now - r.t < 1500; });
+    if (r1s.length >= 5) {
+      var ms = r1s.map(function(r) { return r.mag; });
+      if (Math.max.apply(null, ms) - Math.min.apply(null, ms) > 2.5) {
+        cancelAutoSOS(); showToast('✓ 움직임 감지 — 자동 SOS 취소');
+      }
+    }
+    return;
+  }
+
+  if (!ridingState.active || _sos.phase === 'IDLE') return;
+
+  if (_sos.phase === 'MONITORING') {
+    if (!_sos.speedOk) { _sos.ffStart = null; return; }
+    if (mag < _FF_MAG) {
+      if (!_sos.ffStart) _sos.ffStart = now;
+      if (now - _sos.ffStart >= _FF_DUR) { _sos.phase = 'FREEFALL'; _sos.phaseT = now; }
+    } else {
+      _sos.ffStart = null;
+      if (mag > _IMP_MAG) { _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now; }
+    }
+    return;
+  }
+
+  if (_sos.phase === 'FREEFALL') {
+    if (mag > _IMP_MAG) {
+      _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now;
+    } else if (mag > 7) {
+      _sos.phase = 'MONITORING'; _sos.ffStart = null;
+    } else if (_sos.phaseT && now - _sos.phaseT > 2000) {
+      _sos.phase = 'MONITORING'; _sos.ffStart = null;
+    }
+    return;
+  }
+
+  if (_sos.phase === 'IMPACT') {
+    var r1 = _sos.buf.filter(function(r) { return now - r.t < 1000; });
+    if (r1.length >= 4) {
+      var m1 = r1.map(function(r) { return r.mag; });
+      if (Math.max.apply(null, m1) - Math.min.apply(null, m1) > 3) {
+        _sos.phase = 'MONITORING'; _sosBufReset(); return;
+      }
+    }
+    if (_sos.stillStart && now - _sos.stillStart >= _STILL_DUR) _sosTrigger();
+  }
+}
+
+function _sosTrigger() {
+  _sos.phase = 'COUNTDOWN';
+  _sos.cdVal = 60;
+  var ov = document.getElementById('auto-sos-overlay');
+  if (ov) ov.classList.add('show');
+  var cd = document.getElementById('auto-sos-cd');
+  if (cd) cd.textContent = '60';
+  var med = getMedical();
+  var ci = document.getElementById('auto-sos-contact');
+  if (ci) ci.textContent = med.emergency ? '발송 대상: ' + med.emergency : '⚠ 비상연락처 미등록 — SOS 발송 불가';
+  try {
+    var LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+    if (LN) LN.schedule({notifications: [{
+      id: 9001, title: '⚠️ 충격/낙차 감지',
+      body: '60초 내 응답 없으면 비상연락처에 메시지 발송. 앱을 열어 취소하세요.',
+      schedule: {at: new Date(Date.now() + 100)}
+    }]}).catch(function() {});
+  } catch (e) {}
+  _sos.cdTimer = setInterval(function() {
+    _sos.cdVal--;
+    var el = document.getElementById('auto-sos-cd');
+    if (el) el.textContent = _sos.cdVal;
+    if (_sos.cdVal <= 0) { clearInterval(_sos.cdTimer); _sos.cdTimer = null; _sosSend(); }
+  }, 1000);
+}
+
+function cancelAutoSOS() {
+  _sosCountdownCancel();
+  var ov = document.getElementById('auto-sos-overlay');
+  if (ov) ov.classList.remove('show');
+  if (_sos.phase === 'COUNTDOWN') _sos.phase = 'MONITORING';
+}
+
+function _sosCountdownCancel() {
+  if (_sos.cdTimer) { clearInterval(_sos.cdTimer); _sos.cdTimer = null; }
+  _sos.cdVal = 60;
+}
+
+function _sosPhoneFrom(str) {
+  if (!str) return '';
+  var m = str.match(/(\+?\d[\d\-\s]{8,15})/);
+  return m ? m[0].replace(/[\s\-]/g, '') : '';
+}
+
+function _sosSend() {
+  var ov = document.getElementById('auto-sos-overlay');
+  if (ov) ov.classList.remove('show');
+  _sos.phase = 'MONITORING';
+  var med = getMedical();
+  var phone = _sosPhoneFrom(med.emergency || '');
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      var lat = pos.coords.latitude.toFixed(6);
+      var lng = pos.coords.longitude.toFixed(6);
+      var maps = 'https://maps.google.com/?q=' + lat + ',' + lng;
+      var body = '[Ridemate] ⚠️ 충격/사고 감지\n라이더가 60초 동안 응답하지 않았습니다.\n\n📍 사고 예상 위치:\n위도 ' + lat + ', 경도 ' + lng + '\n지도: ' + maps + '\n\n라이더에게 연락하거나 신고해주세요.';
+      _sosDoSend(phone, body, maps);
+    },
+    function() {
+      var body = '[Ridemate] ⚠️ 충격/사고 감지\n라이더가 60초 동안 응답하지 않았습니다. (위치 불러오기 실패)\n\n라이더에게 연락하거나 신고해주세요.';
+      _sosDoSend(phone, body, null);
+    },
+    {timeout: 5000, enableHighAccuracy: true}
+  );
+}
+
+function _sosDoSend(phone, body, mapsUrl) {
+  if (phone) {
+    window.open('sms:' + phone + '?body=' + encodeURIComponent(body), '_system');
+  } else {
+    showToast('⚠ 비상연락처가 없어 SMS 발송 실패');
+  }
+  var alertMsg = phone ? '발송 대상: ' + phone : '⚠ 비상연락처 미등록';
+  if (mapsUrl) alertMsg += '\n\n위치: ' + mapsUrl;
+  setTimeout(function() {
+    alert('🚨 자동 SOS 발송\n\n' + alertMsg + '\n\n즉시 구조가 필요하면 119에 신고하세요!');
+  }, 500);
+}
+
+(function() {
+  if (localStorage.getItem('mg2-riding')) {
+    ridingState.active = true;
+    _sos.phase = 'MONITORING';
+    _sosGPSStart();
+    _sosMotionStart();
+  }
+  document.addEventListener('DOMContentLoaded', updateRidingBar);
+  if (document.readyState !== 'loading') updateRidingBar();
+})();
+
+// ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
 migrateConsumableIntervals(); // 기존 차량 공식 데이터 자동 적용
 renderDash();
+updateRidingBar();
 // 날씨 모달 자동 표시 (약간 딜레이)
 setTimeout(showWeatherModal, 800);
 
@@ -2683,6 +2978,17 @@ function renderMedicalCard(){
 
 <!-- SOS FAB -->
 <button class="sos-fab" onclick="openSOS()"><span class="sos-fab-text">SOS</span></button>
+
+<!-- 자동 SOS 카운트다운 오버레이 -->
+<div class="auto-sos-overlay" id="auto-sos-overlay">
+  <div style="font-size:64px;margin-bottom:14px;">🚨</div>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:#fff;margin-bottom:8px;">충격 감지!</div>
+  <div style="font-size:15px;color:rgba(255,255,255,0.85);margin-bottom:24px;max-width:290px;line-height:1.65;">괜찮으세요?<br>버튼을 누르거나 움직이면 자동 취소</div>
+  <div class="auto-sos-num" id="auto-sos-cd">60</div>
+  <div style="font-size:14px;color:rgba(255,255,255,0.65);margin-top:10px;">초 후 비상연락처에 메시지 발송</div>
+  <button class="auto-sos-cancel" onclick="cancelAutoSOS()">✓ 나는 괜찮아요</button>
+  <div style="margin-top:20px;font-size:12px;color:rgba(255,255,255,0.4);max-width:300px;line-height:1.5;" id="auto-sos-contact"></div>
+</div>
 
 <!-- SOS 모달 -->
 <div class="modal-overlay" id="m-sos" style="align-items:flex-end;padding:0;">
