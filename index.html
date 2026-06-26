@@ -2204,6 +2204,9 @@ function _requestSmsAndStart() {
 }
 
 function _doStartRiding() {
+  // 백그라운드 위치("항상 허용") 권한 요청 — manifest에 ACCESS_BACKGROUND_LOCATION 선언 시 "항상 허용" 옵션 표시
+  var Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+  if (Geo) Geo.requestPermissions().catch(function() {});
   ridingState.active = true;
   localStorage.setItem('mg2-riding', '1');
   _sos.phase = 'MONITORING';
@@ -2369,7 +2372,7 @@ function _sosTrigger() {
   }, function() {
     console.warn('[SOS] GPS 초기 위치 확보 실패');
     if (dbgEl) dbgEl.textContent = '📍 GPS 위치 확인 실패';
-  }, {timeout: 5000, enableHighAccuracy: true});
+  }, {timeout: 10000, enableHighAccuracy: true});
   // 10초마다 이동 거리 체크
   _sos.gpsCheckTimer = setInterval(function() {
     if (_sos.phase !== 'COUNTDOWN' || _sos.startLat === null) return;
@@ -2421,19 +2424,28 @@ function _sosSend() {
   _sos.phase = 'MONITORING';
   var med = getMedical();
   var phone = med.emergencyPhone ? med.emergencyPhone.replace(/[\s\-]/g,'') : _sosPhoneFrom(med.emergency||'');
+  function sendWithLocation(lat, lng) {
+    var la = lat.toFixed(6), lo = lng.toFixed(6);
+    var maps = 'https://maps.google.com/?q=' + la + ',' + lo;
+    var body = '[Ridemate] ⚠️ 충격/사고 감지\n라이더가 60초 동안 응답하지 않았습니다.\n\n📍 사고 예상 위치:\n위도 ' + la + ', 경도 ' + lo + '\n지도: ' + maps + '\n\n라이더에게 연락하거나 신고해주세요.';
+    _sosDoSend(phone, body, maps);
+  }
+  function sendNoLocation() {
+    var body = '[Ridemate] ⚠️ 충격/사고 감지\n라이더가 60초 동안 응답하지 않았습니다. (위치 확인 불가)\n\n라이더에게 연락하거나 신고해주세요.';
+    _sosDoSend(phone, body, null);
+  }
+  // 1차: GPS (고정밀, 10초)
   navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      var lat = pos.coords.latitude.toFixed(6);
-      var lng = pos.coords.longitude.toFixed(6);
-      var maps = 'https://maps.google.com/?q=' + lat + ',' + lng;
-      var body = '[Ridemate] ⚠️ 충격/사고 감지\n라이더가 60초 동안 응답하지 않았습니다.\n\n📍 사고 예상 위치:\n위도 ' + lat + ', 경도 ' + lng + '\n지도: ' + maps + '\n\n라이더에게 연락하거나 신고해주세요.';
-      _sosDoSend(phone, body, maps);
-    },
+    function(pos) { sendWithLocation(pos.coords.latitude, pos.coords.longitude); },
     function() {
-      var body = '[Ridemate] ⚠️ 충격/사고 감지\n라이더가 60초 동안 응답하지 않았습니다. (위치 불러오기 실패)\n\n라이더에게 연락하거나 신고해주세요.';
-      _sosDoSend(phone, body, null);
+      // 2차: 네트워크/기지국 위치 (저정밀, 5초, 캐시 30초 허용)
+      navigator.geolocation.getCurrentPosition(
+        function(pos) { sendWithLocation(pos.coords.latitude, pos.coords.longitude); },
+        function() { sendNoLocation(); },
+        {timeout: 5000, enableHighAccuracy: false, maximumAge: 30000}
+      );
     },
-    {timeout: 5000, enableHighAccuracy: true}
+    {timeout: 10000, enableHighAccuracy: true}
   );
 }
 
