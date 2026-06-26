@@ -1772,7 +1772,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-en-v11';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-en-v12';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
@@ -2210,84 +2210,108 @@ function renderMedicalCard(){
 
 // ── SOS FAB 드래그
 (function(){
-  var fab, startY=0, startTop=0, moved=false, touching=false;
+  var fab = null;
+  var drag = { active:false, moved:false, startY:0, startX:0, startTop:0 };
 
-  function initSOSDrag(){
+  function init(){
     fab = document.querySelector('.sos-fab');
     if(!fab) return;
+    restorePos();
 
-    // 저장된 위치 복원
-    var saved = localStorage.getItem('mg2-sos-pos');
-    if(saved){
-      try{
-        var pos = JSON.parse(saved);
-        fab.style.bottom = 'auto';
-        fab.style.top = pos.top + 'px';
-        fab.style.left = pos.left ? pos.left + 'px' : 'auto';
-        fab.style.right = pos.left ? 'auto' : '16px';
-      }catch(e){}
-    }
-
+    // 터치
     fab.addEventListener('touchstart', onStart, {passive:true});
     fab.addEventListener('touchmove',  onMove,  {passive:false});
     fab.addEventListener('touchend',   onEnd,   {passive:true});
+    // 마우스 (PC)
     fab.addEventListener('mousedown',  onStart);
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup',   onEnd);
   }
 
-  function getClientY(e){ return e.touches ? e.touches[0].clientY : e.clientY; }
+  function clientPos(e){
+    return e.touches ? {x:e.touches[0].clientX, y:e.touches[0].clientY}
+                     : {x:e.clientX, y:e.clientY};
+  }
+
+  function restorePos(){
+    try{
+      var saved = localStorage.getItem('mg2-sos-pos');
+      if(!saved) return;
+      var pos = JSON.parse(saved);
+      fab.style.position = 'fixed';
+      fab.style.bottom = 'auto';
+      fab.style.top    = pos.top + 'px';
+      fab.style.left   = pos.onLeft ? '16px' : 'auto';
+      fab.style.right  = pos.onLeft ? 'auto' : '16px';
+    }catch(e){}
+  }
 
   function onStart(e){
-    moved = false;
-    touching = true;
-    startY = getClientY(e);
+    var p = clientPos(e);
+    drag.active   = true;
+    drag.moved    = false;
+    drag.startY   = p.y;
+    drag.startX   = p.x;
     var rect = fab.getBoundingClientRect();
-    startTop = rect.top;
+    drag.startTop = rect.top;
     fab.style.bottom = 'auto';
-    fab.style.top = startTop + 'px';
+    fab.style.top    = rect.top + 'px';
+    if(e.type === 'mousedown') e.preventDefault();
   }
 
   function onMove(e){
-    if(!touching) return;
-    var dy = getClientY(e) - startY;
-    if(Math.abs(dy) > 8){
-      if(!moved){
-        moved = true;
+    if(!drag.active) return;
+    var p  = clientPos(e);
+    var dy = p.y - drag.startY;
+    var dx = p.x - drag.startX;
+
+    if(!drag.moved && (Math.abs(dy) > 8 || Math.abs(dx) > 8)){
+      // 수직 이동이 수평보다 클 때만 드래그
+      if(Math.abs(dy) >= Math.abs(dx)){
+        drag.moved = true;
         fab.classList.add('dragging');
+      } else {
+        // 수평 스와이프면 드래그 취소
+        drag.active = false;
+        return;
       }
-      e.preventDefault();
-      var newTop = Math.max(10, Math.min(window.innerHeight - 64, startTop + dy));
+    }
+
+    if(drag.moved){
+      if(e.cancelable) e.preventDefault();
+      var newTop = Math.max(10, Math.min(window.innerHeight - 70, drag.startTop + dy));
       fab.style.top = newTop + 'px';
     }
   }
 
   function onEnd(e){
-    touching = false;
+    if(!drag.active) return;
+    drag.active = false;
     fab.classList.remove('dragging');
 
-    if(!moved) return; // 드래그 안 했으면 클릭으로 처리
+    if(!drag.moved) return; // 탭 → openSOS 정상 실행
 
     // 좌우 스냅
-    var rect = fab.getBoundingClientRect();
-    var snapRight = (rect.left + rect.width/2) > window.innerWidth/2;
-    fab.style.right = snapRight ? '16px' : 'auto';
-    fab.style.left  = snapRight ? 'auto' : '16px';
+    var rect   = fab.getBoundingClientRect();
+    var onLeft = (rect.left + rect.width / 2) < window.innerWidth / 2;
+    fab.style.left  = onLeft ? '16px' : 'auto';
+    fab.style.right = onLeft ? 'auto' : '16px';
 
     // 위치 저장
-    var top = parseFloat(fab.style.top);
     localStorage.setItem('mg2-sos-pos', JSON.stringify({
-      top: top,
-      left: snapRight ? null : 16
+      top: parseFloat(fab.style.top),
+      onLeft: onLeft
     }));
 
-    // 드래그 후 click/touchend 이벤트로 openSOS 실행 방지
-    var block = function(ev){ ev.stopImmediatePropagation(); ev.preventDefault(); };
-    fab.addEventListener('click',      block, {capture:true, once:true});
-    fab.addEventListener('touchend',   block, {capture:true, once:true});
+    // 드래그 후 click 차단 (한 번만)
+    fab.addEventListener('click', function blockClick(ev){
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      fab.removeEventListener('click', blockClick, true);
+    }, true);
   }
 
-  document.addEventListener('DOMContentLoaded', initSOSDrag);
+  document.addEventListener('DOMContentLoaded', init);
 })();
 
 </script>
