@@ -2210,7 +2210,7 @@ function renderMedicalCard(){
 
 // ── SOS FAB 드래그
 (function(){
-  var fab, isDragging=false, startY=0, startTop=0, moved=false;
+  var fab, startY=0, startTop=0, moved=false, touching=false;
 
   function initSOSDrag(){
     fab = document.querySelector('.sos-fab');
@@ -2219,18 +2219,18 @@ function renderMedicalCard(){
     // 저장된 위치 복원
     var saved = localStorage.getItem('mg2-sos-pos');
     if(saved){
-      var pos = JSON.parse(saved);
-      fab.style.bottom = 'auto';
-      fab.style.top = pos.top + 'px';
-      fab.style.right = pos.right + 'px';
-      fab.style.left = 'auto';
+      try{
+        var pos = JSON.parse(saved);
+        fab.style.bottom = 'auto';
+        fab.style.top = pos.top + 'px';
+        fab.style.left = pos.left ? pos.left + 'px' : 'auto';
+        fab.style.right = pos.left ? 'auto' : '16px';
+      }catch(e){}
     }
 
-    // 터치 이벤트
-    fab.addEventListener('touchstart', onStart, {passive:false});
+    fab.addEventListener('touchstart', onStart, {passive:true});
     fab.addEventListener('touchmove',  onMove,  {passive:false});
-    fab.addEventListener('touchend',   onEnd,   {passive:false});
-    // 마우스 이벤트 (PC)
+    fab.addEventListener('touchend',   onEnd,   {passive:true});
     fab.addEventListener('mousedown',  onStart);
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup',   onEnd);
@@ -2239,7 +2239,8 @@ function renderMedicalCard(){
   function getClientY(e){ return e.touches ? e.touches[0].clientY : e.clientY; }
 
   function onStart(e){
-    isDragging = false; moved = false;
+    moved = false;
+    touching = true;
     startY = getClientY(e);
     var rect = fab.getBoundingClientRect();
     startTop = rect.top;
@@ -2248,10 +2249,13 @@ function renderMedicalCard(){
   }
 
   function onMove(e){
+    if(!touching) return;
     var dy = getClientY(e) - startY;
-    if(Math.abs(dy) > 5){
-      isDragging = true; moved = true;
-      fab.classList.add('dragging');
+    if(Math.abs(dy) > 8){
+      if(!moved){
+        moved = true;
+        fab.classList.add('dragging');
+      }
       e.preventDefault();
       var newTop = Math.max(10, Math.min(window.innerHeight - 64, startTop + dy));
       fab.style.top = newTop + 'px';
@@ -2259,30 +2263,28 @@ function renderMedicalCard(){
   }
 
   function onEnd(e){
-    if(!isDragging){ fab.classList.remove('dragging'); return; }
+    touching = false;
     fab.classList.remove('dragging');
-    isDragging = false;
 
-    // 좌우 자동 스냅
+    if(!moved) return; // 드래그 안 했으면 클릭으로 처리
+
+    // 좌우 스냅
     var rect = fab.getBoundingClientRect();
-    var centerX = rect.left + rect.width/2;
-    var snapRight = centerX > window.innerWidth/2;
+    var snapRight = (rect.left + rect.width/2) > window.innerWidth/2;
     fab.style.right = snapRight ? '16px' : 'auto';
     fab.style.left  = snapRight ? 'auto' : '16px';
 
     // 위치 저장
+    var top = parseFloat(fab.style.top);
     localStorage.setItem('mg2-sos-pos', JSON.stringify({
-      top: parseFloat(fab.style.top),
-      right: snapRight ? 16 : -1
+      top: top,
+      left: snapRight ? null : 16
     }));
 
-    // 클릭 방지 (드래그 후 openSOS 실행 안 되도록)
-    if(moved){
-      fab.addEventListener('click', function stopClick(ev){
-        ev.stopImmediatePropagation();
-        fab.removeEventListener('click', stopClick, true);
-      }, true);
-    }
+    // 드래그 후 click/touchend 이벤트로 openSOS 실행 방지
+    var block = function(ev){ ev.stopImmediatePropagation(); ev.preventDefault(); };
+    fab.addEventListener('click',      block, {capture:true, once:true});
+    fab.addEventListener('touchend',   block, {capture:true, once:true});
   }
 
   document.addEventListener('DOMContentLoaded', initSOSDrag);
