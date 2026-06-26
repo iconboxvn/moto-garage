@@ -1,6 +1,6 @@
 {
   "appId": "com.iconbox.motogarage",
-  "appName": "MOTO GARAGE",
+  "appName": "Ridemate",
   "webDir": "www",
   "android": {
     "buildOptions": {

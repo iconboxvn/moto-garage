@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">MOTO GARAGE</string>
-    <string name="title_activity_main">MOTO GARAGE</string>
+    <string name="app_name">Ridemate</string>
+    <string name="title_activity_main">Ridemate</string>
     <string name="package_name">com.iconbox.motogarage</string>
     <string name="custom_url_scheme">com.iconbox.motogarage</string>
 </resources>
