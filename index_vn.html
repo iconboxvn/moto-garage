@@ -130,11 +130,12 @@ option{background:var(--surface2);}
 .c-tag.danger{background:var(--red-dim);color:var(--red);}
 
 /* LOG TABLE */
-.log-table{width:100%;border-collapse:collapse;}
-.log-table th{padding:8px 12px;font-size:15px;font-weight:700;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border);text-align:left;}
-.log-table td{padding:9px 12px;font-size:15px;border-bottom:1px solid var(--border);vertical-align:middle;}
-.log-table tr:last-child td{border-bottom:none;}
-.log-table tbody tr:hover td{background:var(--surface2);}
+/* HISTORY CARDS */
+.h-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:8px;}
+.h-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.h-card-bike{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.h-card-meta{font-size:12px;color:var(--text-dim);line-height:1.65;}
+.h-card-actions{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 .mono{font-family:'JetBrains Mono',monospace;font-size:17px;}
 .badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:15px;font-weight:700;letter-spacing:0.5px;}
 .badge-maint{background:#0e1e2e;color:#4a90d8;}
@@ -397,6 +398,21 @@ option{background:var(--surface2);}
   .medical-row:last-child{border-bottom:none;}
   .medical-label{font-size:12px;color:var(--text-dim);}
   .medical-value{font-size:14px;font-weight:600;color:var(--text);}
+
+  /* ── FIRST LAUNCH WELCOME ── */
+  .welcome-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:1100;align-items:center;justify-content:center;padding:20px;}
+  .welcome-overlay.open{display:flex;}
+  .welcome-modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:16px;width:100%;max-width:340px;animation:slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);}
+  .welcome-body{padding:30px 22px 20px;text-align:center;}
+  .welcome-icon{font-size:52px;margin-bottom:14px;}
+  .welcome-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.45;}
+  .welcome-desc{font-size:13px;color:var(--text-dim);line-height:1.75;margin-bottom:0;}
+  .welcome-footer{padding:14px 20px 20px;display:flex;flex-direction:column;gap:8px;}
+  /* ── SAMPLE BANNER ── */
+  .sample-banner{background:linear-gradient(135deg,#101e30,#0a1420);border:1px solid rgba(74,144,216,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;gap:10px;cursor:pointer;transition:border-color 0.15s;-webkit-tap-highlight-color:transparent;}
+  .sample-banner:hover{border-color:rgba(74,144,216,0.6);}
+  .sample-banner-text{flex:1;font-size:12px;color:#6ab0f5;font-weight:600;}
+  .sample-banner-arrow{font-size:18px;color:#6ab0f5;opacity:0.7;}
 </style>
 </head>
 <body>
@@ -442,7 +458,14 @@ option{background:var(--surface2);}
 
 <div class="container">
   <!-- 홈 -->
-  <div class="page active" id="page-dashboard"><div id="dash-content"></div></div>
+  <div class="page active" id="page-dashboard">
+    <div id="sample-banner" class="sample-banner" onclick="dismissSampleData()">
+      <span style="font-size:18px;">📋</span>
+      <span class="sample-banner-text">Đang dùng dữ liệu mẫu · Nhấn để đăng ký xe của bạn</span>
+      <span class="sample-banner-arrow">›</span>
+    </div>
+    <div id="dash-content"></div>
+  </div>
 
   <!-- 내 차량 -->
   <div class="page" id="page-bikes">
@@ -477,7 +500,7 @@ option{background:var(--surface2);}
       </select>
     </div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">Thêm nhật ký tại tab <strong style="color:var(--accent);">🔧 Bảo dưỡng</strong></div>
-    <div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;" id="history-table"></div></div>
+    <div id="history-table"></div>
   </div>
 
   <!-- 백업 -->
@@ -503,8 +526,16 @@ option{background:var(--surface2);}
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 Xóa toàn bộ dữ liệu</button>
       </div>
     </div>
+    <div id="dev-menu-card" class="card" style="display:none;border-color:#2a2200;background:#0e0c00;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:14px;">🛠</span>
+        <span style="font-size:10px;font-weight:700;color:#6a5a00;letter-spacing:1.5px;">MENU NHÀ PHÁT TRIỂN</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">Đặt lại trạng thái lần đầu để kiểm tra popup chào mừng.<br>Dữ liệu hiện tại sẽ bị xóa và popup hiện ra ngay.</div>
+      <button class="btn btn-sm" style="border-color:#4a3800;color:#a07820;" onclick="resetFirstLaunch()">↺ Đặt lại trạng thái lần đầu</button>
+    </div>
   </div>
-  <div class="created-by">Created by <a href="mailto:iconbox.vn@gmail.com">@iconbox.lee</a></div>
+  <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a></div>
 </div>
 
 <!-- MODAL: 차량 등록 -->
@@ -1596,29 +1627,12 @@ function renderExtraSection(){
   const bike=D.bikes[cState.bikeIdx];
   const logs=D.history.filter(l=>l.bikeId==bike.id&&l.type!=='Thay phụ tùng').sort((a,b)=>b.date.localeCompare(a.date));
   const typeBadge={'정기점검':'badge-maint','수리':'badge-repair','세차':'badge-other','튜닝':'badge-cons','기타':'badge-other'};
-  el.innerHTML=`
-    <div class="sec-header" style="margin-top:8px;">
-      <span class="sec-title">기타 정비</span><div class="sec-line"></div>
-      <button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ Thêm</button>
-    </div>
-    ${!logs.length
-      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:15px;">기타 정비 기록이 없습니다</div>`
-      :`<div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;"><table class="log-table">
-          <thead><tr><th>Ngày</th><th>Loại</th><th>Nội dung</th><th>km</th><th>Chi phí</th><th>Nơi bảo dưỡng</th><th></th></tr></thead>
-          <tbody>${logs.map(l=>`<tr>
-            <td class="mono">${l.date}</td>
-            <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
-            <td>${l.desc||'—'}</td>
-            <td class="mono">${l.km?l.km.toLocaleString():'-'}</td>
-            <td class="mono">${l.cost?'₫'+parseInt(l.cost).toLocaleString():'-'}</td>
-            <td style="color:var(--text-dim)">${l.shop||'—'}</td>
-            <td style="display:flex;gap:4px;">
-              <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button>
-            </td>
-          </tr>`).join('')}</tbody>
-        </table></div></div>`
-    }`;
+  const header=`<div class="sec-header" style="margin-top:8px;"><span class="sec-title">BẢO DƯỠNG KHÁC</span><div class="sec-line"></div><button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ Thêm</button></div>`;
+  if(!logs.length){ el.innerHTML=header+`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Chưa có lịch sử bảo dưỡng</div>`; return; }
+  el.innerHTML=header+logs.map(l=>{
+    const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
+    return `<div class="h-card"><div class="h-card-top"><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${l.date}</span></div><div class="h-card-bike">${bike.brand} ${bike.model}</div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button></div></div>`;
+  }).join('');
 }
 
 function openExtraModal(editId=null){
@@ -1723,24 +1737,12 @@ function renderHistory(){
   if(tfv) logs=logs.filter(l=>l.type===tfv);
   const el=document.getElementById('history-table');
   const typeBadge={'Thay phụ tùng':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
-  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">정비 기록이 없습니다</div></div>`; return; }
-  el.innerHTML=`<table class="log-table"><thead><tr><th>Ngày</th><th>Xe</th><th>Loại</th><th>Nội dung</th><th>km</th><th>Chi phí</th><th>Nơi bảo dưỡng</th><th></th></tr></thead><tbody>
-    ${logs.map(l=>{
-      const b=D.bikes.find(x=>x.id==l.bikeId);
-      return `<tr>
-        <td class="mono">${l.date}</td>
-        <td style="color:var(--text-dim);white-space:nowrap;">${b?b.brand+' '+b.model:'Xe đã xóa'}</td>
-        <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
-        <td>${l.desc||'—'}</td>
-        <td class="mono">${l.km?l.km.toLocaleString():'-'}</td>
-        <td class="mono">${l.cost?'₫'+parseInt(l.cost).toLocaleString():'-'}</td>
-        <td style="color:var(--text-dim)">${l.shop||'—'}</td>
-        <td style="display:flex;gap:4px;">
-          <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button>
-        </td>
-      </tr>`;
-    }).join('')}</tbody></table>`;
+  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Chưa có lịch sử bảo dưỡng</div></div>`; return; }
+  el.innerHTML=logs.map(l=>{
+    const b=D.bikes.find(x=>x.id==l.bikeId);
+    const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
+    return `<div class="h-card"><div class="h-card-top"><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${l.date}</span></div><div class="h-card-bike">${b?b.brand+' '+b.model:'Xe đã xóa'}</div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button></div></div>`;
+  }).join('');
 }
 
 function openEditHistory(id){
@@ -1884,10 +1886,95 @@ function migrateConsumableIntervals() {
 }
 
 // ═══════════════════════════════════════════
+//  Dữ liệu mẫu lần đầu khởi động
+// ═══════════════════════════════════════════
+const SAMPLE_BIKE_ID = 'sample-bike-1';
+const SAMPLE_DATA_VN = {
+  bikes:[{
+    id:SAMPLE_BIKE_ID, brand:'Kawasaki', model:'Ninja ZX-10R',
+    year:2023, cc:998, odometer:8500, plate:'', color:'Đen nhám',
+    consumables:[
+      {id:'oil',     icon:'🛢', name:'Dầu động cơ',      km:5000,  lastKm:2800, lastDate:'2024-05-10', memo:'', category:'sport', isOfficial:true},
+      {id:'oil_f',   icon:'🔩', name:'Lọc dầu',          km:10000, lastKm:7200, lastDate:'2025-01-15', memo:'', category:'sport', isOfficial:true},
+      {id:'spark',   icon:'⚡', name:'Bu-gi',             km:12000, lastKm:5000, lastDate:'2024-07-05', memo:'', category:'sport', isOfficial:true},
+      {id:'chain',   icon:'⛓', name:'Xích/Nhông',        km:5000,  lastKm:4200, lastDate:'2024-06-01', memo:'', category:'sport', isOfficial:true},
+      {id:'tire_f',  icon:'⭕', name:'Lốp trước',         km:15000, lastKm:6500, lastDate:'2024-10-20', memo:'', category:'sport', isOfficial:true},
+      {id:'brake_f', icon:'🛑', name:'Má phanh trước',   km:20000, lastKm:3000, lastDate:'2024-04-10', memo:'', category:'sport', isOfficial:true},
+    ]
+  }],
+  rides:[],
+  history:[
+    {id:100001, bikeId:SAMPLE_BIKE_ID, date:'2025-01-15', km:7200, type:'소모품교체', desc:'Thay dầu động cơ',  cost:0, shop:'Dan Motorbike'},
+    {id:100002, bikeId:SAMPLE_BIKE_ID, date:'2024-10-20', km:6500, type:'소모품교체', desc:'Thay lốp trước',    cost:0, shop:'Honda Official'},
+    {id:100003, bikeId:SAMPLE_BIKE_ID, date:'2024-07-05', km:5000, type:'정기점검',   desc:'Bảo dưỡng định kỳ', cost:0, shop:'Tự thay'},
+  ]
+};
+
+function checkFirstLaunch(){
+  if(localStorage.getItem('mg2-launched')) return;
+  if(D.bikes.length>0){ localStorage.setItem('mg2-launched','1'); return; }
+  document.getElementById('welcome-overlay').classList.add('open');
+}
+function loadSampleData(){
+  D=JSON.parse(JSON.stringify(SAMPLE_DATA_VN));
+  save();
+  localStorage.setItem('mg2-launched','1');
+  localStorage.setItem('mg2-sample','1');
+  document.getElementById('welcome-overlay').classList.remove('open');
+  renderDash();
+  renderSampleBanner();
+}
+function skipSampleData(){
+  localStorage.setItem('mg2-launched','1');
+  document.getElementById('welcome-overlay').classList.remove('open');
+  showPage('bikes',document.querySelector('.nav-btn:nth-child(2)'));
+  setTimeout(()=>openModal('m-bike'),200);
+}
+function renderSampleBanner(){
+  const b=document.getElementById('sample-banner');
+  if(!b) return;
+  b.style.display=localStorage.getItem('mg2-sample')==='1'?'flex':'none';
+}
+function dismissSampleData(){
+  if(!confirm('Xóa dữ liệu mẫu và đăng ký xe của bạn?')) return;
+  D={bikes:[],rides:[],history:[]};
+  save();
+  localStorage.removeItem('mg2-sample');
+  document.getElementById('sample-banner').style.display='none';
+  showPage('bikes',document.querySelector('.nav-btn:nth-child(2)'));
+  setTimeout(()=>openModal('m-bike'),200);
+}
+function resetFirstLaunch(){
+  if(!confirm('Đặt lại trạng thái lần đầu? Dữ liệu hiện tại sẽ bị xóa.')) return;
+  D={bikes:[],rides:[],history:[]};
+  save();
+  localStorage.removeItem('mg2-launched');
+  localStorage.removeItem('mg2-sample');
+  document.getElementById('sample-banner').style.display='none';
+  document.getElementById('welcome-overlay').classList.add('open');
+}
+var _devTaps=0,_devTapTimer=null;
+function devTap(){
+  _devTaps++;
+  clearTimeout(_devTapTimer);
+  if(_devTaps>=5){
+    _devTaps=0;
+    const c=document.getElementById('dev-menu-card');
+    const visible=c.style.display!=='none';
+    c.style.display=visible?'none':'block';
+    if(!visible) setTimeout(()=>c.scrollIntoView({behavior:'smooth',block:'center'}),50);
+  } else {
+    _devTapTimer=setTimeout(()=>{ _devTaps=0; },1500);
+  }
+}
+
+// ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
 migrateConsumableIntervals(); // 기존 차량 공식 데이터 자동 적용
 renderDash();
+renderSampleBanner();
+checkFirstLaunch();
 // 날씨 모달 자동 표시 (약간 딜레이)
 setTimeout(showWeatherModal, 800);
 
@@ -2460,6 +2547,21 @@ function renderMedicalCard(){
   </div>
 </div>
 
+
+<!-- Màn hình chào mừng lần đầu -->
+<div class="welcome-overlay" id="welcome-overlay">
+  <div class="welcome-modal">
+    <div class="welcome-body">
+      <div class="welcome-icon">🏍</div>
+      <div class="welcome-title">Chào mừng đến với Ridemate!<br>Bạn muốn trải nghiệm với dữ liệu mẫu không?</div>
+      <div class="welcome-desc">Khám phá cảnh báo bảo dưỡng · lịch sử sửa chữa<br>· quản lý số km với xe mẫu trước khi thêm xe của bạn</div>
+    </div>
+    <div class="welcome-footer">
+      <button class="btn btn-primary btn-full" onclick="loadSampleData()">🏁 Bắt đầu với dữ liệu mẫu</button>
+      <button class="btn btn-full" onclick="skipSampleData()">Đăng ký xe của tôi</button>
+    </div>
+  </div>
+</div>
 
 <!-- SOS FAB -->
 <button class="sos-fab" onclick="openSOS()"><span class="sos-fab-text">SOS</span></button>

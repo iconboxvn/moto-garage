@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Ridemate — Iconbox.lee</title>
+<title>MOTO GARAGE — Iconbox.lee</title>
 <meta name="theme-color" content="#0c0c0d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Ridemate">
+<meta name="apple-mobile-web-app-title" content="MOTO GARAGE">
 <link rel="manifest" href="/moto-garage/manifest.json">
 <link rel="apple-touch-icon" href="/moto-garage/icon-192.png">
 <style>
@@ -130,8 +130,12 @@ option{background:var(--surface2);}
 .c-tag.danger{background:var(--red-dim);color:var(--red);}
 
 /* LOG TABLE */
-.h-card{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:14px 16px;margin-bottom:8px;}
-.h-card:last-child{margin-bottom:0;}
+/* HISTORY CARDS */
+.h-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:8px;}
+.h-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.h-card-bike{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.h-card-meta{font-size:12px;color:var(--text-dim);line-height:1.65;}
+.h-card-actions{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 .mono{font-family:'JetBrains Mono',monospace;font-size:17px;}
 .badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:15px;font-weight:700;letter-spacing:0.5px;}
 .badge-maint{background:#0e1e2e;color:#4a90d8;}
@@ -394,6 +398,21 @@ option{background:var(--surface2);}
   .medical-row:last-child{border-bottom:none;}
   .medical-label{font-size:12px;color:var(--text-dim);}
   .medical-value{font-size:14px;font-weight:600;color:var(--text);}
+
+  /* ── FIRST LAUNCH WELCOME ── */
+  .welcome-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:1100;align-items:center;justify-content:center;padding:20px;}
+  .welcome-overlay.open{display:flex;}
+  .welcome-modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:16px;width:100%;max-width:340px;animation:slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);}
+  .welcome-body{padding:30px 22px 20px;text-align:center;}
+  .welcome-icon{font-size:52px;margin-bottom:14px;}
+  .welcome-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.45;}
+  .welcome-desc{font-size:13px;color:var(--text-dim);line-height:1.75;margin-bottom:0;}
+  .welcome-footer{padding:14px 20px 20px;display:flex;flex-direction:column;gap:8px;}
+  /* ── SAMPLE BANNER ── */
+  .sample-banner{background:linear-gradient(135deg,#101e30,#0a1420);border:1px solid rgba(74,144,216,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;gap:10px;cursor:pointer;transition:border-color 0.15s;-webkit-tap-highlight-color:transparent;}
+  .sample-banner:hover{border-color:rgba(74,144,216,0.6);}
+  .sample-banner-text{flex:1;font-size:12px;color:#6ab0f5;font-weight:600;}
+  .sample-banner-arrow{font-size:18px;color:#6ab0f5;opacity:0.7;}
 </style>
 </head>
 <body>
@@ -402,7 +421,7 @@ option{background:var(--surface2);}
 <div class="header">
   <div class="header-left">
     <div class="logo-block">
-      <span class="logo-main">Ridemate</span>
+      <span class="logo-main">MOTO GARAGE</span>
       <span class="logo-sub">VEHICLE MANAGEMENT</span>
     </div>
   </div>
@@ -439,7 +458,14 @@ option{background:var(--surface2);}
 
 <div class="container">
   <!-- 홈 -->
-  <div class="page active" id="page-dashboard"><div id="dash-content"></div></div>
+  <div class="page active" id="page-dashboard">
+    <div id="sample-banner" class="sample-banner" onclick="dismissSampleData()">
+      <span style="font-size:18px;">📋</span>
+      <span class="sample-banner-text">Sample data mode · Tap to register your own bike</span>
+      <span class="sample-banner-arrow">›</span>
+    </div>
+    <div id="dash-content"></div>
+  </div>
 
   <!-- 내 차량 -->
   <div class="page" id="page-bikes">
@@ -474,7 +500,7 @@ option{background:var(--surface2);}
       </select>
     </div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">Add records in the <strong style="color:var(--accent);">🔧 Service</strong> tab</div>
-    <div id="history-list"></div>
+    <div id="history-table"></div>
   </div>
 
   <!-- 백업 -->
@@ -500,8 +526,16 @@ option{background:var(--surface2);}
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 Reset All Data</button>
       </div>
     </div>
+    <div id="dev-menu-card" class="card" style="display:none;border-color:#2a2200;background:#0e0c00;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:14px;">🛠</span>
+        <span style="font-size:10px;font-weight:700;color:#6a5a00;letter-spacing:1.5px;">DEVELOPER MENU</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">Reset to first-launch state to test the welcome popup.<br>Current data will be cleared and the popup shown immediately.</div>
+      <button class="btn btn-sm" style="border-color:#4a3800;color:#a07820;" onclick="resetFirstLaunch()">↺ Reset First Launch State</button>
+    </div>
   </div>
-  <div class="created-by">Created by <a href="mailto:iconbox.vn@gmail.com">@iconbox.lee</a></div>
+  <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a></div>
 </div>
 
 <!-- MODAL: 차량 등록 -->
@@ -814,7 +848,7 @@ option{background:var(--surface2);}
   <div class="pwa-banner-inner">
     <div class="pwa-banner-icon">🏍</div>
     <div class="pwa-banner-text">
-      <div class="pwa-banner-title">Install Ridemate</div>
+      <div class="pwa-banner-title">Install MOTO GARAGE</div>
       <div class="pwa-banner-sub">Add to home screen to use as an app</div>
     </div>
     <div style="display:flex;gap:8px;">
@@ -1557,7 +1591,6 @@ function saveConsumable(){
   c.memo=document.getElementById('mc-memo').value;
   D.history.push({id:Date.now(),bikeId:bike.id,date,km:kmVal,type:'Parts Replacement',desc:c.name+' replaced'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
   save(); closeModal('m-consumable'); renderConsumables(); renderDash();
-  if (window.scheduleMaintenanceNotifs) window.scheduleMaintenanceNotifs();
   showToast(`✓ ${c.name} replacement recorded`);
 }
 
@@ -1584,7 +1617,6 @@ function updateConsumable(){
   c.km=parseInt(document.getElementById('edit-c-interval').value)||c.km;
   c.memo=document.getElementById('edit-c-memo').value;
   save(); closeModal('m-edit-consumable'); renderConsumables();
-  if (window.scheduleMaintenanceNotifs) window.scheduleMaintenanceNotifs();
   showToast('✓ Consumable updated');
 }
 
@@ -1595,29 +1627,12 @@ function renderExtraSection(){
   const bike=D.bikes[cState.bikeIdx];
   const logs=D.history.filter(l=>l.bikeId==bike.id&&l.type!=='Parts Replacement').sort((a,b)=>b.date.localeCompare(a.date));
   const typeBadge={'정기점검':'badge-maint','수리':'badge-repair','세차':'badge-other','튜닝':'badge-cons','기타':'badge-other'};
-  el.innerHTML=`
-    <div class="sec-header" style="margin-top:8px;">
-      <span class="sec-title">기타 정비</span><div class="sec-line"></div>
-      <button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ Add</button>
-    </div>
-    ${!logs.length
-      ?`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:15px;">기타 정비 기록이 없습니다</div>`
-      :`<div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;"><table class="log-table">
-          <thead><tr><th>Date</th><th>Type</th><th>Description</th><th>km</th><th>Cost</th><th>Shop</th><th></th></tr></thead>
-          <tbody>${logs.map(l=>`<tr>
-            <td class="mono">${l.date}</td>
-            <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
-            <td>${l.desc||'—'}</td>
-            <td class="mono">${l.km?l.km.toLocaleString():'-'}</td>
-            <td class="mono">${l.cost?'₫'+parseInt(l.cost).toLocaleString():'-'}</td>
-            <td style="color:var(--text-dim)">${l.shop||'—'}</td>
-            <td style="display:flex;gap:4px;">
-              <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Delete</button>
-            </td>
-          </tr>`).join('')}</tbody>
-        </table></div></div>`
-    }`;
+  const header=`<div class="sec-header" style="margin-top:8px;"><span class="sec-title">OTHER MAINTENANCE</span><div class="sec-line"></div><button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ Add</button></div>`;
+  if(!logs.length){ el.innerHTML=header+`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No maintenance records</div>`; return; }
+  el.innerHTML=header+logs.map(l=>{
+    const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
+    return `<div class="h-card"><div class="h-card-top"><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${l.date}</span></div><div class="h-card-bike">${bike.brand} ${bike.model}</div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Edit</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Delete</button></div></div>`;
+  }).join('');
 }
 
 function openExtraModal(editId=null){
@@ -1707,7 +1722,6 @@ function updateOdometer(bikeId){
   if(newKm<bike.odometer){ if(!confirm(`현재(${bike.odometer.toLocaleString()} km).\nDo you still want to update?`)) return; }
   const oldKm = bike.odometer;
   bike.odometer=newKm; save(); renderRiding(); renderDash();
-  if (window.scheduleMaintenanceNotifs) window.scheduleMaintenanceNotifs();
   showToast(`✓ ${bike.brand} ${bike.model} · ${newKm.toLocaleString()} km updated`);
 }
 
@@ -1721,25 +1735,13 @@ function renderHistory(){
   let logs=[...D.history].sort((a,b)=>b.date.localeCompare(a.date));
   if(bfv) logs=logs.filter(l=>l.bikeId==bfv);
   if(tfv) logs=logs.filter(l=>l.type===tfv);
-  const el=document.getElementById('history-list');
-  const typeColor={'Parts Replacement':{border:'var(--accent)',badge:'badge-cons'},'소모품교체':{border:'var(--accent)',badge:'badge-cons'},'정기점검':{border:'#4a90d8',badge:'badge-maint'},'수리':{border:'var(--red)',badge:'badge-repair'},'기타':{border:'var(--green)',badge:'badge-other'}};
-  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No service records</div></div>`; return; }
+  const el=document.getElementById('history-table');
+  const typeBadge={'Parts Replacement':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No maintenance records</div></div>`; return; }
   el.innerHTML=logs.map(l=>{
     const b=D.bikes.find(x=>x.id==l.bikeId);
-    const tc=typeColor[l.type]||{border:'var(--green)',badge:'badge-other'};
-    const meta=[l.desc||null,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop||null].filter(Boolean).join(' · ');
-    return `<div class="h-card" style="border-left-color:${tc.border};">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span class="badge ${tc.badge}">${l.type}</span>
-        <span class="mono" style="font-size:13px;color:var(--text-dim);">${l.date}</span>
-      </div>
-      <div style="font-size:15px;font-weight:700;margin-bottom:4px;">${b?b.brand+' '+b.model:'Deleted Vehicle'}</div>
-      <div style="font-size:13px;color:var(--text-dim);">${meta||'—'}</div>
-      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-        <button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Delete</button>
-      </div>
-    </div>`;
+    const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
+    return `<div class="h-card"><div class="h-card-top"><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${l.date}</span></div><div class="h-card-bike">${b?b.brand+' '+b.model:'Deleted Vehicle'}</div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Edit</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Delete</button></div></div>`;
   }).join('');
 }
 
@@ -1884,10 +1886,97 @@ function migrateConsumableIntervals() {
 }
 
 // ═══════════════════════════════════════════
+//  First Launch Sample Data
+// ═══════════════════════════════════════════
+const SAMPLE_BIKE_ID = 'sample-bike-1';
+const SAMPLE_DATA_EN = {
+  bikes:[{
+    id:SAMPLE_BIKE_ID, brand:'Kawasaki', model:'Ninja ZX-10R',
+    year:2023, cc:998, odometer:8500, plate:'', color:'Matte Black',
+    consumables:[
+      {id:'oil',     icon:'🛢', name:'Engine Oil',       km:5000,  lastKm:2800, lastDate:'2024-05-10', memo:'', category:'sport', isOfficial:true},
+      {id:'oil_f',   icon:'🔩', name:'Oil Filter',       km:10000, lastKm:7200, lastDate:'2025-01-15', memo:'', category:'sport', isOfficial:true},
+      {id:'spark',   icon:'⚡', name:'Spark Plug',        km:12000, lastKm:5000, lastDate:'2024-07-05', memo:'', category:'sport', isOfficial:true},
+      {id:'chain',   icon:'⛓', name:'Chain/Sprocket',   km:5000,  lastKm:4200, lastDate:'2024-06-01', memo:'', category:'sport', isOfficial:true},
+      {id:'tire_f',  icon:'⭕', name:'Front Tire',        km:15000, lastKm:6500, lastDate:'2024-10-20', memo:'', category:'sport', isOfficial:true},
+      {id:'brake_f', icon:'🛑', name:'Front Brake Pad',  km:20000, lastKm:3000, lastDate:'2024-04-10', memo:'', category:'sport', isOfficial:true},
+    ]
+  }],
+  rides:[],
+  history:[
+    {id:100001, bikeId:SAMPLE_BIKE_ID, date:'2025-01-15', km:7200, type:'소모품교체', desc:'Engine Oil Change', cost:0, shop:'Dan Motorbike'},
+    {id:100002, bikeId:SAMPLE_BIKE_ID, date:'2024-10-20', km:6500, type:'소모품교체', desc:'Front Tire Replacement', cost:0, shop:'Honda Official'},
+    {id:100003, bikeId:SAMPLE_BIKE_ID, date:'2024-07-05', km:5000, type:'정기점검',   desc:'Scheduled Inspection',  cost:0, shop:'Self'},
+  ]
+};
+
+function checkFirstLaunch(){
+  if(localStorage.getItem('mg2-launched')) return;
+  if(D.bikes.length>0){ localStorage.setItem('mg2-launched','1'); return; }
+  document.getElementById('welcome-overlay').classList.add('open');
+}
+function loadSampleData(){
+  D=JSON.parse(JSON.stringify(SAMPLE_DATA_EN));
+  save();
+  localStorage.setItem('mg2-launched','1');
+  localStorage.setItem('mg2-sample','1');
+  document.getElementById('welcome-overlay').classList.remove('open');
+  renderDash();
+  renderSampleBanner();
+}
+function skipSampleData(){
+  localStorage.setItem('mg2-launched','1');
+  document.getElementById('welcome-overlay').classList.remove('open');
+  showPage('bikes',document.querySelector('.nav-btn:nth-child(2)'));
+  setTimeout(()=>openModal('m-bike'),200);
+}
+function renderSampleBanner(){
+  const b=document.getElementById('sample-banner');
+  if(!b) return;
+  b.style.display=localStorage.getItem('mg2-sample')==='1'?'flex':'none';
+}
+function dismissSampleData(){
+  if(!confirm('Remove sample data and register your own bike?')) return;
+  D={bikes:[],rides:[],history:[]};
+  save();
+  localStorage.removeItem('mg2-sample');
+  document.getElementById('sample-banner').style.display='none';
+  showPage('bikes',document.querySelector('.nav-btn:nth-child(2)'));
+  setTimeout(()=>openModal('m-bike'),200);
+}
+function resetFirstLaunch(){
+  if(!confirm('Reset to first launch state? Current data will be cleared.')) return;
+  D={bikes:[],rides:[],history:[]};
+  save();
+  localStorage.removeItem('mg2-launched');
+  localStorage.removeItem('mg2-sample');
+  document.getElementById('sample-banner').style.display='none';
+  document.getElementById('welcome-overlay').classList.add('open');
+}
+var _devTaps=0,_devTapTimer=null;
+function devTap(){
+  _devTaps++;
+  clearTimeout(_devTapTimer);
+  if(_devTaps>=5){
+    _devTaps=0;
+    const c=document.getElementById('dev-menu-card');
+    const visible=c.style.display!=='none';
+    c.style.display=visible?'none':'block';
+    if(!visible) setTimeout(()=>c.scrollIntoView({behavior:'smooth',block:'center'}),50);
+  } else {
+    _devTapTimer=setTimeout(()=>{ _devTaps=0; },1500);
+  }
+}
+
+// ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
 migrateConsumableIntervals(); // 기존 차량 공식 데이터 자동 적용
 renderDash();
+renderSampleBanner();
+checkFirstLaunch();
+// 날씨 모달 자동 표시 (약간 딜레이)
+setTimeout(showWeatherModal, 800);
 
 
 function getGuide(consumableId, category) {
@@ -2007,38 +2096,32 @@ async function showWeatherModal() {
   if (!shouldShowWeather()) return;
   openModal('m-weather');
 
-  const Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
-
-  let lat, lon;
-  try {
-    if (Geo) {
-      const pos = await Geo.getCurrentPosition({ timeout: 8000 });
-      lat = pos.coords.latitude;
-      lon = pos.coords.longitude;
-    } else {
-      const pos = await new Promise((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
-      );
-      lat = pos.coords.latitude;
-      lon = pos.coords.longitude;
-    }
-  } catch(e) {
-    closeModal('m-weather');
+  // 위치 권한 요청
+  if (!navigator.geolocation) {
+    showWeatherError('Location services unavailable');
     return;
   }
 
-  try {
-    const [res, aqiRes] = await Promise.all([
-      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=kr`),
-      fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`)
-    ]);
-    const data = await res.json();
-    const aqiData = await aqiRes.json();
-    if (data.cod !== 200) throw new Error(data.message);
-    renderWeather(data, aqiData);
-  } catch(e) {
-    showWeatherError('Could not load weather');
-  }
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      try {
+        // 날씨 + AQI 동시 호출
+        const [res, aqiRes] = await Promise.all([
+          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=kr`),
+          fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`)
+        ]);
+        const data = await res.json();
+        const aqiData = await aqiRes.json();
+        if (data.cod !== 200) throw new Error(data.message);
+        renderWeather(data, aqiData);
+      } catch(e) {
+        showWeatherError('Could not load weather');
+      }
+    },
+    () => showWeatherError('Location access denied.\nPlease allow location permission in settings.'),
+    { timeout: 8000 }
+  );
 }
 
 function getRidingCondition(weather) {
@@ -2414,128 +2497,6 @@ function renderMedicalCard(){
   document.addEventListener('DOMContentLoaded', init);
 })();
 
-// ─────────────────────────────────────────
-//  NOTIFICATIONS  (FCM Push + Local maintenance alerts)
-// ─────────────────────────────────────────
-(function(){
-  var NOTIF_BASE = 1000;
-  var NOTIF_MAX  = 1099;
-
-  function plugin(name){
-    return window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins[name];
-  }
-
-  function nextEightAM(daysAhead){
-    var d = new Date();
-    d.setHours(8, 0, 0, 0);
-    d.setDate(d.getDate() + (daysAhead || 0));
-    if (daysAhead === 0 && d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
-    return d;
-  }
-
-  function scheduleMaintenanceNotifs(){
-    var LN = plugin('LocalNotifications');
-    if (!LN) return;
-
-    var dangerItems = [];
-    var warnItems = [];
-
-    D.bikes.forEach(function(bike){
-      if (!bike.consumables) return;
-      bike.consumables.forEach(function(c){
-        var pct = c.km > 0 ? (bike.odometer - (c.lastKm || 0)) / c.km : 0;
-        if (pct < 0.8) return;
-        var label = bike.brand + ' ' + bike.model + ' ' + c.name;
-        if (pct >= 1) dangerItems.push(label);
-        else warnItems.push(label);
-      });
-    });
-
-    var toSchedule = [];
-
-    if (dangerItems.length > 0) {
-      toSchedule.push({
-        id: NOTIF_BASE,
-        title: dangerItems.length === 1
-          ? '🚨 Replacement Due — ' + dangerItems[0]
-          : '🚨 ' + dangerItems[0] + ' +' + (dangerItems.length - 1) + ' more need replacement',
-        body: dangerItems.length === 1 ? 'Replace immediately' : dangerItems.slice(1).join(', '),
-        schedule: { at: nextEightAM(0) },
-        channelId: 'maintenance', smallIcon: 'ic_stat_icon_config_sample', iconColor: '#e8a020'
-      });
-    }
-
-    if (warnItems.length > 0) {
-      toSchedule.push({
-        id: NOTIF_BASE + 1,
-        title: warnItems.length === 1
-          ? '⚠️ Service Due Soon — ' + warnItems[0]
-          : '⚠️ ' + warnItems[0] + ' +' + (warnItems.length - 1) + ' more due soon',
-        body: warnItems.length === 1 ? 'Maintenance interval approaching' : warnItems.slice(1).join(', '),
-        schedule: { at: nextEightAM(7) },
-        channelId: 'maintenance', smallIcon: 'ic_stat_icon_config_sample', iconColor: '#e8a020'
-      });
-    }
-
-    var cancelList = [];
-    for (var i = NOTIF_BASE; i <= NOTIF_MAX; i++) cancelList.push({ id: i });
-
-    function doSchedule(){
-      if (toSchedule.length > 0){
-        LN.schedule({ notifications: toSchedule }).catch(function(e){
-          console.warn('[MOTO] notif schedule error:', e);
-        });
-      }
-    }
-    LN.cancel({ notifications: cancelList }).then(doSchedule).catch(doSchedule);
-  }
-
-  async function initNotifications(){
-    var Push = plugin('PushNotifications');
-    var LN   = plugin('LocalNotifications');
-    if (!LN && !Push) return;
-
-    if (LN && LN.createChannel){
-      await LN.createChannel({
-        id: 'maintenance',
-        name: 'Maintenance Alerts',
-        description: 'Consumable replacement reminders',
-        importance: 4,
-        vibration: true
-      }).catch(function(){});
-    }
-
-    if (LN){
-      var lnPerm = await LN.requestPermissions().catch(function(){ return { display: 'denied' }; });
-      if (lnPerm.display === 'granted') scheduleMaintenanceNotifs();
-    }
-
-    if (Push){
-      var pPerm = await Push.requestPermissions().catch(function(){ return { receive: 'denied' }; });
-      if (pPerm.receive !== 'granted') return;
-      await Push.register().catch(function(){});
-      Push.addListener('registration', function(token){
-        localStorage.setItem('mg2-fcm-token', token.value);
-      });
-      Push.addListener('registrationError', function(err){
-        console.warn('[MOTO] FCM reg error:', err);
-      });
-      Push.addListener('pushNotificationReceived', function(notification){
-        if (notification.title) showToast('📬 ' + notification.title);
-      });
-      Push.addListener('pushNotificationActionPerformed', function(){
-        var btn = document.querySelector('.nav-btn[onclick*="consumables"]');
-        if (btn) btn.click();
-      });
-    }
-
-    setTimeout(function(){ if (typeof showWeatherModal === 'function') showWeatherModal(); }, 500);
-  }
-
-  window.scheduleMaintenanceNotifs = scheduleMaintenanceNotifs;
-  document.addEventListener('DOMContentLoaded', function(){ initNotifications(); });
-})();
-
 </script>
 
 <!-- ═══════════ MODAL: AI 가이드 ═══════════ -->
@@ -2586,6 +2547,21 @@ function renderMedicalCard(){
   </div>
 </div>
 
+
+<!-- First Launch Welcome Modal -->
+<div class="welcome-overlay" id="welcome-overlay">
+  <div class="welcome-modal">
+    <div class="welcome-body">
+      <div class="welcome-icon">🏍</div>
+      <div class="welcome-title">Welcome to Ridemate!<br>Want to explore with sample data first?</div>
+      <div class="welcome-desc">Try service alerts · maintenance history · mileage tracking<br>with a sample bike before adding your own</div>
+    </div>
+    <div class="welcome-footer">
+      <button class="btn btn-primary btn-full" onclick="loadSampleData()">🏁 Start with Sample Data</button>
+      <button class="btn btn-full" onclick="skipSampleData()">Register My Bike</button>
+    </div>
+  </div>
+</div>
 
 <!-- SOS FAB -->
 <button class="sos-fab" onclick="openSOS()"><span class="sos-fab-text">SOS</span></button>
