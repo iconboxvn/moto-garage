@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MOTO GARAGE — Iconbox.lee</title>
+<title>Ridemate — Your Riding Companion</title>
 <meta name="theme-color" content="#0c0c0d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MOTO GARAGE">
+<meta name="apple-mobile-web-app-title" content="Ridemate">
 <link rel="manifest" href="/moto-garage/manifest.json">
 <link rel="apple-touch-icon" href="/moto-garage/icon-192.png">
 <style>
@@ -413,6 +413,17 @@ option{background:var(--surface2);}
   .sample-banner:hover{border-color:rgba(74,144,216,0.6);}
   .sample-banner-text{flex:1;font-size:12px;color:#6ab0f5;font-weight:600;}
   .sample-banner-arrow{font-size:18px;color:#6ab0f5;opacity:0.7;}
+  /* ── RIDING CTRL BAR ── */
+  .riding-ctrl{margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .riding-ctrl.on{background:linear-gradient(135deg,#0a2018,#061410);border-color:rgba(56,168,104,0.35);}
+  .riding-dot{width:9px;height:9px;border-radius:50%;background:var(--border-bright);flex-shrink:0;}
+  .riding-dot.on{background:var(--green);animation:ridingPulse 1.5s ease-in-out infinite;}
+  .riding-stop-btn{background:transparent;border:1px solid rgba(208,64,64,0.5);color:var(--red);font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:8px 14px;border-radius:4px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+  /* ── AUTO SOS OVERLAY ── */
+  .auto-sos-overlay{display:none;position:fixed;inset:0;z-index:1000;background:linear-gradient(180deg,#8a0808 0%,#4a0404 100%);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+  .auto-sos-overlay.show{display:flex;}
+  .auto-sos-num{font-family:'Bebas Neue',sans-serif;font-size:120px;color:#fff;line-height:1;text-shadow:0 0 60px rgba(255,80,80,0.5);}
+  .auto-sos-cancel{background:#fff;color:#7a0606;font-family:'Inter',sans-serif;font-size:17px;font-weight:800;padding:16px 56px;border-radius:50px;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:28px;}
 </style>
 </head>
 <body>
@@ -421,7 +432,7 @@ option{background:var(--surface2);}
 <div class="header">
   <div class="header-left">
     <div class="logo-block">
-      <span class="logo-main">MOTO GARAGE</span>
+      <span class="logo-main">RIDEMATE</span>
       <span class="logo-sub">VEHICLE MANAGEMENT</span>
     </div>
   </div>
@@ -464,6 +475,18 @@ option{background:var(--surface2);}
       <span class="sample-banner-text">Đang dùng dữ liệu mẫu · Nhấn để đăng ký xe của bạn</span>
       <span class="sample-banner-arrow">›</span>
     </div>
+    <div id="riding-ctrl-bar" class="riding-ctrl" style="margin-top:4px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="riding-ctrl-dot" class="riding-dot"></div>
+        <div>
+          <div id="riding-ctrl-title" style="font-size:14px;font-weight:700;color:var(--text-dim);">Chờ bắt đầu</div>
+          <div id="riding-ctrl-sub" style="font-size:11px;color:var(--text-muted);">Bắt đầu trước khi đi → Tự động SOS khi tai nạn</div>
+        </div>
+      </div>
+      <div id="riding-ctrl-btn">
+        <button class="btn btn-primary" style="font-size:13px;padding:8px 14px;" onclick="startRiding()">▶ Bắt đầu</button>
+      </div>
+    </div>
     <div id="dash-content"></div>
   </div>
 
@@ -483,7 +506,7 @@ option{background:var(--surface2);}
 
   <!-- 주행거리 -->
   <div class="page" id="page-riding">
-    <div class="sec-header"><span class="sec-title">누적 주행거리 관리</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">Quản lý tổng số km</span><div class="sec-line"></div></div>
     <div id="odo-cards"></div>
   </div>
 
@@ -556,14 +579,14 @@ option{background:var(--surface2);}
           <div class="pill" onclick="selectBrand('Triumph',this)">Triumph</div>
           <div class="pill" onclick="selectBrand('Royal Enfield',this)">Royal Enfield</div>
           <div class="pill" onclick="selectBrand('Harley',this)">Harley</div>
-          <div class="pill" onclick="selectBrand('other',this)">기타...</div>
+          <div class="pill" onclick="selectBrand('other',this)">Khác...</div>
         </div>
-        <input type="text" class="form-input" id="brand-custom" placeholder="제조사 입력" style="margin-top:8px;display:none;">
+        <input type="text" class="form-input" id="brand-custom" placeholder="Nhập hãng xe" style="margin-top:8px;display:none;">
       </div>
       <div style="margin-bottom:14px;">
         <div class="step-label"><span class="step-num">2</span>Dòng xe</div>
         <div class="pill-group" id="model-pills"><span style="font-size:12px;color:var(--text-muted);">Chọn hãng xe trước</span></div>
-        <input type="text" class="form-input" id="model-custom" placeholder="모델명 입력" style="margin-top:8px;display:none;">
+        <input type="text" class="form-input" id="model-custom" placeholder="Nhập dòng xe" style="margin-top:8px;display:none;">
       </div>
       <div id="cat-preview" style="display:none;margin-bottom:10px;padding:8px 12px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:5px;font-size:12px;color:var(--accent);font-weight:600;"></div>
       <div style="margin-bottom:14px;">
@@ -599,9 +622,9 @@ option{background:var(--surface2);}
           <div class="pill" data-cc="349" onclick="selectCC(349,this)">349cc</div>
           <div class="pill" data-cc="321" onclick="selectCC(321,this)">321cc</div>
           <div class="pill" data-cc="313" onclick="selectCC(313,this)">313cc</div>
-          <div class="pill" data-cc="0" onclick="selectCC('other',this)">기타</div>
+          <div class="pill" data-cc="0" onclick="selectCC('other',this)">Khác</div>
         </div>
-        <input type="number" class="form-input" id="cc-custom" placeholder="배기량 입력 (cc)" style="margin-top:8px;display:none;max-width:180px;">
+        <input type="number" class="form-input" id="cc-custom" placeholder="Nhập dung tích (cc)" style="margin-top:8px;display:none;max-width:180px;">
       </div>
       <div style="margin-bottom:14px;">
         <div class="step-label"><span class="step-num">5</span>Tổng số km hiện tại</div>
@@ -614,7 +637,7 @@ option{background:var(--surface2);}
           <div class="pill" onclick="setOdo(30000,this)">30,000</div>
           <div class="pill" onclick="setOdo(-1,this)">Nhập trực tiếp</div>
         </div>
-        <input type="number" class="form-input" id="bike-odo" placeholder="주행거리 km" style="max-width:200px;">
+        <input type="number" class="form-input" id="bike-odo" placeholder="Số km" style="max-width:200px;">
       </div>
       <div class="form-grid">
         <div class="form-group">
@@ -683,9 +706,9 @@ option{background:var(--surface2);}
       <div style="margin-bottom:14px;">
         <div class="step-label"><span class="step-num">2</span>Ngày thay</div>
         <div class="pill-group" style="margin-bottom:8px;" id="mc-date-pills">
-          <div class="pill selected" onclick="selectMcDate('today',this)">오늘</div>
-          <div class="pill" onclick="selectMcDate('yesterday',this)">어제</div>
-          <div class="pill" onclick="selectMcDate('pick',this)">직접 선택</div>
+          <div class="pill selected" onclick="selectMcDate('today',this)">Hôm nay</div>
+          <div class="pill" onclick="selectMcDate('yesterday',this)">Hôm qua</div>
+          <div class="pill" onclick="selectMcDate('pick',this)">Chọn ngày</div>
         </div>
         <input type="date" class="form-input" id="mc-date-input" style="display:none;max-width:200px;">
       </div>
@@ -757,7 +780,7 @@ option{background:var(--surface2);}
     <div class="modal-header"><span class="modal-title" id="m-extra-title">THÊM BẢO DƯỠNG KHÁC</span><button class="modal-close" onclick="closeModal('m-extra')">✕</button></div>
     <div class="modal-body">
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">1</span>유형</div>
+        <div class="step-label"><span class="step-num">1</span>Loại</div>
         <div class="pill-group">
           <div class="pill" onclick="selectExtraType('Kiểm tra định kỳ',this)">🔍 Kiểm tra định kỳ</div>
           <div class="pill" onclick="selectExtraType('Sửa chữa',this)">🛠 Sửa chữa</div>
@@ -768,7 +791,7 @@ option{background:var(--surface2);}
         <input type="hidden" id="extra-type" value="">
       </div>
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">2</span>내용</div>
+        <div class="step-label"><span class="step-num">2</span>Nội dung</div>
         <div class="pill-group" style="margin-bottom:8px;" id="extra-desc-pills">
           <div class="pill" onclick="setExtraDesc('Kiểm tra tổng thể',this)">Kiểm tra tổng thể</div>
           <div class="pill" onclick="setExtraDesc('Căng xích',this)">Căng xích</div>
@@ -780,11 +803,11 @@ option{background:var(--surface2);}
         <input type="text" class="form-input" id="extra-desc" placeholder="Nhập nội dung bảo dưỡng">
       </div>
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">3</span>날짜</div>
+        <div class="step-label"><span class="step-num">3</span>Ngày</div>
         <div class="pill-group" style="margin-bottom:8px;" id="extra-date-pills">
-          <div class="pill selected" onclick="selectExtraDate('today',this)">오늘</div>
-          <div class="pill" onclick="selectExtraDate('yesterday',this)">어제</div>
-          <div class="pill" onclick="selectExtraDate('pick',this)">직접 선택</div>
+          <div class="pill selected" onclick="selectExtraDate('today',this)">Hôm nay</div>
+          <div class="pill" onclick="selectExtraDate('yesterday',this)">Hôm qua</div>
+          <div class="pill" onclick="selectExtraDate('pick',this)">Chọn ngày</div>
         </div>
         <input type="date" class="form-input" id="extra-date-input" style="display:none;max-width:200px;">
       </div>
@@ -805,7 +828,7 @@ option{background:var(--surface2);}
         </div>
       </div>
       <div>
-        <div class="step-label"><span class="step-num">4</span>정비소 (선택)</div>
+        <div class="step-label"><span class="step-num">4</span>Nơi bảo dưỡng (tùy chọn)</div>
         <div class="pill-group" style="margin-bottom:8px;" id="extra-shop-pills">
           <div class="pill" onclick="setExtraShop('Garage Đan',this)">Garage Đan</div>
           <div class="pill" onclick="setExtraShop('Honda chính hãng',this)">Honda chính hãng</div>
@@ -829,7 +852,7 @@ option{background:var(--surface2);}
       <div class="form-grid">
         <div class="form-group"><label class="form-label">Ngày</label><input type="date" class="form-input" id="edit-h-date"></div>
         <div class="form-group"><label class="form-label">Số km</label><input type="number" class="form-input" id="edit-h-km"></div>
-        <div class="form-group full"><label class="form-label">유형</label>
+        <div class="form-group full"><label class="form-label">Loại</label>
           <select class="form-select" id="edit-h-type"><option>Thay phụ tùng</option><option>Kiểm tra định kỳ</option><option>Sửa chữa</option><option>Khác</option></select>
         </div>
         <div class="form-group full"><label class="form-label">Nội dung</label><input type="text" class="form-input" id="edit-h-desc"></div>
@@ -848,7 +871,7 @@ option{background:var(--surface2);}
   <div class="pwa-banner-inner">
     <div class="pwa-banner-icon">🏍</div>
     <div class="pwa-banner-text">
-      <div class="pwa-banner-title">Cài đặt MOTO GARAGE</div>
+      <div class="pwa-banner-title">Cài đặt Ridemate</div>
       <div class="pwa-banner-sub">Thêm vào màn hình chính để dùng như ứng dụng</div>
     </div>
     <div style="display:flex;gap:8px;">
@@ -1191,28 +1214,28 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{
 //  오늘의 라이딩 팁
 // ─────────────────────────────────────────
 const RIDING_TIPS = [
-  { icon:'🌧', tag:'빗길', tip:'빗길 흰색 차선은 아이스링크만큼 미끄럽습니다. 차선 위에서는 절대 브레이크를 잡지 마세요.' },
-  { icon:'🛢', tag:'엔진오일', tip:'엔진오일은 색이 검게 변하기 전에 교체하세요. 투명한 갈색이 정상, 검은색은 교체 시기입니다.' },
-  { icon:'🏍', tag:'타이어', tip:'타이어 공기압은 주 1회 체크하세요. 저압은 연비 저하와 핸들링 불안정의 원인입니다.' },
-  { icon:'⛓', tag:'체인', tip:'체인은 1,000km마다 윤활하세요. 우천 후 주행했다면 반드시 당일 윤활이 필요합니다.' },
-  { icon:'🌡', tag:'여름', tip:'폭염 주행 시 30분마다 휴식을 취하세요. 탈수는 판단력을 흐리게 합니다.' },
-  { icon:'🌙', tag:'야간', tip:'야간 주행 시 반사 조끼나 밝은 색 재킷을 착용하면 사고 위험이 크게 줄어듭니다.' },
-  { icon:'🛑', tag:'브레이크', tip:'브레이크 잡을 때 금속 긁히는 소리가 나면 즉시 교체하세요. 디스크 손상으로 이어집니다.' },
-  { icon:'👁', tag:'시야', tip:'2초 룰: 앞차와의 거리는 최소 2초 이상 유지하세요. 빗길엔 4초 이상이 안전합니다.' },
-  { icon:'🔦', tag:'전조등', tip:'낮에도 전조등을 켜면 다른 차량에서의 인식률이 2배 이상 높아집니다.' },
-  { icon:'💨', tag:'바람', tip:'강한 측풍 구간에서는 핸들을 살짝 바람 방향으로 기울여 균형을 잡으세요.' },
-  { icon:'🏥', tag:'안전', tip:'장거리 라이딩 전에는 차량 상태뿐 아니라 본인의 컨디션도 확인하세요. 피로는 사고의 주원인입니다.' },
-  { icon:'⚡', tag:'점화플러그', tip:'시동이 잘 안 걸린다면 점화플러그를 먼저 확인하세요. 교체 비용 대비 효과가 큽니다.' },
-  { icon:'🔩', tag:'볼트', tip:'진동이 느껴진다면 핸들바 볼트와 미러 볼트를 점검하세요. 풀림 방지 나사로 교체를 권장합니다.' },
-  { icon:'🌫', tag:'안개', tip:'짙은 안개 속에서는 안개등을 켜고 속도를 50% 줄이세요. 상향등은 오히려 시야를 방해합니다.' },
-  { icon:'🔋', tag:'배터리', tip:'배터리 수명은 보통 2~3년입니다. 시동이 느리게 걸린다면 배터리 전압을 점검하세요.' },
-  { icon:'🌊', tag:'빗길', tip:'비 온 직후 첫 10분이 가장 위험합니다. 도로의 기름과 빗물이 섞여 미끄러움이 최대가 됩니다.' },
-  { icon:'🏁', tag:'타이어', tip:'새 타이어는 처음 200km 동안 예열이 필요합니다. 급격한 기울임을 피하세요.' },
-  { icon:'🎯', tag:'시야', tip:'커브 진입 전 출구를 먼저 보세요. 시선이 가는 방향으로 바이크가 따라갑니다.' },
-  { icon:'💧', tag:'냉각수', tip:'냉각수 레벨은 월 1회 점검하세요. 부족 시 절대 수돗물을 넣지 말고 전용 냉각수를 사용하세요.' },
-  { icon:'🧤', tag:'안전', tip:'장갑은 낙차 시 손을 보호하는 필수 장비입니다. 여름에도 메시 장갑 착용을 권장합니다.' },
-  { icon:'🛣', tag:'주행', tip:'교차로 통과 시 속도를 줄이고 좌우를 반드시 확인하세요. 베트남에서는 신호를 무시하는 차량이 많습니다.' },
-  { icon:'🔧', tag:'정비', tip:'정기점검은 주행거리와 관계없이 6개월마다 한 번씩 받으세요. 시간이 지나도 부품은 열화됩니다.' },
+  { icon:'🌧', tag:'Đường ướt', tip:'Vạch kẻ đường màu trắng khi trời mưa trơn như sân băng. Tuyệt đối không phanh trên đó.' },
+  { icon:'🛢', tag:'Dầu máy', tip:'Thay dầu trước khi dầu chuyển đen. Màu nâu trong là bình thường, màu đen là đã quá hạn.' },
+  { icon:'🏍', tag:'Lốp xe', tip:'Kiểm tra áp suất lốp hàng tuần. Thiếu áp làm giảm tiết kiệm nhiên liệu và mất ổn định tay lái.' },
+  { icon:'⛓', tag:'Xích xe', tip:'Tra dầu xích mỗi 1.000 km. Nếu đi trong mưa, hãy tra dầu ngay trong ngày.' },
+  { icon:'🌡', tag:'Mùa hè', tip:'Nghỉ ngơi mỗi 30 phút trong nắng nóng. Mất nước làm giảm khả năng phán đoán.' },
+  { icon:'🌙', tag:'Ban đêm', tip:'Mặc áo phản quang hoặc áo sáng màu ban đêm giảm đáng kể nguy cơ tai nạn.' },
+  { icon:'🛑', tag:'Phanh', tip:'Nếu nghe tiếng kim loại cào khi phanh, thay má phanh ngay. Có thể làm hỏng đĩa phanh.' },
+  { icon:'👁', tag:'Tầm nhìn', tip:'Quy tắc 2 giây: giữ khoảng cách ít nhất 2 giây với xe phía trước. 4 giây khi trời mưa.' },
+  { icon:'🔦', tag:'Đèn pha', tip:'Bật đèn pha ban ngày giúp xe khác nhìn thấy bạn dễ hơn gấp đôi.' },
+  { icon:'💨', tag:'Gió', tip:'Khi có gió ngang mạnh, hơi nghiêng tay lái về phía gió để giữ thăng bằng.' },
+  { icon:'🏥', tag:'An toàn', tip:'Trước chuyến đi dài, kiểm tra cả sức khỏe bản thân, không chỉ xe. Mệt mỏi là nguyên nhân tai nạn hàng đầu.' },
+  { icon:'⚡', tag:'Bugi', tip:'Nếu xe khó nổ, kiểm tra bugi trước. Chi phí thấp nhưng hiệu quả cao.' },
+  { icon:'🔩', tag:'Bu lông', tip:'Nếu cảm thấy rung động, kiểm tra bu lông tay lái và gương chiếu hậu.' },
+  { icon:'🌫', tag:'Sương mù', tip:'Trong sương mù dày, bật đèn sương mù và giảm tốc độ 50%. Đèn pha thực ra làm giảm tầm nhìn.' },
+  { icon:'🔋', tag:'Ắc quy', tip:'Tuổi thọ ắc quy thường 2-3 năm. Nếu khởi động chậm, kiểm tra điện áp ắc quy.' },
+  { icon:'🌊', tag:'Đường ướt', tip:'10 phút đầu sau khi mưa là nguy hiểm nhất. Dầu và nước hòa trộn tạo độ trơn tối đa.' },
+  { icon:'🏁', tag:'Lốp xe', tip:'Lốp mới cần 200 km làm nóng. Tránh nghiêng xe mạnh trong giai đoạn này.' },
+  { icon:'🎯', tag:'Tầm nhìn', tip:'Nhìn vào điểm thoát ra trước khi vào cua. Xe đi theo hướng mắt nhìn.' },
+  { icon:'💧', tag:'Nước làm mát', tip:'Kiểm tra mức nước làm mát hàng tháng. Không dùng nước máy — gây đóng cặn.' },
+  { icon:'🧤', tag:'An toàn', tip:'Găng tay là trang bị bảo hộ thiết yếu khi ngã. Kể cả găng tay lưới vào mùa hè.' },
+  { icon:'🛣', tag:'Lái xe', tip:'Giảm tốc và quan sát cẩn thận tại ngã tư. Ở Việt Nam, nhiều xe vượt đèn đỏ.' },
+  { icon:'🔧', tag:'Bảo dưỡng', tip:'Kiểm tra định kỳ mỗi 6 tháng bất kể số km. Các bộ phận cũng hao mòn theo thời gian.' },
 ];
 
 function getTodayTip() {
@@ -1255,7 +1278,7 @@ function renderDash(){
     return{c,pct,remain,cls,fillColor,tag};
   });
   const recentHistory=D.history.filter(l=>l.bikeId==sb.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  const typeBadge={'Thay phụ tùng':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+  const typeBadge={'Thay phụ tùng':'badge-cons','Kiểm tra định kỳ':'badge-maint','Sửa chữa':'badge-repair','Khác':'badge-other'};
   el.innerHTML=`
     ${D.bikes.length>1?`<div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;">
       ${D.bikes.map(b=>{
@@ -1313,7 +1336,7 @@ function renderDash(){
             <td style="font-size:15px;">${l.desc||'—'}</td>
           </tr>`).join('')}
         </tbody></table></div>`
-      :`<div class="card" style="text-align:center;padding:16px;font-size:15px;color:var(--text-muted);">정비 기록이 없습니다</div>`
+      :`<div class="card" style="text-align:center;padding:16px;font-size:15px;color:var(--text-muted);">Chưa có lịch sử bảo dưỡng</div>`
     }`;
 }
 
@@ -1398,7 +1421,7 @@ function selectBrand(brand,el){
   else{
     models.forEach(m=>{
       const d=document.createElement('div');
-      const isOther=m.name.startsWith('기타 (250cc');
+      const isOther=m.name.startsWith('Khác (250cc');
       d.innerHTML=isOther?`<span>${m.name}</span>`:`<span>${m.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text-muted);margin-left:4px;">${m.cc}cc</span>`;
       d.className='pill';
       d.onclick=()=>{
@@ -1420,7 +1443,7 @@ function selectBrand(brand,el){
           const modelData=getModelIntervals(bState.brand, m.name);
           const prev=document.getElementById('cat-preview');
           prev.innerHTML=modelData
-            ? `✅ <strong>공식 정비 데이터 적용</strong> — ${CAT_NAMES[cat]||cat}`
+            ? `✅ <strong>Dữ liệu chính hãng</strong> — ${CAT_NAMES[cat]||cat}`
             : `📋 ${CAT_NAMES[cat]||cat}`;
           prev.style.display='block';
         }
@@ -1511,8 +1534,8 @@ function _renderConsumablesCore(){
   tabs.innerHTML=`<div class="pill-group">${D.bikes.map((b,i)=>`<div class="pill ${i===cState.bikeIdx?'selected':''}" onclick="switchCBike(${i})">${b.brand} ${b.model}</div>`).join('')}</div>`;
   const bike=D.bikes[cState.bikeIdx];
   el.innerHTML=`
-    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} 소모품</span><div class="sec-line"></div></div>
-    <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">현재 주행거리 <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
+    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} Bảo dưỡng</span><div class="sec-line"></div></div>
+    <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">Tổng số km <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
     <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
 }
 
@@ -1539,9 +1562,9 @@ function consumableCard(c,km){
       </div>
       <div style="padding-left:26px;">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:7px;flex-wrap:wrap;">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">마지막: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Chưa có'}</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">주기: ${c.km.toLocaleString()} km</span>
-          ${remain>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:${fillColor};font-weight:600;">잔여 ${remain.toLocaleString()} km</span>`:''}
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">Lần cuối: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Chưa có'}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">Chu kỳ: ${c.km.toLocaleString()} km</span>
+          ${remain>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:${fillColor};font-weight:600;">Còn lại ${remain.toLocaleString()} km</span>`:''}
         </div>
         <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
       </div>
@@ -1599,7 +1622,7 @@ function openEditConsumable(cId){
   const bike=D.bikes[cState.bikeIdx];
   const c=bike.consumables.find(x=>x.id===cId);
   editingCId=cId;
-  document.getElementById('m-edit-c-title').textContent=c.name+' 수정';
+  document.getElementById('m-edit-c-title').textContent=c.name+' Chỉnh sửa';
   document.getElementById('edit-c-km').value=c.lastKm||0;
   document.getElementById('edit-c-date').value=c.lastDate||todayStr();
   document.getElementById('edit-c-interval').value=c.km;
@@ -1626,7 +1649,7 @@ function renderExtraSection(){
   if(!D.bikes.length){ el.innerHTML=''; return; }
   const bike=D.bikes[cState.bikeIdx];
   const logs=D.history.filter(l=>l.bikeId==bike.id&&l.type!=='Thay phụ tùng').sort((a,b)=>b.date.localeCompare(a.date));
-  const typeBadge={'정기점검':'badge-maint','수리':'badge-repair','세차':'badge-other','튜닝':'badge-cons','기타':'badge-other'};
+  const typeBadge={'Kiểm tra định kỳ':'badge-maint','Sửa chữa':'badge-repair','Rửa xe':'badge-other','Độ xe':'badge-cons','Khác':'badge-other'};
   const header=`<div class="sec-header" style="margin-top:8px;"><span class="sec-title">BẢO DƯỠNG KHÁC</span><div class="sec-line"></div><button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ Thêm</button></div>`;
   if(!logs.length){ el.innerHTML=header+`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Chưa có lịch sử bảo dưỡng</div>`; return; }
   el.innerHTML=header+logs.map(l=>{
@@ -1736,7 +1759,7 @@ function renderHistory(){
   if(bfv) logs=logs.filter(l=>l.bikeId==bfv);
   if(tfv) logs=logs.filter(l=>l.type===tfv);
   const el=document.getElementById('history-table');
-  const typeBadge={'Thay phụ tùng':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+  const typeBadge={'Thay phụ tùng':'badge-cons','Kiểm tra định kỳ':'badge-maint','Sửa chữa':'badge-repair','Khác':'badge-other'};
   if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Chưa có lịch sử bảo dưỡng</div></div>`; return; }
   el.innerHTML=logs.map(l=>{
     const b=D.bikes.find(x=>x.id==l.bikeId);
@@ -1750,7 +1773,7 @@ function openEditHistory(id){
   editingHistoryId=id;
   document.getElementById('edit-h-date').value=log.date||todayStr();
   document.getElementById('edit-h-km').value=log.km||'';
-  document.getElementById('edit-h-type').value=log.type||'기타';
+  document.getElementById('edit-h-type').value=log.type||'Khác';
   document.getElementById('edit-h-desc').value=log.desc||'';
   document.getElementById('edit-h-cost').value=log.cost||'';
   document.getElementById('edit-h-shop').value=log.shop||'';
@@ -1776,7 +1799,7 @@ function renderBackupPage(){
   const lastBackup=localStorage.getItem('mg2-last-backup');
   el.innerHTML=`
     <div class="backup-stat-row"><span>Xe đã đăng ký</span><span class="backup-stat-val">${D.bikes.length}대</span></div>
-    <div class="backup-stat-row"><span>Lịch sử</span><span class="backup-stat-val">${D.history.length}건</span></div>
+    <div class="backup-stat-row"><span>Lịch sử</span><span class="backup-stat-val">${D.history.length}</span></div>
     <div class="backup-stat-row"><span>Sao lưu lần cuối</span><span class="backup-stat-val" style="font-size:16px;">${lastBackup||'Chưa có'}</span></div>`;
 }
 function showBackupToast(msg,type='success'){
@@ -1838,7 +1861,7 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-vn-v13';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const SW=`const CACHE='moto-vn-v15';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
   if('serviceWorker' in navigator){
     const blob=new Blob([SW],{type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
@@ -1967,6 +1990,337 @@ function devTap(){
     _devTapTimer=setTimeout(()=>{ _devTaps=0; },1500);
   }
 }
+
+// ═══════════════════════════════════════════
+//  RIDING / AUTO SOS
+// ═══════════════════════════════════════════
+var ridingState = {active: false};
+var _sos = {
+  phase: 'IDLE',
+  speedOk: false,
+  ffStart: null,
+  phaseT: null,
+  stillStart: null,
+  buf: [],
+  gpsId: null,
+  cdTimer: null,
+  cdVal: 60,
+  motAdded: false,
+  motListening: false,
+  startLat: null,
+  startLng: null,
+  gpsCheckTimer: null
+};
+var _FF_MAG    = 3;
+var _FF_DUR    = 300;
+var _IMP_MAG   = 39.2;
+var _STILL_DUR = 5000;
+var _MIN_SPD   = 20;
+var _SHK_PEAK  = 20;
+var _SHK_SWING = 8;
+
+function updateRidingBar() {
+  var bar   = document.getElementById('riding-ctrl-bar');
+  var dot   = document.getElementById('riding-ctrl-dot');
+  var title = document.getElementById('riding-ctrl-title');
+  var sub   = document.getElementById('riding-ctrl-sub');
+  var btn   = document.getElementById('riding-ctrl-btn');
+  if (!bar) return;
+  if (ridingState.active) {
+    bar.className = 'riding-ctrl on';
+    dot.className = 'riding-dot on';
+    title.style.color = 'var(--green)';
+    title.textContent = 'Đang đi · Cảm biến va chạm hoạt động';
+    sub.textContent = 'Tự động phát hiện va chạm khi tốc độ 20 km/h+';
+    btn.innerHTML = '<button class="riding-stop-btn" onclick="stopRiding()">■ Dừng</button>';
+  } else {
+    bar.className = 'riding-ctrl';
+    dot.className = 'riding-dot';
+    title.style.color = 'var(--text-dim)';
+    title.textContent = 'Chờ bắt đầu';
+    sub.textContent = 'Bắt đầu trước khi đi → Tự động SOS khi tai nạn';
+    btn.innerHTML = '<button class="btn btn-primary" style="font-size:13px;padding:8px 14px;" onclick="startRiding()">▶ Bắt đầu</button>';
+  }
+}
+
+function toggleRiding() { ridingState.active ? stopRiding() : startRiding(); }
+
+function startRiding() {
+  var Sms = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Sms;
+  if (!Sms) { _doStartRiding(); return; }
+  Sms.checkPermission().then(function(r) {
+    if (r.granted) { _doStartRiding(); } else { openModal('m-sms-perm'); }
+  }).catch(function() { _doStartRiding(); });
+}
+
+function _requestSmsAndStart() {
+  var Sms = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Sms;
+  if (!Sms) { _doStartRiding(); return; }
+  Sms.requestPermission().then(function() { _doStartRiding(); }).catch(function() { _doStartRiding(); });
+}
+
+function _doStartRiding() {
+  var Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+  if (Geo) Geo.requestPermissions().catch(function() {});
+  ridingState.active = true;
+  localStorage.setItem('mg2-riding', '1');
+  _sos.phase = 'MONITORING';
+  _sos.speedOk = false;
+  _sosBufReset();
+  _sosGPSStart();
+  _sosMotionStart();
+  var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (R) R.startForeground().catch(function() {});
+  updateRidingBar();
+  showToast('🏍 Bắt đầu đi! Cảm biến va chạm hoạt động');
+}
+
+function stopRiding() {
+  ridingState.active = false;
+  localStorage.removeItem('mg2-riding');
+  _sosCountdownCancel();
+  _sosGPSStop();
+  _sosMotionStop();
+  _sos.phase = 'IDLE';
+  _sos.speedOk = false;
+  _sosBufReset();
+  var ov = document.getElementById('auto-sos-overlay');
+  if (ov) ov.classList.remove('show');
+  var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (R) R.stopForeground().catch(function() {});
+  updateRidingBar();
+  showToast('■ Kết thúc chuyến đi');
+}
+
+function _sosBufReset() {
+  _sos.buf = []; _sos.ffStart = null; _sos.phaseT = null; _sos.stillStart = null;
+}
+
+function _sosGPSStart() {
+  if (!navigator.geolocation) return;
+  _sos.gpsId = navigator.geolocation.watchPosition(
+    function(p) { _sos.speedOk = ((p.coords.speed || 0) * 3.6) >= _MIN_SPD; },
+    null,
+    {enableHighAccuracy: true, maximumAge: 2000}
+  );
+}
+
+function _sosGPSStop() {
+  if (_sos.gpsId !== null) { navigator.geolocation.clearWatch(_sos.gpsId); _sos.gpsId = null; }
+  _sos.speedOk = false;
+}
+
+function _sosMotionStart() {
+  if (_sos.motListening) return;
+  try {
+    var M = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Motion;
+    if (M) {
+      M.addListener('accel', function(e) {
+        var a = e.accelerationIncludingGravity || e.acceleration;
+        if (a) _sosAccel(a.x || 0, a.y || 0, a.z || 0);
+      });
+      _sos.motListening = true;
+      return;
+    }
+  } catch (e) {}
+  if (typeof DeviceMotionEvent === 'undefined') return;
+  function addDM() {
+    window.addEventListener('devicemotion', _sosDMHandler);
+    _sos.motAdded = true;
+    _sos.motListening = true;
+  }
+  if (typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(function(s) { if (s === 'granted') addDM(); }).catch(addDM);
+  } else { addDM(); }
+}
+
+function _sosMotionStop() {
+  _sos.motListening = false;
+  try {
+    var M = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Motion;
+    if (M) { M.removeAllListeners(); return; }
+  } catch (e) {}
+  if (_sos.motAdded) { window.removeEventListener('devicemotion', _sosDMHandler); _sos.motAdded = false; }
+}
+
+function _sosDMHandler(e) {
+  var a = e.accelerationIncludingGravity;
+  if (a) _sosAccel(a.x || 0, a.y || 0, a.z || 0);
+}
+
+function _sosAccel(x, y, z) {
+  var mag = Math.sqrt(x * x + y * y + z * z);
+  var now = Date.now();
+  _sos.buf.push({mag: mag, t: now});
+  _sos.buf = _sos.buf.filter(function(r) { return now - r.t < 6000; });
+  if (_sos.phase === 'COUNTDOWN') return;
+  if (!ridingState.active || _sos.phase === 'IDLE') return;
+  if (_sos.phase === 'MONITORING') {
+    if (!_sos.speedOk) { _sos.ffStart = null; return; }
+    if (mag < _FF_MAG) {
+      if (!_sos.ffStart) _sos.ffStart = now;
+      if (now - _sos.ffStart >= _FF_DUR) { _sos.phase = 'FREEFALL'; _sos.phaseT = now; }
+    } else {
+      _sos.ffStart = null;
+      if (mag > _IMP_MAG) { _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now; }
+    }
+    return;
+  }
+  if (_sos.phase === 'FREEFALL') {
+    if (mag > _IMP_MAG) {
+      _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now;
+    } else if (mag > 7) {
+      _sos.phase = 'MONITORING'; _sos.ffStart = null;
+    } else if (_sos.phaseT && now - _sos.phaseT > 2000) {
+      _sos.phase = 'MONITORING'; _sos.ffStart = null;
+    }
+    return;
+  }
+  if (_sos.phase === 'IMPACT') {
+    var r1 = _sos.buf.filter(function(r) { return now - r.t < 1000; });
+    if (r1.length >= 4) {
+      var m1 = r1.map(function(r) { return r.mag; });
+      if (Math.max.apply(null, m1) - Math.min.apply(null, m1) > 3) {
+        _sos.phase = 'MONITORING'; _sosBufReset(); return;
+      }
+    }
+    if (_sos.stillStart && now - _sos.stillStart >= _STILL_DUR) _sosTrigger();
+  }
+}
+
+function _gpsDistance(lat1, lon1, lat2, lon2) {
+  var R = 6371000;
+  var p = Math.PI / 180;
+  var a = 0.5 - Math.cos((lat2 - lat1) * p) / 2 +
+          Math.cos(lat1 * p) * Math.cos(lat2 * p) * (1 - Math.cos((lon2 - lon1) * p)) / 2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+function _sosTrigger() {
+  _sos.phase = 'COUNTDOWN';
+  _sos.startLat = null;
+  _sos.startLng = null;
+  _sos.cdVal = 60;
+  var ov = document.getElementById('auto-sos-overlay');
+  if (ov) ov.classList.add('show');
+  var cd = document.getElementById('auto-sos-cd');
+  if (cd) cd.textContent = '60';
+  var dbgEl = document.getElementById('auto-sos-dbg');
+  if (dbgEl) dbgEl.textContent = '📍 Đang xác định vị trí GPS...';
+  var med = getMedical();
+  var ci = document.getElementById('auto-sos-contact');
+  if (ci) ci.textContent = med.emergencyPhone ? 'Gửi đến: ' + (med.emergency||'') + ' ' + med.emergencyPhone : '⚠ Chưa đăng ký liên hệ khẩn cấp — Không thể gửi SOS';
+  navigator.geolocation.getCurrentPosition(function(p) {
+    _sos.startLat = p.coords.latitude;
+    _sos.startLng = p.coords.longitude;
+    if (dbgEl) dbgEl.textContent = '📍 Khoảng cách di chuyển: 0m (hủy nếu 10m+)';
+  }, function() {
+    if (dbgEl) dbgEl.textContent = '📍 Không thể xác định vị trí GPS';
+  }, {timeout: 10000, enableHighAccuracy: true});
+  _sos.gpsCheckTimer = setInterval(function() {
+    if (_sos.phase !== 'COUNTDOWN' || _sos.startLat === null) return;
+    navigator.geolocation.getCurrentPosition(function(p) {
+      var dist = _gpsDistance(_sos.startLat, _sos.startLng, p.coords.latitude, p.coords.longitude);
+      if (dbgEl) dbgEl.textContent = '📍 Khoảng cách di chuyển: ' + dist.toFixed(0) + 'm (hủy nếu 10m+)';
+      if (dist >= 10) { cancelAutoSOS(); showToast('✓ Phát hiện di chuyển — Tự động SOS đã hủy'); }
+    }, null, {timeout: 8000, enableHighAccuracy: true});
+  }, 10000);
+  try {
+    var LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+    if (LN) LN.schedule({notifications: [{
+      id: 9001, title: '⚠️ Phát hiện va chạm / ngã',
+      body: 'Không có phản hồi sau 60 giây — sẽ gửi tin nhắn khẩn cấp. Mở ứng dụng để hủy.',
+      schedule: {at: new Date(Date.now() + 100)}
+    }]}).catch(function() {});
+  } catch (e) {}
+  _sos.cdTimer = setInterval(function() {
+    _sos.cdVal--;
+    var el = document.getElementById('auto-sos-cd');
+    if (el) el.textContent = _sos.cdVal;
+    if (_sos.cdVal <= 0) { clearInterval(_sos.cdTimer); _sos.cdTimer = null; _sosSend(); }
+  }, 1000);
+}
+
+function cancelAutoSOS() {
+  _sosCountdownCancel();
+  var ov = document.getElementById('auto-sos-overlay');
+  if (ov) ov.classList.remove('show');
+  if (_sos.phase === 'COUNTDOWN') _sos.phase = 'MONITORING';
+}
+
+function _sosCountdownCancel() {
+  if (_sos.cdTimer) { clearInterval(_sos.cdTimer); _sos.cdTimer = null; }
+  if (_sos.gpsCheckTimer) { clearInterval(_sos.gpsCheckTimer); _sos.gpsCheckTimer = null; }
+  _sos.cdVal = 60;
+}
+
+function _sosPhoneFrom(str) {
+  if (!str) return '';
+  var m = str.match(/(\+?\d[\d\-\s]{8,15})/);
+  return m ? m[0].replace(/[\s\-]/g, '') : '';
+}
+
+function _sosSend() {
+  var ov = document.getElementById('auto-sos-overlay');
+  if (ov) ov.classList.remove('show');
+  _sos.phase = 'MONITORING';
+  var med = getMedical();
+  var phone = med.emergencyPhone ? med.emergencyPhone.replace(/[\s\-]/g,'') : _sosPhoneFrom(med.emergency||'');
+  function sendWithLocation(lat, lng) {
+    var la = lat.toFixed(6), lo = lng.toFixed(6);
+    var maps = 'https://maps.google.com/?q=' + la + ',' + lo;
+    var body = '[Ridemate] ⚠️ Phát hiện va chạm/tai nạn\nNgười đi xe chưa phản hồi sau 60 giây.\n\n📍 Vị trí ước tính:\nVĩ độ ' + la + ', Kinh độ ' + lo + '\nBản đồ: ' + maps + '\n\nVui lòng liên hệ hoặc gọi cấp cứu.';
+    _sosDoSend(phone, body, maps);
+  }
+  function sendNoLocation() {
+    var body = '[Ridemate] ⚠️ Phát hiện va chạm/tai nạn\nNgười đi xe chưa phản hồi sau 60 giây. (Không xác định được vị trí)\n\nVui lòng liên hệ hoặc gọi cấp cứu.';
+    _sosDoSend(phone, body, null);
+  }
+  navigator.geolocation.getCurrentPosition(
+    function(pos) { sendWithLocation(pos.coords.latitude, pos.coords.longitude); },
+    function() {
+      navigator.geolocation.getCurrentPosition(
+        function(pos) { sendWithLocation(pos.coords.latitude, pos.coords.longitude); },
+        function() { sendNoLocation(); },
+        {timeout: 5000, enableHighAccuracy: false, maximumAge: 30000}
+      );
+    },
+    {timeout: 10000, enableHighAccuracy: true}
+  );
+}
+
+function _sosDoSend(phone, body, mapsUrl) {
+  var alertMsg = phone ? 'Gửi đến: ' + phone : '⚠ Chưa đăng ký liên hệ khẩn cấp';
+  if (mapsUrl) alertMsg += '\n\nVị trí: ' + mapsUrl;
+  var fallback = function() {
+    if (phone) window.open('sms:' + phone + '?body=' + encodeURIComponent(body), '_system');
+    else showToast('⚠ Chưa có liên hệ khẩn cấp — Gửi SMS thất bại');
+    setTimeout(function() {
+      alert('🚨 Đã gửi SOS tự động\n\n' + alertMsg + '\n\nNếu cần cấp cứu ngay, hãy gọi 115!');
+    }, 500);
+  };
+  var Sms = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Sms;
+  if (Sms && phone) {
+    Sms.send({phone: phone, text: body}).then(function() {
+      setTimeout(function() {
+        alert('🚨 Đã gửi SOS tự động\n\n' + alertMsg + '\n\nNếu cần cấp cứu ngay, hãy gọi 115!');
+      }, 500);
+    }).catch(function() { fallback(); });
+  } else {
+    fallback();
+  }
+}
+
+(function() {
+  if (localStorage.getItem('mg2-riding')) {
+    ridingState.active = true;
+    _sos.phase = 'MONITORING';
+    _sosGPSStart();
+    _sosMotionStart();
+  }
+  document.addEventListener('DOMContentLoaded', updateRidingBar);
+  if (document.readyState !== 'loading') updateRidingBar();
+})();
 
 // ═══════════════════════════════════════════
 //  INIT
@@ -2108,7 +2462,7 @@ async function showWeatherModal() {
       try {
         // 날씨 + AQI 동시 호출
         const [res, aqiRes] = await Promise.all([
-          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=kr`),
+          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=vi`),
           fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`)
         ]);
         const data = await res.json();
@@ -2119,7 +2473,7 @@ async function showWeatherModal() {
         showWeatherError('Không thể tải thông tin thời tiết');
       }
     },
-    () => showWeatherError('위치 접근이 거부됐습니다\n설정에서 위치 권한을 허용해주세요'),
+    () => closeModal('m-weather'),
     { timeout: 8000 }
   );
 }
@@ -2199,11 +2553,11 @@ function getAqiInfo(aqiData) {
     const pm25 = Math.round(aqiData.list[0].components.pm2_5);
     const levels = [
       null,
-      { cls:'good',     icon:'😊', label:'좋음',     sub:'라이딩하기 좋은 대기질', color:'#38a868', mask:false },
-      { cls:'moderate', icon:'🙂', label:'보통',     sub:'민감한 분은 주의',       color:'#e8a020', mask:false },
-      { cls:'bad',      icon:'😷', label:'나쁨',     sub:'마스크 착용 권장',       color:'#e86420', mask:true  },
-      { cls:'very-bad', icon:'🤢', label:'매우 나쁨', sub:'장시간 라이딩 자제',     color:'#d04040', mask:true  },
-      { cls:'very-bad', icon:'☠️', label:'최악',     sub:'외출 자제 권장',         color:'#d04040', mask:true  },
+      { cls:'good',     icon:'😊', label:'Tốt',        sub:'Chất lượng không khí tốt để lái xe', color:'#38a868', mask:false },
+      { cls:'moderate', icon:'🙂', label:'Trung bình', sub:'Thận trọng với người nhạy cảm',       color:'#e8a020', mask:false },
+      { cls:'bad',      icon:'😷', label:'Kém',        sub:'Nên đeo khẩu trang',       color:'#e86420', mask:true  },
+      { cls:'very-bad', icon:'🤢', label:'Rất kém',    sub:'Tránh lái xe lâu',     color:'#d04040', mask:true  },
+      { cls:'very-bad', icon:'☠️', label:'Nguy hiểm',  sub:'Nên ở trong nhà',         color:'#d04040', mask:true  },
     ];
     return { ...levels[aqi], aqi, pm25 };
   } catch(e) { return null; }
@@ -2226,7 +2580,7 @@ function renderWeather(data, aqiData) {
     <div class="aqi-box ${aqi.cls}">
       <div class="aqi-level">${aqi.icon}</div>
       <div class="aqi-info">
-        <div class="aqi-title">대기질 <span style="color:${aqi.color};">${aqi.label}</span>${aqi.mask ? ' · 😷 마스크 권장' : ''}</div>
+        <div class="aqi-title">Chất lượng không khí <span style="color:${aqi.color};">${aqi.label}</span>${aqi.mask ? ' · 😷 Nên đeo khẩu trang' : ''}</div>
         <div class="aqi-sub">${aqi.sub}</div>
       </div>
       <div class="aqi-value" style="color:${aqi.color};">PM2.5<br>${aqi.pm25}㎍</div>
@@ -2549,6 +2903,37 @@ function renderMedicalCard(){
 
 
 <!-- Màn hình chào mừng lần đầu -->
+<div class="auto-sos-overlay" id="auto-sos-overlay">
+  <div style="font-size:64px;margin-bottom:14px;">🚨</div>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:#fff;margin-bottom:8px;">Phát hiện va chạm!</div>
+  <div style="font-size:15px;color:rgba(255,255,255,0.85);margin-bottom:24px;max-width:290px;line-height:1.65;">Bạn có ổn không?<br>Nhấn nút hoặc di chuyển 10m+ để hủy</div>
+  <div class="auto-sos-num" id="auto-sos-cd">60</div>
+  <div style="font-size:14px;color:rgba(255,255,255,0.65);margin-top:10px;">giây nữa sẽ gửi tin nhắn khẩn cấp</div>
+  <button class="auto-sos-cancel" onclick="cancelAutoSOS()">✓ Tôi ổn</button>
+  <div style="margin-top:20px;font-size:12px;color:rgba(255,255,255,0.4);max-width:300px;line-height:1.5;" id="auto-sos-contact"></div>
+  <div id="auto-sos-dbg" style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.25);font-family:'Inter',sans-serif;"></div>
+</div>
+
+<!-- Modal xin quyền SMS -->
+<div class="modal-overlay" id="m-sms-perm">
+  <div class="modal" style="max-width:300px;">
+    <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
+      <div style="font-size:44px;margin-bottom:14px;">🚨</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">Vì sự an toàn của bạn</div>
+      <div style="font-size:13px;color:var(--text-dim);line-height:1.8;">
+        Khi phát hiện tai nạn, tin nhắn khẩn cấp<br>
+        kèm vị trí sẽ được tự động gửi đến<br>
+        liên hệ khẩn cấp đã đăng ký.<br><br>
+        <span style="color:var(--text);font-weight:600;">Vui lòng cho phép quyền SMS.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-sms-perm');_doStartRiding();">Bỏ qua</button>
+      <button class="btn btn-primary" onclick="closeModal('m-sms-perm');_requestSmsAndStart();">Cho phép</button>
+    </div>
+  </div>
+</div>
+
 <div class="welcome-overlay" id="welcome-overlay">
   <div class="welcome-modal">
     <div class="welcome-body">
