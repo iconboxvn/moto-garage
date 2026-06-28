@@ -2158,10 +2158,9 @@ var _sos = {
 var _FF_MAG    = 3;
 var _FF_DUR    = 300;
 var _IMP_MAG   = 39.2;
+var _FF_IMP_MAG = 19.6;
 var _STILL_DUR = 5000;
 var _MIN_SPD   = 20;
-var _SHK_PEAK  = 20;
-var _SHK_SWING = 8;
 
 function updateRidingBar() {
   var bar   = document.getElementById('riding-ctrl-bar');
@@ -2175,7 +2174,7 @@ function updateRidingBar() {
     dot.className = 'riding-dot on';
     title.style.color = 'var(--green)';
     title.textContent = '라이딩 중 · 충격 감지 활성';
-    sub.textContent = '속도 20 km/h+ 시 충격 자동 감지';
+    sub.textContent = '⏳ GPS 속도 연결 중...';
     btn.innerHTML = '<button class="riding-stop-btn" onclick="stopRiding()">■ 종료</button>';
   } else {
     bar.className = 'riding-ctrl';
@@ -2244,10 +2243,22 @@ function _sosBufReset() {
 function _sosGPSStart() {
   if (!navigator.geolocation) return;
   _sos.gpsId = navigator.geolocation.watchPosition(
-    function(p) { _sos.speedOk = ((p.coords.speed || 0) * 3.6) >= _MIN_SPD; },
-    null,
+    function(p) {
+      var spd = p.coords.speed;
+      if (spd !== null && spd !== undefined) {
+        _sos.speedOk = (spd * 3.6) >= _MIN_SPD;
+      }
+      _updateRidingSpeedUI();
+    },
+    function(err) { console.warn('[SOS] GPS error', err.code, err.message); },
     {enableHighAccuracy: true, maximumAge: 2000}
   );
+}
+
+function _updateRidingSpeedUI() {
+  var sub = document.getElementById('riding-ctrl-sub');
+  if (!sub || !ridingState.active) return;
+  sub.textContent = _sos.speedOk ? '⚡ 충격 감지 활성 (20 km/h+)' : '⏳ 속도 대기 중 (20 km/h 미만)';
 }
 
 function _sosGPSStop() {
@@ -2319,10 +2330,8 @@ function _sosAccel(x, y, z) {
   }
 
   if (_sos.phase === 'FREEFALL') {
-    if (mag > _IMP_MAG) {
+    if (mag > _FF_IMP_MAG) {
       _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now;
-    } else if (mag > 7) {
-      _sos.phase = 'MONITORING'; _sos.ffStart = null;
     } else if (_sos.phaseT && now - _sos.phaseT > 2000) {
       _sos.phase = 'MONITORING'; _sos.ffStart = null;
     }

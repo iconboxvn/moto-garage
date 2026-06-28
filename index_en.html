@@ -890,6 +890,8 @@ option{background:var(--surface2);}
 // ═══════════════════════════════════════════
 var D = JSON.parse(localStorage.getItem('mg2') || 'null') || {bikes:[],rides:[],history:[]};
 var dashSelectedBikeId = null;
+const TYPE_NAMES = {'소모품교체':'Parts Replacement','정기점검':'Inspection','수리':'Repair','세차':'Wash','튜닝':'Tuning','기타':'Other'};
+function localizeType(type) { return TYPE_NAMES[type] || type; }
 var cState = {bikeIdx:0, cId:''};
 var mcDateVal = todayStr();
 var extraDateVal = todayStr();
@@ -1278,7 +1280,7 @@ function renderDash(){
     return{c,pct,remain,cls,fillColor,tag};
   });
   const recentHistory=D.history.filter(l=>l.bikeId==sb.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  const typeBadge={'Parts Replacement':'badge-cons','Inspection':'badge-maint','Repair':'badge-repair','Other':'badge-other'};
+  const typeBadge={'Parts Replacement':'badge-cons','Inspection':'badge-maint','Repair':'badge-repair','Other':'badge-other','소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
   el.innerHTML=`
     ${D.bikes.length>1?`<div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;">
       ${D.bikes.map(b=>{
@@ -1332,7 +1334,7 @@ function renderDash(){
       ?`<div class="card" style="padding:0;overflow:hidden;"><table class="log-table"><tbody>
           ${recentHistory.map(l=>`<tr>
             <td class="mono" style="color:var(--text-dim);white-space:nowrap;">${l.date}</td>
-            <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span></td>
+            <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${localizeType(l.type)}</span></td>
             <td style="font-size:15px;">${l.desc||'—'}</td>
           </tr>`).join('')}
         </tbody></table></div>`
@@ -1648,13 +1650,15 @@ function renderExtraSection(){
   const el=document.getElementById('c-extra-section');
   if(!D.bikes.length){ el.innerHTML=''; return; }
   const bike=D.bikes[cState.bikeIdx];
-  const logs=D.history.filter(l=>l.bikeId==bike.id&&l.type!=='Parts Replacement').sort((a,b)=>b.date.localeCompare(a.date));
-  const typeBadge={'Inspection':'badge-maint','Repair':'badge-repair','Wash':'badge-other','Tuning':'badge-cons','Other':'badge-other'};
+  const logs=D.history.filter(l=>l.bikeId==bike.id&&l.type!=='Parts Replacement'&&l.type!=='소모품교체').sort((a,b)=>b.date.localeCompare(a.date));
+  const typeBadge={'Inspection':'badge-maint','Repair':'badge-repair','Wash':'badge-other','Tuning':'badge-cons','Other':'badge-other','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+
   const header=`<div class="sec-header" style="margin-top:8px;"><span class="sec-title">OTHER MAINTENANCE</span><div class="sec-line"></div><button class="btn btn-primary btn-sm" style="margin-left:10px;flex-shrink:0;" onclick="openExtraModal()">+ Add</button></div>`;
   if(!logs.length){ el.innerHTML=header+`<div class="card" style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No maintenance records</div>`; return; }
   el.innerHTML=header+logs.map(l=>{
     const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
-    return `<div class="h-card"><div class="h-card-top"><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${l.date}</span></div><div class="h-card-bike">${bike.brand} ${bike.model}</div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Edit</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Delete</button></div></div>`;
+    const label=localizeType(l.type);
+    return `<div class="h-card"><div class="h-card-top"><span class="badge ${typeBadge[l.type]||'badge-other'}">${label}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${l.date}</span></div><div class="h-card-bike">${bike.brand} ${bike.model}</div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Edit</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Delete</button></div></div>`;
   }).join('');
 }
 
@@ -1759,12 +1763,14 @@ function renderHistory(){
   if(bfv) logs=logs.filter(l=>l.bikeId==bfv);
   if(tfv) logs=logs.filter(l=>l.type===tfv);
   const el=document.getElementById('history-table');
-  const typeBadge={'Parts Replacement':'badge-cons','Inspection':'badge-maint','Repair':'badge-repair','Other':'badge-other'};
+  const typeBadge={'Parts Replacement':'badge-cons','Inspection':'badge-maint','Repair':'badge-repair','Other':'badge-other','소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+
   if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No maintenance records</div></div>`; return; }
   el.innerHTML=logs.map(l=>{
     const b=D.bikes.find(x=>x.id==l.bikeId);
     const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
-    return `<div class="h-card"><div class="h-card-top"><span class="badge ${typeBadge[l.type]||'badge-other'}">${l.type}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${l.date}</span></div><div class="h-card-bike">${b?b.brand+' '+b.model:'Deleted Vehicle'}</div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Edit</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Delete</button></div></div>`;
+    const label=localizeType(l.type);
+    return `<div class="h-card"><div class="h-card-top"><span class="badge ${typeBadge[l.type]||'badge-other'}">${label}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${l.date}</span></div><div class="h-card-bike">${b?b.brand+' '+b.model:'Deleted Vehicle'}</div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Edit</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Delete</button></div></div>`;
   }).join('');
 }
 
@@ -2014,10 +2020,9 @@ var _sos = {
 var _FF_MAG    = 3;
 var _FF_DUR    = 300;
 var _IMP_MAG   = 39.2;
+var _FF_IMP_MAG = 19.6;
 var _STILL_DUR = 5000;
 var _MIN_SPD   = 20;
-var _SHK_PEAK  = 20;
-var _SHK_SWING = 8;
 
 function updateRidingBar() {
   var bar   = document.getElementById('riding-ctrl-bar');
@@ -2031,7 +2036,7 @@ function updateRidingBar() {
     dot.className = 'riding-dot on';
     title.style.color = 'var(--green)';
     title.textContent = 'Riding · Impact detection active';
-    sub.textContent = 'Auto-detects impact at speed 20 km/h+';
+    sub.textContent = '⏳ Connecting GPS speed...';
     btn.innerHTML = '<button class="riding-stop-btn" onclick="stopRiding()">■ Stop</button>';
   } else {
     bar.className = 'riding-ctrl';
@@ -2099,10 +2104,22 @@ function _sosBufReset() {
 function _sosGPSStart() {
   if (!navigator.geolocation) return;
   _sos.gpsId = navigator.geolocation.watchPosition(
-    function(p) { _sos.speedOk = ((p.coords.speed || 0) * 3.6) >= _MIN_SPD; },
-    null,
+    function(p) {
+      var spd = p.coords.speed;
+      if (spd !== null && spd !== undefined) {
+        _sos.speedOk = (spd * 3.6) >= _MIN_SPD;
+      }
+      _updateRidingSpeedUI();
+    },
+    function(err) { console.warn('[SOS] GPS error', err.code, err.message); },
     {enableHighAccuracy: true, maximumAge: 2000}
   );
+}
+
+function _updateRidingSpeedUI() {
+  var sub = document.getElementById('riding-ctrl-sub');
+  if (!sub || !ridingState.active) return;
+  sub.textContent = _sos.speedOk ? '⚡ Impact detection active (20 km/h+)' : '⏳ Waiting for speed (below 20 km/h)';
 }
 
 function _sosGPSStop() {
@@ -2167,10 +2184,8 @@ function _sosAccel(x, y, z) {
     return;
   }
   if (_sos.phase === 'FREEFALL') {
-    if (mag > _IMP_MAG) {
+    if (mag > _FF_IMP_MAG) {
       _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now;
-    } else if (mag > 7) {
-      _sos.phase = 'MONITORING'; _sos.ffStart = null;
     } else if (_sos.phaseT && now - _sos.phaseT > 2000) {
       _sos.phase = 'MONITORING'; _sos.ffStart = null;
     }
