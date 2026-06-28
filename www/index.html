@@ -2506,25 +2506,24 @@ function scheduleMaintNotifs() {
       if (pct >= 0.8) items.push({bike: bike, c: c, pct: pct});
     });
   });
-  var cancelIds = [];
-  for (var i = 0; i < 50; i++) cancelIds.push({id: 2000 + i});
-  LN.cancel({notifications: cancelIds}).catch(function() {});
+  LN.cancel({notifications: [{id: 2000}]}).catch(function() {});
   if (!items.length) return;
+  items.sort(function(a, b) { return b.pct - a.pct; });
   var t = new Date();
   t.setDate(t.getDate() + 1);
-  t.setHours(9, 0, 0, 0);
-  var notifications = items.slice(0, 10).map(function(item, idx) {
-    var over = item.pct >= 1.0;
-    return {
-      id: 2000 + idx,
-      title: over ? '🚨 정비 필요 — ' + item.bike.brand + ' ' + item.bike.model
-                  : '⚠️ 정비 예정 — ' + item.bike.brand + ' ' + item.bike.model,
-      body: item.c.icon + ' ' + item.c.name + (over ? ' 교체 주기 초과' : ' 교체 시기 임박'),
-      schedule: {at: new Date(t.getTime() + idx * 60000)},
-      extra: {type: 'maintenance'}
-    };
-  });
-  LN.schedule({notifications: notifications}).catch(function() {});
+  t.setHours(8, 0, 0, 0);
+  var first = items[0];
+  var over = first.pct >= 1.0;
+  var body = first.c.icon + ' ' + first.c.name + (over ? ' 교체 주기 초과' : ' 교체 시기 임박');
+  if (items.length > 1) body += ' 외 ' + (items.length - 1) + '개';
+  LN.schedule({notifications: [{
+    id: 2000,
+    title: over ? '🚨 정비 필요 — ' + first.bike.brand + ' ' + first.bike.model
+                : '⚠️ 정비 예정 — ' + first.bike.brand + ' ' + first.bike.model,
+    body: body,
+    schedule: {at: t},
+    extra: {type: 'maintenance'}
+  }]}).catch(function() {});
 }
 
 (function() {
