@@ -2480,6 +2480,53 @@ function _sosDoSend(phone, body, mapsUrl) {
   }
 }
 
+// ═══════════════════════════════════════════
+//  정비 알림
+// ═══════════════════════════════════════════
+function setupMaintNotifListener() {
+  var LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+  if (!LN) return;
+  LN.addListener('localNotificationActionPerformed', function(data) {
+    var extra = (data.notification || {}).extra;
+    if (extra && extra.type === 'maintenance') {
+      setTimeout(function() {
+        showPage('consumables', document.querySelector('.nav-btn:nth-child(3)'));
+      }, 100);
+    }
+  }).catch(function() {});
+}
+
+function scheduleMaintNotifs() {
+  var LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+  if (!LN || !D.bikes.length) return;
+  var items = [];
+  D.bikes.forEach(function(bike) {
+    bike.consumables.forEach(function(c) {
+      var pct = (bike.odometer - c.lastKm) / c.km;
+      if (pct >= 0.8) items.push({bike: bike, c: c, pct: pct});
+    });
+  });
+  var cancelIds = [];
+  for (var i = 0; i < 50; i++) cancelIds.push({id: 2000 + i});
+  LN.cancel({notifications: cancelIds}).catch(function() {});
+  if (!items.length) return;
+  var t = new Date();
+  t.setDate(t.getDate() + 1);
+  t.setHours(9, 0, 0, 0);
+  var notifications = items.slice(0, 10).map(function(item, idx) {
+    var over = item.pct >= 1.0;
+    return {
+      id: 2000 + idx,
+      title: over ? '🚨 정비 필요 — ' + item.bike.brand + ' ' + item.bike.model
+                  : '⚠️ 정비 예정 — ' + item.bike.brand + ' ' + item.bike.model,
+      body: item.c.icon + ' ' + item.c.name + (over ? ' 교체 주기 초과' : ' 교체 시기 임박'),
+      schedule: {at: new Date(t.getTime() + idx * 60000)},
+      extra: {type: 'maintenance'}
+    };
+  });
+  LN.schedule({notifications: notifications}).catch(function() {});
+}
+
 (function() {
   if (localStorage.getItem('mg2-riding')) {
     ridingState.active = true;
@@ -2489,6 +2536,7 @@ function _sosDoSend(phone, body, mapsUrl) {
   }
   document.addEventListener('DOMContentLoaded', updateRidingBar);
   if (document.readyState !== 'loading') updateRidingBar();
+  setupMaintNotifListener();
 })();
 
 // ═══════════════════════════════════════════
@@ -2582,6 +2630,7 @@ renderDash();
 renderSampleBanner();
 checkFirstLaunch();
 updateRidingBar();
+scheduleMaintNotifs();
 // 날씨 모달 자동 표시 (약간 딜레이)
 setTimeout(showWeatherModal, 800);
 
