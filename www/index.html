@@ -2034,15 +2034,45 @@ function showBackupToast(msg,type='success'){
   t.textContent=msg; t.className=`backup-toast ${type} show`;
   setTimeout(()=>t.classList.remove('show'),3000);
 }
-function exportJSON(){
-  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`moto-garage-backup-${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(url);
-  localStorage.setItem('mg2-last-backup',new Date().toLocaleString('ko-KR'));
-  showBackupToast('✓ 백업 파일이 다운로드됐습니다');
-  renderBackupPage();
+async function exportJSON(){
+  const jsonStr = JSON.stringify(D, null, 2);
+  const fileName = `ridemate-backup-${new Date().toISOString().slice(0,10)}.json`;
+  const Filesystem = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
+  const Share = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
+  if (Filesystem && Share) {
+    try {
+      // Capacitor: 파일 촔수어 저장 후 공유 시트 열\uae30
+      await Filesystem.writeFile({
+        path: fileName,
+        data: btoa(unescape(encodeURIComponent(jsonStr))),
+        directory: 'CACHE',
+        encoding: null
+      });
+      const fileResult = await Filesystem.getUri({ path: fileName, directory: 'CACHE' });
+      await Share.share({
+        title: 'Ridemate 백업',
+        text: fileName,
+        url: fileResult.uri,
+        dialogTitle: '백업 파일 공유'
+      });
+      localStorage.setItem('mg2-last-backup', new Date().toLocaleString('ko-KR'));
+      showBackupToast('✓ 백업 파일이 준비됐습니다');
+      renderBackupPage();
+    } catch(e) {
+      if (e && e.message && e.message.includes('cancel')) return;
+      showBackupToast('✗ 백업 실패: ' + (e.message||e), 'error');
+    }
+  } else {
+    // 브라우저 환\uacbd 폴백
+    const blob = new Blob([jsonStr], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    a.click(); URL.revokeObjectURL(url);
+    localStorage.setItem('mg2-last-backup', new Date().toLocaleString('ko-KR'));
+    showBackupToast('✓ 백업 파일이 다운로드됐습니다');
+    renderBackupPage();
+  }
 }
 function importJSON(event){
   const file=event.target.files[0]; if(!file) return;

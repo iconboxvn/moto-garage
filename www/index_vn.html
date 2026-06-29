@@ -1813,15 +1813,43 @@ function showBackupToast(msg,type='success'){
   t.textContent=msg; t.className=`backup-toast ${type} show`;
   setTimeout(()=>t.classList.remove('show'),3000);
 }
-function exportJSON(){
-  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`moto-garage-backup-${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(url);
-  localStorage.setItem('mg2-last-backup',new Date().toLocaleString('ko-KR'));
-  showBackupToast('✓ File đã được tải xuống');
-  renderBackupPage();
+async function exportJSON(){
+  const jsonStr = JSON.stringify(D, null, 2);
+  const fileName = `ridemate-backup-${new Date().toISOString().slice(0,10)}.json`;
+  const Filesystem = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
+  const Share = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
+  if (Filesystem && Share) {
+    try {
+      await Filesystem.writeFile({
+        path: fileName,
+        data: btoa(unescape(encodeURIComponent(jsonStr))),
+        directory: 'CACHE',
+        encoding: null
+      });
+      const fileResult = await Filesystem.getUri({ path: fileName, directory: 'CACHE' });
+      await Share.share({
+        title: 'Ridemate Backup',
+        text: fileName,
+        url: fileResult.uri,
+        dialogTitle: 'Share Backup File'
+      });
+      localStorage.setItem('mg2-last-backup', new Date().toLocaleString('ko-KR'));
+      showBackupToast('✓ File sao lưu đã sẵn sàng');
+      renderBackupPage();
+    } catch(e) {
+      if (e && e.message && e.message.includes('cancel')) return;
+      showBackupToast('✗ Sao lưu thất bại: ' + (e.message||e), 'error');
+    }
+  } else {
+    const blob = new Blob([jsonStr], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    a.click(); URL.revokeObjectURL(url);
+    localStorage.setItem('mg2-last-backup', new Date().toLocaleString('ko-KR'));
+    showBackupToast('✓ File đã được tải xuống');
+    renderBackupPage();
+  }
 }
 function importJSON(event){
   const file=event.target.files[0]; if(!file) return;
