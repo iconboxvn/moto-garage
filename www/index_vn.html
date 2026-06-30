@@ -1373,7 +1373,34 @@ function renderBikes(){
         <div class="bstat-lbl">Cảnh báo</div>
       </div>
     </div>
+    <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleBikeMemo(${b.id})">
+        <span style="font-size:13px;color:var(--text-dim);">📝 Ghi chú${b.memo?' · '+b.memo.length+' ký tự':''}</span>
+        <span id="memo-arrow-${b.id}" style="font-size:11px;color:var(--text-muted);">${b.memo?'▲':'▼'}</span>
+      </div>
+      <div id="memo-box-${b.id}" style="display:${b.memo?'block':'none'};margin-top:8px;">
+        <textarea id="memo-input-${b.id}" placeholder="Áp suất lốp, thông tin phụ tùng, ghi chú tự do" style="width:100%;min-height:80px;background:var(--bg-input,rgba(255,255,255,0.04));border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:13px;font-family:inherit;resize:vertical;" oninput="autoSaveBikeMemo(${b.id})">${b.memo||''}</textarea>
+      </div>
+    </div>
   </div>`).join('');
+}
+
+let memoSaveTimers={};
+function toggleBikeMemo(id){
+  const box=document.getElementById('memo-box-'+id);
+  const arrow=document.getElementById('memo-arrow-'+id);
+  const open=box.style.display==='block';
+  box.style.display=open?'none':'block';
+  arrow.textContent=open?'▼':'▲';
+  if(!open) document.getElementById('memo-input-'+id).focus();
+}
+function autoSaveBikeMemo(id){
+  clearTimeout(memoSaveTimers[id]);
+  memoSaveTimers[id]=setTimeout(()=>{
+    const bike=D.bikes.find(b=>b.id===id); if(!bike) return;
+    bike.memo=document.getElementById('memo-input-'+id).value;
+    save();
+  }, 500);
 }
 
 function deleteBike(id){
@@ -1481,6 +1508,7 @@ function addBike(){
     cc, odometer:odo,
     color:document.getElementById('bike-color').value,
     plate:document.getElementById('bike-plate').value,
+    memo:'',
     consumables:makeConsumables(brand,model)
   });
   save(); closeModal('m-bike'); renderDash(); renderBikes();
@@ -2799,9 +2827,9 @@ function renderMedicalCard(){
     restorePos();
 
     // 터치
-    fab.addEventListener('touchstart', onStart, {passive:true});
-    fab.addEventListener('touchmove',  onMove,  {passive:false});
-    fab.addEventListener('touchend',   onEnd,   {passive:true});
+    fab.addEventListener('touchstart', onStart, {passive:false});
+    document.addEventListener('touchmove',  onMove,  {passive:false});
+    document.addEventListener('touchend',   onEnd,   {passive:true});
     // 마우스 (PC)
     fab.addEventListener('mousedown',  onStart);
     document.addEventListener('mousemove', onMove);
@@ -2836,7 +2864,7 @@ function renderMedicalCard(){
     drag.startTop = rect.top;
     fab.style.bottom = 'auto';
     fab.style.top    = rect.top + 'px';
-    if(e.type === 'mousedown') e.preventDefault();
+    // preventDefault 는 여기서 하지 않음 → 탭 시 click 이벤트 유지
   }
 
   function onMove(e){
@@ -2869,7 +2897,10 @@ function renderMedicalCard(){
     drag.active = false;
     fab.classList.remove('dragging');
 
-    if(!drag.moved) return; // 탭 → openSOS 정상 실행
+    if(!drag.moved){
+      openSOS();
+      return;
+    }
 
     // 좌우 스냅
     var rect   = fab.getBoundingClientRect();
@@ -2883,12 +2914,6 @@ function renderMedicalCard(){
       onLeft: onLeft
     }));
 
-    // 드래그 후 click 차단 (한 번만)
-    fab.addEventListener('click', function blockClick(ev){
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      fab.removeEventListener('click', blockClick, true);
-    }, true);
   }
 
   document.addEventListener('DOMContentLoaded', init);
@@ -2992,7 +3017,7 @@ function renderMedicalCard(){
 </div>
 
 <!-- SOS FAB -->
-<button class="sos-fab" onclick="openSOS()"><span class="sos-fab-text">SOS</span></button>
+<button class="sos-fab"><span class="sos-fab-text">SOS</span></button>
 
 <!-- SOS 모달 -->
 <div class="modal-overlay" id="m-sos" style="align-items:flex-end;padding:0;">
