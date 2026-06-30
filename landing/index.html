@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ridemate — Your Riding Companion</title>
+<style>
+  :root{
+    --bg:#0B1424;
+    --bg-2:#101D33;
+    --card:#16233C;
+    --border:rgba(255,255,255,0.08);
+    --amber:#F5A623;
+    --amber-dim:#B5791A;
+    --text:#F4F1EA;
+    --text-dim:#8B95A8;
+    --green:#3DBE7A;
+    --red:#E4564C;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI', 'Pretendard', -apple-system, sans-serif;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  body[data-lang="vn"], body[data-lang="en"]{}
+
+  [data-i18n]{display:none;}
+  body[data-lang="ko"] [data-i18n="ko"],
+  body[data-lang="en"] [data-i18n="en"],
+  body[data-lang="vn"] [data-i18n="vn"]{display:block;}
+  span[data-i18n]{display:none;}
+  body[data-lang="ko"] span[data-i18n="ko"],
+  body[data-lang="en"] span[data-i18n="en"],
+  body[data-lang="vn"] span[data-i18n="vn"]{display:inline;}
+
+  .wrap{max-width:880px; margin:0 auto; padding:0 24px;}
+
+  /* ===== Header ===== */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(11,20,36,0.88);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+  }
+  .header-inner{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 24px;
+    max-width:880px; margin:0 auto;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand img{width:32px; height:32px; border-radius:8px;}
+  .brand-name{font-size:18px; font-weight:800; letter-spacing:0.5px;}
+  .lang-switch{display:flex; gap:6px; background:var(--card); border:1px solid var(--border); border-radius:999px; padding:4px;}
+  .lang-btn{
+    border:none; background:transparent; color:var(--text-dim);
+    font-size:13px; font-weight:600; padding:6px 14px; border-radius:999px;
+    cursor:pointer; transition:all 0.2s;
+  }
+  .lang-btn.active{background:var(--amber); color:#1A1206;}
+
+  /* ===== Hero ===== */
+  .hero{
+    padding:72px 0 56px;
+    text-align:center;
+    position:relative;
+  }
+  .hero::before{
+    content:'';
+    position:absolute; top:-120px; left:50%; transform:translateX(-50%);
+    width:600px; height:400px;
+    background:radial-gradient(ellipse, rgba(245,166,35,0.14) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .hero-icon{
+    width:96px; height:96px; border-radius:24px;
+    margin:0 auto 28px;
+    display:block;
+    box-shadow:0 8px 32px rgba(245,166,35,0.25);
+  }
+  .hero h1{
+    font-size:40px; font-weight:800; letter-spacing:1px;
+    margin-bottom:12px;
+  }
+  .hero .tagline{
+    color:var(--amber);
+    font-size:15px; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+    margin-bottom:20px;
+  }
+  .hero p.desc{
+    color:var(--text-dim);
+    font-size:17px;
+    max-width:480px; margin:0 auto 32px;
+  }
+  .cta-row{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:14px 28px; border-radius:12px;
+    font-size:15px; font-weight:700;
+    text-decoration:none; cursor:pointer; border:none;
+    transition:transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn-primary{background:var(--amber); color:#1A1206; box-shadow:0 4px 20px rgba(245,166,35,0.3);}
+  .btn-secondary{background:var(--card); color:var(--text); border:1px solid var(--border);}
+
+  /* ===== Dashboard mockup strip ===== */
+  .gauge-strip{
+    display:flex; justify-content:center; gap:32px;
+    margin-top:56px; padding-top:40px;
+    border-top:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .gauge{text-align:center;}
+  .gauge .num{font-size:28px; font-weight:800; color:var(--amber);}
+  .gauge .lbl{font-size:12px; color:var(--text-dim); margin-top:4px; letter-spacing:0.5px;}
+
+  /* ===== Features ===== */
+  .section{padding:64px 0;}
+  .section-title{
+    font-size:28px; font-weight:800;
+    text-align:center; margin-bottom:8px;
+  }
+  .section-sub{
+    text-align:center; color:var(--text-dim); font-size:15px; margin-bottom:40px;
+  }
+  .feature-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;
+  }
+  .feature-card{
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:24px 20px;
+  }
+  .feature-card .icon{
+    width:44px; height:44px; border-radius:12px;
+    background:rgba(245,166,35,0.12);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; margin-bottom:16px;
+  }
+  .feature-card h3{font-size:16px; font-weight:700; margin-bottom:8px;}
+  .feature-card p{font-size:13.5px; color:var(--text-dim);}
+
+  /* ===== Beta section ===== */
+  .beta-section{
+    background:var(--bg-2);
+    border-radius:24px;
+    padding:48px 32px;
+    text-align:center;
+    margin:0 24px;
+    border:1px solid var(--border);
+  }
+  .beta-badge{
+    display:inline-block;
+    background:rgba(245,166,35,0.14); color:var(--amber);
+    font-size:12px; font-weight:700; letter-spacing:1px;
+    padding:6px 14px; border-radius:999px; margin-bottom:16px;
+  }
+  .beta-section h2{font-size:24px; font-weight:800; margin-bottom:12px;}
+  .beta-section p{color:var(--text-dim); font-size:15px; max-width:480px; margin:0 auto 28px;}
+  .steps{
+    display:flex; justify-content:center; gap:24px; margin-bottom:32px;
+    flex-wrap:wrap; text-align:left;
+  }
+  .step{display:flex; gap:12px; align-items:flex-start; max-width:220px;}
+  .step-num{
+    width:26px; height:26px; border-radius:50%;
+    background:var(--amber); color:#1A1206;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:800; flex-shrink:0;
+  }
+  .step-text{font-size:13.5px; color:var(--text-dim); padding-top:3px;}
+
+  /* ===== Footer ===== */
+  footer{
+    padding:48px 24px 32px;
+    text-align:center;
+    border-top:1px solid var(--border);
+    margin-top:64px;
+  }
+  footer .links{
+    display:flex; gap:20px; justify-content:center; margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+  footer a{color:var(--text-dim); text-decoration:none; font-size:13.5px;}
+  footer a:hover{color:var(--amber);}
+  footer .copyright{color:var(--text-dim); font-size:12.5px;}
+
+  @media (max-width:680px){
+    .feature-grid{grid-template-columns:1fr;}
+    .hero h1{font-size:30px;}
+    .gauge-strip{gap:24px;}
+    .beta-section{padding:36px 20px;}
+  }
+</style>
+</head>
+<body data-lang="ko">
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <img src="helmet.png" alt="Ridemate">
+      <span class="brand-name">RIDEMATE</span>
+    </div>
+    <div class="lang-switch">
+      <button class="lang-btn active" data-set-lang="ko">한국어</button>
+      <button class="lang-btn" data-set-lang="en">English</button>
+      <button class="lang-btn" data-set-lang="vn">Tiếng Việt</button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <img src="helmet.png" alt="" class="hero-icon">
+
+    <div data-i18n="ko">
+      <div class="tagline">Your Riding Companion</div>
+      <h1>오토바이 관리, 잊지 않고 챙기세요</h1>
+      <p class="desc">베트남 거주 라이더를 위한 오토바이 정비 · 안전 관리 앱. 소모품 교체 시기부터 사고 시 자동 SOS까지.</p>
+    </div>
+    <div data-i18n="en">
+      <div class="tagline">Your Riding Companion</div>
+      <h1>Never miss your motorcycle maintenance</h1>
+      <p class="desc">A maintenance and safety app for riders in Vietnam — from parts replacement reminders to automatic crash SOS alerts.</p>
+    </div>
+    <div data-i18n="vn">
+      <div class="tagline">Your Riding Companion</div>
+      <h1>Không bỏ lỡ lịch bảo dưỡng xe</h1>
+      <p class="desc">Ứng dụng bảo dưỡng và an toàn dành cho người lái xe máy tại Việt Nam — từ nhắc nhở thay phụ tùng đến cảnh báo SOS tự động khi tai nạn.</p>
+    </div>
+
+    <div class="cta-row">
+      <a href="#beta" class="btn btn-primary">
+        <span data-i18n="ko">비공개 테스트 참여하기</span>
+        <span data-i18n="en">Join the beta test</span>
+        <span data-i18n="vn">Tham gia thử nghiệm</span>
+      </a>
+      <a href="https://github.com/iconboxvn/moto-garage/blob/main/privacy_policy.html" class="btn btn-secondary">
+        <span data-i18n="ko">개인정보처리방침</span>
+        <span data-i18n="en">Privacy Policy</span>
+        <span data-i18n="vn">Chính sách bảo mật</span>
+      </a>
+    </div>
+
+    <div class="gauge-strip">
+      <div class="gauge">
+        <div class="num">3</div>
+        <div class="lbl">
+          <span data-i18n="ko">언어 지원</span>
+          <span data-i18n="en">Languages</span>
+          <span data-i18n="vn">Ngôn ngữ</span>
+        </div>
+      </div>
+      <div class="gauge">
+        <div class="num">24/7</div>
+        <div class="lbl">
+          <span data-i18n="ko">SOS 모니터링</span>
+          <span data-i18n="en">SOS monitoring</span>
+          <span data-i18n="vn">Giám sát SOS</span>
+        </div>
+      </div>
+      <div class="gauge">
+        <div class="num">FREE</div>
+        <div class="lbl">
+          <span data-i18n="ko">무료 사용</span>
+          <span data-i18n="en">Free to use</span>
+          <span data-i18n="vn">Miễn phí</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <h2 class="section-title">
+      <span data-i18n="ko">핵심 기능</span>
+      <span data-i18n="en">Core features</span>
+      <span data-i18n="vn">Tính năng chính</span>
+    </h2>
+    <p class="section-sub">
+      <span data-i18n="ko">라이딩 전부터 사고 순간까지, 필요한 모든 걸 한 곳에서</span>
+      <span data-i18n="en">Everything you need, from pre-ride checks to emergency response</span>
+      <span data-i18n="vn">Mọi thứ bạn cần, từ kiểm tra trước khi đi đến ứng phó khẩn cấp</span>
+    </p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="icon">🔧</div>
+        <h3>
+          <span data-i18n="ko">소모품 관리</span>
+          <span data-i18n="en">Parts tracking</span>
+          <span data-i18n="vn">Quản lý phụ tùng</span>
+        </h3>
+        <p>
+          <span data-i18n="ko">엔진오일, 타이어, 체인 등 교체 시기를 자동으로 계산하고 알려드려요.</span>
+          <span data-i18n="en">Automatically tracks when your oil, tires, and chain need replacement.</span>
+          <span data-i18n="vn">Tự động theo dõi thời điểm cần thay dầu, lốp và xích xe.</span>
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon">🚨</div>
+        <h3>
+          <span data-i18n="ko">자동 SOS</span>
+          <span data-i18n="en">Auto SOS</span>
+          <span data-i18n="vn">SOS tự động</span>
+        </h3>
+        <p>
+          <span data-i18n="ko">충격이 감지되면 비상 연락처에 위치와 함께 자동으로 알림을 보내요.</span>
+          <span data-i18n="en">Detects crash impact and sends your location to emergency contacts.</span>
+          <span data-i18n="vn">Phát hiện va chạm và gửi vị trí đến liên hệ khẩn cấp.</span>
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon">📋</div>
+        <h3>
+          <span data-i18n="ko">정비 이력</span>
+          <span data-i18n="en">Service history</span>
+          <span data-i18n="vn">Lịch sử bảo dưỡng</span>
+        </h3>
+        <p>
+          <span data-i18n="ko">날짜, 주행거리, 비용까지 모든 정비 기록을 한눈에 확인하세요.</span>
+          <span data-i18n="en">Keep every service record — date, mileage, and cost — in one place.</span>
+          <span data-i18n="vn">Lưu mọi bản ghi bảo dưỡng — ngày, số km, chi phí — tại một nơi.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="beta">
+  <div class="wrap">
+    <div class="beta-section">
+      <div class="beta-badge">
+        <span data-i18n="ko">베타 테스트 진행 중</span>
+        <span data-i18n="en">Beta testing now</span>
+        <span data-i18n="vn">Đang thử nghiệm beta</span>
+      </div>
+
+      <h2>
+        <span data-i18n="ko">Ridemate 첫 테스터가 되어주세요</span>
+        <span data-i18n="en">Be one of our first testers</span>
+        <span data-i18n="vn">Hãy là người thử nghiệm đầu tiên</span>
+      </h2>
+      <p>
+        <span data-i18n="ko">정식 출시 전 비공개 테스트에 참여하시면 가장 먼저 Ridemate를 사용해보실 수 있어요.</span>
+        <span data-i18n="en">Join our private beta and be among the first to try Ridemate before launch.</span>
+        <span data-i18n="vn">Tham gia thử nghiệm riêng tư và là người đầu tiên dùng thử Ridemate trước khi ra mắt.</span>
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <span data-i18n="ko">테스터 참여 신청 (구글 계정 이메일 공유)</span>
+            <span data-i18n="en">Request to join (share your Google account email)</span>
+            <span data-i18n="vn">Yêu cầu tham gia (chia sẻ email tài khoản Google)</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <span data-i18n="ko">테스트 참여 링크 클릭 후 참여 선택</span>
+            <span data-i18n="en">Click the test link and opt in</span>
+            <span data-i18n="vn">Nhấp vào liên kết thử nghiệm và chọn tham gia</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <span data-i18n="ko">Play 스토어에서 Ridemate 다운로드</span>
+            <span data-i18n="en">Download Ridemate from the Play Store</span>
+            <span data-i18n="vn">Tải Ridemate từ Play Store</span>
+          </div>
+        </div>
+      </div>
+
+      <a href="mailto:iconbox.lee@gmail.com?subject=Ridemate%20Beta%20Tester" class="btn btn-primary">
+        <span data-i18n="ko">테스터 신청 메일 보내기</span>
+        <span data-i18n="en">Email to request access</span>
+        <span data-i18n="vn">Gửi email yêu cầu tham gia</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="links">
+    <a href="https://github.com/iconboxvn/moto-garage/blob/main/privacy_policy.html">
+      <span data-i18n="ko">개인정보처리방침</span>
+      <span data-i18n="en">Privacy Policy</span>
+      <span data-i18n="vn">Chính sách bảo mật</span>
+    </a>
+    <a href="https://www.youtube.com/@iconbox1008">YouTube</a>
+    <a href="https://www.tiktok.com/@iconbox.lee">TikTok</a>
+    <a href="mailto:iconbox.lee@gmail.com">
+      <span data-i18n="ko">문의하기</span>
+      <span data-i18n="en">Contact</span>
+      <span data-i18n="vn">Liên hệ</span>
+    </a>
+  </div>
+  <div class="copyright">© 2026 Ridemate · Created by @iconbox.lee</div>
+</footer>
+
+<script>
+  document.querySelectorAll('.lang-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const lang = btn.getAttribute('data-set-lang');
+      document.body.setAttribute('data-lang', lang);
+      document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      localStorage.setItem('ridemate-landing-lang', lang);
+    });
+  });
+  const saved = localStorage.getItem('ridemate-landing-lang');
+  if(saved){
+    document.body.setAttribute('data-lang', saved);
+    document.querySelectorAll('.lang-btn').forEach(b=>{
+      b.classList.toggle('active', b.getAttribute('data-set-lang')===saved);
+    });
+  }
+</script>
+
+</body>
+</html>
