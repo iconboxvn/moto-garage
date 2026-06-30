@@ -2639,11 +2639,13 @@ function devTap(){
   }
 }
 
-migrateConsumableIntervals(); // 기존 차량 공식 데이터 자동 적용
-renderDash();
-renderSampleBanner();
-checkFirstLaunch();
-updateRidingBar();
+window.addEventListener('load', function(){
+  migrateConsumableIntervals(); // 기존 차량 공식 데이터 자동 적용
+  renderDash();
+  renderSampleBanner();
+  checkFirstLaunch();
+  updateRidingBar();
+});
 // 날씨 모달 자동 표시 (약간 딜레이)
 setTimeout(showWeatherModal, 800);
 
