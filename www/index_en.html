@@ -1899,6 +1899,8 @@ function confirmReset(){
   if(!confirm('Delete all data?\nThis cannot be undone.')) return;
   if(!confirm('Have you made a backup first?')) return;
   D={bikes:[],rides:[],history:[]}; save();
+  localStorage.removeItem('mg2-launched');
+  localStorage.removeItem('mg2-sample');
   showBackupToast('Data has been reset','error');
   renderBackupPage(); renderDash(); renderBikes();
 }
@@ -1923,10 +1925,13 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-en-v15';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  // Native app (Capacitor) doesn't need service-worker caching and it causes
+  // update-delay bugs, so block new registrations and clear any old ones.
   if('serviceWorker' in navigator){
-    const blob=new Blob([SW],{type:'application/javascript'});
-    navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
+    navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});
+  }
+  if(window.caches && caches.keys){
+    caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))).catch(()=>{});
   }
 })();
 
@@ -1996,8 +2001,7 @@ const SAMPLE_DATA_EN = {
 };
 
 function checkFirstLaunch(){
-  if(localStorage.getItem('mg2-launched')) return;
-  if(D.bikes.length>0){ localStorage.setItem('mg2-launched','1'); return; }
+  if(D.bikes.length>0) return;
   document.getElementById('welcome-overlay').classList.add('open');
 }
 function loadSampleData(){

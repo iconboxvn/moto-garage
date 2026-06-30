@@ -2122,6 +2122,8 @@ function confirmReset(){
   if(!confirm('모든 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
   if(!confirm('정말로 삭제합니다. 백업 파일을 먼저 만들었나요?')) return;
   D={bikes:[],rides:[],history:[]}; save();
+  localStorage.removeItem('mg2-launched');
+  localStorage.removeItem('mg2-sample');
   showBackupToast('데이터가 초기화됐습니다','error');
   renderBackupPage(); renderDash(); renderBikes();
 }
@@ -2146,10 +2148,13 @@ function clearPills(container){
 //  PWA
 // ═══════════════════════════════════════════
 (function(){
-  const SW=`const CACHE='moto-ko-v29';const A=[self.location.pathname];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(A)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  // 네이티브 앱(Capacitor)은 서비스워커 캐싱이 불필요하고 업데이트 지연 버그를 일으키므로
+  // 등록을 막고, 기존에 설치되어 있던 서비스워커/캐시는 모두 제거한다.
   if('serviceWorker' in navigator){
-    const blob=new Blob([SW],{type:'application/javascript'});
-    navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
+    navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});
+  }
+  if(window.caches && caches.keys){
+    caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))).catch(()=>{});
   }
 })();
 
@@ -2578,8 +2583,7 @@ const SAMPLE_DATA_KO = {
 };
 
 function checkFirstLaunch(){
-  if(localStorage.getItem('mg2-launched')) return;
-  if(D.bikes.length>0){ localStorage.setItem('mg2-launched','1'); return; }
+  if(D.bikes.length>0) return;
   document.getElementById('welcome-overlay').classList.add('open');
 }
 function loadSampleData(){
