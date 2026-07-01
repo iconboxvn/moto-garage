@@ -567,34 +567,29 @@ option{background:var(--surface2);}
     <div class="modal-header"><span class="modal-title">ĐĂNG KÝ XE</span><button class="modal-close" onclick="closeModal('m-bike')">✕</button></div>
     <div class="modal-body">
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">1</span>Hãng xe</div>
-        <div class="pill-group" id="brand-pills">
-          <div class="pill" onclick="selectBrand('Honda',this)">Honda</div>
-          <div class="pill" onclick="selectBrand('Yamaha',this)">Yamaha</div>
-          <div class="pill" onclick="selectBrand('Kawasaki',this)">Kawasaki</div>
-          <div class="pill" onclick="selectBrand('Suzuki',this)">Suzuki</div>
-          <div class="pill" onclick="selectBrand('BMW',this)">BMW</div>
-          <div class="pill" onclick="selectBrand('KTM',this)">KTM</div>
-          <div class="pill" onclick="selectBrand('Ducati',this)">Ducati</div>
-          <div class="pill" onclick="selectBrand('Triumph',this)">Triumph</div>
-          <div class="pill" onclick="selectBrand('Royal Enfield',this)">Royal Enfield</div>
-          <div class="pill" onclick="selectBrand('Harley',this)">Harley</div>
-          <div class="pill" onclick="selectBrand('other',this)">Khác...</div>
+        <div class="step-label"><span class="step-num">1</span>Loại nhiên liệu</div>
+        <div class="pill-group" id="fuel-pills">
+          <div class="pill selected" onclick="selectFuelType('ice',this)">⛽ Xăng</div>
+          <div class="pill" onclick="selectFuelType('electric',this)">🔋 Điện</div>
         </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">2</span>Hãng xe</div>
+        <div class="pill-group" id="brand-pills"></div>
         <input type="text" class="form-input" id="brand-custom" placeholder="Nhập hãng xe" style="margin-top:8px;display:none;">
       </div>
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">2</span>Dòng xe</div>
+        <div class="step-label"><span class="step-num">3</span>Dòng xe</div>
         <div class="pill-group" id="model-pills"><span style="font-size:12px;color:var(--text-muted);">Chọn hãng xe trước</span></div>
         <input type="text" class="form-input" id="model-custom" placeholder="Nhập dòng xe" style="margin-top:8px;display:none;">
       </div>
       <div id="cat-preview" style="display:none;margin-bottom:10px;padding:8px 12px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:5px;font-size:12px;color:var(--accent);font-weight:600;"></div>
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">3</span>Năm sản xuất</div>
+        <div class="step-label"><span class="step-num">4</span>Năm sản xuất</div>
         <div class="pill-group" id="year-pills"></div>
       </div>
-      <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">4</span>Dung tích</div>
+      <div style="margin-bottom:14px;" id="cc-step">
+        <div class="step-label"><span class="step-num">5</span>Dung tích</div>
         <div class="pill-group" id="cc-pills">
           <div class="pill" data-cc="1301" onclick="selectCC(1301,this)">1301cc</div>
           <div class="pill" data-cc="1254" onclick="selectCC(1254,this)">1254cc</div>
@@ -627,7 +622,7 @@ option{background:var(--surface2);}
         <input type="number" class="form-input" id="cc-custom" placeholder="Nhập dung tích (cc)" style="margin-top:8px;display:none;max-width:180px;">
       </div>
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">5</span>Tổng số km hiện tại</div>
+        <div class="step-label"><span class="step-num">6</span>Tổng số km hiện tại</div>
         <div class="pill-group" style="margin-bottom:8px;">
           <div class="pill" onclick="setOdo(0,this)">Xe mới (0)</div>
           <div class="pill" onclick="setOdo(1000,this)">1,000</div>
@@ -899,7 +894,7 @@ var editingBikeId = null;
 var editingCId = null;
 var editingExtraId = null;
 var editingHistoryId = null;
-var bState = {brand:'',model:'',year:0,cc:0};
+var bState = {brand:'',model:'',year:0,cc:0,fuelType:'ice'};
 var deferredPrompt = null;
 
 const save = () => localStorage.setItem('mg2', JSON.stringify(D));
@@ -978,7 +973,14 @@ const GUIDE_DATA = {
     sport: { why: 'Dầu phanh có tính hút ẩm — hấp thụ hơi nước theo thời gian. Dầu có hơi nước có thể sôi ở nhiệt độ cao, gây bó phanh (vapor lock).', check: '① Nếu tay/chân phanh cảm giác xốp sau khi bóp/đạp nhiều lần — thay ngay\n② Thay nếu màu dầu đã tối sầm', cost: 'Thay dầu phanh: 80,000 ~ 200,000 ₫', tip: 'Dùng DOT5.1 hoặc dầu đua điểm sôi cao nếu thường xuyên đi track.' },
     naked: { why: 'Dầu phanh xuống cấp gây giảm lực phanh và fade phanh.', check: '① Kiểm tra nếu hành trình tay phanh tăng đột ngột\n② Kiểm tra màu dầu qua cửa sổ bình', cost: 'Thay dầu phanh: 60,000 ~ 150,000 ₫', tip: 'Thay dầu phanh cần xả khí (bleeding) — nên thực hiện tại xưởng.' },
     adventure: { why: 'Phanh mạnh trong hành trình dài làm nóng dầu. Dầu xuống cấp có thể gây vapor lock.', check: '① Kiểm tra tình trạng dầu phanh trước hành trình dài\n② Kiểm tra màu và mức dầu', cost: 'Thay dầu phanh: 80,000 ~ 180,000 ₫', tip: 'Nếu cảm giác phanh bất thường, hãy thay dầu trước khi khởi hành.' },
-    classic: { why: 'Dầu phanh hấp thụ hơi ẩm theo thời gian, hạ điểm sôi.', check: '① Thay vô điều kiện nếu hơn 2 năm chưa thay\n② Thay ngay nếu cảm giác phanh xốp', cost: 'Thay dầu phanh: 60,000 ~ 150,000 ₫', tip: 'Vứt bỏ dầu phanh còn thừa sau khi mở nắp — không lưu trữ.' }
+    classic: { why: 'Dầu phanh hấp thụ hơi ẩm theo thời gian, hạ điểm sôi.', check: '① Thay vô điều kiện nếu hơn 2 năm chưa thay\n② Thay ngay nếu cảm giác phanh xốp', cost: 'Thay dầu phanh: 60,000 ~ 150,000 ₫', tip: 'Vứt bỏ dầu phanh còn thừa sau khi mở nắp — không lưu trữ.' },
+    electric: { why: 'Xe máy điện dùng phanh thủy lực cũng bị dầu xuống cấp do hút ẩm giống như xe xăng.', check: '① Kiểm tra hành trình tay phanh và cảm giác xốp\n② Kiểm tra màu dầu qua cửa sổ bình chứa', cost: 'Thay dầu phanh: 60,000 ~ 150,000 ₫', tip: 'Khuyến nghị thay mỗi 2 năm (tiêu chuẩn DOT4).' }
+  },
+  battery_check: {
+    electric: { why: 'Pin là bộ phận quan trọng nhất — và đắt nhất — của xe máy điện. Tiếp xúc nhiệt độ cao thường xuyên hoặc để pin cạn hoàn toàn sẽ làm giảm nhanh tình trạng pin (SOH). Ở khí hậu nóng như Việt Nam, tốc độ xuống cấp còn nhanh hơn.', check: '① Kiểm tra quãng đường thực tế sau khi sạc đầy có giảm nhiều so với lúc mới không\n② Kiểm tra có phát nhiệt hoặc mùi bất thường khi sạc không\n③ Kiểm tra bằng mắt xem đầu nối chống nước có bị ăn mòn/hư hỏng không', cost: 'Chẩn đoán pin chi tiết (đại lý/trung tâm bảo hành): miễn phí ~ 200,000 ₫\nChi phí thay pack pin thay đổi nhiều theo model — nên hỏi báo giá tại trung tâm bảo hành', tip: 'Khi không sử dụng lâu ngày, nên giữ mức sạc 50–80% thay vì 0% hoặc 100%. Tránh sạc hoặc để xe dưới nắng gắt trong thời gian dài.' }
+  },
+  motor_check: {
+    electric: { why: 'Động cơ và bộ điều khiển là hệ truyền động của xe máy điện. Đầu nối chống nước bị ăn mòn hoặc tản nhiệt kém có thể gây mất công suất đột ngột khi đang chạy.', check: '① Nghe tiếng ồn, rung động hoặc giảm công suất bất thường khi chạy\n② Kiểm tra nhiệt độ quanh động cơ/bộ điều khiển\n③ Kiểm tra bằng mắt đầu nối chống nước có bị ăn mòn không\n④ Kiểm tra thông báo cập nhật phần mềm/firmware', cost: 'Kiểm tra định kỳ: miễn phí ~ 150,000 ₫ (thường nằm trong gói kiểm tra cơ bản tại trung tâm bảo hành)', tip: 'Đặc biệt vào mùa mưa, hãy kiểm tra đầu nối có bị vào nước không. Khi rửa xe, không xịt nước áp lực cao trực tiếp vào khu vực động cơ/bộ điều khiển.' }
   }
 };
 
@@ -995,7 +997,9 @@ const C_NAMES = {
   'tire_r':'Lốp sau',
   'coolant':'Nước làm mát',
   'air_f':'Lọc gió',
-  'brake_oil':'Dầu phanh'
+  'brake_oil':'Dầu phanh',
+  'battery_check':'Kiểm tra tình trạng pin',
+  'motor_check':'Kiểm tra động cơ/bộ điều khiển'
 };
 function getCName(id){ return C_NAMES[id] || id; }
 
@@ -1012,6 +1016,20 @@ const CONSUMABLES = [
   {id:'air_f',     icon:'💨', name:'Lọc gió',          km:15000},
   {id:'brake_oil', icon:'💧', name:'Dầu phanh',       km:20000},
 ];
+
+// ── Phụ tùng dành riêng cho xe máy điện
+const CONSUMABLES_ELECTRIC = [
+  {id:'battery_check', icon:'🔋', name:'Kiểm tra tình trạng pin',            km:3000},
+  {id:'motor_check',   icon:'⚙',  name:'Kiểm tra động cơ/bộ điều khiển',    km:6000},
+  {id:'brake_f',       icon:'🛑', name:'Má phanh trước',                    km:20000},
+  {id:'brake_r',       icon:'🛑', name:'Má phanh sau',                      km:15000},
+  {id:'tire_f',        icon:'⭕', name:'Lốp trước',                          km:15000},
+  {id:'tire_r',        icon:'⭕', name:'Lốp sau',                            km:12000},
+  {id:'brake_oil',     icon:'💧', name:'Dầu phanh',                         km:20000},
+];
+const CATEGORY_INTERVALS_ELECTRIC = {
+  electric:{battery_check:3000, motor_check:6000, brake_f:20000, brake_r:15000, tire_f:15000, tire_r:12000, brake_oil:20000}
+};
 
 // ── 카테고리별 기본 주기 (폴백용)
 const CATEGORY_INTERVALS = {
@@ -1128,7 +1146,7 @@ function getModelIntervals(brand, model) {
   return found ? MODEL_INTERVALS[found] : null;
 }
 
-const CAT_NAMES = {sport:'🏁 Sport (vòng tua cao)',naked:'🏙 Naked/Street (tiêu chuẩn)',adventure:'🌍 Adventure/Touring (đường dài)',classic:'🛣 Classic/Cruiser'};
+const CAT_NAMES = {sport:'🏁 Sport (vòng tua cao)',naked:'🏙 Naked/Street (tiêu chuẩn)',adventure:'🌍 Adventure/Touring (đường dài)',classic:'🛣 Classic/Cruiser',electric:'🔋 Xe máy điện (chú trọng chăm sóc pin)'};
 
 function detectCategory(brand,model){
   const m = model.toLowerCase();
@@ -1150,7 +1168,11 @@ function detectCategory(brand,model){
   return 'naked';
 }
 
-function makeConsumables(brand,model){
+function makeConsumables(brand,model,fuelType){
+  if(fuelType==='electric'){
+    const intervals=CATEGORY_INTERVALS_ELECTRIC.electric;
+    return CONSUMABLES_ELECTRIC.map(c=>({...c, km:intervals[c.id]||c.km, lastKm:0, lastDate:'', memo:'', category:'electric', isOfficial:false}));
+  }
   const cat=detectCategory(brand,model);
   // 1순위: 모델별 공식 데이터 / 2순위: 카테고리 기본값
   const modelData = getModelIntervals(brand, model);
@@ -1177,6 +1199,18 @@ const BRAND_MODELS = {
   Triumph:[{name:'Rocket 3',cc:2458},{name:'Speed Triple 1200',cc:1160},{name:'Tiger 1200',cc:1160},{name:'Street Triple 765',cc:765},{name:'Tiger 900',cc:888},{name:'Trident 660',cc:660},{name:'Tiger 660',cc:660},{name:'Speed 400',cc:398},{name:'기타 (250cc 이하 포함)',cc:0}],
   'Royal Enfield':[{name:'Super Meteor 650',cc:648},{name:'Continental GT 650',cc:648},{name:'Interceptor 650',cc:648},{name:'Himalayan 450',cc:452},{name:'Hunter 350',cc:349},{name:'Classic 350',cc:349},{name:'Meteor 350',cc:349},{name:'기타 (250cc 이하 포함)',cc:0}],
   Harley:[{name:'Road Glide',cc:1868},{name:'Fat Boy',cc:1868},{name:'Fat Bob',cc:1868},{name:'Street Bob',cc:1868},{name:'Sportster S',cc:1252},{name:'Pan America',cc:1252},{name:'Nightster',cc:975},{name:'기타 (250cc 이하 포함)',cc:0}],
+  other:[]
+};
+
+// ═══════════════════════════════════════════
+//  Danh sách hãng/mẫu xe máy điện (thị trường Việt Nam)
+// ═══════════════════════════════════════════
+const ELECTRIC_BRAND_MODELS = {
+  VinFast:[{name:'Evo200',cc:0},{name:'Evo Lite',cc:0},{name:'Feliz S',cc:0},{name:'Klara S2',cc:0},{name:'Vento S',cc:0},{name:'Theon S',cc:0},{name:'Khác',cc:0}],
+  'Dat Bike':[{name:'Weaver++',cc:0},{name:'Khác',cc:0}],
+  Yadea:[{name:'Khác',cc:0}],
+  Pega:[{name:'Khác',cc:0}],
+  Selex:[{name:'Khác',cc:0}],
   other:[]
 };
 
@@ -1356,8 +1390,8 @@ function renderBikes(){
   el.innerHTML=D.bikes.map(b=>`<div class="bike-card">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
       <div>
-        <div class="bike-name">${b.brand} ${b.model}</div>
-        <div class="bike-meta">${b.year}${b.cc?' · '+b.cc+'cc':''}${b.plate?' · '+b.plate:''}</div>
+        <div class="bike-name">${b.fuelType==='electric'?'🔋 ':''}${b.brand} ${b.model}</div>
+        <div class="bike-meta">${b.year}${b.cc?' · '+b.cc+'cc':''}${b.fuelType==='electric'?' · Điện':''}${b.plate?' · '+b.plate:''}</div>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
         ${b.color?`<span class="tag-chip">${b.color}</span>`:''}
@@ -1407,17 +1441,21 @@ function deleteBike(id){
   if(!confirm('Bạn có muốn xóa xe này không?')) return;
   D.bikes=D.bikes.filter(b=>b.id!==id);
   save(); renderBikes(); renderDash();
+  scheduleConsumableAlerts();
 }
 
 function countAlerts(bike){ return bike.consumables.filter(c=>(bike.odometer-c.lastKm)/c.km>=0.8).length; }
 
 // 차량 등록 모달
 function resetBikeModal(){
-  bState={brand:'',model:'',year:0,cc:0};
-  clearPills('brand-pills');
+  bState={brand:'',model:'',year:0,cc:0,fuelType:'ice'};
+  clearPills('fuel-pills');
+  document.querySelector('#fuel-pills .pill').classList.add('selected');
+  document.getElementById('cc-step').style.display='block';
+  renderBrandPills('ice');
   document.getElementById('brand-custom').style.display='none';
   document.getElementById('brand-custom').value='';
-  document.getElementById('model-pills').innerHTML='<span style="font-size:15px;color:var(--text-muted);">제조사를 먼저 선택하세요</span>';
+  document.getElementById('model-pills').innerHTML='<span style="font-size:15px;color:var(--text-muted);">Chọn hãng xe trước</span>';
   document.getElementById('model-custom').style.display='none';
   document.getElementById('model-custom').value='';
   document.getElementById('cc-custom').style.display='none';
@@ -1436,6 +1474,31 @@ function resetBikeModal(){
   }
 }
 
+// Chọn loại nhiên liệu (xăng/điện) — thay đổi danh sách hãng xe và bước dung tích
+function selectFuelType(type,el){
+  clearPills('fuel-pills'); el.classList.add('selected');
+  bState.fuelType=type;
+  bState.brand=''; bState.model=''; bState.cc=0;
+  document.getElementById('cc-step').style.display=(type==='electric')?'none':'block';
+  document.getElementById('cc-custom').style.display='none';
+  document.getElementById('cc-custom').value='';
+  renderBrandPills(type);
+  document.getElementById('brand-custom').style.display='none';
+  document.getElementById('brand-custom').value='';
+  document.getElementById('model-pills').innerHTML='<span style="font-size:15px;color:var(--text-muted);">Chọn hãng xe trước</span>';
+  document.getElementById('model-custom').style.display='none';
+  document.getElementById('model-custom').value='';
+  document.getElementById('cat-preview').style.display='none';
+}
+
+const ICE_BRANDS=['Honda','Yamaha','Kawasaki','Suzuki','BMW','KTM','Ducati','Triumph','Royal Enfield','Harley'];
+const ELECTRIC_BRANDS=['VinFast','Dat Bike','Yadea','Pega','Selex'];
+function renderBrandPills(type){
+  const bp=document.getElementById('brand-pills');
+  const list=type==='electric'?ELECTRIC_BRANDS:ICE_BRANDS;
+  bp.innerHTML=list.map(b=>`<div class="pill" onclick="selectBrand('${b}',this)">${b}</div>`).join('')+`<div class="pill" onclick="selectBrand('other',this)">Khác...</div>`;
+}
+
 function selectBrand(brand,el){
   clearPills('brand-pills'); el.classList.add('selected');
   bState.brand=brand==='other'?'':brand;
@@ -1444,14 +1507,15 @@ function selectBrand(brand,el){
   else { custom.style.display='none'; }
   const mp=document.getElementById('model-pills');
   const mcustom=document.getElementById('model-custom');
-  const models=BRAND_MODELS[brand]||[];
+  const modelSource=bState.fuelType==='electric'?ELECTRIC_BRAND_MODELS:BRAND_MODELS;
+  const models=modelSource[brand]||[];
   mp.innerHTML=''; mcustom.style.display='none'; mcustom.value='';
   if(!models.length){ mcustom.style.display='block'; }
   else{
     models.forEach(m=>{
       const d=document.createElement('div');
-      const isOther=m.name.startsWith('Khác (250cc');
-      d.innerHTML=isOther?`<span>${m.name}</span>`:`<span>${m.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text-muted);margin-left:4px;">${m.cc}cc</span>`;
+      const isOther=m.name.startsWith('Khác');
+      d.innerHTML=(isOther||bState.fuelType==='electric')?`<span>${m.name}</span>`:`<span>${m.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text-muted);margin-left:4px;">${m.cc}cc</span>`;
       d.className='pill';
       d.onclick=()=>{
         clearPills('model-pills'); d.classList.add('selected');
@@ -1459,22 +1523,28 @@ function selectBrand(brand,el){
           mcustom.style.display='block'; mcustom.focus();
           bState.model=''; bState.cc=0;
           clearPills('cc-pills');
-          document.getElementById('cc-custom').style.display='block';
+          document.getElementById('cc-custom').style.display=(bState.fuelType==='electric')?'none':'block';
           document.getElementById('cat-preview').style.display='none';
         } else {
           mcustom.style.display='none';
           bState.model=m.name; bState.cc=m.cc;
-          clearPills('cc-pills');
-          document.getElementById('cc-custom').style.display='none';
-          document.getElementById('cc-custom').value='';
-          document.querySelectorAll('#cc-pills .pill').forEach(p=>{ if(parseInt(p.dataset.cc)===m.cc) p.classList.add('selected'); });
-          const cat=detectCategory(bState.brand,m.name);
-          const modelData=getModelIntervals(bState.brand, m.name);
           const prev=document.getElementById('cat-preview');
-          prev.innerHTML=modelData
-            ? `✅ <strong>Dữ liệu chính hãng</strong> — ${CAT_NAMES[cat]||cat}`
-            : `📋 ${CAT_NAMES[cat]||cat}`;
-          prev.style.display='block';
+          if(bState.fuelType==='electric'){
+            clearPills('cc-pills');
+            prev.innerHTML=`${CAT_NAMES['electric']}`;
+            prev.style.display='block';
+          } else {
+            clearPills('cc-pills');
+            document.getElementById('cc-custom').style.display='none';
+            document.getElementById('cc-custom').value='';
+            document.querySelectorAll('#cc-pills .pill').forEach(p=>{ if(parseInt(p.dataset.cc)===m.cc) p.classList.add('selected'); });
+            const cat=detectCategory(bState.brand,m.name);
+            const modelData=getModelIntervals(bState.brand, m.name);
+            prev.innerHTML=modelData
+              ? `✅ <strong>Dữ liệu chính hãng</strong> — ${CAT_NAMES[cat]||cat}`
+              : `📋 ${CAT_NAMES[cat]||cat}`;
+            prev.style.display='block';
+          }
         }
       };
       mp.appendChild(d);
@@ -1500,18 +1570,20 @@ function addBike(){
   const brand=bState.brand||document.getElementById('brand-custom').value.trim();
   const model=bState.model||document.getElementById('model-custom').value.trim();
   if(!brand||!model){ alert('Vui lòng chọn hoặc nhập hãng xe và dòng xe.'); return; }
-  const cc=bState.cc||parseInt(document.getElementById('cc-custom').value)||0;
+  const fuelType=bState.fuelType||'ice';
+  const cc=fuelType==='electric'?0:(bState.cc||parseInt(document.getElementById('cc-custom').value)||0);
   const odo=parseInt(document.getElementById('bike-odo').value)||0;
   D.bikes.push({
-    id:Date.now(), brand, model,
+    id:Date.now(), brand, model, fuelType,
     year:bState.year||new Date().getFullYear(),
     cc, odometer:odo,
     color:document.getElementById('bike-color').value,
     plate:document.getElementById('bike-plate').value,
     memo:'',
-    consumables:makeConsumables(brand,model)
+    consumables:makeConsumables(brand,model,fuelType)
   });
   save(); closeModal('m-bike'); renderDash(); renderBikes();
+  scheduleConsumableAlerts();
   showToast(`✓ Đã đăng ký ${brand} ${model}`);
 }
 
@@ -1541,6 +1613,7 @@ function saveEditBike(){
   bike.plate=document.getElementById('edit-bike-plate').value;
   bike.color=document.getElementById('edit-bike-color').value;
   save(); closeModal('m-edit-bike'); renderBikes(); renderDash();
+  scheduleConsumableAlerts();
   showToast(`✓ Đã cập nhật ${brand} ${model}`);
 }
 
@@ -1644,6 +1717,7 @@ function saveConsumable(){
   c.memo=document.getElementById('mc-memo').value;
   D.history.push({id:Date.now(),bikeId:bike.id,date,km:kmVal,type:'Thay phụ tùng',desc:c.name+' thay thế'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
   save(); closeModal('m-consumable'); renderConsumables(); renderDash();
+  scheduleConsumableAlerts();
   showToast(`✓ Đã lưu nhật ký thay ${c.name}`);
 }
 
@@ -1670,6 +1744,7 @@ function updateConsumable(){
   c.km=parseInt(document.getElementById('edit-c-interval').value)||c.km;
   c.memo=document.getElementById('edit-c-memo').value;
   save(); closeModal('m-edit-consumable'); renderConsumables();
+  scheduleConsumableAlerts();
   showToast('✓ Đã cập nhật thông tin phụ tùng');
 }
 
@@ -1777,6 +1852,7 @@ function updateOdometer(bikeId){
   if(newKm<bike.odometer){ if(!confirm(`현재(${bike.odometer.toLocaleString()} km).\nBạn có muốn tiếp tục không?`)) return; }
   const oldKm = bike.odometer;
   bike.odometer=newKm; save(); renderRiding(); renderDash();
+  scheduleConsumableAlerts();
   showToast(`✓ ${bike.brand} ${bike.model} · ${newKm.toLocaleString()} km đã cập nhật`);
 }
 
@@ -1890,6 +1966,7 @@ function importJSON(event){
       D=imported; save();
       showBackupToast('✓ Dữ liệu đã được khôi phục');
       renderBackupPage(); renderDash();
+      scheduleConsumableAlerts();
     } catch(err){ showBackupToast('✗ Định dạng file không hợp lệ','error'); }
   };
   reader.readAsText(file);
@@ -1903,6 +1980,7 @@ function confirmReset(){
   localStorage.removeItem('mg2-sample');
   showBackupToast('Dữ liệu đã được xóa','error');
   renderBackupPage(); renderDash(); renderBikes();
+  scheduleConsumableAlerts();
 }
 
 
@@ -1948,6 +2026,25 @@ function dismissInstall(){ document.getElementById('pwa-banner').classList.remov
 // ─────────────────────────────────────────
 function migrateConsumableIntervals() {
   D.bikes.forEach(bike => {
+    if (!bike.fuelType) bike.fuelType = 'ice';
+
+    if (bike.fuelType === 'electric') {
+      const intervals = CATEGORY_INTERVALS_ELECTRIC.electric;
+      bike.consumables = CONSUMABLES_ELECTRIC.map(con => {
+        const existing = (bike.consumables || []).find(e => e.id === con.id);
+        return {
+          ...con,
+          km: intervals[con.id] || con.km,
+          category: 'electric',
+          isOfficial: false,
+          lastKm:   existing ? (existing.lastKm   || 0)  : 0,
+          lastDate: existing ? (existing.lastDate  || '') : '',
+          memo:     existing ? (existing.memo      || '') : '',
+        };
+      });
+      return;
+    }
+
     const modelData = getModelIntervals(bike.brand, bike.model);
     const cat = detectCategory(bike.brand, bike.model);
     const intervals = modelData || CATEGORY_INTERVALS[cat];
@@ -1967,7 +2064,6 @@ function migrateConsumableIntervals() {
       };
     }).filter(Boolean);
 
-    // 항상 최신 데이터로 덮어씀
     bike.consumables = newConsumables;
   });
 
@@ -1975,10 +2071,146 @@ function migrateConsumableIntervals() {
   console.log('[MOTO] migrate done');
 }
 
+// ─────────────────────────────────────────
+//  Nhắc nhở bảo dưỡng phụ tùng (Capacitor LocalNotifications)
+// ─────────────────────────────────────────
+function requestNotificationPermission(){
+  try{
+    var LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+    if (LN && LN.requestPermissions) LN.requestPermissions().catch(function(){});
+  } catch(e){}
+}
+
+function _maintNotifId(bikeId, consumableId, urgent){
+  const s = String(bikeId)+'_'+consumableId;
+  let h = 0;
+  for (let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) | 0; }
+  h = Math.abs(h) % 100000;
+  return 3000000 + h*10 + (urgent?1:0);
+}
+
+function _atNineAm(daysFromNow){
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromNow);
+  d.setHours(9,0,0,0);
+  if (d.getTime() <= Date.now()) d.setDate(d.getDate()+1);
+  return d;
+}
+
+function scheduleConsumableAlerts(){
+  try{
+    var LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+    if (!LN) return;
+
+    const prevIds = JSON.parse(localStorage.getItem('mg2-scheduled-notif-ids') || '[]');
+    const cancelPrev = prevIds.length ? LN.cancel({notifications: prevIds.map(id=>({id}))}).catch(function(){}) : Promise.resolve();
+
+    const toSchedule = [];
+    D.bikes.forEach(bike=>{
+      (bike.consumables||[]).forEach(c=>{
+        if (!c.km) return;
+        const used = bike.odometer - c.lastKm;
+        const pct = Math.round(used/c.km*100);
+        if (pct>=100){
+          toSchedule.push({
+            id: _maintNotifId(bike.id, c.id, true),
+            title: `🚨 ${bike.brand} ${bike.model} — Cần thay ${getCName(c.id)}`,
+            body: 'Mục này đã quá chu kỳ bảo dưỡng. Hãy kiểm tra trong ứng dụng.',
+            schedule: {at: _atNineAm(1)},
+          });
+        } else if (pct>=80){
+          toSchedule.push({
+            id: _maintNotifId(bike.id, c.id, false),
+            title: `⚠ ${bike.brand} ${bike.model} — Sắp cần thay ${getCName(c.id)}`,
+            body: 'Mục này sắp đến kỳ thay thế.',
+            schedule: {at: _atNineAm(7)},
+          });
+        }
+      });
+    });
+
+    cancelPrev.finally(function(){
+      localStorage.setItem('mg2-scheduled-notif-ids', JSON.stringify(toSchedule.map(n=>n.id)));
+      if (toSchedule.length) LN.schedule({notifications: toSchedule}).catch(function(e){ console.warn('[MOTO] schedule failed', e); });
+    });
+  } catch(e){ console.warn('[MOTO] scheduleConsumableAlerts error', e); }
+
+  syncNotifyTarget();
+}
+
+// ─────────────────────────────────────────
+//  Thông báo thời tiết/bảo dưỡng hàng ngày từ máy chủ (Cloud Functions)
+//  ⚠ Thay bằng URL Cloud Function thực tế sau khi triển khai
+// ─────────────────────────────────────────
+const SYNC_ENDPOINT = 'https://us-central1-moto-garage-8da30.cloudfunctions.net/syncNotifyTarget';
+
+function getDeviceId(){
+  let id = localStorage.getItem('mg2-device-id');
+  if (!id){
+    id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('dev-'+Date.now()+'-'+Math.random().toString(36).slice(2));
+    localStorage.setItem('mg2-device-id', id);
+  }
+  return id;
+}
+
+function getConsumableSummary(){
+  let urgent=0, warn=0;
+  const urgentNames=[], warnNames=[];
+  D.bikes.forEach(bike=>{
+    (bike.consumables||[]).forEach(c=>{
+      if (!c.km) return;
+      const pct = Math.round((bike.odometer-c.lastKm)/c.km*100);
+      if (pct>=100){ urgent++; if(urgentNames.length<3) urgentNames.push(getCName(c.id)); }
+      else if (pct>=80){ warn++; if(warnNames.length<3) warnNames.push(getCName(c.id)); }
+    });
+  });
+  return {urgent, warn, urgentNames, warnNames};
+}
+
+function syncNotifyTarget(){
+  try{
+    const token = localStorage.getItem('mg2-fcm-token');
+    if (!token) return;
+    const lat = parseFloat(localStorage.getItem('mg2-last-lat'));
+    const lon = parseFloat(localStorage.getItem('mg2-last-lon'));
+    const payload = {
+      deviceId: getDeviceId(),
+      fcmToken: token,
+      lat: isNaN(lat) ? null : lat,
+      lon: isNaN(lon) ? null : lon,
+      lang: 'vn',
+      consumables: getConsumableSummary()
+    };
+    fetch(SYNC_ENDPOINT, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    }).catch(function(e){ console.warn('[MOTO] syncNotifyTarget fail', e); });
+  } catch(e){ console.warn('[MOTO] syncNotifyTarget error', e); }
+}
+
+function registerPushNotifications(){
+  try{
+    var PN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications;
+    if (!PN) return;
+    PN.requestPermissions().then(function(res){
+      if (res.receive !== 'granted') return;
+      PN.register();
+    }).catch(function(){});
+    PN.addListener('registration', function(token){
+      localStorage.setItem('mg2-fcm-token', token.value);
+      syncNotifyTarget();
+    });
+    PN.addListener('registrationError', function(err){
+      console.warn('[MOTO] FCM registration error', err);
+    });
+  } catch(e){ console.warn('[MOTO] registerPushNotifications error', e); }
+}
+
 // ═══════════════════════════════════════════
 //  Dữ liệu mẫu lần đầu khởi động
 // ═══════════════════════════════════════════
-const SAMPLE_BIKE_ID = 'sample-bike-1';
+const SAMPLE_BIKE_ID = 900000001;
 const SAMPLE_DATA_VN = {
   bikes:[{
     id:SAMPLE_BIKE_ID, brand:'Kawasaki', model:'Ninja ZX-10R',
@@ -2402,6 +2634,9 @@ function _sosDoSend(phone, body, mapsUrl) {
 // ═══════════════════════════════════════════
 window.addEventListener('load', function(){
   migrateConsumableIntervals(); // 기존 차량 공식 데이터 자동 적용
+  requestNotificationPermission();
+  registerPushNotifications();
+  scheduleConsumableAlerts();
   renderDash();
   renderSampleBanner();
   checkFirstLaunch();
@@ -2536,6 +2771,9 @@ async function showWeatherModal() {
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
       const { latitude: lat, longitude: lon } = pos.coords;
+      localStorage.setItem('mg2-last-lat', lat);
+      localStorage.setItem('mg2-last-lon', lon);
+      syncNotifyTarget();
       try {
         // 날씨 + AQI 동시 호출
         const [res, aqiRes] = await Promise.all([
@@ -2588,7 +2826,7 @@ function getRidingCondition(weather) {
   if (windSpeed > 10) return {
     level: 'caution', emoji: '💨',
     title: '⚠️ Cảnh báo gió mạnh',
-    tips: [`풍속 ${Math.round(windSpeed)}m/s — 고속도로 주행 자제`, 'Nắm chặt tay lái khi có gió ngang', 'Đặc biệt nguy hiểm khi đi cạnh xe tải lớn']
+    tips: [`Tốc độ gió ${Math.round(windSpeed)}m/s — hạn chế chạy trên đường cao tốc`, 'Nắm chặt tay lái khi có gió ngang', 'Đặc biệt nguy hiểm khi đi cạnh xe tải lớn']
   };
   if (humidity > 85) return {
     level: 'caution', emoji: '💧',
