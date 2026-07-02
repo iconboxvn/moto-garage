@@ -399,6 +399,16 @@ option{background:var(--surface2);}
   .medical-label{font-size:12px;color:var(--text-dim);}
   .medical-value{font-size:14px;font-weight:600;color:var(--text);}
 
+  /* ── More bottom sheet ── */
+  .more-sheet{background:var(--surface);border:1px solid var(--border-bright);border-radius:14px 14px 0 0;width:100%;max-width:460px;max-height:80vh;overflow-y:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
+  .more-sheet-handle{width:36px;height:4px;background:var(--border-bright);border-radius:2px;margin:10px auto 4px;}
+  .more-sheet-title{font-size:15px;font-weight:700;color:var(--text-dim);letter-spacing:1px;padding:8px 18px 14px;}
+  .more-sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 18px 18px;}
+  .more-sheet-tile{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px 12px;text-align:center;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
+  .more-sheet-tile:active{background:var(--surface3);}
+  .more-tile-icon{font-size:28px;display:block;margin-bottom:8px;}
+  .more-tile-label{font-size:13px;font-weight:700;color:var(--text);}
+
   /* ── FIRST LAUNCH WELCOME ── */
   .welcome-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:1100;align-items:center;justify-content:center;padding:20px;}
   .welcome-overlay.open{display:flex;}
@@ -449,9 +459,6 @@ option{background:var(--surface2);}
     <button class="nav-btn active" onclick="showPage('dashboard',this)">
       <span class="nav-icon">📊</span><span class="nav-label">Home</span><span class="nav-dot"></span>
     </button>
-    <button class="nav-btn" onclick="showPage('bikes',this)">
-      <span class="nav-icon">🏍</span><span class="nav-label">My Bikes</span><span class="nav-dot"></span>
-    </button>
     <button class="nav-btn" onclick="showPage('consumables',this)">
       <span class="nav-icon">🔧</span><span class="nav-label">Service</span><span class="nav-dot"></span>
     </button>
@@ -461,8 +468,8 @@ option{background:var(--surface2);}
     <button class="nav-btn" onclick="showPage('history',this)">
       <span class="nav-icon">📋</span><span class="nav-label">History</span><span class="nav-dot"></span>
     </button>
-    <button class="nav-btn" onclick="showPage('backup',this)">
-      <span class="nav-icon">☁️</span><span class="nav-label">Backup</span><span class="nav-dot"></span>
+    <button class="nav-btn" id="nav-more-btn" onclick="openModal('m-more')">
+      <span class="nav-icon">☰</span><span class="nav-label">More</span><span class="nav-dot"></span>
     </button>
   </nav>
 </div>
@@ -527,6 +534,13 @@ option{background:var(--surface2);}
   </div>
 
   <!-- 백업 -->
+  <!-- Ride History -->
+  <div class="page" id="page-rideHistory">
+    <div class="sec-header"><span class="sec-title">RIDE HISTORY</span><div class="sec-line"></div></div>
+    <div id="ride-history-list"></div>
+    <button class="btn btn-full" id="ride-history-more-btn" onclick="showMoreRideHistory()" style="display:none;margin-top:8px;">Load more</button>
+  </div>
+
   <div class="page" id="page-backup">
     <div class="sec-header"><span class="sec-title">DATA BACKUP</span><div class="sec-line"></div></div>
     <div class="card" style="margin-bottom:12px;">
@@ -1221,13 +1235,14 @@ function showPage(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
   if(name==='dashboard') renderDash();
   if(name==='bikes') renderBikes();
   if(name==='consumables') renderConsumables();
   if(name==='riding') renderRiding();
   if(name==='history') renderHistory();
   if(name==='backup') renderBackupPage();
+  if(name==='rideHistory') renderRideHistoryPage();
 }
 
 // ═══════════════════════════════════════════
@@ -1344,7 +1359,7 @@ function renderDash(){
     <div class="sec-header"><span class="sec-title">Consumable Status</span><div class="sec-line"></div></div>
     <div class="card" style="padding:6px 0;margin-bottom:14px;">
       ${consumableRows.map(({c,pct,remain,cls,fillColor,tag})=>`
-        <div style="padding:9px 14px;border-bottom:1px solid var(--border);" onclick="showPage('consumables',document.querySelector('.nav-btn:nth-child(3)'))">
+        <div style="padding:9px 14px;border-bottom:1px solid var(--border);" onclick="showPage('consumables',document.querySelector('.nav-btn:nth-child(2)'))">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
             <div style="display:flex;align-items:center;gap:7px;">
               <span style="font-size:16px;width:22px;text-align:center;">${c.icon}</span>
@@ -1844,6 +1859,74 @@ function renderRiding(){
       </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:15px;color:var(--green);">✓ 모든 소모품 양호</div>`}
     </div>`;
   }).join('');
+  renderRecentRides();
+}
+
+// Recent rides (max 5, newest first)
+function renderRecentRides(){
+  const el=document.getElementById('odo-cards');
+  if(!el) return;
+  const rides=(D.rides||[]).slice().sort((a,b)=>b.id-a.id).slice(0,5);
+  const html=`<div class="bike-card" style="margin-top:14px;">
+    <div style="font-size:16px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:10px;">🏁 Recent Rides</div>
+    ${rides.length?rides.map(r=>{
+      const bike=D.bikes.find(b=>b.id===r.bikeId);
+      return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:15px;color:var(--text);">${r.date} · ${r.startTime}~${r.endTime}</span>
+          <span style="font-size:15px;color:var(--accent);font-weight:700;">${r.distanceKm}km</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">${bike?bike.brand+' '+bike.model+' · ':''}Avg ${r.avgKmh}km/h · Top ${r.maxKmh}km/h</div>
+      </div>`;
+    }).join(''):`<div style="font-size:15px;color:var(--text-muted);">No rides recorded yet</div>`}
+  </div>`;
+  el.insertAdjacentHTML('beforeend', html);
+}
+
+// ═══════════════════════════════════════════
+//  Ride history page (full list, load-more pagination)
+// ═══════════════════════════════════════════
+var rideHistoryShown = 10;
+const RIDE_HISTORY_PAGE_SIZE = 10;
+
+function renderRideHistoryPage(){
+  rideHistoryShown = RIDE_HISTORY_PAGE_SIZE;
+  renderRideHistoryList();
+}
+
+function showMoreRideHistory(){
+  rideHistoryShown += RIDE_HISTORY_PAGE_SIZE;
+  renderRideHistoryList();
+}
+
+function renderRideHistoryList(){
+  const el=document.getElementById('ride-history-list');
+  const moreBtn=document.getElementById('ride-history-more-btn');
+  if(!el) return;
+  const all=(D.rides||[]).slice().sort((a,b)=>b.id-a.id);
+  const shown=all.slice(0, rideHistoryShown);
+  el.innerHTML = shown.length ? shown.map(r=>{
+    const bike=D.bikes.find(b=>b.id===r.bikeId);
+    return `<div class="bike-card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:15px;font-weight:700;color:var(--text);">${r.date} · ${r.startTime}~${r.endTime}</span>
+        <span style="font-size:17px;color:var(--accent);font-weight:700;">${r.distanceKm}km</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;color:var(--text-muted);">${bike?bike.brand+' '+bike.model+' · ':''}Avg ${r.avgKmh}km/h · Top ${r.maxKmh}km/h</span>
+        <button class="btn btn-sm btn-danger" onclick="deleteRide(${r.id})">Delete</button>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">No rides recorded yet</div></div>`;
+  if(moreBtn) moreBtn.style.display = (all.length > rideHistoryShown) ? 'block' : 'none';
+}
+
+function deleteRide(id){
+  if(!confirm('Delete this ride record?')) return;
+  D.rides=D.rides.filter(r=>r.id!==id);
+  save();
+  renderRideHistoryList();
+  showToast('✓ Ride record deleted');
 }
 
 function updateOdometer(bikeId){
@@ -2248,7 +2331,7 @@ function loadSampleData(){
 function skipSampleData(){
   localStorage.setItem('mg2-launched','1');
   document.getElementById('welcome-overlay').classList.remove('open');
-  showPage('bikes',document.querySelector('.nav-btn:nth-child(2)'));
+  showPage('bikes',document.getElementById('nav-more-btn'));
   setTimeout(()=>openModal('m-bike'),200);
 }
 function renderSampleBanner(){
@@ -2262,7 +2345,7 @@ function dismissSampleData(){
   save();
   localStorage.removeItem('mg2-sample');
   document.getElementById('sample-banner').style.display='none';
-  showPage('bikes',document.querySelector('.nav-btn:nth-child(2)'));
+  showPage('bikes',document.getElementById('nav-more-btn'));
   setTimeout(()=>openModal('m-bike'),200);
 }
 function resetFirstLaunch(){
@@ -2293,6 +2376,16 @@ function devTap(){
 //  RIDING / AUTO SOS
 // ═══════════════════════════════════════════
 var ridingState = {active: false};
+var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[]};
+
+function _haversineKm(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R*c;
+}
 var _sos = {
   phase: 'IDLE',
   speedOk: false,
@@ -2361,6 +2454,7 @@ function _doStartRiding() {
   if (Geo) Geo.requestPermissions().catch(function() {});
   ridingState.active = true;
   localStorage.setItem('mg2-riding', '1');
+  _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[]};
   _sos.phase = 'MONITORING';
   _sos.speedOk = false;
   _sosBufReset();
@@ -2373,6 +2467,7 @@ function _doStartRiding() {
 }
 
 function stopRiding() {
+  var summary = _buildRideSummary();
   ridingState.active = false;
   localStorage.removeItem('mg2-riding');
   _sosCountdownCancel();
@@ -2387,6 +2482,53 @@ function stopRiding() {
   if (R) R.stopForeground().catch(function() {});
   updateRidingBar();
   showToast('■ Riding stopped');
+  if (summary) {
+    saveRideRecord(summary);
+    showRideSummary(summary);
+  }
+}
+
+// Save ride record to D.rides (with date / start & end time)
+function saveRideRecord(s){
+  if (s.durationMs < 60000 && s.distanceKm < 0.05) return;
+  var startD = new Date(_ride.startTime);
+  var endD = new Date();
+  var fmtTime = d => d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:false});
+  D.rides.push({
+    id: Date.now(),
+    bikeId: (D.bikes.find(b=>b.id===dashSelectedBikeId) ? dashSelectedBikeId : (D.bikes[0] ? D.bikes[0].id : null)),
+    date: startD.toISOString().split('T')[0],
+    startTime: fmtTime(startD),
+    endTime: fmtTime(endD),
+    durationMs: s.durationMs,
+    distanceKm: Math.round(s.distanceKm*10)/10,
+    avgKmh: Math.round(s.avgKmh),
+    maxKmh: Math.round(s.maxKmh)
+  });
+  save();
+  renderRiding();
+}
+
+// Compute ride summary (distance / avg / top speed)
+function _buildRideSummary(){
+  if (!_ride || !_ride.startTime) return null;
+  var durationMs = Date.now() - _ride.startTime;
+  var distKm = _ride.distance;
+  var avgKmh = durationMs > 0 ? distKm / (durationMs/3600000) : 0;
+  return { durationMs: durationMs, distanceKm: distKm, avgKmh: avgKmh, maxKmh: _ride.maxSpeed };
+}
+
+function showRideSummary(s){
+  if (s.durationMs < 60000 && s.distanceKm < 0.05) return;
+  var h = Math.floor(s.durationMs/3600000);
+  var m = Math.floor((s.durationMs%3600000)/60000);
+  document.getElementById('ride-summary-duration').textContent = h>0 ? `${h}h ${m}min` : `${m}min`;
+  document.getElementById('ride-summary-distance').textContent = s.distanceKm.toFixed(1)+' km';
+  document.getElementById('ride-summary-avg').textContent = Math.round(s.avgKmh)+' km/h';
+  document.getElementById('ride-summary-max').textContent = Math.round(s.maxKmh)+' km/h';
+  var note = document.getElementById('ride-summary-note');
+  if (note) note.style.display = (s.distanceKm===0 && s.maxKmh===0) ? 'block' : 'none';
+  openModal('m-ride-summary');
 }
 
 function _sosBufReset() {
@@ -2397,15 +2539,42 @@ function _sosGPSStart() {
   if (!navigator.geolocation) return;
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
+      var now = Date.now();
       var spd = p.coords.speed;
       if (spd !== null && spd !== undefined) {
         _sos.speedOk = (spd * 3.6) >= _MIN_SPD;
+        var kmh = spd * 3.6;
+        if (kmh < 300) _rideTrackSpeed(kmh, now);
       }
+      var lat = p.coords.latitude, lon = p.coords.longitude;
+      if (_ride.lastLat !== null) {
+        var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
+        var dtH = (now - _ride.lastT) / 3600000;
+        var instKmh = dtH > 0 ? dKm / dtH : 0;
+        if (instKmh < 300) _ride.distance += dKm;
+      }
+      _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
     },
     function(err) { console.warn('[SOS] GPS error', err.code, err.message); },
     {enableHighAccuracy: true, maximumAge: 2000}
   );
+}
+
+// Top-speed filters: outlier rejection + persistence check
+function _rideTrackSpeed(kmh, now){
+  if (_ride.lastAcceptedKmh !== null) {
+    var dtSec = (now - _ride.lastAcceptedT) / 1000;
+    var deltaPerSec = dtSec > 0 ? Math.abs(kmh - _ride.lastAcceptedKmh) / dtSec : 0;
+    if (deltaPerSec > 40) return;
+  }
+  _ride.lastAcceptedKmh = kmh;
+  _ride.lastAcceptedT = now;
+
+  _ride.speedBuf.push({kmh: kmh, t: now});
+  _ride.speedBuf = _ride.speedBuf.filter(function(r){ return now - r.t < 4000; });
+  var nearCount = _ride.speedBuf.filter(function(r){ return Math.abs(r.kmh - kmh) < 5; }).length;
+  if (nearCount >= 2 && kmh > _ride.maxSpeed) _ride.maxSpeed = kmh;
 }
 
 function _updateRidingSpeedUI() {
@@ -2621,6 +2790,7 @@ function _sosDoSend(phone, body, mapsUrl) {
 (function() {
   if (localStorage.getItem('mg2-riding')) {
     ridingState.active = true;
+    if (!_ride.startTime) _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[]};
     _sos.phase = 'MONITORING';
     _sosGPSStart();
     _sosMotionStart();
@@ -2768,29 +2938,45 @@ async function showWeatherModal() {
     return;
   }
 
+  // A. Show weather instantly from last cached position
+  var cachedLat = parseFloat(localStorage.getItem('mg2-last-lat'));
+  var cachedLon = parseFloat(localStorage.getItem('mg2-last-lon'));
+  var shownFromCache = false;
+  if (!isNaN(cachedLat) && !isNaN(cachedLon)) {
+    shownFromCache = true;
+    _fetchAndRenderWeather(cachedLat, cachedLon).catch(function(){ shownFromCache = false; });
+  }
+
+  // B. Refresh GPS in background (reuse OS-cached fix up to 10min, low accuracy for speed)
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
       const { latitude: lat, longitude: lon } = pos.coords;
       localStorage.setItem('mg2-last-lat', lat);
       localStorage.setItem('mg2-last-lon', lon);
       syncNotifyTarget();
-      try {
-        // 날씨 + AQI 동시 호출
-        const [res, aqiRes] = await Promise.all([
-          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=en`),
-          fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`)
-        ]);
-        const data = await res.json();
-        const aqiData = await aqiRes.json();
-        if (data.cod !== 200) throw new Error(data.message);
-        renderWeather(data, aqiData);
-      } catch(e) {
-        showWeatherError('Could not load weather');
+      if (shownFromCache) {
+        var moved = _haversineKm(cachedLat, cachedLon, lat, lon);
+        if (moved < 1) return;
       }
+      _fetchAndRenderWeather(lat, lon).catch(function(){
+        if (!shownFromCache) showWeatherError('Could not load weather');
+      });
     },
-    () => closeModal('m-weather'),
-    { timeout: 8000 }
+    () => { if (!shownFromCache) closeModal('m-weather'); },
+    { timeout: 8000, maximumAge: 600000, enableHighAccuracy: false }
   );
+}
+
+// Fetch weather/AQI for coordinates and render
+async function _fetchAndRenderWeather(lat, lon) {
+  const [res, aqiRes] = await Promise.all([
+    fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=en`),
+    fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`)
+  ]);
+  const data = await res.json();
+  const aqiData = await aqiRes.json();
+  if (data.cod !== 200) throw new Error(data.message);
+  renderWeather(data, aqiData);
 }
 
 function getRidingCondition(weather) {
@@ -3242,6 +3428,59 @@ function renderMedicalCard(){
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('m-sms-perm');_doStartRiding();">Skip</button>
       <button class="btn btn-primary" onclick="closeModal('m-sms-perm');_requestSmsAndStart();">Allow</button>
+    </div>
+  </div>
+</div>
+
+<!-- More bottom sheet -->
+<div class="modal-overlay" id="m-more" style="align-items:flex-end;padding:0;">
+  <div class="more-sheet">
+    <div class="more-sheet-handle"></div>
+    <div class="more-sheet-title">All Menu</div>
+    <div class="more-sheet-grid">
+      <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('bikes',document.getElementById('nav-more-btn'));">
+        <span class="more-tile-icon">🏍</span><span class="more-tile-label">My Bikes</span>
+      </div>
+      <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('rideHistory',document.getElementById('nav-more-btn'));">
+        <span class="more-tile-icon">🏁</span><span class="more-tile-label">Ride History</span>
+      </div>
+      <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('backup',document.getElementById('nav-more-btn'));">
+        <span class="more-tile-icon">☁️</span><span class="more-tile-label">Backup</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ride summary modal -->
+<div class="modal-overlay" id="m-ride-summary">
+  <div class="modal" style="max-width:320px;">
+    <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
+      <div style="font-size:44px;margin-bottom:10px;">🏁</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:18px;">Ride Summary</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;">
+        <div>
+          <div style="font-size:11px;color:var(--text-dim);">Duration</div>
+          <div id="ride-summary-duration" style="font-size:18px;font-weight:700;color:var(--text);">-</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-dim);">Distance</div>
+          <div id="ride-summary-distance" style="font-size:18px;font-weight:700;color:var(--text);">-</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-dim);">Avg speed</div>
+          <div id="ride-summary-avg" style="font-size:18px;font-weight:700;color:var(--text);">-</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-dim);">Top speed</div>
+          <div id="ride-summary-max" style="font-size:18px;font-weight:700;color:var(--accent);">-</div>
+        </div>
+      </div>
+      <div id="ride-summary-note" style="display:none;margin-top:16px;font-size:11px;color:var(--text-dim);line-height:1.6;">
+        ⚠ Weak GPS signal — accurate ride data could not be recorded.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" style="width:100%;" onclick="closeModal('m-ride-summary')">OK</button>
     </div>
   </div>
 </div>
