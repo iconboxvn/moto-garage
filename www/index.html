@@ -308,6 +308,35 @@ option{background:var(--surface2);}
     display:flex;align-items:center;gap:4px;
   }
   .weather-body { padding:0 18px 16px; }
+
+  /* ── 시간대별 예보 accordion ── */
+  .forecast-toggle {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 18px;cursor:pointer;user-select:none;
+    border-top:1px solid var(--border);margin-top:2px;
+  }
+  .forecast-toggle-label {
+    font-size:14px;font-weight:700;color:var(--text-dim);letter-spacing:0.5px;
+  }
+  .forecast-toggle-arrow {
+    font-size:13px;color:var(--text-muted);transition:transform 0.25s;
+  }
+  .forecast-toggle-arrow.open { transform:rotate(180deg); }
+  .forecast-list {
+    display:none;padding:6px 18px 14px;
+  }
+  .forecast-list.open { display:block; }
+  .forecast-row {
+    display:flex;align-items:center;gap:10px;
+    padding:7px 0;border-bottom:1px solid var(--border);
+    font-size:14px;
+  }
+  .forecast-row:last-child { border-bottom:none; }
+  .forecast-time { width:36px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;flex-shrink:0; }
+  .forecast-icon { font-size:18px;width:22px;text-align:center;flex-shrink:0; }
+  .forecast-temp { font-weight:700;color:var(--text);width:40px; }
+  .forecast-desc { color:var(--text-muted);font-size:13px;flex:1; }
+  .forecast-warn { color:#E84040;font-size:12px;font-weight:700; }
   .riding-condition {
     border-radius:8px;padding:14px;margin-bottom:10px;
   }
@@ -3231,16 +3260,18 @@ async function showWeatherModal() {
   );
 }
 
-// 좌표 → 날씨/AQI 조회 후 렌더링
+// 좌표 → 날씨/AQI/시간대예보 조회 후 렌더링
 async function _fetchAndRenderWeather(lat, lon) {
-  const [res, aqiRes] = await Promise.all([
+  const [res, aqiRes, fcRes] = await Promise.all([
     fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=kr`),
-    fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`)
+    fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`),
+    fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric&lang=kr&cnt=8`)
   ]);
   const data = await res.json();
   const aqiData = await aqiRes.json();
+  const fcData = await fcRes.json();
   if (data.cod !== 200) throw new Error(data.message);
-  renderWeather(data, aqiData);
+  renderWeather(data, aqiData, fcData);
 }
 
 function getRidingCondition(weather) {
@@ -3347,7 +3378,7 @@ function getWeatherDescKo(id) {
   return map[id] || '흐림';
 }
 
-function renderWeather(data, aqiData) {
+function renderWeather(data, aqiData, fcData) {
   const cond = getRidingCondition(data);
   const icon = getWeatherIcon(data.weather[0].id);
   const temp = Math.round(data.main.temp);
@@ -3369,6 +3400,41 @@ function renderWeather(data, aqiData) {
       </div>
       <div class="aqi-value" style="color:${aqi.color};">PM2.5<br>${aqi.pm25}㎍</div>
     </div>` : '';
+
+  // 시간대별 예보 HTML (현재 시각 이후만, 오늘 날짜만)
+  let forecastHtml = '';
+  if (fcData && fcData.list) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const nowHour = new Date().getHours();
+    const rows = fcData.list.filter(item => {
+      const d = new Date(item.dt * 1000);
+      return d.toISOString().split('T')[0] === todayStr && d.getHours() >= nowHour;
+    });
+    if (rows.length) {
+      const rowsHtml = rows.map(item => {
+        const d = new Date(item.dt * 1000);
+        const h = String(d.getHours()).padStart(2,'0');
+        const id = item.weather[0].id;
+        const ico = getWeatherIcon(id);
+        const t = Math.round(item.main.temp);
+        const dsc = getWeatherDescKo(id);
+        const isRain = id >= 200 && id < 700;
+        const warn = isRain ? `<span class="forecast-warn">⚠ ${dsc}</span>` : `<span class="forecast-desc">${dsc}</span>`;
+        return `<div class="forecast-row">
+          <span class="forecast-time">${h}시</span>
+          <span class="forecast-icon">${ico}</span>
+          <span class="forecast-temp">${t}°C</span>
+          ${warn}
+        </div>`;
+      }).join('');
+      forecastHtml = `
+        <div class="forecast-toggle" onclick="toggleForecast(this)">
+          <span class="forecast-toggle-label">⏱ 오늘 시간대별 예보</span>
+          <span class="forecast-toggle-arrow">▼</span>
+        </div>
+        <div class="forecast-list">${rowsHtml}</div>`;
+    }
+  }
 
   document.getElementById('weather-content').innerHTML = `
     <div class="weather-header">
@@ -3395,9 +3461,15 @@ function renderWeather(data, aqiData) {
           ${cond.tips.map(t => `<div class="riding-tip-item"><span>·</span><span>${t}</span></div>`).join('')}
         </div>
       </div>
-    </div>`;
+    </div>
+    ${forecastHtml}`;
 
   document.getElementById('weather-footer').style.display = 'flex';
+}
+
+function toggleForecast(el) {
+  el.querySelector('.forecast-toggle-arrow').classList.toggle('open');
+  el.nextElementSibling.classList.toggle('open');
 }
 
 function showWeatherError(msg) {
