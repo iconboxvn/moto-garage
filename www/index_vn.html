@@ -65,6 +65,19 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 /* BIKE CARD */
 .bike-card{background:linear-gradient(135deg,#181a1d 0%,#101214 100%);border:1px solid var(--border-bright);border-radius:8px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;}
 .bike-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent) 0%,transparent 70%);}
+  /* ── Insurance section ── */
+  .ins-section{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;}
+  .ins-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+  .ins-title{font-size:15px;color:var(--text-dim);}
+  .ins-body{margin-top:10px;}
+  .ins-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .ins-label{font-size:15px;color:var(--text-muted);}
+  .ins-value{font-size:15px;font-weight:700;color:var(--text);}
+  .ins-dday-ok{color:var(--green);font-size:15px;font-weight:700;}
+  .ins-dday-warn{color:#E8A020;font-size:15px;font-weight:700;}
+  .ins-dday-danger{color:#E84040;font-size:15px;font-weight:700;}
+  .ins-btn-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .ins-loading{font-size:15px;color:var(--text-muted);padding:8px 0;}
 .bike-name{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;line-height:1;}
 .bike-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);margin-top:3px;}
 .bstat-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);}
@@ -1451,9 +1464,18 @@ function renderBikes(){
         <div class="bstat-lbl">Cảnh báo</div>
       </div>
     </div>
+    <div class="ins-section">
+      <div class="ins-header" onclick="toggleInsSection(${b.id})">
+        <span class="ins-title">🛡 Đăng ký bảo hiểm${b.insurance?.expiry?' · '+b.insurance.expiry:''}</span>
+        <span id="ins-arrow-${b.id}" style="font-size:11px;color:var(--text-muted);">▼</span>
+      </div>
+      <div id="ins-body-${b.id}" style="display:none;">
+        ${_renderInsBody(b)}
+      </div>
+    </div>
     <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;">
       <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleBikeMemo(${b.id})">
-        <span style="font-size:13px;color:var(--text-dim);">📝 Ghi chú${b.memo?' · '+b.memo.length+' ký tự':''}</span>
+        <span style="font-size:15px;color:var(--text-dim);">📝 Ghi chú${b.memo?' · '+b.memo.length+' ký tự':''}</span>
         <span id="memo-arrow-${b.id}" style="font-size:11px;color:var(--text-muted);">${b.memo?'▲':'▼'}</span>
       </div>
       <div id="memo-box-${b.id}" style="display:${b.memo?'block':'none'};margin-top:8px;">
@@ -1480,6 +1502,202 @@ function autoSaveBikeMemo(id){
     save();
   }, 500);
 }
+// ═══════════════════════════════════════════
+//  Bảo hiểm xe
+// ═══════════════════════════════════════════
+function toggleInsSection(id){
+  const body=document.getElementById('ins-body-'+id);
+  const arrow=document.getElementById('ins-arrow-'+id);
+  const open=body.style.display==='block';
+  body.style.display=open?'none':'block';
+  arrow.textContent=open?'▼':'▲';
+}
+
+function _renderInsBody(b){
+  const ins=b.insurance||{};
+  const dDayHtml=_insDDay(ins.expiry);
+  return `<div class="ins-body">
+    <p style="font-size:15px;color:var(--text-muted);margin:0 0 10px 0;line-height:1.6;">
+      Đăng ký giấy chứng nhận bảo hiểm dạng PDF hoặc ảnh, chúng tôi sẽ tự động nhắc nhở bạn trước khi hết hạn.<br>
+      <span style="font-size:13px;">(Nhắc 1 lần trước 14 ngày, nhắc hàng ngày từ 7 ngày trước)</span>
+    </p>
+    ${ins.expiry?`
+    <div class="ins-row"><span class="ins-label">Công ty BH</span><span class="ins-value">${ins.insurer||'-'}</span></div>
+    <div class="ins-row"><span class="ins-label">Loại BH</span><span class="ins-value">${ins.type||'-'}</span></div>
+    <div class="ins-row"><span class="ins-label">Ngày hết hạn</span><span class="ins-value">${ins.expiry}</span></div>
+    <div class="ins-row"><span class="ins-label">Còn lại</span>${dDayHtml}</div>
+    ${ins.personLimit?`<div class="ins-row"><span class="ins-label">Giới hạn người</span><span class="ins-value">${ins.personLimit}</span></div>`:''}
+    ${ins.propertyLimit?`<div class="ins-row"><span class="ins-label">Giới hạn tài sản</span><span class="ins-value">${ins.propertyLimit}</span></div>`:''}
+    ${ins.plateNumber?`<div class="ins-row"><span class="ins-label">Biển số xe</span><span class="ins-value">${ins.plateNumber}</span></div>`:''}
+    `:''}
+    <div class="ins-btn-row">
+      <button class="btn btn-sm" onclick="insRegisterPDF(${b.id})">📄 Đăng ký PDF</button>
+      <button class="btn btn-sm" onclick="insRegisterPhoto(${b.id})">📷 Chụp ảnh</button>
+      <button class="btn btn-sm" onclick="insDateOnly(${b.id})">📅 Nhập thủ công</button>
+      ${ins.expiry?`<button class="btn btn-sm btn-danger" onclick="insDelete(${b.id})">Xóa</button>`:''}
+    </div>
+    <div id="ins-loading-${b.id}" class="ins-loading" style="display:none;">⏳ Đang phân tích ngày hết hạn...</div>
+    ${ins.expiry?`<div style="margin-top:8px;">
+      <span style="font-size:15px;color:var(--text-muted);">Sửa ngày hết hạn: </span>
+      <input type="date" id="ins-date-${b.id}" value="${ins.expiry||''}"
+        style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:2px 6px;"
+        onchange="insManualDate(${b.id},this.value)">
+    </div>`:''}
+  </div>`;
+}
+
+function _insDDay(expiry){
+  if(!expiry) return '<span class="ins-label">-</span>';
+  const diff=Math.ceil((new Date(expiry)-new Date())/86400000);
+  if(diff<0) return `<span class="ins-dday-danger">Đã hết hạn (D+${Math.abs(diff)})</span>`;
+  if(diff<=7) return `<span class="ins-dday-danger">D-${diff} ⚠ Sắp hết hạn</span>`;
+  if(diff<=14) return `<span class="ins-dday-warn">D-${diff} Cần gia hạn</span>`;
+  return `<span class="ins-dday-ok">D-${diff}</span>`;
+}
+
+async function insRegisterPDF(bikeId){
+  try{
+    const input=document.createElement('input');
+    input.type='file'; input.accept='application/pdf';
+    input.onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file) return;
+      _insShowLoading(bikeId,true);
+      await _insExtractExpiry(bikeId,file,'pdf');
+      _insShowLoading(bikeId,false);
+    };
+    input.click();
+  } catch(err){ console.warn('[INS] PDF error',err); showToast('Lỗi khi đăng ký PDF'); }
+}
+
+async function insRegisterPhoto(bikeId){
+  try{
+    const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
+    if(!Camera){ showToast('Không thể dùng camera'); return; }
+    const photo=await Camera.getPhoto({quality:90,allowEditing:false,resultType:'base64',source:'CAMERA'});
+    _insShowLoading(bikeId,true);
+    await _insExtractExpiryFromBase64(bikeId,photo.base64String,'image/jpeg',null);
+    _insShowLoading(bikeId,false);
+  } catch(err){ _insShowLoading(bikeId,false); if(err.message!=='User cancelled photos app') showToast('Đã xảy ra lỗi camera'); }
+}
+
+function insDelete(bikeId){
+  if(!confirm('Xóa thông tin bảo hiểm?')) return;
+  const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  bike.insurance={};save();scheduleInsuranceAlerts();
+  renderBikes();showToast('✓ Đã xóa thông tin bảo hiểm');
+}
+
+function insManualDate(bikeId,val){
+  const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  if(!bike.insurance) bike.insurance={};
+  bike.insurance.expiry=val;save();scheduleInsuranceAlerts();
+  renderBikes();showToast('✓ Đã cập nhật ngày hết hạn');
+}
+
+function insDateOnly(bikeId){
+  const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  const current=(bike.insurance?.expiry||'').replace(/-/g,'');
+  const val=prompt('Nhập ngày hết hạn bảo hiểm (ví dụ: 20261219)',current);
+  if(!val) return;
+  const digits=val.replace(/\D/g,'');
+  if(digits.length!==8){ showToast('Vui lòng nhập 8 chữ số (ví dụ: 20261219)'); return; }
+  const formatted=`${digits.slice(0,4)}-${digits.slice(4,6)}-${digits.slice(6,8)}`;
+  if(!bike.insurance) bike.insurance={};
+  bike.insurance.expiry=formatted;save();scheduleInsuranceAlerts();
+  renderBikes();showToast('✓ Đã đăng ký ngày hết hạn: '+formatted);
+}
+
+const ANTHROPIC_PROXY='https://us-central1-moto-garage-8da30.cloudfunctions.net/anthropicProxy';
+
+async function _insExtractExpiry(bikeId,file,type){
+  try{
+    const mediaType=type==='pdf'?'application/pdf':'image/jpeg';
+    const dataUrl=await _fileToBase64(file);
+    const base64=dataUrl.includes(',')?dataUrl.split(',')[1]:dataUrl;
+    await _insExtractExpiryFromBase64(bikeId,base64,mediaType,null);
+  } catch(e){ console.warn('[INS] error',e); showToast('Trích xuất thất bại. Vui lòng nhập thủ công.'); }
+}
+
+async function _insExtractExpiryFromBase64(bikeId,base64,mediaType,filePath){
+  try{
+    const pureBase64=base64.includes(',')?base64.split(',')[1]:base64;
+    const contentType=mediaType==='application/pdf'?'document':'image';
+    const res=await fetch(ANTHROPIC_PROXY,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:400,
+        messages:[{role:'user',content:[
+          {type:contentType,source:{type:'base64',media_type:mediaType,data:pureBase64}},
+          {type:'text',text:'Đây là giấy chứng nhận bảo hiểm. Trích xuất thông tin sau và chỉ trả lời bằng JSON.\n{"expiry":"ngày hết hạn YYYY-MM-DD","insurer":"tên công ty bảo hiểm","type":"loại bảo hiểm","personLimit":"giới hạn bồi thường người hoặc null","propertyLimit":"giới hạn bồi thường tài sản hoặc null","plateNumber":"biển số xe hoặc null"}'}
+        ]}]
+      })
+    });
+    const data=await res.json();
+    const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
+    let parsed=null;
+    try{ const clean=text.replace(/```json|```/g,'').trim(); parsed=JSON.parse(clean); } catch(e){}
+    if(parsed&&parsed.expiry&&parsed.expiry.match(/\d{4}-\d{2}-\d{2}/)){
+      const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+      bike.insurance={expiry:parsed.expiry,insurer:parsed.insurer||null,type:parsed.type||null,personLimit:parsed.personLimit||null,propertyLimit:parsed.propertyLimit||null,plateNumber:parsed.plateNumber||null};
+      save();scheduleInsuranceAlerts();
+      renderBikes();showToast('✓ Đã đăng ký thông tin bảo hiểm (Hết hạn: '+parsed.expiry+')');
+    } else {
+      showToast('Không tìm thấy ngày hết hạn. Vui lòng nhập thủ công.');renderBikes();
+    }
+  } catch(e){ console.warn('[INS] proxy error',e); showToast('Trích xuất thất bại. Vui lòng nhập thủ công.'); renderBikes(); }
+}
+
+function _insShowLoading(bikeId,show){
+  const el=document.getElementById('ins-loading-'+bikeId);
+  if(el) el.style.display=show?'block':'none';
+}
+
+function _fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=()=>rej(new Error('Đọc file thất bại'));
+    r.readAsDataURL(file);
+  });
+}
+
+function scheduleInsuranceAlerts(){
+  try{
+    var LN=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;
+    if(!LN) return;
+    const prevIds=JSON.parse(localStorage.getItem('mg2-ins-notif-ids')||'[]');
+    const cancel=prevIds.length?LN.cancel({notifications:prevIds.map(id=>({id}))}).catch(()=>{}):Promise.resolve();
+    const toSchedule=[];
+    D.bikes.forEach(bike=>{
+      const expiry=bike.insurance?.expiry; if(!expiry) return;
+      const exp=new Date(expiry); exp.setHours(9,0,0,0);
+      const now=new Date();
+      const d14=new Date(exp); d14.setDate(d14.getDate()-14);
+      if(d14>now) toSchedule.push({
+        id:5000000+bike.id%100000,
+        title:`🛡 ${bike.brand} ${bike.model} — Bảo hiểm hết hạn sau 14 ngày`,
+        body:`Hết hạn ${expiry}. Vui lòng gia hạn sớm.`,
+        schedule:{at:d14}
+      });
+      for(let i=7;i>=0;i--){
+        const d=new Date(exp); d.setDate(d.getDate()-i);
+        if(d>now) toSchedule.push({
+          id:5100000+bike.id%100000+i,
+          title:`🛡 ${bike.brand} ${bike.model} — Bảo hiểm D-${i||'DAY'}`,
+          body:i===0?'Bảo hiểm hết hạn hôm nay!':`Còn ${i} ngày. Vui lòng gia hạn.`,
+          schedule:{at:d}
+        });
+      }
+    });
+    cancel.finally(()=>{
+      localStorage.setItem('mg2-ins-notif-ids',JSON.stringify(toSchedule.map(n=>n.id)));
+      if(toSchedule.length) LN.schedule({notifications:toSchedule}).catch(e=>console.warn('[INS] schedule fail',e));
+    });
+  } catch(e){ console.warn('[INS] scheduleInsuranceAlerts error',e); }
+}
+
 
 function deleteBike(id){
   if(!confirm('Bạn có muốn xóa xe này không?')) return;
@@ -2836,6 +3054,7 @@ window.addEventListener('load', function(){
   requestNotificationPermission();
   registerPushNotifications();
   scheduleConsumableAlerts();
+  scheduleInsuranceAlerts();
   renderDash();
   renderSampleBanner();
   checkFirstLaunch();

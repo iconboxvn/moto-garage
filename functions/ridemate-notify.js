@@ -22,7 +22,39 @@ const db = admin.firestore();
 
 // Firebase Secret Manager에 저장해서 사용 (하드코딩 금지)
 //   firebase functions:secrets:set OWM_KEY
+//   firebase functions:secrets:set ANTHROPIC_KEY
 const OWM_KEY = defineSecret('OWM_KEY');
+const ANTHROPIC_KEY = defineSecret('ANTHROPIC_KEY');
+
+// ─────────────────────────────────────────
+//  0) Anthropic API 프록시
+//     (앱 WebView의 CORS 제한 우회 — 보험증 만료일 자동 추출용)
+// ─────────────────────────────────────────
+exports.anthropicProxy = onRequest(
+  { cors: true, secrets: [ANTHROPIC_KEY] },
+  async (req, res) => {
+    if (req.method !== 'POST') {
+      res.status(405).send({ error: 'POST only' });
+      return;
+    }
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_KEY.value(),
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify(req.body),
+      });
+      const data = await response.json();
+      res.status(response.status).json(data);
+    } catch (e) {
+      console.error('[anthropicProxy]', e);
+      res.status(500).json({ error: 'proxy error' });
+    }
+  }
+);
 
 // ─────────────────────────────────────────
 //  1) 클라이언트 → 알림 대상 정보 동기화
