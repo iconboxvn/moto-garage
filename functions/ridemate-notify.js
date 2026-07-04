@@ -248,6 +248,7 @@ exports.dailyWeatherPush = onSchedule(
     const jobs = snap.docs.map(async (doc) => {
       const t = doc.data();
       if (!t.fcmToken) return;
+      if (t.dailyNotif === false) return; // 데일리 알림 OFF
 
       const lang = AQI_LABELS[t.lang] ? t.lang : 'ko';
       let title, body, color;

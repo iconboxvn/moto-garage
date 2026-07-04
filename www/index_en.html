@@ -78,6 +78,18 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
   .ins-dday-danger{color:#E84040;font-size:15px;font-weight:700;}
   .ins-btn-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
   .ins-loading{font-size:15px;color:var(--text-muted);padding:8px 0;}
+  /* ── Settings toggle switch ── */
+  .setting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+  .setting-row:last-child{border-bottom:none;}
+  .setting-label{font-size:15px;color:var(--text);}
+  .setting-desc{font-size:12px;color:var(--text-muted);margin-top:2px;}
+  .toggle-wrap{position:relative;width:46px;height:26px;flex-shrink:0;}
+  .toggle-wrap input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--border-bright);border-radius:26px;transition:.25s;}
+  .toggle-slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.25s;}
+  .toggle-wrap input:checked + .toggle-slider{background:var(--accent);}
+  .toggle-wrap input:checked + .toggle-slider:before{transform:translateX(20px);}
+  .setting-section-title{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin:16px 0 6px;}
 .bike-name{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;line-height:1;}
 .bike-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);margin-top:3px;}
 .bstat-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);}
@@ -584,8 +596,40 @@ option{background:var(--surface2);}
   </div>
 
   <div class="page" id="page-backup">
-    <div class="sec-header"><span class="sec-title">DATA BACKUP</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">SETTINGS</span><div class="sec-line"></div></div>
     <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">🌐 Language</div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button id="lang-btn-ko" class="btn btn-sm" onclick="setAppLang('ko',this)" style="flex:1;">🇰🇷 한국어</button>
+        <button id="lang-btn-vn" class="btn btn-sm" onclick="setAppLang('vn',this)" style="flex:1;">🇻🇳 Tiếng Việt</button>
+        <button id="lang-btn-en" class="btn btn-sm" onclick="setAppLang('en',this)" style="flex:1;">🇺🇸 English</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">Notifications will be sent in your selected language</div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">🔔 Notifications</div>
+      <div class="setting-row">
+        <div><div class="setting-label">Daily Weather Alert</div><div class="setting-desc">Weather & riding tips every morning at 8am</div></div>
+        <label class="toggle-wrap"><input type="checkbox" id="notif-daily" onchange="saveNotifSettings()" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Parts Replacement Alert</div><div class="setting-desc">Notify when service interval is approaching</div></div>
+        <label class="toggle-wrap"><input type="checkbox" id="notif-consumable" onchange="saveNotifSettings()" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Insurance Expiry Alert</div><div class="setting-desc">14 days before & daily from 7 days before</div></div>
+        <label class="toggle-wrap"><input type="checkbox" id="notif-insurance" onchange="saveNotifSettings()" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">🌤 Weather</div>
+      <div class="setting-row">
+        <div><div class="setting-label">Auto-show weather on launch</div><div class="setting-desc">Show weather modal when opening app</div></div>
+        <label class="toggle-wrap"><input type="checkbox" id="notif-weather-auto" onchange="saveNotifSettings()" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">💾 Data Management</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
         <div style="font-size:22px;">📁</div>
         <div><div style="font-weight:700;font-size:14px;">Manual Backup / Restore</div>
@@ -597,11 +641,8 @@ option{background:var(--surface2);}
         <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
       </div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:10px;">Save the exported file somewhere safe</div>
-    </div>
-    <div class="card">
-      <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:12px;">CURRENT DATA</div>
-      <div id="backup-stats"></div>
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <div id="backup-stats" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"></div>
+      <div style="margin-top:14px;">
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 Reset All Data</button>
       </div>
     </div>
@@ -610,8 +651,8 @@ option{background:var(--surface2);}
         <span style="font-size:14px;">🛠</span>
         <span style="font-size:10px;font-weight:700;color:#6a5a00;letter-spacing:1.5px;">DEVELOPER MENU</span>
       </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">Reset to first-launch state to test the welcome popup.<br>Current data will be cleared and the popup shown immediately.</div>
-      <button class="btn btn-sm" style="border-color:#4a3800;color:#a07820;" onclick="resetFirstLaunch()">↺ Reset First Launch State</button>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">Reset to first-launch state to test the welcome popup.</div>
+      <button class="btn btn-sm" style="border-color:#4a3800;color:#a07820;" onclick="resetFirstLaunch()">↺ Reset First Launch</button>
     </div>
   </div>
   <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a></div>
@@ -1703,6 +1744,7 @@ function deleteBike(id){
   if(!confirm('Delete this vehicle?')) return;
   D.bikes=D.bikes.filter(b=>b.id!==id);
   save(); renderBikes(); renderDash();
+  renderSampleBanner();
   scheduleConsumableAlerts();
 }
 
@@ -2235,12 +2277,51 @@ function deleteHistory(id){
 //  백업
 // ═══════════════════════════════════════════
 function renderBackupPage(){
+  renderSettingsPage();
+}
+
+function renderSettingsPage(){
   const el=document.getElementById('backup-stats');
   const lastBackup=localStorage.getItem('mg2-last-backup');
-  el.innerHTML=`
-    <div class="backup-stat-row"><span>Registered Vehicles</span><span class="backup-stat-val">${D.bikes.length}대</span></div>
+  if(el) el.innerHTML=`
+    <div class="backup-stat-row"><span>Vehicles</span><span class="backup-stat-val">${D.bikes.length}</span></div>
     <div class="backup-stat-row"><span>History</span><span class="backup-stat-val">${D.history.length}</span></div>
     <div class="backup-stat-row"><span>Last Backup</span><span class="backup-stat-val" style="font-size:16px;">${lastBackup||'None'}</span></div>`;
+  const curLang=localStorage.getItem('mg2-lang')||'en';
+  ['ko','vn','en'].forEach(l=>{
+    const btn=document.getElementById('lang-btn-'+l);
+    if(btn) btn.classList.toggle('btn-primary',l===curLang);
+  });
+  const settings=_getNotifSettings();
+  [['notif-daily','daily'],['notif-consumable','consumable'],['notif-insurance','insurance'],['notif-weather-auto','weatherAuto']].forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(el) el.checked=settings[key]!==false;
+  });
+}
+
+function _getNotifSettings(){
+  try{ return JSON.parse(localStorage.getItem('mg2-notif-settings')||'{}'); }
+  catch(e){ return {}; }
+}
+
+function saveNotifSettings(){
+  const settings={
+    daily:document.getElementById('notif-daily')?.checked!==false,
+    consumable:document.getElementById('notif-consumable')?.checked!==false,
+    insurance:document.getElementById('notif-insurance')?.checked!==false,
+    weatherAuto:document.getElementById('notif-weather-auto')?.checked!==false,
+  };
+  localStorage.setItem('mg2-notif-settings',JSON.stringify(settings));
+  scheduleConsumableAlerts();
+  scheduleInsuranceAlerts();
+  showToast('✓ Settings saved');
+}
+
+function setAppLang(lang,btn){
+  localStorage.setItem('mg2-lang',lang);
+  syncNotifyTarget();
+  const urls={ko:'./index.html',vn:'./index_vn.html',en:'./index_en.html'};
+  if(urls[lang]) window.location.href=urls[lang];
 }
 function showBackupToast(msg,type='success'){
   const t=document.getElementById('backup-toast');
@@ -2435,6 +2516,11 @@ function scheduleConsumableAlerts(){
     const prevIds = JSON.parse(localStorage.getItem('mg2-scheduled-notif-ids') || '[]');
     const cancelPrev = prevIds.length ? LN.cancel({notifications: prevIds.map(id=>({id}))}).catch(function(){}) : Promise.resolve();
 
+    const settings_c=_getNotifSettings();
+    if(settings_c.consumable===false){
+      cancelPrev.finally(function(){ localStorage.setItem('mg2-scheduled-notif-ids','[]'); });
+      syncNotifyTarget(); return;
+    }
     const toSchedule = [];
     D.bikes.forEach(bike=>{
       (bike.consumables||[]).forEach(c=>{
@@ -2508,7 +2594,8 @@ function syncNotifyTarget(){
       fcmToken: token,
       lat: isNaN(lat) ? null : lat,
       lon: isNaN(lon) ? null : lon,
-      lang: 'en',
+      lang: localStorage.getItem('mg2-lang')||'en',
+      dailyNotif: _getNotifSettings().daily!==false,
       consumables: getConsumableSummary()
     };
     fetch(SYNC_ENDPOINT, {
@@ -2584,10 +2671,18 @@ function skipSampleData(){
 function renderSampleBanner(){
   const b=document.getElementById('sample-banner');
   if(!b) return;
-  b.style.display=localStorage.getItem('mg2-sample')==='1'?'flex':'none';
+  const hasSampleFlag=localStorage.getItem('mg2-sample')==='1';
+  const hasSampleBike=D.bikes.some(bike=>bike.id===900000001);
+  if(hasSampleFlag&&!hasSampleBike) localStorage.removeItem('mg2-sample');
+  b.style.display=(hasSampleFlag&&hasSampleBike)?'flex':'none';
 }
 function dismissSampleData(){
-  if(!confirm('Remove sample data and register your own bike?')) return;
+  const bikeCount=D.bikes.length;
+  const histCount=D.history.length;
+  const msg=bikeCount>0
+    ?`${bikeCount} vehicle(s) and ${histCount} service record(s) will be permanently deleted.\n\nContinue?`
+    :'Remove sample data and register your own bike?';
+  if(!confirm(msg)) return;
   D={bikes:[],rides:[],history:[]};
   save();
   localStorage.removeItem('mg2-sample');
@@ -3164,6 +3259,8 @@ function renderAiGuide(guide, con, pct, bike) {
 const OWM_KEY = '2ada65daac7051c6dda621ccff724063';
 
 function shouldShowWeather() {
+  const settings=_getNotifSettings();
+  if(settings.weatherAuto===false) return false;
   const dismissed = localStorage.getItem('mg2-weather-dismissed');
   if (!dismissed) return true;
   const today = new Date().toISOString().split('T')[0];
@@ -3275,6 +3372,13 @@ function getRidingCondition(weather) {
     tips: ['Watch for engine overheating', 'Stay well hydrated', 'Take frequent breaks on long rides', 'Check helmet ventilation']
   };
 
+  // Overcast — neutral
+  if (id >= 802 && id <= 804) return {
+    level: 'caution', emoji: '☁️',
+    title: '☁️ Cloudy — Bring your rain gear',
+    tips: ['Rain could start any time', 'Bring rain jacket/waterproof gloves', 'Check the hourly forecast below']
+  };
+
   // 양호
   return {
     level: 'good', emoji: '✅',
@@ -3339,6 +3443,7 @@ function renderWeather(data, aqiData, fcData) {
 
   // 시간대별 예보 (현재 시각 이후, 오늘만)
   let forecastHtml = '';
+  let forecastWarnHtml = '';
   if (fcData && fcData.list) {
     const todayStr = new Date().toISOString().split('T')[0];
     const nowHour = new Date().getHours();
@@ -3346,6 +3451,23 @@ function renderWeather(data, aqiData, fcData) {
       const d = new Date(item.dt * 1000);
       return d.toISOString().split('T')[0] === todayStr && d.getHours() >= nowHour;
     });
+    const soonRain = rows.find(item => {
+      const d = new Date(item.dt * 1000);
+      const hoursAhead = (d - new Date()) / 3600000;
+      const id = item.weather[0].id;
+      return hoursAhead <= 6 && id >= 200 && id < 700;
+    });
+    if (soonRain) {
+      const d = new Date(soonRain.dt * 1000);
+      const h = String(d.getHours()).padStart(2,'0');
+      const id = soonRain.weather[0].id;
+      const isThunder = id >= 200 && id < 300;
+      forecastWarnHtml = `
+        <div style="background:rgba(216,64,64,0.12);border:1px solid #E84040;border-radius:8px;padding:10px 14px;margin:8px 18px 0;">
+          <div style="font-size:14px;font-weight:700;color:#E84040;margin-bottom:4px;">${isThunder?'⛈':'🌧'} ${h}:00 ${isThunder?'Thunderstorm':'Rain'}</div>
+          <div style="font-size:13px;color:var(--text-muted);">Bring rain jacket/waterproof gloves in advance</div>
+        </div>`;
+    }
     if (rows.length) {
       const rowsHtml = rows.map(item => {
         const d = new Date(item.dt * 1000);
@@ -3398,6 +3520,7 @@ function renderWeather(data, aqiData, fcData) {
         </div>
       </div>
     </div>
+    ${forecastWarnHtml}
     ${forecastHtml}`;
 
   document.getElementById('weather-footer').style.display = 'flex';
@@ -3724,9 +3847,9 @@ function renderMedicalCard(){
 </div>
 
 <!-- More bottom sheet -->
-<div class="modal-overlay" id="m-more" style="align-items:flex-end;padding:0;">
-  <div class="more-sheet">
-    <div class="more-sheet-handle"></div>
+<div class="modal-overlay" id="m-more" style="align-items:flex-end;padding:0;" onclick="if(event.target===this)closeModal('m-more');">
+  <div class="more-sheet" onclick="event.stopPropagation();">
+    <div class="more-sheet-handle" onclick="closeModal('m-more')" style="cursor:pointer;padding:6px 0;"></div>
     <div class="more-sheet-title">All Menu</div>
     <div class="more-sheet-grid">
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('bikes',document.getElementById('nav-more-btn'));">
@@ -3736,7 +3859,7 @@ function renderMedicalCard(){
         <span class="more-tile-icon">🏁</span><span class="more-tile-label">Ride History</span>
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('backup',document.getElementById('nav-more-btn'));">
-        <span class="more-tile-icon">☁️</span><span class="more-tile-label">Backup</span>
+        <span class="more-tile-icon">⚙️</span><span class="more-tile-label">Settings</span>
       </div>
     </div>
   </div>

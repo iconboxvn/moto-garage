@@ -79,6 +79,19 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
   .ins-dday-danger{color:#E84040;font-size:15px;font-weight:700;}
   .ins-btn-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
   .ins-loading{font-size:15px;color:var(--text-muted);padding:8px 0;}
+
+  /* ── 설정 토글 스위치 ── */
+  .setting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+  .setting-row:last-child{border-bottom:none;}
+  .setting-label{font-size:15px;color:var(--text);}
+  .setting-desc{font-size:12px;color:var(--text-muted);margin-top:2px;}
+  .toggle-wrap{position:relative;width:46px;height:26px;flex-shrink:0;}
+  .toggle-wrap input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--border-bright);border-radius:26px;transition:.25s;}
+  .toggle-slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.25s;}
+  .toggle-wrap input:checked + .toggle-slider{background:var(--accent);}
+  .toggle-wrap input:checked + .toggle-slider:before{transform:translateX(20px);}
+  .setting-section-title{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin:16px 0 6px;}
 .bike-name{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;line-height:1;}
 .bike-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);margin-top:3px;}
 .bstat-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);}
@@ -586,8 +599,48 @@ option{background:var(--surface2);}
 
   <!-- 백업 -->
   <div class="page" id="page-backup">
-    <div class="sec-header"><span class="sec-title">데이터 백업</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">설정</span><div class="sec-line"></div></div>
+
+    <!-- 언어 설정 -->
     <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">🌐 언어</div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button id="lang-btn-ko" class="btn btn-sm" onclick="setAppLang('ko',this)" style="flex:1;">🇰🇷 한국어</button>
+        <button id="lang-btn-vn" class="btn btn-sm" onclick="setAppLang('vn',this)" style="flex:1;">🇻🇳 Tiếng Việt</button>
+        <button id="lang-btn-en" class="btn btn-sm" onclick="setAppLang('en',this)" style="flex:1;">🇺🇸 English</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">알림도 선택한 언어로 발송됩니다</div>
+    </div>
+
+    <!-- 알림 설정 -->
+    <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">🔔 알림</div>
+      <div class="setting-row">
+        <div><div class="setting-label">데일리 날씨 알림</div><div class="setting-desc">매일 오전 8시 날씨·라이딩 팁</div></div>
+        <label class="toggle-wrap"><input type="checkbox" id="notif-daily" onchange="saveNotifSettings()" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">소모품 교체 알림</div><div class="setting-desc">교체 시기가 다가오면 알림</div></div>
+        <label class="toggle-wrap"><input type="checkbox" id="notif-consumable" onchange="saveNotifSettings()" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">보험 만료 알림</div><div class="setting-desc">만료 14일 전·7일 전부터 매일</div></div>
+        <label class="toggle-wrap"><input type="checkbox" id="notif-insurance" onchange="saveNotifSettings()" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <!-- 날씨 설정 -->
+    <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">🌤 날씨</div>
+      <div class="setting-row">
+        <div><div class="setting-label">앱 실행 시 날씨 자동 표시</div><div class="setting-desc">앱을 열 때 날씨 모달 자동으로 표시</div></div>
+        <label class="toggle-wrap"><input type="checkbox" id="notif-weather-auto" onchange="saveNotifSettings()" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <!-- 데이터 관리 -->
+    <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">💾 데이터 관리</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
         <div style="font-size:22px;">📁</div>
         <div><div style="font-weight:700;font-size:14px;">수동 백업 / 복원</div>
@@ -599,14 +652,12 @@ option{background:var(--surface2);}
         <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
       </div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:10px;">내보내기 후 카카오톡 나에게 보내기로 보관하세요</div>
-    </div>
-    <div class="card">
-      <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:12px;">현재 저장된 데이터</div>
-      <div id="backup-stats"></div>
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <div id="backup-stats" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"></div>
+      <div style="margin-top:14px;">
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 전체 데이터 초기화</button>
       </div>
     </div>
+
     <div id="dev-menu-card" class="card" style="display:none;border-color:#2a2200;background:#0e0c00;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <span style="font-size:14px;">🛠</span>
@@ -1975,6 +2026,14 @@ function scheduleInsuranceAlerts(){
     if(!LN) return;
     const prevIds=JSON.parse(localStorage.getItem('mg2-ins-notif-ids')||'[]');
     const cancel=prevIds.length?LN.cancel({notifications:prevIds.map(id=>({id}))}).catch(()=>{}):Promise.resolve();
+
+    // 보험 알림 OFF면 취소만 하고 종료
+    const settings = _getNotifSettings();
+    if(settings.insurance === false){
+      cancel.finally(()=>{ localStorage.setItem('mg2-ins-notif-ids','[]'); });
+      return;
+    }
+
     const toSchedule=[];
     D.bikes.forEach(bike=>{
       const expiry=bike.insurance?.expiry; if(!expiry) return;
@@ -2010,6 +2069,7 @@ function deleteBike(id){
   if(!confirm('차량을 삭제하시겠습니까?')) return;
   D.bikes=D.bikes.filter(b=>b.id!==id);
   save(); renderBikes(); renderDash();
+  renderSampleBanner(); // 샘플 차량 삭제 시 배너 자동 숨김
   scheduleConsumableAlerts();
 }
 
@@ -2539,12 +2599,61 @@ function deleteHistory(id){
 //  백업
 // ═══════════════════════════════════════════
 function renderBackupPage(){
+  renderSettingsPage();
+}
+
+function renderSettingsPage(){
+  // 데이터 통계
   const el=document.getElementById('backup-stats');
   const lastBackup=localStorage.getItem('mg2-last-backup');
-  el.innerHTML=`
+  if(el) el.innerHTML=`
     <div class="backup-stat-row"><span>등록 차량</span><span class="backup-stat-val">${D.bikes.length}대</span></div>
     <div class="backup-stat-row"><span>정비 이력</span><span class="backup-stat-val">${D.history.length}건</span></div>
     <div class="backup-stat-row"><span>마지막 백업</span><span class="backup-stat-val" style="font-size:16px;">${lastBackup||'없음'}</span></div>`;
+
+  // 언어 버튼 활성화
+  const curLang = localStorage.getItem('mg2-lang') || 'ko';
+  ['ko','vn','en'].forEach(l=>{
+    const btn=document.getElementById('lang-btn-'+l);
+    if(btn){ btn.classList.toggle('btn-primary', l===curLang); }
+  });
+
+  // 알림 토글 상태 복원 (기본값 ON)
+  const settings = _getNotifSettings();
+  const ids = ['notif-daily','notif-consumable','notif-insurance','notif-weather-auto'];
+  const keys = ['daily','consumable','insurance','weatherAuto'];
+  ids.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el) el.checked = settings[keys[i]] !== false;
+  });
+}
+
+// 설정값 읽기 (기본값 모두 true)
+function _getNotifSettings(){
+  try{ return JSON.parse(localStorage.getItem('mg2-notif-settings')||'{}'); }
+  catch(e){ return {}; }
+}
+
+// 알림 설정 저장 + 재스케줄
+function saveNotifSettings(){
+  const settings = {
+    daily:     document.getElementById('notif-daily')?.checked !== false,
+    consumable:document.getElementById('notif-consumable')?.checked !== false,
+    insurance: document.getElementById('notif-insurance')?.checked !== false,
+    weatherAuto:document.getElementById('notif-weather-auto')?.checked !== false,
+  };
+  localStorage.setItem('mg2-notif-settings', JSON.stringify(settings));
+  scheduleConsumableAlerts();
+  scheduleInsuranceAlerts();
+  showToast('✓ 설정이 저장됐습니다');
+}
+
+// 언어 변경 (화면 전환 + 알림 언어 저장)
+function setAppLang(lang, btn){
+  localStorage.setItem('mg2-lang', lang);
+  syncNotifyTarget(); // 서버에 새 언어 즉시 반영
+  const urls = {ko:'./index.html', vn:'./index_vn.html', en:'./index_en.html'};
+  if(urls[lang]) window.location.href = urls[lang];
 }
 function showBackupToast(msg,type='success'){
   const t=document.getElementById('backup-toast');
@@ -2747,7 +2856,12 @@ function scheduleConsumableAlerts(){
     const prevIds = JSON.parse(localStorage.getItem('mg2-scheduled-notif-ids') || '[]');
     const cancelPrev = prevIds.length ? LN.cancel({notifications: prevIds.map(id=>({id}))}).catch(function(){}) : Promise.resolve();
 
-    const toSchedule = [];
+    // 소모품 알림 OFF면 취소만 하고 종료
+    const settings = _getNotifSettings();
+    if(settings.consumable === false){
+      cancelPrev.finally(function(){ localStorage.setItem('mg2-scheduled-notif-ids','[]'); });
+      syncNotifyTarget(); return;
+    }
     D.bikes.forEach(bike=>{
       (bike.consumables||[]).forEach(c=>{
         if (!c.km) return;
@@ -2816,12 +2930,14 @@ function syncNotifyTarget(){
     if (!token) return; // FCM 토큰 발급 전이면 아직 보낼 게 없음
     const lat = parseFloat(localStorage.getItem('mg2-last-lat'));
     const lon = parseFloat(localStorage.getItem('mg2-last-lon'));
+    const settings = _getNotifSettings();
     const payload = {
       deviceId: getDeviceId(),
       fcmToken: token,
       lat: isNaN(lat) ? null : lat,
       lon: isNaN(lon) ? null : lon,
-      lang: 'ko',
+      lang: localStorage.getItem('mg2-lang') || 'ko',
+      dailyNotif: settings.daily !== false,
       consumables: getConsumableSummary()
     };
     fetch(SYNC_ENDPOINT, {
@@ -3349,10 +3465,22 @@ function skipSampleData(){
 function renderSampleBanner(){
   const b=document.getElementById('sample-banner');
   if(!b) return;
-  b.style.display=localStorage.getItem('mg2-sample')==='1'?'flex':'none';
+  // 샘플 플래그가 있어도 실제 샘플 차량(id=900000001)이 없으면 배너 숨김
+  const hasSampleFlag = localStorage.getItem('mg2-sample')==='1';
+  const hasSampleBike = D.bikes.some(bike=>bike.id===900000001);
+  if(hasSampleFlag && !hasSampleBike){
+    localStorage.removeItem('mg2-sample');
+  }
+  b.style.display=(hasSampleFlag && hasSampleBike)?'flex':'none';
 }
+
 function dismissSampleData(){
-  if(!confirm('샘플 데이터를 삭제하고 내 차량을 직접 등록할까요?')) return;
+  const bikeCount = D.bikes.length;
+  const histCount = D.history.length;
+  const msg = bikeCount > 0
+    ? `현재 등록된 차량 ${bikeCount}대와 정비 이력 ${histCount}건이 모두 삭제됩니다.\n\n계속하시겠습니까?`
+    : '샘플 데이터를 삭제하고 내 차량을 직접 등록할까요?';
+  if(!confirm(msg)) return;
   D={bikes:[],rides:[],history:[]};
   save();
   localStorage.removeItem('mg2-sample');
@@ -3494,6 +3622,9 @@ function renderAiGuide(guide, con, pct, bike) {
 const OWM_KEY = '2ada65daac7051c6dda621ccff724063';
 
 function shouldShowWeather() {
+  // 날씨 자동 표시 설정이 OFF면 표시 안 함
+  const settings = _getNotifSettings();
+  if(settings.weatherAuto === false) return false;
   const dismissed = localStorage.getItem('mg2-weather-dismissed');
   if (!dismissed) return true;
   const today = new Date().toISOString().split('T')[0];
@@ -3606,7 +3737,14 @@ function getRidingCondition(weather) {
     tips: ['엔진 과열에 주의하세요', '수분을 충분히 섭취하세요', '장거리 주행 시 자주 휴식 취하세요', '헬멧 통풍 확인']
   };
 
-  // 양호
+  // 흐림 — 중립 (비 예보 가능성)
+  if (id >= 802 && id <= 804) return {
+    level: 'caution', emoji: '☁️',
+    title: '☁️ 흐린 날씨 — 우비를 챙기세요',
+    tips: ['언제든 비가 내릴 수 있어요', '우비/방수 장갑을 챙기세요', '시간대별 예보를 꼭 확인하세요']
+  };
+
+  // 양호 (맑음/구름조금)
   return {
     level: 'good', emoji: '✅',
     title: '🏍 라이딩하기 좋은 날씨!',
@@ -3689,6 +3827,7 @@ function renderWeather(data, aqiData, fcData) {
 
   // 시간대별 예보 HTML (현재 시각 이후만, 오늘 날짜만)
   let forecastHtml = '';
+  let forecastWarnHtml = ''; // 예보 기반 사전 경고
   if (fcData && fcData.list) {
     const todayStr = new Date().toISOString().split('T')[0];
     const nowHour = new Date().getHours();
@@ -3696,6 +3835,26 @@ function renderWeather(data, aqiData, fcData) {
       const d = new Date(item.dt * 1000);
       return d.toISOString().split('T')[0] === todayStr && d.getHours() >= nowHour;
     });
+
+    // 앞으로 6시간 내 비/폭풍 예보가 있으면 경고 배너 표시
+    const soonRain = rows.find(item => {
+      const d = new Date(item.dt * 1000);
+      const hoursAhead = (d - new Date()) / 3600000;
+      const id = item.weather[0].id;
+      return hoursAhead <= 6 && id >= 200 && id < 700;
+    });
+    if (soonRain) {
+      const d = new Date(soonRain.dt * 1000);
+      const h = String(d.getHours()).padStart(2,'0');
+      const id = soonRain.weather[0].id;
+      const isThunder = id >= 200 && id < 300;
+      forecastWarnHtml = `
+        <div style="background:rgba(216,64,64,0.12);border:1px solid #E84040;border-radius:8px;padding:10px 14px;margin:8px 18px 0;">
+          <div style="font-size:14px;font-weight:700;color:#E84040;margin-bottom:4px;">${isThunder?'⛈':'🌧'} ${h}시 ${isThunder?'천둥번개':'비'} 예보</div>
+          <div style="font-size:13px;color:var(--text-muted);">우비/방수 장갑을 미리 챙기세요</div>
+        </div>`;
+    }
+
     if (rows.length) {
       const rowsHtml = rows.map(item => {
         const d = new Date(item.dt * 1000);
@@ -3748,6 +3907,7 @@ function renderWeather(data, aqiData, fcData) {
         </div>
       </div>
     </div>
+    ${forecastWarnHtml}
     ${forecastHtml}`;
 
   document.getElementById('weather-footer').style.display = 'flex';
@@ -4095,9 +4255,9 @@ function renderMedicalCard(){
 </div>
 
 <!-- 더보기 바텀시트 -->
-<div class="modal-overlay" id="m-more" style="align-items:flex-end;padding:0;">
-  <div class="more-sheet">
-    <div class="more-sheet-handle"></div>
+<div class="modal-overlay" id="m-more" style="align-items:flex-end;padding:0;" onclick="if(event.target===this)closeModal('m-more');">
+  <div class="more-sheet" onclick="event.stopPropagation();">
+    <div class="more-sheet-handle" onclick="closeModal('m-more')" style="cursor:pointer;padding:6px 0;"></div>
     <div class="more-sheet-title">전체 메뉴</div>
     <div class="more-sheet-grid">
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('bikes',document.getElementById('nav-more-btn'));">
@@ -4107,7 +4267,7 @@ function renderMedicalCard(){
         <span class="more-tile-icon">🏁</span><span class="more-tile-label">라이딩 이력</span>
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('backup',document.getElementById('nav-more-btn'));">
-        <span class="more-tile-icon">☁️</span><span class="more-tile-label">백업</span>
+        <span class="more-tile-icon">⚙️</span><span class="more-tile-label">설정</span>
       </div>
     </div>
   </div>
