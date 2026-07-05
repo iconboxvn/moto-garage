@@ -541,7 +541,7 @@ option{background:var(--surface2);}
         <div id="riding-ctrl-dot" class="riding-dot"></div>
         <div>
           <div id="riding-ctrl-title" style="font-size:14px;font-weight:700;color:var(--text-dim);">Chờ bắt đầu</div>
-          <div id="riding-ctrl-sub" style="font-size:11px;color:var(--text-muted);">Bắt đầu trước khi đi → Tự động SOS khi tai nạn</div>
+          <div id="riding-ctrl-sub" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Cung cấp thông tin quãng đường / thời gian / tốc độ sau mỗi chuyến đi.<br>Tự động gửi tin nhắn đến liên hệ khẩn cấp khi phát hiện tai nạn.</div>
         </div>
       </div>
       <div id="riding-ctrl-btn">
@@ -605,6 +605,21 @@ option{background:var(--surface2);}
         <button id="lang-btn-en" class="btn btn-sm" onclick="setAppLang('en',this)" style="flex:1;">🇺🇸 English</button>
       </div>
       <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">Thông báo sẽ được gửi bằng ngôn ngữ bạn chọn</div>
+    </div>
+
+    <!-- SOS Contact -->
+    <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">🆘 Liên hệ khẩn cấp SOS</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Tin nhắn tự động sẽ được gửi đến số này khi phát hiện tai nạn</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">Tên</div>
+        <input type="text" class="form-input" id="sos-contact-name" placeholder="Tên người liên hệ khẩn cấp" style="width:100%;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">Số điện thoại</div>
+        <input type="tel" class="form-input" id="sos-contact-phone" placeholder="0xxx-xxx-xxxx" style="width:100%;">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveSosContact()">Lưu</button>
     </div>
     <div class="card" style="margin-bottom:12px;">
       <div class="setting-section-title">🔔 Thông báo</div>
@@ -2297,6 +2312,13 @@ function renderSettingsPage(){
     const el=document.getElementById(id);
     if(el) el.checked=settings[key]!==false;
   });
+
+  // SOS contact restore
+  const sos=getSosContact(); const med2=getMedical();
+  const nameEl=document.getElementById('sos-contact-name');
+  const phoneEl=document.getElementById('sos-contact-phone');
+  if(nameEl) nameEl.value=sos.name||med2.emergency||'';
+  if(phoneEl) phoneEl.value=sos.phone||med2.emergencyPhone||'';
 }
 
 function _getNotifSettings(){
@@ -2770,7 +2792,7 @@ function updateRidingBar() {
     dot.className = 'riding-dot';
     title.style.color = 'var(--text-dim)';
     title.textContent = 'Chờ bắt đầu';
-    sub.textContent = 'Bắt đầu trước khi đi → Tự động SOS khi tai nạn';
+    sub.innerHTML = 'Cung cấp thông tin quãng đường / thời gian / tốc độ sau mỗi chuyến đi.<br>Tự động gửi tin nhắn đến liên hệ khẩn cấp khi phát hiện tai nạn.';
     btn.innerHTML = '<button class="btn btn-primary" style="font-size:13px;padding:8px 14px;" onclick="startRiding()">▶ Bắt đầu</button>';
   }
 }
@@ -2861,15 +2883,21 @@ function _buildRideSummary(){
 }
 
 function showRideSummary(s){
-  if (s.durationMs < 60000 && s.distanceKm < 0.05) return;
   var h = Math.floor(s.durationMs/3600000);
   var m = Math.floor((s.durationMs%3600000)/60000);
-  document.getElementById('ride-summary-duration').textContent = h>0 ? `${h} giờ ${m} phút` : `${m} phút`;
-  document.getElementById('ride-summary-distance').textContent = s.distanceKm.toFixed(1)+' km';
-  document.getElementById('ride-summary-avg').textContent = Math.round(s.avgKmh)+' km/h';
-  document.getElementById('ride-summary-max').textContent = Math.round(s.maxKmh)+' km/h';
+  var sec = Math.floor((s.durationMs%60000)/1000);
+  document.getElementById('ride-summary-duration').textContent = h>0 ? `${h} giờ ${m} phút` : m>0 ? `${m} phút ${sec} giây` : `${sec} giây`;
+  document.getElementById('ride-summary-distance').textContent = s.distanceKm > 0 ? s.distanceKm.toFixed(1)+' km' : '-';
+  document.getElementById('ride-summary-avg').textContent = s.avgKmh > 0 ? Math.round(s.avgKmh)+' km/h' : '-';
+  document.getElementById('ride-summary-max').textContent = s.maxKmh > 0 ? Math.round(s.maxKmh)+' km/h' : '-';
   var note = document.getElementById('ride-summary-note');
-  if (note) note.style.display = (s.distanceKm===0 && s.maxKmh===0) ? 'block' : 'none';
+  var tooShort = s.durationMs < 60000 && s.distanceKm < 0.05;
+  var noGps = s.distanceKm === 0 && s.maxKmh === 0;
+  if(note){
+    if(tooShort){ note.textContent = 'Chuyến đi quá ngắn — không lưu lịch sử.'; note.style.display='block'; }
+    else if(noGps){ note.textContent = 'Tín hiệu GPS yếu hoặc đi trong nhà — không lưu lịch sử.'; note.style.display='block'; }
+    else { note.style.display='none'; }
+  }
   openModal('m-ride-summary');
 }
 
@@ -2878,6 +2906,32 @@ function _sosBufReset() {
 }
 
 function _sosGPSStart() {
+  var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (RidingPlugin && RidingPlugin.addListener) {
+    RidingPlugin.addListener('locationUpdate', function(loc) {
+      var now = Date.now();
+      var speedMs = (loc.speed !== undefined && loc.speed >= 0) ? loc.speed : null;
+      if (speedMs !== null) {
+        var kmh = speedMs * 3.6;
+        _sos.speedOk = kmh >= _MIN_SPD;
+        if (kmh < 300) _rideTrackSpeed(kmh, now);
+      }
+      var lat = loc.lat, lon = loc.lon;
+      if (_ride.lastLat !== null) {
+        var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
+        var dtH = (now - _ride.lastT) / 3600000;
+        var instKmh = dtH > 0 ? dKm / dtH : 0;
+        if (speedMs === null && instKmh > 0 && instKmh < 300) {
+          _sos.speedOk = instKmh >= _MIN_SPD;
+          _rideTrackSpeed(instKmh, now);
+        }
+        if (instKmh < 300) _ride.distance += dKm;
+      }
+      _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
+      _updateRidingSpeedUI();
+    });
+    return;
+  }
   if (!navigator.geolocation) return;
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
@@ -2893,6 +2947,10 @@ function _sosGPSStart() {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
         var dtH = (now - _ride.lastT) / 3600000;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
+        if (spd === null && instKmh > 0 && instKmh < 300) {
+          _sos.speedOk = instKmh >= _MIN_SPD;
+          _rideTrackSpeed(instKmh, now);
+        }
         if (instKmh < 300) _ride.distance += dKm;
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
@@ -2926,6 +2984,10 @@ function _updateRidingSpeedUI() {
 }
 
 function _sosGPSStop() {
+  var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (RidingPlugin && RidingPlugin.removeAllListeners) {
+    RidingPlugin.removeAllListeners('locationUpdate').catch(function(){});
+  }
   if (_sos.gpsId !== null) { navigator.geolocation.clearWatch(_sos.gpsId); _sos.gpsId = null; }
   _sos.speedOk = false;
 }
@@ -3604,6 +3666,18 @@ function toggleCheck(item){
 }
 
 function getMedical(){ return JSON.parse(localStorage.getItem('mg2-medical')||'{}'); }
+function getSosContact(){ return JSON.parse(localStorage.getItem('mg2-sos-contact')||'{}'); }
+
+function saveSosContact(){
+  const name=document.getElementById('sos-contact-name')?.value.trim()||'';
+  const phone=document.getElementById('sos-contact-phone')?.value.trim()||'';
+  localStorage.setItem('mg2-sos-contact', JSON.stringify({name, phone}));
+  const med=getMedical();
+  med.emergency=name; med.emergencyPhone=phone;
+  localStorage.setItem('mg2-medical', JSON.stringify(med));
+  showToast('✓ Đã lưu liên hệ khẩn cấp');
+  renderMedicalCard();
+}
 
 function saveMedical(){
   var data={
@@ -3613,7 +3687,7 @@ function saveMedical(){
     allergy:document.getElementById('med-allergy').value,
     medicine:document.getElementById('med-medicine').value,
     history:document.getElementById('med-history').value,
-    emergency:document.getElementById('med-emergency').value,
+    emergency:getMedical().emergency||'',
     insurance:document.getElementById('med-insurance').value,
   };
   localStorage.setItem('mg2-medical',JSON.stringify(data));
@@ -3630,7 +3704,7 @@ function openMedicalEdit(){
   document.getElementById('med-allergy').value=d.allergy||'';
   document.getElementById('med-medicine').value=d.medicine||'';
   document.getElementById('med-history').value=d.history||'';
-  document.getElementById('med-emergency').value=d.emergency||'';
+  // Emergency contact managed in Settings
   document.getElementById('med-insurance').value=d.insurance||'';
   openModal('m-medical');
 }
@@ -3654,6 +3728,7 @@ function renderMedicalCard(){
     +'<div class="medical-row"><span class="medical-label">💊 복용약 / Medication / Thuốc</span><span class="medical-value">'+(d.medicine||'없음 / None')+'</span></div>'
     +(d.history?'<div class="medical-row"><span class="medical-label">🩺 지병 / History</span><span class="medical-value">'+d.history+'</span></div>':'')
     +(d.emergency?'<div class="medical-row"><span class="medical-label">📞 비상연락처 / Emergency</span><span class="medical-value" style="font-size:13px;">'+d.emergency+'</span></div>':'')
+    +(d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📱 비상연락처 전화 / Phone</span><span class="medical-value" style="font-size:13px;">'+d.emergencyPhone+'</span></div>':(!d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📞 비상연락처</span><span class="medical-value" style="font-size:12px;color:var(--accent);">설정 → SOS 긴급연락처에서 등록하세요</span></div>':''))
     +(d.insurance?'<div class="medical-row"><span class="medical-label">📋 보험사 / Insurance</span><span class="medical-value" style="font-size:13px;">'+d.insurance+'</span></div>':'')
     +'</div>'
     +'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;">🇰🇷 한국인 라이더 · Korean Motorcycle Rider</div>';
@@ -4011,7 +4086,7 @@ function renderMedicalCard(){
         <div class="form-group full"><label class="form-label">⚠️ 알레르기 / Allergy</label><input type="text" class="form-input" id="med-allergy" placeholder="페니실린 / Penicillin (없으면 공백)"></div>
         <div class="form-group full"><label class="form-label">💊 복용 중인 약 / Medication</label><input type="text" class="form-input" id="med-medicine" placeholder="없음 / None"></div>
         <div class="form-group full"><label class="form-label">🩺 지병 / Medical History</label><input type="text" class="form-input" id="med-history" placeholder="없음 / None"></div>
-        <div class="form-group full"><label class="form-label">📞 비상연락처 / Emergency Contact</label><input type="text" class="form-input" id="med-emergency" placeholder="홍길순 (배우자) 010-xxxx-xxxx"></div>
+        <div style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:6px;font-size:12px;color:var(--text-muted);">📞 Đăng ký liên hệ khẩn cấp tại <strong style="color:var(--accent);">Menu → Cài đặt → Liên hệ khẩn cấp SOS</strong></div>
         <div class="form-group full"><label class="form-label">🏥 여행자보험사 연락처</label><input type="text" class="form-input" id="med-insurance" placeholder="삼성화재 1588-xxxx"></div>
       </div>
     </div>

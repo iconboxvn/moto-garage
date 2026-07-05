@@ -544,7 +544,7 @@ option{background:var(--surface2);}
         <div id="riding-ctrl-dot" class="riding-dot"></div>
         <div>
           <div id="riding-ctrl-title" style="font-size:14px;font-weight:700;color:var(--text-dim);">라이딩 대기중</div>
-          <div id="riding-ctrl-sub" style="font-size:11px;color:var(--text-muted);">출발 전 시작 → 사고 시 자동 SOS</div>
+          <div id="riding-ctrl-sub" style="font-size:11px;color:var(--text-muted);line-height:1.6;">라이딩 종료 후 거리 / 시간 / 속도 정보를 제공합니다.<br>사고 감지 시 긴급 연락처로 자동 문자를 발송합니다.</div>
         </div>
       </div>
       <div id="riding-ctrl-btn">
@@ -610,6 +610,21 @@ option{background:var(--surface2);}
         <button id="lang-btn-en" class="btn btn-sm" onclick="setAppLang('en',this)" style="flex:1;">🇺🇸 English</button>
       </div>
       <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">알림도 선택한 언어로 발송됩니다</div>
+    </div>
+
+    <!-- SOS 긴급연락처 설정 -->
+    <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">🆘 SOS 긴급연락처</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">사고 감지 시 아래 번호로 자동 문자가 발송됩니다</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">이름</div>
+        <input type="text" class="form-input" id="sos-contact-name" placeholder="홍길순 (배우자)" style="width:100%;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">전화번호</div>
+        <input type="tel" class="form-input" id="sos-contact-phone" placeholder="010-xxxx-xxxx" style="width:100%;">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveSosContact()">저장</button>
     </div>
 
     <!-- 알림 설정 -->
@@ -2626,6 +2641,14 @@ function renderSettingsPage(){
     const el=document.getElementById(id);
     if(el) el.checked = settings[keys[i]] !== false;
   });
+
+  // SOS 긴급연락처 값 복원
+  const sos=getSosContact();
+  const med=getMedical();
+  const nameEl=document.getElementById('sos-contact-name');
+  const phoneEl=document.getElementById('sos-contact-phone');
+  if(nameEl) nameEl.value=sos.name||med.emergency||'';
+  if(phoneEl) phoneEl.value=sos.phone||med.emergencyPhone||'';
 }
 
 // 설정값 읽기 (기본값 모두 true)
@@ -3024,7 +3047,7 @@ function updateRidingBar() {
     dot.className = 'riding-dot';
     title.style.color = 'var(--text-dim)';
     title.textContent = '라이딩 대기중';
-    sub.textContent = '출발 전 시작 → 사고 시 자동 SOS';
+    sub.innerHTML = '라이딩 종료 후 거리 / 시간 / 속도 정보를 제공합니다.<br>사고 감지 시 긴급 연락처로 자동 문자를 발송합니다.';
     btn.innerHTML = '<button class="btn btn-primary" style="font-size:13px;padding:8px 14px;" onclick="startRiding()">▶ 시작</button>';
   }
 }
@@ -3117,16 +3140,27 @@ function _buildRideSummary(){
 }
 
 function showRideSummary(s){
-  // 너무 짧은 라이딩(실수로 시작/종료)은 요약을 띄우지 않음
-  if (s.durationMs < 60000 && s.distanceKm < 0.05) return;
   var h = Math.floor(s.durationMs/3600000);
   var m = Math.floor((s.durationMs%3600000)/60000);
-  document.getElementById('ride-summary-duration').textContent = h>0 ? `${h}시간 ${m}분` : `${m}분`;
-  document.getElementById('ride-summary-distance').textContent = s.distanceKm.toFixed(1)+' km';
-  document.getElementById('ride-summary-avg').textContent = Math.round(s.avgKmh)+' km/h';
-  document.getElementById('ride-summary-max').textContent = Math.round(s.maxKmh)+' km/h';
+  var sec = Math.floor((s.durationMs%60000)/1000);
+  document.getElementById('ride-summary-duration').textContent = h>0 ? `${h}시간 ${m}분` : m>0 ? `${m}분 ${sec}초` : `${sec}초`;
+  document.getElementById('ride-summary-distance').textContent = s.distanceKm > 0 ? s.distanceKm.toFixed(1)+' km' : '-';
+  document.getElementById('ride-summary-avg').textContent = s.avgKmh > 0 ? Math.round(s.avgKmh)+' km/h' : '-';
+  document.getElementById('ride-summary-max').textContent = s.maxKmh > 0 ? Math.round(s.maxKmh)+' km/h' : '-';
   var note = document.getElementById('ride-summary-note');
-  if (note) note.style.display = (s.distanceKm===0 && s.maxKmh===0) ? 'block' : 'none';
+  var tooShort = s.durationMs < 60000 && s.distanceKm < 0.05;
+  var noGps = s.distanceKm === 0 && s.maxKmh === 0;
+  if(note){
+    if(tooShort){
+      note.textContent = '주행 시간이 너무 짧아 이력이 저장되지 않았습니다.';
+      note.style.display = 'block';
+    } else if(noGps){
+      note.textContent = 'GPS 신호가 약하거나 실내 주행으로 이력이 저장되지 않았습니다.';
+      note.style.display = 'block';
+    } else {
+      note.style.display = 'none';
+    }
+  }
   openModal('m-ride-summary');
 }
 
@@ -3135,6 +3169,39 @@ function _sosBufReset() {
 }
 
 function _sosGPSStart() {
+  var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+
+  // 네이티브 Riding 플러그인이 있으면 → 백그라운드 GPS (RidingService에서 FusedLocation)
+  if (RidingPlugin && RidingPlugin.addListener) {
+    RidingPlugin.addListener('locationUpdate', function(loc) {
+      var now = Date.now();
+      var speedMs = (loc.speed !== undefined && loc.speed >= 0) ? loc.speed : null;
+
+      if (speedMs !== null) {
+        var kmh = speedMs * 3.6;
+        _sos.speedOk = kmh >= _MIN_SPD;
+        if (kmh < 300) _rideTrackSpeed(kmh, now);
+      }
+
+      var lat = loc.lat, lon = loc.lon;
+      if (_ride.lastLat !== null) {
+        var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
+        var dtH = (now - _ride.lastT) / 3600000;
+        var instKmh = dtH > 0 ? dKm / dtH : 0;
+        // speed가 null이면 좌표 기반으로 속도 계산해서 추적
+        if (speedMs === null && instKmh > 0 && instKmh < 300) {
+          _sos.speedOk = instKmh >= _MIN_SPD;
+          _rideTrackSpeed(instKmh, now);
+        }
+        if (instKmh < 300) _ride.distance += dKm;
+      }
+      _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
+      _updateRidingSpeedUI();
+    });
+    return;
+  }
+
+  // 폴백: 네이티브 플러그인 없으면 기존 watchPosition (웹 테스트용)
   if (!navigator.geolocation) return;
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
@@ -3143,15 +3210,18 @@ function _sosGPSStart() {
       if (spd !== null && spd !== undefined) {
         _sos.speedOk = (spd * 3.6) >= _MIN_SPD;
         var kmh = spd * 3.6;
-        if (kmh < 300) _rideTrackSpeed(kmh, now); // 300km/h 이상은 명백한 GPS 오류로 제외
+        if (kmh < 300) _rideTrackSpeed(kmh, now);
       }
-      // 총 주행거리 누적 (직전 좌표 대비 이동거리)
       var lat = p.coords.latitude, lon = p.coords.longitude;
       if (_ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
         var dtH = (now - _ride.lastT) / 3600000;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
-        if (instKmh < 300) _ride.distance += dKm; // GPS 튐(순간이동) 방지
+        if (spd === null && instKmh > 0 && instKmh < 300) {
+          _sos.speedOk = instKmh >= _MIN_SPD;
+          _rideTrackSpeed(instKmh, now);
+        }
+        if (instKmh < 300) _ride.distance += dKm;
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
@@ -3185,6 +3255,12 @@ function _updateRidingSpeedUI() {
 }
 
 function _sosGPSStop() {
+  // 네이티브 리스너 제거
+  var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (RidingPlugin && RidingPlugin.removeAllListeners) {
+    RidingPlugin.removeAllListeners('locationUpdate').catch(function(){});
+  }
+  // 폴백 watchPosition 제거
   if (_sos.gpsId !== null) { navigator.geolocation.clearWatch(_sos.gpsId); _sos.gpsId = null; }
   _sos.speedOk = false;
 }
@@ -3991,8 +4067,22 @@ function toggleCheck(item){
 }
 
 function getMedical(){ return JSON.parse(localStorage.getItem('mg2-medical')||'{}'); }
+function getSosContact(){ return JSON.parse(localStorage.getItem('mg2-sos-contact')||'{}'); }
+
+function saveSosContact(){
+  const name=document.getElementById('sos-contact-name')?.value.trim()||'';
+  const phone=document.getElementById('sos-contact-phone')?.value.trim()||'';
+  localStorage.setItem('mg2-sos-contact', JSON.stringify({name, phone}));
+  // 기존 medical에도 동기화 (SOS 발송 로직이 medical에서 읽으므로)
+  const med=getMedical();
+  med.emergency=name; med.emergencyPhone=phone;
+  localStorage.setItem('mg2-medical', JSON.stringify(med));
+  showToast('✓ 긴급연락처가 저장됐습니다');
+  renderMedicalCard();
+}
 
 function saveMedical(){
+  var prev=getMedical();
   var data={
     name:document.getElementById('med-name').value,
     blood:document.getElementById('med-blood').value,
@@ -4000,9 +4090,10 @@ function saveMedical(){
     allergy:document.getElementById('med-allergy').value,
     medicine:document.getElementById('med-medicine').value,
     history:document.getElementById('med-history').value,
-    emergency:document.getElementById('med-emergency-name').value,
-    emergencyPhone:document.getElementById('med-emergency-phone').value,
     insurance:document.getElementById('med-insurance').value,
+    // 긴급연락처는 설정에서 관리 — 기존 값 유지
+    emergency:prev.emergency||'',
+    emergencyPhone:prev.emergencyPhone||'',
   };
   localStorage.setItem('mg2-medical',JSON.stringify(data));
   closeModal('m-medical');
@@ -4018,8 +4109,6 @@ function openMedicalEdit(){
   document.getElementById('med-allergy').value=d.allergy||'';
   document.getElementById('med-medicine').value=d.medicine||'';
   document.getElementById('med-history').value=d.history||'';
-  document.getElementById('med-emergency-name').value=d.emergency||'';
-  document.getElementById('med-emergency-phone').value=d.emergencyPhone||'';
   document.getElementById('med-insurance').value=d.insurance||'';
   openModal('m-medical');
 }
@@ -4044,6 +4133,7 @@ function renderMedicalCard(){
     +(d.history?'<div class="medical-row"><span class="medical-label">🩺 지병 / History</span><span class="medical-value">'+d.history+'</span></div>':'')
     +(d.emergency?'<div class="medical-row"><span class="medical-label">📞 비상연락처 이름 / Emergency</span><span class="medical-value" style="font-size:13px;">'+d.emergency+'</span></div>':'')
     +(d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📱 비상연락처 전화 / Phone</span><span class="medical-value" style="font-size:13px;">'+d.emergencyPhone+'</span></div>':'')
+    +(!d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📞 비상연락처</span><span class="medical-value" style="font-size:12px;color:var(--accent);">설정 → SOS 긴급연락처에서 등록하세요</span></div>':'')
     +(d.insurance?'<div class="medical-row"><span class="medical-label">📋 보험사 / Insurance</span><span class="medical-value" style="font-size:13px;">'+d.insurance+'</span></div>':'')
     +'</div>'
     +'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;">🇰🇷 한국인 라이더 · Korean Motorcycle Rider</div>';
@@ -4405,9 +4495,10 @@ function renderMedicalCard(){
         <div class="form-group full"><label class="form-label">⚠️ 알레르기 / Allergy</label><input type="text" class="form-input" id="med-allergy" placeholder="페니실린 / Penicillin (없으면 공백)"></div>
         <div class="form-group full"><label class="form-label">💊 복용 중인 약 / Medication</label><input type="text" class="form-input" id="med-medicine" placeholder="없음 / None"></div>
         <div class="form-group full"><label class="form-label">🩺 지병 / Medical History</label><input type="text" class="form-input" id="med-history" placeholder="없음 / None"></div>
-        <div class="form-group full"><label class="form-label">📞 비상연락처 이름 / Emergency Contact</label><input type="text" class="form-input" id="med-emergency-name" placeholder="홍길순 (배우자)"></div>
-        <div class="form-group full"><label class="form-label">📱 비상연락처 전화번호 / Phone</label><input type="tel" class="form-input" id="med-emergency-phone" placeholder="010-xxxx-xxxx"></div>
         <div class="form-group full"><label class="form-label">🏥 여행자보험사 연락처</label><input type="text" class="form-input" id="med-insurance" placeholder="삼성화재 1588-xxxx"></div>
+        <div style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:6px;font-size:12px;color:var(--text-muted);">
+          📞 긴급연락처는 <strong style="color:var(--accent);">더보기 → 설정 → SOS 긴급연락처</strong>에서 등록하세요
+        </div>
       </div>
     </div>
     <div class="modal-footer">
