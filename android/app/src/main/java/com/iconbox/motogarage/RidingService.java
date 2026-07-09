@@ -12,6 +12,7 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -38,14 +39,14 @@ public class RidingService extends Service {
             public void onLocationResult(@NonNull LocationResult result) {
                 android.location.Location loc = result.getLastLocation();
                 if (loc == null) return;
-                // 위치 데이터를 브로드캐스트로 전송 → RidingPlugin이 수신해서 JS로 전달
                 Intent broadcast = new Intent(ACTION_LOCATION);
                 broadcast.putExtra("lat", loc.getLatitude());
                 broadcast.putExtra("lon", loc.getLongitude());
-                broadcast.putExtra("speed", loc.hasSpeed() ? loc.getSpeed() : -1f); // m/s, -1이면 없음
+                broadcast.putExtra("speed", loc.hasSpeed() ? loc.getSpeed() : -1f);
                 broadcast.putExtra("accuracy", loc.getAccuracy());
                 broadcast.putExtra("time", loc.getTime());
-                sendBroadcast(broadcast);
+                // LocalBroadcastManager 사용 (앱 내부 통신, 보안 정책 우회)
+                LocalBroadcastManager.getInstance(RidingService.this).sendBroadcast(broadcast);
             }
         };
     }

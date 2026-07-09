@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -19,31 +21,28 @@ public class RidingPlugin extends Plugin {
 
     @Override
     public void load() {
-        // 서비스에서 보내는 위치 브로드캐스트를 수신해서 JS로 전달
         locationReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 JSObject data = new JSObject();
                 data.put("lat",      intent.getDoubleExtra("lat", 0));
                 data.put("lon",      intent.getDoubleExtra("lon", 0));
-                data.put("speed",    intent.getFloatExtra("speed", -1f));   // m/s, -1이면 없음
+                data.put("speed",    intent.getFloatExtra("speed", -1f));
                 data.put("accuracy", intent.getFloatExtra("accuracy", 0f));
                 data.put("time",     intent.getLongExtra("time", 0L));
                 notifyListeners("locationUpdate", data);
             }
         };
-        IntentFilter filter = new IntentFilter(RidingService.ACTION_LOCATION);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            getContext().registerReceiver(locationReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            getContext().registerReceiver(locationReceiver, filter);
-        }
+        // LocalBroadcastManager로 수신 (RidingService와 동일)
+        LocalBroadcastManager.getInstance(getContext())
+            .registerReceiver(locationReceiver, new IntentFilter(RidingService.ACTION_LOCATION));
     }
 
     @Override
     protected void handleOnDestroy() {
         if (locationReceiver != null) {
-            getContext().unregisterReceiver(locationReceiver);
+            LocalBroadcastManager.getInstance(getContext())
+                .unregisterReceiver(locationReceiver);
         }
     }
 

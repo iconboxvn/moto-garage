@@ -2,6 +2,25 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<script>
+(function(){
+  try{
+    var saved = localStorage.getItem('mg2-lang');
+    var urls = {vn:'./index_vn.html', en:'./index_en.html'};
+    if(!saved){
+      var device = ((navigator.language||navigator.userLanguage||'ko')+'').toLowerCase();
+      var target = 'ko';
+      if(device.indexOf('vi') === 0) target = 'vn';
+      else if(device.indexOf('ko') !== 0) target = 'en';
+      localStorage.setItem('mg2-lang', target);
+      localStorage.setItem('mg2-onboarding-pending', '1');
+      if(urls[target]){ window.location.replace(urls[target]); }
+    } else if(urls[saved]){
+      window.location.replace(urls[saved]);
+    }
+  }catch(e){}
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Ridemate — Your Riding Companion</title>
 <meta name="theme-color" content="#0c0c0d">
@@ -12,7 +31,7 @@
 <link rel="manifest" href="/moto-garage/manifest.json">
 <link rel="apple-touch-icon" href="/moto-garage/icon-192.png">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 :root {
   --bg:#0c0c0d; --surface:#141517; --surface2:#1b1d20; --surface3:#222529;
   --border:#272a2f; --border-bright:#363b42;
@@ -20,7 +39,7 @@
   --accent:#e8a020; --accent-dim:#3a2808;
   --red:#d04040; --red-dim:#2e1010;
   --green:#38a868; --green-dim:#0e2a1a;
-  --text:#e8ecf0; --text-dim:#9aa3ad; --text-muted:#5a6270;
+  --text:#e8ecf0; --text-dim:#9aa3ad; --text-muted:#8890a0;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden;}
@@ -71,9 +90,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
   .ins-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
   .ins-title{font-size:15px;color:var(--text-dim);}
   .ins-body{margin-top:10px;}
-  .ins-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-  .ins-label{font-size:15px;color:var(--text-muted);}
-  .ins-value{font-size:15px;font-weight:700;color:var(--text);}
+  .ins-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;}
+  .ins-label{font-size:15px;color:var(--text-muted);flex-shrink:0;white-space:nowrap;}
+  .ins-value{font-size:15px;font-weight:700;color:var(--text);text-align:right;word-break:break-word;}
   .ins-dday-ok{color:var(--green);font-size:15px;font-weight:700;}
   .ins-dday-warn{color:#E8A020;font-size:15px;font-weight:700;}
   .ins-dday-danger{color:#E84040;font-size:15px;font-weight:700;}
@@ -419,11 +438,13 @@ option{background:var(--surface2);}
   .sos-fab:active{cursor:grabbing;}
   .sos-fab.dragging{animation:none;box-shadow:0 8px 30px rgba(208,48,48,0.7);transform:scale(1.05);}
   @keyframes sosPulse{0%,100%{box-shadow:0 4px 20px rgba(208,48,48,0.5);}50%{box-shadow:0 4px 30px rgba(208,48,48,0.9),0 0 0 8px rgba(208,48,48,0.15);}}
+  .onb-highlight{position:absolute;border:4px solid #22d3ee;border-radius:14px;pointer-events:none;animation:onbPulse 1.4s ease-in-out infinite;box-sizing:border-box;}
+  @keyframes onbPulse{0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,0.6);}50%{box-shadow:0 0 0 12px rgba(34,211,238,0);}}
   .sos-fab-text{font-size:13px;font-weight:900;color:#fff;letter-spacing:0.5px;}
   .sos-modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:14px 14px 0 0;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;}
   .sos-header{background:linear-gradient(135deg,#c02020,#8a1010);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;}
   .sos-title{font-family:"Bebas Neue",sans-serif;font-size:22px;letter-spacing:3px;color:#fff;}
-  .sos-body{padding:16px;}
+  .sos-body{padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
   .sos-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
   .sos-choice-btn{background:var(--surface2);border:2px solid var(--border-bright);border-radius:10px;padding:18px 12px;cursor:pointer;text-align:center;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
   .sos-choice-btn.selected{border-color:var(--red);background:var(--red-dim);}
@@ -492,6 +513,7 @@ option{background:var(--surface2);}
   .sample-banner-text{flex:1;font-size:12px;color:#6ab0f5;font-weight:600;}
   .sample-banner-arrow{font-size:18px;color:#6ab0f5;opacity:0.7;}
 </style>
+<script src="./lib/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -540,12 +562,12 @@ option{background:var(--surface2);}
       <span class="sample-banner-arrow">›</span>
     </div>
     <div id="riding-ctrl-bar" class="riding-ctrl" style="margin-top:4px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div id="riding-ctrl-dot" class="riding-dot"></div>
-        <div>
-          <div id="riding-ctrl-title" style="font-size:14px;font-weight:700;color:var(--text-dim);">라이딩 대기중</div>
-          <div id="riding-ctrl-sub" style="font-size:11px;color:var(--text-muted);line-height:1.6;">라이딩 종료 후 거리 / 시간 / 속도 정보를 제공합니다.<br>사고 감지 시 긴급 연락처로 자동 문자를 발송합니다.</div>
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div id="riding-ctrl-dot" class="riding-dot"></div>
+          <div id="riding-ctrl-title" style="font-size:15px;font-weight:700;color:var(--accent);">라이딩 대기중</div>
         </div>
+        <div id="riding-ctrl-sub" style="font-size:12px;color:var(--text);line-height:1.7;margin-top:4px;">• 라이딩 종료 후 거리 / 시간 / 속도 정보 제공.<br>• 충격 감지 시 긴급 연락처로 자동 문자 발송 시도(보조기능, 감지 실패 가능).<br>• 위급 시엔 꼭 직접 119(또는 현지 긴급구조번호)에 신고해주세요.</div>
       </div>
       <div id="riding-ctrl-btn">
         <button class="btn btn-primary" style="font-size:13px;padding:8px 14px;" onclick="startRiding()">▶ 시작</button>
@@ -593,8 +615,36 @@ option{background:var(--surface2);}
   <!-- 라이딩 이력 -->
   <div class="page" id="page-rideHistory">
     <div class="sec-header"><span class="sec-title">라이딩 이력</span><div class="sec-line"></div></div>
+    <button class="btn btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats')">📅 월별 통계 보기</button>
     <div id="ride-history-list"></div>
     <button class="btn btn-full" id="ride-history-more-btn" onclick="showMoreRideHistory()" style="display:none;margin-top:8px;">더 보기</button>
+  </div>
+
+  <!-- 월별 통계 -->
+  <div class="page" id="page-monthlyStats">
+    <div class="sec-header">
+      <button class="btn btn-sm" onclick="showPage('rideHistory', document.getElementById('nav-more-btn'))" style="padding:6px 12px;margin-right:10px;">←</button>
+      <span class="sec-title">월별 통계</span>
+      <div class="sec-line"></div>
+    </div>
+
+    <div id="mstat-bike-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;"></div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <button class="btn btn-sm" onclick="mstatChangeMonth(-1)">◀</button>
+      <div id="mstat-month-label" style="font-weight:700;font-size:17px;color:var(--text);"></div>
+      <button class="btn btn-sm" onclick="mstatChangeMonth(1)">▶</button>
+    </div>
+
+    <div id="mstat-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;"></div>
+
+    <div id="mstat-weekday-header" style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--text-dim);margin-bottom:8px;">
+      <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+    </div>
+    <div id="mstat-calendar" style="display:grid;grid-template-columns:repeat(7,1fr);row-gap:12px;"></div>
+
+    <div id="mstat-day-detail" style="display:none;margin-top:18px;background:var(--surface2);border-radius:10px;padding:14px;"></div>
+    <div id="mstat-motivate" style="display:none;margin-top:16px;margin-bottom:20px;text-align:center;font-size:13px;color:var(--text-dim);line-height:1.6;"></div>
   </div>
 
   <!-- 백업 -->
@@ -605,11 +655,17 @@ option{background:var(--surface2);}
     <div class="card" style="margin-bottom:12px;">
       <div class="setting-section-title">🌐 언어</div>
       <div style="display:flex;gap:8px;margin-top:8px;">
-        <button id="lang-btn-ko" class="btn btn-sm" onclick="setAppLang('ko',this)" style="flex:1;">🇰🇷 한국어</button>
-        <button id="lang-btn-vn" class="btn btn-sm" onclick="setAppLang('vn',this)" style="flex:1;">🇻🇳 Tiếng Việt</button>
-        <button id="lang-btn-en" class="btn btn-sm" onclick="setAppLang('en',this)" style="flex:1;">🇺🇸 English</button>
+        <button id="lang-btn-ko" class="btn btn-sm" onclick="setAppLang('ko',this)" style="flex:1;min-width:0;white-space:normal;text-align:center;justify-content:center;padding:8px 4px;font-size:13px;">🇰🇷 한국어</button>
+        <button id="lang-btn-vn" class="btn btn-sm" onclick="setAppLang('vn',this)" style="flex:1;min-width:0;white-space:normal;text-align:center;justify-content:center;padding:8px 4px;font-size:13px;">🇻🇳 Tiếng Việt</button>
+        <button id="lang-btn-en" class="btn btn-sm" onclick="setAppLang('en',this)" style="flex:1;min-width:0;white-space:normal;text-align:center;justify-content:center;padding:8px 4px;font-size:13px;">🇺🇸 English</button>
       </div>
       <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">알림도 선택한 언어로 발송됩니다</div>
+    </div>
+
+    <!-- 앱 사용법 다시보기 -->
+    <div class="card" style="margin-bottom:12px;">
+      <div class="setting-section-title">📖 도움말</div>
+      <button class="btn btn-sm" style="width:100%;margin-top:8px;" onclick="showOnboarding()">앱 사용법 다시보기</button>
     </div>
 
     <!-- SOS 긴급연락처 설정 -->
@@ -690,74 +746,54 @@ option{background:var(--surface2);}
   <div class="modal">
     <div class="modal-header"><span class="modal-title">차량 등록</span><button class="modal-close" onclick="closeModal('m-bike')">✕</button></div>
     <div class="modal-body">
+
+      <!-- 검색 -->
       <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">1</span>연료 타입</div>
-        <div class="pill-group" id="fuel-pills">
-          <div class="pill selected" onclick="selectFuelType('ice',this)">⛽ 내연기관</div>
-          <div class="pill" onclick="selectFuelType('electric',this)">🔋 전기</div>
+        <div class="step-label"><span class="step-num">1</span>브랜드 / 모델 검색</div>
+        <input type="text" class="form-input" id="bike-search"
+          placeholder="예: CBR, Ninja, MT-09, Forza..."
+          oninput="onBikeSearch(this.value)"
+          autocomplete="off"
+          style="margin-bottom:8px;">
+        <div id="bike-search-results"></div>
+        <!-- 선택된 차량 표시 -->
+        <div id="bike-selected" style="display:none;padding:10px 12px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:6px;margin-top:6px;">
+          <div style="font-size:14px;font-weight:700;color:var(--accent);" id="bike-selected-label"></div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px;" id="bike-selected-sub"></div>
+        </div>
+        <!-- 직접 입력 -->
+        <div id="bike-manual-fields" style="display:none;margin-top:10px;">
+          <div style="padding:8px 10px;background:var(--surface2);border-radius:5px;font-size:12px;color:var(--text-muted);margin-bottom:8px;">✏️ 목록에 없는 차량을 직접 입력합니다</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input type="text" class="form-input" id="brand-custom" placeholder="브랜드명">
+            <input type="text" class="form-input" id="model-custom" placeholder="모델명">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="number" class="form-input" id="cc-custom" placeholder="배기량 (cc)" style="max-width:140px;">
+            <div class="pill-group" style="flex-wrap:nowrap;gap:4px;">
+              <div class="pill" onclick="selectFuelType('ice',this)">⛽ 내연기관</div>
+              <div class="pill" onclick="selectFuelType('electric',this)">🔋 전기</div>
+            </div>
+          </div>
         </div>
       </div>
-      <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">2</span>제조사</div>
-        <div class="pill-group" id="brand-pills"></div>
-        <input type="text" class="form-input" id="brand-custom" placeholder="제조사 입력" style="margin-top:8px;display:none;">
-      </div>
-      <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">3</span>모델</div>
-        <div class="pill-group" id="model-pills"><span style="font-size:12px;color:var(--text-muted);">제조사를 먼저 선택하세요</span></div>
-        <input type="text" class="form-input" id="model-custom" placeholder="모델명 입력" style="margin-top:8px;display:none;">
-      </div>
-      <div id="cat-preview" style="display:none;margin-bottom:10px;padding:8px 12px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:5px;font-size:12px;color:var(--accent);font-weight:600;"></div>
-      <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">4</span>연식</div>
-        <div class="pill-group" id="year-pills"></div>
-      </div>
-      <div style="margin-bottom:14px;" id="cc-step">
-        <div class="step-label"><span class="step-num">5</span>배기량</div>
-        <div class="pill-group" id="cc-pills">
-          <div class="pill" data-cc="1301" onclick="selectCC(1301,this)">1301cc</div>
-          <div class="pill" data-cc="1254" onclick="selectCC(1254,this)">1254cc</div>
-          <div class="pill" data-cc="1160" onclick="selectCC(1160,this)">1160cc</div>
-          <div class="pill" data-cc="1103" onclick="selectCC(1103,this)">1103cc</div>
-          <div class="pill" data-cc="1043" onclick="selectCC(1043,this)">1043cc</div>
-          <div class="pill" data-cc="999" onclick="selectCC(999,this)">999cc</div>
-          <div class="pill" data-cc="998" onclick="selectCC(998,this)">998cc</div>
-          <div class="pill" data-cc="937" onclick="selectCC(937,this)">937cc</div>
-          <div class="pill" data-cc="895" onclick="selectCC(895,this)">895cc</div>
-          <div class="pill" data-cc="890" onclick="selectCC(890,this)">890cc</div>
-          <div class="pill" data-cc="853" onclick="selectCC(853,this)">853cc</div>
-          <div class="pill" data-cc="799" onclick="selectCC(799,this)">799cc</div>
-          <div class="pill" data-cc="776" onclick="selectCC(776,this)">776cc</div>
-          <div class="pill" data-cc="765" onclick="selectCC(765,this)">765cc</div>
-          <div class="pill" data-cc="750" onclick="selectCC(750,this)">750cc</div>
-          <div class="pill" data-cc="693" onclick="selectCC(693,this)">693cc</div>
-          <div class="pill" data-cc="689" onclick="selectCC(689,this)">689cc</div>
-          <div class="pill" data-cc="660" onclick="selectCC(660,this)">660cc</div>
-          <div class="pill" data-cc="649" onclick="selectCC(649,this)">649cc</div>
-          <div class="pill" data-cc="648" onclick="selectCC(648,this)">648cc</div>
-          <div class="pill" data-cc="500" onclick="selectCC(500,this)">500cc</div>
-          <div class="pill" data-cc="452" onclick="selectCC(452,this)">452cc</div>
-          <div class="pill" data-cc="399" onclick="selectCC(399,this)">399cc</div>
-          <div class="pill" data-cc="349" onclick="selectCC(349,this)">349cc</div>
-          <div class="pill" data-cc="321" onclick="selectCC(321,this)">321cc</div>
-          <div class="pill" data-cc="313" onclick="selectCC(313,this)">313cc</div>
-          <div class="pill" data-cc="0" onclick="selectCC('other',this)">기타</div>
+
+      <!-- 연식 + 주행거리 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <div class="step-label"><span class="step-num">2</span>연식</div>
+          <select class="form-select" id="bike-year" style="width:100%;"></select>
         </div>
-        <input type="number" class="form-input" id="cc-custom" placeholder="배기량 입력 (cc)" style="margin-top:8px;display:none;max-width:180px;">
-      </div>
-      <div style="margin-bottom:14px;">
-        <div class="step-label"><span class="step-num">6</span>현재 주행거리 (km)</div>
-        <div class="pill-group" style="margin-bottom:8px;">
-          <div class="pill" onclick="setOdo(0,this)">신차 (0)</div>
-          <div class="pill" onclick="setOdo(1000,this)">1,000</div>
-          <div class="pill" onclick="setOdo(5000,this)">5,000</div>
-          <div class="pill" onclick="setOdo(10000,this)">10,000</div>
-          <div class="pill" onclick="setOdo(20000,this)">20,000</div>
-          <div class="pill" onclick="setOdo(30000,this)">30,000</div>
-          <div class="pill" onclick="setOdo(-1,this)">직접 입력</div>
+        <div>
+          <div class="step-label"><span class="step-num">3</span>주행거리</div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="number" class="form-input" id="bike-odo" placeholder="0" style="flex:1;min-width:0;">
+            <span style="font-size:13px;color:var(--text-dim);">km</span>
+          </div>
         </div>
-        <input type="number" class="form-input" id="bike-odo" placeholder="주행거리 km" style="max-width:200px;">
       </div>
+
+      <!-- 선택사항 -->
       <div class="form-grid">
         <div class="form-group">
           <label class="form-label">번호판 (선택)</label>
@@ -772,6 +808,7 @@ option{background:var(--surface2);}
           </select>
         </div>
       </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('m-bike')">취소</button>
@@ -1020,6 +1057,17 @@ var bState = {brand:'',model:'',year:0,cc:0,fuelType:'ice'};
 var deferredPrompt = null;
 
 const save = () => localStorage.setItem('mg2', JSON.stringify(D));
+
+// ═══════════════════════════════════════════
+//  ANALYTICS (Firebase)
+// ═══════════════════════════════════════════
+function logAnalyticsEvent(name, params){
+  try{
+    var FA = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseAnalytics;
+    if(!FA){ console.log('[Analytics:skip]', name, params); return; }
+    FA.logEvent({ name: name, params: params || {} }).catch(function(e){ console.warn('[Analytics] logEvent 실패', name, e); });
+  }catch(e){ console.warn('[Analytics] 오류', e); }
+}
 
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
 function yesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
@@ -1552,16 +1600,149 @@ function makeConsumables(brand,model,fuelType){
 //  브랜드별 모델 목록
 // ═══════════════════════════════════════════
 const BRAND_MODELS = {
-  Honda:[{name:'Africa Twin',cc:1100},{name:'NT1100',cc:1100},{name:'CBR1000RR-R',cc:1000},{name:'CB1000R',cc:1000},{name:'X-ADV 750',cc:750},{name:'CB750 Hornet',cc:750},{name:'CB650R',cc:650},{name:'CBR650R',cc:650},{name:'CB500F',cc:500},{name:'CB500X',cc:500},{name:'CBR500R',cc:500},{name:'CB400F',cc:400},{name:'CRF300L',cc:300},{name:'CB300R',cc:300},{name:'기타 (250cc 이하 포함)',cc:0}],
-  Yamaha:[{name:'YZF-R1',cc:998},{name:'MT-10',cc:998},{name:'MT-09',cc:890},{name:'XSR900',cc:890},{name:'Tracer 9',cc:890},{name:'MT-07',cc:689},{name:'XSR700',cc:689},{name:'Tracer 7',cc:689},{name:'Ténéré 700',cc:689},{name:'YZF-R7',cc:689},{name:'YZF-R3',cc:321},{name:'MT-03',cc:321},{name:'기타 (250cc 이하 포함)',cc:0}],
-  Kawasaki:[{name:'Ninja ZX-10R',cc:998},{name:'Z H2',cc:998},{name:'Ninja H2',cc:998},{name:'Ninja 1000SX',cc:1043},{name:'Versys 1000',cc:1043},{name:'Z900',cc:948},{name:'Z900RS',cc:948},{name:'Versys 650',cc:649},{name:'Ninja 650',cc:649},{name:'Z650',cc:649},{name:'Z400',cc:399},{name:'Ninja 400',cc:399},{name:'기타 (250cc 이하 포함)',cc:0}],
-  Suzuki:[{name:'Hayabusa',cc:1340},{name:'GSX-S1000',cc:999},{name:'V-Strom 1050',cc:1037},{name:'GSX-8S',cc:776},{name:'V-Strom 800',cc:776},{name:'GSX-S750',cc:749},{name:'V-Strom 650',cc:645},{name:'기타 (250cc 이하 포함)',cc:0}],
-  BMW:[{name:'R1250GS',cc:1254},{name:'R1250R',cc:1254},{name:'S1000RR',cc:999},{name:'S1000R',cc:999},{name:'M1000RR',cc:999},{name:'F900R',cc:895},{name:'F850GS',cc:853},{name:'F750GS',cc:853},{name:'G310R',cc:313},{name:'G310GS',cc:313},{name:'기타 (250cc 이하 포함)',cc:0}],
-  KTM:[{name:'1290 Super Duke R',cc:1301},{name:'1290 Adventure',cc:1301},{name:'890 Duke R',cc:889},{name:'890 Adventure',cc:889},{name:'790 Duke',cc:799},{name:'690 Duke',cc:693},{name:'390 Duke',cc:399},{name:'390 Adventure',cc:399},{name:'기타 (250cc 이하 포함)',cc:0}],
-  Ducati:[{name:'Multistrada V4',cc:1158},{name:'Panigale V4',cc:1103},{name:'Streetfighter V4',cc:1103},{name:'Monster 937',cc:937},{name:'DesertX',cc:937},{name:'기타 (250cc 이하 포함)',cc:0}],
-  Triumph:[{name:'Rocket 3',cc:2458},{name:'Speed Triple 1200',cc:1160},{name:'Tiger 1200',cc:1160},{name:'Street Triple 765',cc:765},{name:'Tiger 900',cc:888},{name:'Trident 660',cc:660},{name:'Tiger 660',cc:660},{name:'Speed 400',cc:398},{name:'기타 (250cc 이하 포함)',cc:0}],
-  'Royal Enfield':[{name:'Super Meteor 650',cc:648},{name:'Continental GT 650',cc:648},{name:'Interceptor 650',cc:648},{name:'Himalayan 450',cc:452},{name:'Hunter 350',cc:349},{name:'Classic 350',cc:349},{name:'Meteor 350',cc:349},{name:'기타 (250cc 이하 포함)',cc:0}],
-  Harley:[{name:'Road Glide',cc:1868},{name:'Fat Boy',cc:1868},{name:'Fat Bob',cc:1868},{name:'Street Bob',cc:1868},{name:'Sportster S',cc:1252},{name:'Pan America',cc:1252},{name:'Nightster',cc:975},{name:'기타 (250cc 이하 포함)',cc:0}],
+  Honda:[
+    {name:'Africa Twin 1100',cc:1100},{name:'NT1100',cc:1100},{name:'Gold Wing',cc:1833},
+    {name:'CBR1000RR-R',cc:1000},{name:'CB1000R',cc:1000},
+    {name:'CB750 Hornet',cc:750},{name:'X-ADV 750',cc:750},
+    {name:'CB650R',cc:650},{name:'CBR650R',cc:650},
+    {name:'CB500F',cc:500},{name:'CB500X',cc:500},{name:'CBR500R',cc:500},
+    {name:'CB400F',cc:400},
+    {name:'CRF300L',cc:300},{name:'CB300R',cc:300},
+    {name:'XR190',cc:190},{name:'XR150L',cc:150},
+    {name:'CB125R',cc:125},
+    {name:'Winner X 150',cc:150},{name:'Winner 150',cc:150},
+    {name:'Sonic 150',cc:150},{name:'Wave 110',cc:110},{name:'Wave RSX 110',cc:110},
+    {name:'Future 125',cc:125},{name:'Blade 110',cc:110},
+    {name:'Forza 750',cc:750},{name:'Forza 350',cc:350},{name:'Forza 300',cc:300},
+    {name:'ADV 350',cc:350},{name:'ADV 160',cc:160},
+    {name:'SH 350i',cc:350},{name:'SH 160i',cc:160},{name:'SH 150i',cc:150},{name:'SH 125i',cc:125},
+    {name:'SH Mode 150',cc:150},{name:'SH Mode 125',cc:125},
+    {name:'PCX 160',cc:160},{name:'PCX 125',cc:125},
+    {name:'Air Blade 160',cc:160},{name:'Air Blade 125',cc:125},
+    {name:'Vision 125',cc:125},{name:'Lead 125',cc:125},
+    {name:'Click 150',cc:150},{name:'Click 125',cc:125},
+    // 미들급 슈퍼스포츠
+    {name:'CBR600RR',cc:599},{name:'CBR600F',cc:599},
+    {name:'기타',cc:0}
+  ],
+  Yamaha:[
+    {name:'YZF-R1',cc:998},{name:'MT-10',cc:998},
+    {name:'MT-09',cc:890},{name:'XSR900',cc:890},{name:'Tracer 9',cc:890},
+    {name:'MT-07',cc:689},{name:'XSR700',cc:689},{name:'Tracer 7',cc:689},
+    {name:'Ténéré 700',cc:689},{name:'YZF-R7',cc:689},
+    {name:'YZF-R3',cc:321},{name:'MT-03',cc:321},
+    {name:'YZF-R6',cc:599},{name:'YZF-R15',cc:155},{name:'MT-15',cc:155},
+    {name:'Exciter 155',cc:155},{name:'Exciter 150',cc:150},
+    {name:'Sirius 110',cc:110},{name:'Jupiter 110',cc:110},
+    {name:'FZ150i',cc:150},{name:'TFX 150',cc:150},
+    {name:'TMAX 560',cc:560},{name:'XMAX 300',cc:300},{name:'XMAX 250',cc:250},
+    {name:'NMax 155',cc:155},{name:'NMax 125',cc:125},
+    {name:'Aerox 155',cc:155},{name:'Aerox 125',cc:125},
+    {name:'Janus 125',cc:125},{name:'Freego 125',cc:125},
+    {name:'Grande 125',cc:125},{name:'Latte 125',cc:125},
+    {name:'기타',cc:0}
+  ],
+  Kawasaki:[
+    // 리터급
+    {name:'Ninja ZX-10R',cc:998},{name:'Ninja ZX-10RR',cc:998},
+    {name:'Z H2',cc:998},{name:'Ninja H2',cc:998},{name:'Ninja H2 SX',cc:998},
+    {name:'Ninja 1000SX',cc:1043},{name:'Versys 1000',cc:1043},
+    {name:'Z900',cc:948},{name:'Z900RS',cc:948},{name:'Z900RS Cafe',cc:948},
+    // 미들급 슈퍼스포츠
+    {name:'Ninja ZX-6R (636)',cc:636},
+    {name:'Ninja ZX-4RR',cc:399},
+    {name:'Ninja ZX-4R',cc:399},
+    // 미들급 네이키드/투어링
+    {name:'Versys 650',cc:649},{name:'Ninja 650',cc:649},{name:'Z650',cc:649},{name:'Z650RS',cc:649},
+    {name:'Z400',cc:399},{name:'Ninja 400',cc:399},
+    {name:'Versys-X 300',cc:296},{name:'Ninja 300',cc:296},
+    {name:'Z125',cc:125},{name:'Ninja 125',cc:125},
+    {name:'기타',cc:0}
+  ],
+  Suzuki:[
+    {name:'Hayabusa',cc:1340},{name:'GSX-S1000',cc:999},
+    {name:'V-Strom 1050',cc:1037},
+    {name:'GSX-8S',cc:776},{name:'V-Strom 800',cc:776},
+    {name:'GSX-S750',cc:749},{name:'V-Strom 650',cc:645},
+    {name:'Raider R150',cc:150},{name:'GSX-R150',cc:150},
+    {name:'Satria F150',cc:150},
+    {name:'Burgman 400',cc:400},{name:'Burgman 200',cc:200},
+    {name:'Address 125',cc:125},{name:'Avenis 125',cc:125},
+    // 미들급 슈퍼스포츠
+    {name:'GSX-R600',cc:599},{name:'GSX-R750',cc:750},
+    {name:'기타',cc:0}
+  ],
+  BMW:[
+    {name:'R1250GS',cc:1254},{name:'R1250R',cc:1254},{name:'R1250RS',cc:1254},
+    {name:'S1000RR',cc:999},{name:'S1000R',cc:999},{name:'M1000RR',cc:999},
+    {name:'F900R',cc:895},{name:'F900XR',cc:895},
+    {name:'F850GS',cc:853},{name:'F750GS',cc:853},
+    {name:'G310R',cc:313},{name:'G310GS',cc:313},
+    {name:'C400X',cc:350},{name:'C400GT',cc:350},
+    {name:'기타',cc:0}
+  ],
+  KTM:[
+    {name:'1290 Super Duke R',cc:1301},{name:'1290 Adventure',cc:1301},
+    {name:'890 Duke R',cc:889},{name:'890 Adventure',cc:889},
+    {name:'790 Duke',cc:799},{name:'690 Duke',cc:693},
+    {name:'390 Duke',cc:399},{name:'390 Adventure',cc:399},
+    {name:'250 Duke',cc:249},{name:'200 Duke',cc:199},
+    {name:'기타',cc:0}
+  ],
+  Ducati:[
+    {name:'Multistrada V4',cc:1158},{name:'Panigale V4',cc:1103},
+    {name:'Streetfighter V4',cc:1103},{name:'Monster 937',cc:937},
+    {name:'DesertX',cc:937},{name:'Scrambler 800',cc:803},
+    {name:'기타',cc:0}
+  ],
+  Triumph:[
+    {name:'Rocket 3',cc:2458},{name:'Speed Triple 1200',cc:1160},{name:'Tiger 1200',cc:1160},
+    {name:'Street Triple 765',cc:765},{name:'Tiger 900',cc:888},
+    {name:'Trident 660',cc:660},{name:'Tiger 660',cc:660},
+    {name:'Speed 400',cc:398},{name:'Scrambler 400X',cc:398},
+    {name:'기타',cc:0}
+  ],
+  'Royal Enfield':[
+    {name:'Super Meteor 650',cc:648},{name:'Continental GT 650',cc:648},{name:'Interceptor 650',cc:648},
+    {name:'Himalayan 450',cc:452},{name:'Guerrilla 450',cc:452},
+    {name:'Hunter 350',cc:349},{name:'Classic 350',cc:349},{name:'Meteor 350',cc:349},
+    {name:'Scram 411',cc:411},{name:'Himalayan 411',cc:411},
+    {name:'기타',cc:0}
+  ],
+  Harley:[
+    {name:'Road Glide',cc:1868},{name:'Street Glide',cc:1868},
+    {name:'Fat Boy',cc:1868},{name:'Fat Bob',cc:1868},{name:'Street Bob',cc:1868},
+    {name:'Sportster S',cc:1252},{name:'Pan America',cc:1252},{name:'Nightster',cc:975},
+    {name:'기타',cc:0}
+  ],
+  Piaggio:[
+    {name:'Vespa GTS 300',cc:300},{name:'Vespa GTS 250',cc:250},
+    {name:'Vespa Sprint 150',cc:150},{name:'Vespa Primavera 150',cc:150},
+    {name:'Vespa LX 125',cc:125},{name:'Vespa S 125',cc:125},
+    {name:'MP3 500',cc:500},{name:'MP3 300',cc:300},
+    {name:'Liberty 150',cc:150},{name:'Fly 150',cc:150},
+    {name:'기타',cc:0}
+  ],
+  Kymco:[
+    {name:'AK 550',cc:550},{name:'X-Town 300',cc:300},
+    {name:'Downtown 350',cc:350},{name:'X-Citing 400',cc:400},
+    {name:'Agility 125',cc:125},{name:'Like 125',cc:125},
+    {name:'기타',cc:0}
+  ],
+  SYM:[
+    {name:'Maxsym 600',cc:600},{name:'Maxsym TL 500',cc:500},
+    {name:'Cruisym 300',cc:278},{name:'Cruisym 250',cc:249},
+    {name:'Star SR 170',cc:170},{name:'Jet X 125',cc:125},
+    {name:'Fancy 125',cc:125},{name:'Venus 125',cc:125},
+    {name:'기타',cc:0}
+  ],
+  Benelli:[
+    {name:'TRK 502',cc:500},{name:'TRK 502X',cc:500},
+    {name:'Leoncino 500',cc:500},{name:'TNT 600',cc:600},
+    {name:'302S',cc:300},{name:'BN 302',cc:300},
+    {name:'Imperiale 400',cc:374},{name:'Leoncino 250',cc:249},
+    {name:'기타',cc:0}
+  ],
   other:[]
 };
 
@@ -1592,6 +1773,8 @@ function showPage(name,btn){
   if(name==='history') renderHistory();
   if(name==='backup') renderBackupPage();
   if(name==='rideHistory') renderRideHistoryPage();
+  if(name==='monthlyStats') openMonthlyStats();
+  logAnalyticsEvent('app_screen_view', {screen_name:name});
 }
 
 // ═══════════════════════════════════════════
@@ -1659,9 +1842,38 @@ function renderTodayTip() {
 }
 
 function renderDash(){
+  _renderDashAttempt(0);
+}
+
+function _renderDashAttempt(attempt){
+  try{
+    _renderDashInner();
+    // 렌더링은 성공했지만 저장된 데이터와 D가 어긋나 있는 경우(스토리지 초기화 지연 등) 감지
+    if(attempt < 3){
+      var stored = localStorage.getItem('mg2');
+      if(stored){
+        try{
+          var p = JSON.parse(stored);
+          if(p.bikes && p.bikes.length > 0 && (!D.bikes || D.bikes.length === 0)){
+            console.warn('[renderDash] D-스토리지 불일치 감지(시도 #'+attempt+'), 재시도 예약');
+            setTimeout(function(){ _renderDashAttempt(attempt+1); }, 300*(attempt+1));
+          }
+        }catch(e){}
+      }
+    }
+  }catch(e){
+    console.warn('[renderDash] 렌더링 실패(시도 #'+attempt+')', e);
+    if(attempt < 3){
+      setTimeout(function(){ _renderDashAttempt(attempt+1); }, 300*(attempt+1));
+    }
+  }
+}
+
+function _renderDashInner(){
   const stored=localStorage.getItem('mg2');
   if(stored){ try{ const p=JSON.parse(stored); if(p.bikes) D=p; }catch(e){} }
   const el=document.getElementById('dash-content');
+  if(!el) throw new Error('dash-content 요소를 찾을 수 없음');
   if(!D.bikes.length){
     el.innerHTML=`<div class="no-bikes-box"><div style="font-size:43px;margin-bottom:14px;">🏍</div><div style="font-size:16px;color:var(--text-dim);margin-bottom:6px;">차량을 등록하면 관리가 시작됩니다</div><div style="font-size:15px;color:var(--text-muted);margin-bottom:20px;">소모품 알림 · 주행거리 · 정비 이력</div><button class="btn btn-primary" onclick="openModal('m-bike')">첫 차량 등록하기</button></div>`;
     return;
@@ -1953,6 +2165,7 @@ async function _insExtractExpiry(bikeId, file, type){
 }
 
 async function _insExtractExpiryFromBase64(bikeId, base64, mediaType, filePath){
+  logAnalyticsEvent('insurance_scan_used', {media_type: mediaType});
   try{
     const pureBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
     const contentType = mediaType==='application/pdf' ? 'document' : 'image';
@@ -2090,138 +2303,142 @@ function deleteBike(id){
 
 function countAlerts(bike){ return bike.consumables.filter(c=>(bike.odometer-c.lastKm)/c.km>=0.8).length; }
 
-// 차량 등록 모달
+// ═══════════════════════════════════════════
+//  차량 등록 모달 — 검색 기반 심플 UI
+// ═══════════════════════════════════════════
+var bState = {brand:'', model:'', year:0, cc:0, fuelType:'ice'};
+
 function resetBikeModal(){
-  bState={brand:'',model:'',year:0,cc:0,fuelType:'ice'};
-  clearPills('fuel-pills');
-  document.querySelector('#fuel-pills .pill').classList.add('selected'); // 기본값: 내연기관
-  document.getElementById('cc-step').style.display='block';
-  renderBrandPills('ice');
-  document.getElementById('brand-custom').style.display='none';
+  bState = {brand:'', model:'', year:0, cc:0, fuelType:'ice'};
+  const searchEl = document.getElementById('bike-search');
+  if(searchEl) searchEl.value='';
+  document.getElementById('bike-search-results').innerHTML = _renderDefaultBrands();
+  document.getElementById('bike-selected').style.display='none';
+  document.getElementById('bike-manual-fields').style.display='none';
   document.getElementById('brand-custom').value='';
-  document.getElementById('model-pills').innerHTML='<span style="font-size:15px;color:var(--text-muted);">제조사를 먼저 선택하세요</span>';
-  document.getElementById('model-custom').style.display='none';
   document.getElementById('model-custom').value='';
-  document.getElementById('cc-custom').style.display='none';
+  document.getElementById('cc-custom').value='';
   document.getElementById('bike-odo').value='';
   document.getElementById('bike-plate').value='';
   document.getElementById('bike-color').value='';
-  document.getElementById('cat-preview').style.display='none';
+  // 연식 select 채우기
   const yr=new Date().getFullYear();
-  const yp=document.getElementById('year-pills');
-  yp.innerHTML='';
-  for(let y=yr;y>=yr-12;y--){
-    const d=document.createElement('div');
-    d.className='pill'; d.textContent=y;
-    d.onclick=()=>{ clearPills('year-pills'); d.classList.add('selected'); bState.year=y; };
-    yp.appendChild(d);
+  const sel=document.getElementById('bike-year');
+  sel.innerHTML='';
+  for(let y=yr;y>=yr-15;y--){
+    const o=document.createElement('option');
+    o.value=y; o.textContent=y;
+    sel.appendChild(o);
   }
 }
 
-// 연료 타입 선택 (내연기관/전기) — 브랜드 목록과 배기량 단계가 바뀜
-function selectFuelType(type,el){
-  clearPills('fuel-pills'); el.classList.add('selected');
-  bState.fuelType=type;
-  bState.brand=''; bState.model=''; bState.cc=0;
-  document.getElementById('cc-step').style.display=(type==='electric')?'none':'block';
-  document.getElementById('cc-custom').style.display='none';
-  document.getElementById('cc-custom').value='';
-  renderBrandPills(type);
-  document.getElementById('brand-custom').style.display='none';
-  document.getElementById('brand-custom').value='';
-  document.getElementById('model-pills').innerHTML='<span style="font-size:15px;color:var(--text-muted);">제조사를 먼저 선택하세요</span>';
-  document.getElementById('model-custom').style.display='none';
-  document.getElementById('model-custom').value='';
-  document.getElementById('cat-preview').style.display='none';
+function _renderDefaultBrands(){
+  const brands=['Honda','Yamaha','Kawasaki','Suzuki','BMW','KTM','Ducati','Triumph','Royal Enfield','Harley','Kymco','SYM'];
+  return `<div style="margin-bottom:6px;font-size:12px;color:var(--text-muted);">인기 브랜드</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      ${brands.map(b=>`<div class="pill" onclick="onBikeSearch('${b}')" style="font-size:13px;">${b}</div>`).join('')}
+      <div class="pill" onclick="showBikeManual()" style="font-size:13px;">직접 입력</div>
+    </div>`;
 }
 
-// 연료 타입에 맞는 제조사 pill 렌더링
-const ICE_BRANDS=['Honda','Yamaha','Kawasaki','Suzuki','BMW','KTM','Ducati','Triumph','Royal Enfield','Harley'];
-const ELECTRIC_BRANDS=['VinFast','Dat Bike','Yadea','Pega','Selex'];
-function renderBrandPills(type){
-  const bp=document.getElementById('brand-pills');
-  const list=type==='electric'?ELECTRIC_BRANDS:ICE_BRANDS;
-  bp.innerHTML=list.map(b=>`<div class="pill" onclick="selectBrand('${b}',this)">${b}</div>`).join('')+`<div class="pill" onclick="selectBrand('other',this)">기타...</div>`;
-}
+function onBikeSearch(q){
+  const searchEl=document.getElementById('bike-search');
+  if(searchEl && searchEl.value!==q) searchEl.value=q;
+  const query=q.trim().toLowerCase();
+  if(!query){
+    document.getElementById('bike-search-results').innerHTML=_renderDefaultBrands();
+    document.getElementById('bike-selected').style.display='none';
+    document.getElementById('bike-manual-fields').style.display='none';
+    return;
+  }
+  const allModels={...BRAND_MODELS, ...ELECTRIC_BRAND_MODELS};
+  const results=[];
 
-function selectBrand(brand,el){
-  clearPills('brand-pills'); el.classList.add('selected');
-  bState.brand=brand==='other'?'':brand;
-  const custom=document.getElementById('brand-custom');
-  if(brand==='other'){ custom.style.display='block'; custom.focus(); }
-  else { custom.style.display='none'; }
-  const mp=document.getElementById('model-pills');
-  const mcustom=document.getElementById('model-custom');
-  const modelSource=bState.fuelType==='electric'?ELECTRIC_BRAND_MODELS:BRAND_MODELS;
-  const models=modelSource[brand]||[];
-  mp.innerHTML=''; mcustom.style.display='none'; mcustom.value='';
-  if(!models.length){ mcustom.style.display='block'; }
-  else{
+  // 브랜드 버튼 클릭 (정확히 일치) → 해당 브랜드 전체 모델 ABC 순
+  const exactBrand = Object.keys(allModels).find(b=>b.toLowerCase()===query && b!=='other');
+  if(exactBrand){
+    const models = (allModels[exactBrand]||[])
+      .filter(m=>m.name!=='기타')
+      .sort((a,b)=>a.name.localeCompare(b.name));
     models.forEach(m=>{
-      const d=document.createElement('div');
-      const isOther=m.name.startsWith('기타');
-      d.innerHTML=(isOther||bState.fuelType==='electric')?`<span>${m.name}</span>`:`<span>${m.name}</span><span style="font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text-muted);margin-left:4px;">${m.cc}cc</span>`;
-      d.className='pill';
-      d.onclick=()=>{
-        clearPills('model-pills'); d.classList.add('selected');
-        if(isOther){
-          mcustom.style.display='block'; mcustom.focus();
-          bState.model=''; bState.cc=0;
-          clearPills('cc-pills');
-          document.getElementById('cc-custom').style.display=(bState.fuelType==='electric')?'none':'block';
-          document.getElementById('cat-preview').style.display='none';
-        } else {
-          mcustom.style.display='none';
-          bState.model=m.name; bState.cc=m.cc;
-          const prev=document.getElementById('cat-preview');
-          if(bState.fuelType==='electric'){
-            clearPills('cc-pills');
-            prev.innerHTML=`${CAT_NAMES['electric']}`;
-            prev.style.display='block';
-          } else {
-            clearPills('cc-pills');
-            document.getElementById('cc-custom').style.display='none';
-            document.getElementById('cc-custom').value='';
-            document.querySelectorAll('#cc-pills .pill').forEach(p=>{ if(parseInt(p.dataset.cc)===m.cc) p.classList.add('selected'); });
-            const cat=detectCategory(bState.brand,m.name);
-            const modelData=getModelIntervals(bState.brand, m.name);
-            prev.innerHTML=modelData
-              ? `✅ <strong>공식 정비 데이터 적용</strong> — ${CAT_NAMES[cat]||cat}`
-              : `📋 ${CAT_NAMES[cat]||cat}`;
-            prev.style.display='block';
-          }
+      results.push({brand:exactBrand, model:m.name, cc:m.cc, fuelType:Object.keys(ELECTRIC_BRAND_MODELS).includes(exactBrand)?'electric':'ice'});
+    });
+  } else {
+    // 일반 검색 → 브랜드+모델명 포함 검색
+    Object.keys(allModels).forEach(brand=>{
+      if(brand==='other') return;
+      (allModels[brand]||[]).forEach(m=>{
+        if(m.name==='기타') return;
+        const fullName=`${brand} ${m.name}`.toLowerCase();
+        if(fullName.includes(query)||brand.toLowerCase().includes(query)||m.name.toLowerCase().includes(query)){
+          results.push({brand, model:m.name, cc:m.cc, fuelType:Object.keys(ELECTRIC_BRAND_MODELS).includes(brand)?'electric':'ice'});
         }
-      };
-      mp.appendChild(d);
+      });
     });
   }
+
+  const el=document.getElementById('bike-search-results');
+  if(!results.length){
+    el.innerHTML=`<div style="padding:10px 0;font-size:13px;color:var(--text-muted);text-align:center;">검색 결과가 없어요</div>
+      <div onclick="showBikeManual()" style="padding:12px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--accent);">"${q}" 직접 등록</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">브랜드명, 모델명을 직접 입력합니다</div>
+        </div>
+        <span style="font-size:18px;color:var(--accent);">→</span>
+      </div>`;
+    return;
+  }
+
+  // 브랜드 전체 보기면 max 없이 전부, 일반 검색은 최대 6개
+  const isBrandView = !!exactBrand;
+  const max = isBrandView ? results.length : Math.min(results.length, 6);
+  el.innerHTML = (isBrandView ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${exactBrand} 전체 모델 (${results.length}개) — ABC 순</div>` : '')
+    + results.slice(0,max).map((r,i)=>`
+    <div onclick="selectBikeFromSearch(${i})" data-idx="${i}"
+      style="padding:10px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:14px;color:var(--text);">${isBrandView?r.model:`${r.brand} ${r.model}`}</span>
+      <span style="font-size:12px;color:var(--text-muted);">${r.fuelType==='electric'?'전기':(r.cc?r.cc+'cc':'')}</span>
+    </div>`).join('')
+    + (!isBrandView && results.length>max ? `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:4px 0;">+${results.length-max}개 더 있어요 — 더 구체적으로 검색해보세요</div>` : '');
+  window._bikeSearchResults = results;
 }
 
-function selectCC(val,el){
-  clearPills('cc-pills'); el.classList.add('selected');
-  const c=document.getElementById('cc-custom');
-  if(val==='other'){ c.style.display='block'; c.focus(); bState.cc=0; }
-  else { c.style.display='none'; bState.cc=val; }
+function selectBikeFromSearch(idx){
+  const r=window._bikeSearchResults[idx]; if(!r) return;
+  bState.brand=r.brand; bState.model=r.model; bState.cc=r.cc; bState.fuelType=r.fuelType;
+  document.getElementById('bike-selected').style.display='block';
+  document.getElementById('bike-selected-label').textContent=`${r.brand} ${r.model}`;
+  document.getElementById('bike-selected-sub').textContent=r.fuelType==='electric'?'전기 오토바이':(r.cc?`${r.cc}cc`:'');
+  document.getElementById('bike-search-results').innerHTML='';
+  document.getElementById('bike-manual-fields').style.display='none';
 }
 
-function setOdo(val,el){
-  clearPills(el.parentElement); el.classList.add('selected');
-  const inp=document.getElementById('bike-odo');
-  if(val===-1){ inp.value=''; inp.focus(); }
-  else { inp.value=val; }
+function showBikeManual(){
+  bState.brand=''; bState.model=''; bState.cc=0; bState.fuelType='ice';
+  document.getElementById('bike-selected').style.display='none';
+  document.getElementById('bike-manual-fields').style.display='block';
+  document.getElementById('bike-search-results').innerHTML='';
+  document.getElementById('brand-custom').focus();
+}
+
+function selectFuelType(type,el){
+  bState.fuelType=type;
+  el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
 }
 
 function addBike(){
-  const brand=bState.brand||document.getElementById('brand-custom').value.trim();
-  const model=bState.model||document.getElementById('model-custom').value.trim();
-  if(!brand||!model){ alert('제조사와 모델을 선택하거나 입력하세요.'); return; }
+  let brand=bState.brand||document.getElementById('brand-custom').value.trim();
+  let model=bState.model||document.getElementById('model-custom').value.trim();
+  if(!brand||!model){ alert('브랜드와 모델을 선택하거나 입력하세요.'); return; }
   const fuelType=bState.fuelType||'ice';
   const cc=fuelType==='electric'?0:(bState.cc||parseInt(document.getElementById('cc-custom').value)||0);
+  const year=parseInt(document.getElementById('bike-year').value)||new Date().getFullYear();
   const odo=parseInt(document.getElementById('bike-odo').value)||0;
   D.bikes.push({
     id:Date.now(), brand, model, fuelType,
-    year:bState.year||new Date().getFullYear(),
-    cc, odometer:odo,
+    year, cc, odometer:odo,
     color:document.getElementById('bike-color').value,
     plate:document.getElementById('bike-plate').value,
     memo:'',
@@ -2230,6 +2447,7 @@ function addBike(){
   save(); closeModal('m-bike'); renderDash(); renderBikes();
   scheduleConsumableAlerts();
   showToast(`✓ ${brand} ${model} 등록됐습니다`);
+  logAnalyticsEvent('bike_registered', {brand:brand, fuel_type:fuelType});
 }
 
 // 차량 수정
@@ -2364,6 +2582,7 @@ function saveConsumable(){
   save(); closeModal('m-consumable'); renderConsumables(); renderDash();
   scheduleConsumableAlerts();
   showToast(`✓ ${c.name} 교체 기록이 저장됐습니다`);
+  logAnalyticsEvent('consumable_updated', {consumable_name:c.name});
 }
 
 // 소모품 수정
@@ -2542,11 +2761,199 @@ function renderRideHistoryList(){
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:13px;color:var(--text-muted);">${bike?bike.brand+' '+bike.model+' · ':''}평균 ${r.avgKmh}km/h · 최고 ${r.maxKmh}km/h</span>
-        <button class="btn btn-sm btn-danger" onclick="deleteRide(${r.id})">삭제</button>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm" onclick="shareHistoryRide(${r.id})">공유</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteRide(${r.id})">삭제</button>
+        </div>
       </div>
     </div>`;
   }).join('') : `<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">아직 기록된 라이딩이 없어요</div></div>`;
   if(moreBtn) moreBtn.style.display = (all.length > rideHistoryShown) ? 'block' : 'none';
+}
+
+function shareHistoryRide(id){
+  var r = (D.rides||[]).find(x=>x.id===id);
+  if(!r) return;
+  var s = {durationMs:r.durationMs, distanceKm:r.distanceKm, avgKmh:r.avgKmh, maxKmh:r.maxKmh};
+  showRideSummary(s, r.date, r.bikeId);
+}
+
+// ═══════════════════════════════════════════
+//  월별 통계 (캘린더)
+// ═══════════════════════════════════════════
+var mstatState = { bikeId: null, year: 0, month: 0, selectedDate: null };
+
+function openMonthlyStats(){
+  if(!D.bikes.length){ showToast('등록된 차량이 없어요'); return; }
+  if(!mstatState.bikeId || !D.bikes.find(b=>b.id===mstatState.bikeId)){
+    mstatState.bikeId = dashSelectedBikeId || D.bikes[0].id;
+  }
+  var now = new Date();
+  mstatState.year = now.getFullYear();
+  mstatState.month = now.getMonth()+1;
+  mstatState.selectedDate = null;
+  mstatRenderBikeSelector();
+  mstatRender();
+}
+
+function mstatRenderBikeSelector(){
+  var wrap = document.getElementById('mstat-bike-selector');
+  if(!wrap) return;
+  if(D.bikes.length <= 1){ wrap.style.display='none'; return; }
+  wrap.style.display='flex';
+  wrap.innerHTML = D.bikes.map(function(b){
+    var sel = b.id === mstatState.bikeId;
+    return `<div onclick="mstatSelectBike(${b.id})" style="flex-shrink:0;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>`;
+  }).join('');
+}
+
+function mstatSelectBike(id){
+  mstatState.bikeId = id;
+  mstatState.selectedDate = null;
+  mstatRenderBikeSelector();
+  mstatRender();
+}
+
+function mstatChangeMonth(delta){
+  var d = new Date(mstatState.year, mstatState.month - 1 + delta, 1);
+  mstatState.year = d.getFullYear();
+  mstatState.month = d.getMonth() + 1;
+  mstatState.selectedDate = null;
+  mstatRender();
+}
+
+function _mstatFmtDuration(ms){
+  var h = Math.floor(ms/3600000);
+  var m = Math.floor((ms%3600000)/60000);
+  return h>0 ? `${h}시간 ${m}분` : `${m}분`;
+}
+
+function mstatRender(){
+  var year = mstatState.year, month = mstatState.month;
+  document.getElementById('mstat-month-label').textContent = `${year}년 ${month}월`;
+
+  var prefix = year + '-' + String(month).padStart(2,'0');
+  var rides = (D.rides||[]).filter(function(r){ return r.bikeId===mstatState.bikeId && r.date && r.date.indexOf(prefix)===0; });
+
+  // 날짜별 집계
+  var byDay = {};
+  rides.forEach(function(r){
+    if(!byDay[r.date]) byDay[r.date] = {distance:0, duration:0, max:0, avgSum:0, count:0};
+    var d = byDay[r.date];
+    d.distance += r.distanceKm||0;
+    d.duration += r.durationMs||0;
+    d.max = Math.max(d.max, r.maxKmh||0);
+    d.avgSum += r.avgKmh||0;
+    d.count++;
+  });
+
+  // 월 요약
+  var totalDistance = rides.reduce(function(sum,r){ return sum + (r.distanceKm||0); }, 0);
+  var totalDuration = rides.reduce(function(sum,r){ return sum + (r.durationMs||0); }, 0);
+  var maxSpeed = rides.reduce(function(m,r){ return Math.max(m, r.maxKmh||0); }, 0);
+  var avgSpeed = totalDuration > 0 ? totalDistance / (totalDuration/3600000) : 0;
+
+  document.getElementById('mstat-summary').innerHTML = `
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+      <div style="font-size:11px;color:var(--text-dim);">이번 달 총거리</div>
+      <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${totalDistance.toFixed(1)} km</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+      <div style="font-size:11px;color:var(--text-dim);">총 라이딩 횟수</div>
+      <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${rides.length}회</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+      <div style="font-size:11px;color:var(--text-dim);">평균 속도</div>
+      <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${Math.round(avgSpeed)} km/h</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+      <div style="font-size:11px;color:var(--text-dim);">최고 속도</div>
+      <div style="font-size:19px;font-weight:800;color:var(--accent);margin-top:2px;">${Math.round(maxSpeed)} km/h</div>
+    </div>
+  `;
+
+  // 캘린더 그리기
+  var firstDay = new Date(year, month-1, 1);
+  var daysInMonth = new Date(year, month, 0).getDate();
+  var startWeekday = firstDay.getDay(); // 0=일
+
+  var todayStr = new Date().toISOString().split('T')[0];
+  var cells = [];
+  for(var i=0; i<startWeekday; i++){ cells.push('<div></div>'); }
+  for(var day=1; day<=daysInMonth; day++){
+    var dateStr = prefix + '-' + String(day).padStart(2,'0');
+    var info = byDay[dateStr];
+    var isToday = dateStr === todayStr;
+    var isSelected = dateStr === mstatState.selectedDate;
+    var dotHtml;
+    if(info && info.distance > 0){
+      var tier = info.distance <= 10 ? {size:19, rings:2} : info.distance <= 50 ? {size:25, rings:3} : info.distance <= 100 ? {size:31, rings:4} : {size:36, rings:5};
+      dotHtml = `<div onclick="mstatSelectDay('${dateStr}')" style="width:${tier.size}px;height:${tier.size}px;margin:0 auto;cursor:pointer;border-radius:50%;${isSelected?'box-shadow:0 0 0 3px var(--accent-dim);':''}">${_mstatRingSvg(tier.rings, tier.size)}</div>`;
+    } else {
+      // 라이딩 없는 날 - 빈 점선 원 (채우고 싶게)
+      dotHtml = `<div onclick="mstatSelectDay('${dateStr}')" style="width:14px;height:14px;border-radius:50%;border:1.5px dashed ${isToday?'var(--accent)':'var(--border)'};margin:0 auto;cursor:pointer;"></div>`;
+    }
+    cells.push(`<div style="text-align:center;">
+      <div style="font-size:10px;color:${isToday?'var(--accent)':'var(--text-dim)'};margin-bottom:4px;font-weight:${isToday?'700':'400'};">${day}</div>
+      ${dotHtml}
+    </div>`);
+  }
+  document.getElementById('mstat-calendar').innerHTML = cells.join('');
+
+  // 선택된 날짜 상세
+  var detailEl = document.getElementById('mstat-day-detail');
+  if(mstatState.selectedDate && byDay[mstatState.selectedDate]){
+    var info2 = byDay[mstatState.selectedDate];
+    var d2 = new Date(mstatState.selectedDate + 'T00:00:00');
+    detailEl.style.display = 'block';
+    detailEl.innerHTML = `
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">${d2.getMonth()+1}월 ${d2.getDate()}일${info2.count>1?` (라이딩 ${info2.count}회)`:''}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">
+        <div><span style="color:var(--text-dim);">거리</span> <strong style="color:var(--text);">${info2.distance.toFixed(1)}km</strong></div>
+        <div><span style="color:var(--text-dim);">시간</span> <strong style="color:var(--text);">${_mstatFmtDuration(info2.duration)}</strong></div>
+        <div><span style="color:var(--text-dim);">평균</span> <strong style="color:var(--text);">${Math.round(info2.avgSum/info2.count)}km/h</strong></div>
+        <div><span style="color:var(--text-dim);">최고</span> <strong style="color:var(--accent);">${Math.round(info2.max)}km/h</strong></div>
+      </div>
+    `;
+  } else if(mstatState.selectedDate){
+    detailEl.style.display = 'block';
+    var d3 = new Date(mstatState.selectedDate + 'T00:00:00');
+    detailEl.innerHTML = `<div style="font-size:13px;color:var(--text-dim);text-align:center;">${d3.getMonth()+1}월 ${d3.getDate()}일에는 라이딩 기록이 없어요</div>`;
+  } else {
+    detailEl.style.display = 'none';
+  }
+
+  // 동기부여 메시지 (이번 달이면서 라이딩이 적을 때)
+  var motivateEl = document.getElementById('mstat-motivate');
+  var isCurrentMonth = (year === new Date().getFullYear() && month === new Date().getMonth()+1);
+  if(isCurrentMonth && rides.length === 0){
+    motivateEl.style.display = 'block';
+    motivateEl.innerHTML = '🏍️ 이번 달 아직 라이딩 기록이 없어요.<br>오늘 한번 달려볼까요?';
+  } else if(isCurrentMonth && rides.length < 3){
+    motivateEl.style.display = 'block';
+    motivateEl.innerHTML = '이번 달 캘린더를 채워보세요! 🔥';
+  } else {
+    motivateEl.style.display = 'none';
+  }
+}
+
+// 바깥→안쪽 색상 (진한 색이 바깥, 연한 색이 안쪽)
+var MSTAT_RING_COLORS = ['#7a3b12','#a8551a','#d17a22','#e8a020','#fbe3b8'];
+
+function _mstatRingSvg(numRings, size){
+  var cx = size/2, cy = size/2;
+  var circles = '';
+  for(var i=0; i<numRings; i++){
+    var radius = (size/2) * ((numRings-i)/numRings);
+    var color = MSTAT_RING_COLORS[5-numRings+i];
+    circles += `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${color}"/>`;
+  }
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;">${circles}</svg>`;
+}
+
+function mstatSelectDay(dateStr){
+  mstatState.selectedDate = (mstatState.selectedDate === dateStr) ? null : dateStr;
+  mstatRender();
 }
 
 function deleteRide(id){
@@ -2684,7 +3091,11 @@ function showBackupToast(msg,type='success'){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 async function exportJSON(){
-  const jsonStr = JSON.stringify(D, null, 2);
+  const exportObj = Object.assign({}, D, {
+    medical: getMedical(),
+    sosContact: getSosContact()
+  });
+  const jsonStr = JSON.stringify(exportObj, null, 2);
   const fileName = `ridemate-backup-${new Date().toISOString().slice(0,10)}.json`;
   const Filesystem = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
   const Share = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
@@ -2731,7 +3142,10 @@ function importJSON(event){
       const imported=JSON.parse(e.target.result);
       if(!imported.bikes||!imported.history) throw new Error('형식 오류');
       if(!confirm(`백업을 불러오면 현재 데이터가 교체됩니다.\n차량 ${imported.bikes.length}대, 정비 ${imported.history.length}건\n\n계속하시겠습니까?`)) return;
-      D=imported; save();
+      if(imported.medical){ localStorage.setItem('mg2-medical', JSON.stringify(imported.medical)); }
+      if(imported.sosContact){ localStorage.setItem('mg2-sos-contact', JSON.stringify(imported.sosContact)); }
+      D={bikes:imported.bikes, rides:imported.rides||[], history:imported.history};
+      save();
       showBackupToast('✓ 데이터를 성공적으로 불러왔습니다');
       renderBackupPage(); renderDash();
       scheduleConsumableAlerts();
@@ -3045,21 +3459,88 @@ function updateRidingBar() {
   } else {
     bar.className = 'riding-ctrl';
     dot.className = 'riding-dot';
-    title.style.color = 'var(--text-dim)';
+    title.style.color = 'var(--accent)';
     title.textContent = '라이딩 대기중';
-    sub.innerHTML = '라이딩 종료 후 거리 / 시간 / 속도 정보를 제공합니다.<br>사고 감지 시 긴급 연락처로 자동 문자를 발송합니다.';
+    sub.innerHTML = '• 라이딩 종료 후 거리 / 시간 / 속도 정보 제공.<br>• 충격 감지 시 긴급 연락처로 자동 문자 발송 시도(보조기능, 감지 실패 가능).<br>• 위급 시엔 꼭 직접 119(또는 현지 긴급구조번호)에 신고해주세요.';
     btn.innerHTML = '<button class="btn btn-primary" style="font-size:13px;padding:8px 14px;" onclick="startRiding()">▶ 시작</button>';
   }
 }
 
 function toggleRiding() { ridingState.active ? stopRiding() : startRiding(); }
 
+function _getOrCreateDeviceId(){
+  var id = localStorage.getItem('mg2-device-id');
+  if(!id){
+    id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('dev-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+    localStorage.setItem('mg2-device-id', id);
+  }
+  return id;
+}
+
+function logConsentToServer(kind){
+  try{
+    var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseFirestore;
+    if(!FS){ console.log('[consent] Firestore 플러그인 없음, 로컬만 기록됨'); return; }
+    FS.addDocument({
+      reference: 'consent_logs',
+      data: {
+        deviceId: _getOrCreateDeviceId(),
+        kind: kind, // 'onboarding' | 'ride_start'
+        timestamp: new Date().toISOString(),
+        tosVersion: '2026-07-09',
+        privacyVersion: '2026-07-09',
+        lang: 'ko',
+        appVersion: '2.0'
+      }
+    }).catch(function(e){ console.warn('[consent] 서버 기록 실패', e); });
+  }catch(e){ console.warn('[consent] 오류', e); }
+}
+
 function startRiding() {
-  var Sms = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Sms;
-  if (!Sms) { _doStartRiding(); return; }
-  Sms.checkPermission().then(function(r) {
-    if (r.granted) { _doStartRiding(); } else { openModal('m-sms-perm'); }
-  }).catch(function() { _doStartRiding(); });
+  if (localStorage.getItem('mg2-sos-consent') !== '1') {
+    var tosBlock = document.getElementById('sos-consent-tos-block');
+    var needsTos = localStorage.getItem('mg2-tos-consent') !== '1';
+    if(tosBlock){
+      tosBlock.style.display = needsTos ? 'flex' : 'none';
+      var check = document.getElementById('sos-consent-tos-check');
+      if(check) check.checked = false;
+    }
+    openModal('m-sos-consent');
+    return;
+  }
+  _startRidingFlow();
+}
+
+function acceptSosConsent() {
+  var tosBlock = document.getElementById('sos-consent-tos-block');
+  var needsTos = tosBlock && tosBlock.style.display !== 'none';
+  if(needsTos){
+    var check = document.getElementById('sos-consent-tos-check');
+    if(check && !check.checked){
+      showToast('이용약관 및 개인정보처리방침에 동의해주세요');
+      return;
+    }
+    localStorage.setItem('mg2-tos-consent', '1');
+    logConsentToServer('ride_start_tos');
+  }
+  localStorage.setItem('mg2-sos-consent', '1');
+  logConsentToServer('ride_start_sos');
+  closeModal('m-sos-consent');
+  _startRidingFlow();
+}
+
+function _startRidingFlow() {
+  // 위치 권한 먼저 요청
+  var Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+  var geoPromise = Geo ? Geo.requestPermissions() : Promise.resolve();
+  geoPromise.catch(function(){}).finally(function(){
+    // 위치 권한 처리 후 SMS 권한 확인
+    var Sms = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Sms;
+    if (!Sms) { _doStartRiding(); return; }
+    Sms.checkPermission().then(function(r) {
+      if (r.granted) { _doStartRiding(); } else { openModal('m-sms-perm'); }
+    }).catch(function() { _doStartRiding(); });
+  });
 }
 
 function _requestSmsAndStart() {
@@ -3069,9 +3550,6 @@ function _requestSmsAndStart() {
 }
 
 function _doStartRiding() {
-  // 백그라운드 위치("항상 허용") 권한 요청 — manifest에 ACCESS_BACKGROUND_LOCATION 선언 시 "항상 허용" 옵션 표시
-  var Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
-  if (Geo) Geo.requestPermissions().catch(function() {});
   ridingState.active = true;
   localStorage.setItem('mg2-riding', '1');
   _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[]};
@@ -3084,6 +3562,7 @@ function _doStartRiding() {
   if (R) R.startForeground().catch(function() {});
   updateRidingBar();
   showToast('🏍 라이딩 시작! 충격 감지 활성');
+  logAnalyticsEvent('riding_started', {});
 }
 
 function stopRiding() {
@@ -3112,6 +3591,12 @@ function stopRiding() {
 function saveRideRecord(s){
   // 너무 짧은 라이딩(실수로 시작/종료)은 기록하지 않음
   if (s.durationMs < 60000 && s.distanceKm < 0.05) return;
+  logAnalyticsEvent('riding_completed', {
+    distance_km: Math.round(s.distanceKm*10)/10,
+    duration_sec: Math.round(s.durationMs/1000),
+    avg_kmh: Math.round(s.avgKmh),
+    max_kmh: Math.round(s.maxKmh)
+  });
   var startD = new Date(_ride.startTime);
   var endD = new Date();
   var fmtTime = d => d.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
@@ -3139,7 +3624,102 @@ function _buildRideSummary(){
   return { durationMs: durationMs, distanceKm: distKm, avgKmh: avgKmh, maxKmh: _ride.maxSpeed };
 }
 
-function showRideSummary(s){
+// ═══════════════════════════════════════════
+//  라이딩 공유 카드 - 캐릭터
+// ═══════════════════════════════════════════
+const RIDE_CHARACTERS = [
+  {id:'char_01', file:'char_01.png', thumb:'char_01_thumb.png', label:'따봉'},
+  {id:'char_02', file:'char_02.png', thumb:'char_02_thumb.png', label:'인사'},
+  {id:'char_03', file:'char_03.png', thumb:'char_03_thumb.png', label:'코너링'},
+  {id:'char_04', file:'char_04.png', thumb:'char_04_thumb.png', label:'브이'},
+  {id:'char_05', file:'char_05.png', thumb:'char_05_thumb.png', label:'뒷모습'},
+  {id:'char_06', file:'char_06.png', thumb:'char_06_thumb.png', label:'캠핑'},
+  {id:'char_07', file:'char_07.png', thumb:'char_07_thumb.png', label:'주유'},
+  {id:'char_08', file:'char_08.png', thumb:'char_08_thumb.png', label:'우천'},
+  {id:'char_09', file:'char_09.png', thumb:'char_09_thumb.png', label:'세차'},
+  {id:'char_10', file:'char_10.png', thumb:'char_10_thumb.png', label:'셀카'},
+  {id:'char_11', file:'char_11.png', thumb:'char_11_thumb.png', label:'꾸벅'},
+  {id:'char_12', file:'char_12.png', thumb:'char_12_thumb.png', label:'헥헥'}
+];
+
+function renderCharacterPicker(){
+  var c = RIDE_CHARACTERS.find(x=>x.id===window._selectedCharacterId) || RIDE_CHARACTERS[0];
+  var img = document.getElementById('ride-summary-char-preview');
+  var label = document.getElementById('ride-summary-char-preview-label');
+  if(img) img.src = './assets/characters/'+c.thumb;
+  if(label) label.textContent = c.label;
+}
+
+function openCharacterPicker(){
+  var grid = document.getElementById('character-picker-grid');
+  if(grid){
+    grid.innerHTML = RIDE_CHARACTERS.map(function(c){
+      var sel = (window._selectedCharacterId === c.id);
+      return `<div onclick="selectCharacter('${c.id}')" style="text-align:center;cursor:pointer;">
+        <div style="width:100%;aspect-ratio:1;border-radius:12px;background:#000;border:3px solid ${sel?'var(--accent)':'var(--border)'};display:flex;align-items:center;justify-content:center;overflow:hidden;">
+          <img src="./assets/characters/${c.thumb}" style="width:100%;height:100%;object-fit:contain;">
+        </div>
+        <div style="font-size:12px;color:${sel?'var(--accent)':'var(--text-dim)'};margin-top:5px;font-weight:${sel?'700':'400'};">${c.label}</div>
+      </div>`;
+    }).join('');
+  }
+  openModal('m-character-picker');
+}
+
+function selectCharacter(id){
+  window._selectedCharacterId = id;
+  renderCharacterPicker();
+  closeModal('m-character-picker');
+}
+
+function computeRideInsight(){
+  var rides = D.rides || [];
+  if(!rides.length) return null;
+  var sorted = rides.slice().sort(function(a,b){ return b.id-a.id; });
+  var latest = sorted[0];
+  var totalCount = rides.length;
+
+  // 1. 마일스톤 (10번째마다)
+  if(totalCount > 0 && totalCount % 10 === 0){
+    return '🎉 축하해요! ' + totalCount + '번째 라이딩을 달성했어요!';
+  }
+
+  // 2. 최장거리 갱신
+  var others = sorted.slice(1);
+  if(others.length > 0){
+    var prevMax = others.reduce(function(m,r){ return Math.max(m, r.distanceKm||0); }, 0);
+    if(latest.distanceKm > prevMax){
+      return '🏆 역대 최장거리 기록이에요! (' + latest.distanceKm.toFixed(1) + 'km)';
+    }
+  }
+
+  // 3. 연속 기록 (스트릭, 2일 이상일 때만)
+  var datesSet = {};
+  rides.forEach(function(r){ if(r.date) datesSet[r.date] = true; });
+  var streak = 0;
+  var d = new Date(latest.date + 'T00:00:00');
+  while(datesSet[d.toISOString().split('T')[0]]){
+    streak++;
+    d.setDate(d.getDate()-1);
+  }
+  if(streak >= 2){
+    return '🔥 ' + streak + '일 연속 라이딩 중!';
+  }
+
+  // 4. 이번 달 라이딩 횟수 (기본값)
+  var ym = latest.date.slice(0,7);
+  var monthCount = rides.filter(function(r){ return r.date && r.date.slice(0,7)===ym; }).length;
+  return '이번 달 ' + monthCount + '번째 라이딩이에요';
+}
+
+function showRideSummary(s, dateOverride, bikeIdOverride){
+  window._lastRideSummary = s;
+  window._lastRideDate = dateOverride || null;
+  window._lastRideBikeId = (bikeIdOverride!=null) ? bikeIdOverride : null;
+  window._selectedCharacterId = RIDE_CHARACTERS[0].id;
+  renderCharacterPicker();
+  var memoEl = document.getElementById('ride-summary-memo');
+  if(memoEl) memoEl.value = '무복..!';
   var h = Math.floor(s.durationMs/3600000);
   var m = Math.floor((s.durationMs%3600000)/60000);
   var sec = Math.floor((s.durationMs%60000)/1000);
@@ -3150,6 +3730,8 @@ function showRideSummary(s){
   var note = document.getElementById('ride-summary-note');
   var tooShort = s.durationMs < 60000 && s.distanceKm < 0.05;
   var noGps = s.distanceKm === 0 && s.maxKmh === 0;
+  var memoWrap = document.getElementById('ride-summary-memo-wrap');
+  var shareBtn = document.getElementById('ride-summary-share-btn');
   if(note){
     if(tooShort){
       note.textContent = '주행 시간이 너무 짧아 이력이 저장되지 않았습니다.';
@@ -3161,7 +3743,91 @@ function showRideSummary(s){
       note.style.display = 'none';
     }
   }
+  var canShare = !tooShort && !noGps;
+  if(memoWrap) memoWrap.style.display = canShare ? 'block' : 'none';
+  if(shareBtn) shareBtn.style.display = canShare ? 'block' : 'none';
+  var insightEl = document.getElementById('ride-summary-insight');
+  if(insightEl){
+    var insightMsg = (!dateOverride && canShare) ? computeRideInsight() : null;
+    if(insightMsg){
+      insightEl.textContent = insightMsg;
+      insightEl.style.display = 'block';
+    } else {
+      insightEl.style.display = 'none';
+    }
+  }
   openModal('m-ride-summary');
+}
+
+function _rideCardDateStr(){
+  var d = new Date();
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+}
+
+async function shareRideCard(){
+  var s = window._lastRideSummary;
+  if(!s){ showToast('공유할 라이딩 정보가 없어요'); return; }
+  var btn = document.getElementById('ride-summary-share-btn');
+  var origLabel = btn ? btn.textContent : '';
+  if(btn){ btn.textContent = '카드 생성 중...'; btn.disabled = true; }
+  try{
+    var bike = D.bikes.find(b=>b.id===(window._lastRideBikeId!=null ? window._lastRideBikeId : dashSelectedBikeId)) || D.bikes[0];
+    var memo = (document.getElementById('ride-summary-memo').value||'').trim() || '무복..!';
+    var h = Math.floor(s.durationMs/3600000);
+    var m = Math.floor((s.durationMs%3600000)/60000);
+    var sec = Math.floor((s.durationMs%60000)/1000);
+
+    document.getElementById('rsc-date').textContent = window._lastRideDate ? window._lastRideDate.replace(/-/g,'.') : _rideCardDateStr();
+    document.getElementById('rsc-bike').textContent = bike ? `${bike.brand} ${bike.model}` : '';
+    document.getElementById('rsc-memo').textContent = memo;
+    document.getElementById('rsc-memo-bubble').style.display = 'block';
+    document.getElementById('rsc-distance').textContent = s.distanceKm.toFixed(1) + ' km';
+    document.getElementById('rsc-duration').textContent = h>0 ? `${h}시간 ${m}분` : m>0 ? `${m}분 ${sec}초` : `${sec}초`;
+    document.getElementById('rsc-avg').textContent = Math.round(s.avgKmh)+' km/h';
+    document.getElementById('rsc-max').textContent = Math.round(s.maxKmh)+' km/h';
+
+    var cardEl = document.getElementById('ride-share-card');
+    if(typeof html2canvas !== 'function'){ showToast('카드 생성 라이브러리를 불러오지 못했어요'); return; }
+    var charImg = document.getElementById('rsc-character');
+    var chosenChar = RIDE_CHARACTERS.find(c=>c.id===window._selectedCharacterId) || RIDE_CHARACTERS[0];
+    if(charImg && charImg.getAttribute('src') !== './assets/characters/'+chosenChar.file){
+      charImg.src = './assets/characters/'+chosenChar.file;
+    }
+    if(charImg && !charImg.complete){
+      await new Promise(function(resolve){
+        charImg.onload = resolve;
+        charImg.onerror = resolve;
+        setTimeout(resolve, 3000);
+      });
+    }
+    var rawCanvas = await html2canvas(cardEl, {backgroundColor:null, scale:2});
+    // 일부 안드로이드 웹뷰에서 투명 처리가 불안정한 경우가 있어 알파 채널을 명시한 새 캔버스에 다시 그려서 보정
+    var canvas = document.createElement('canvas');
+    canvas.width = rawCanvas.width;
+    canvas.height = rawCanvas.height;
+    var ctx = canvas.getContext('2d', {alpha:true});
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(rawCanvas, 0, 0);
+    var dataUrl = canvas.toDataURL('image/png');
+    var base64 = dataUrl.split(',')[1];
+    var fileName = `ridemate-ride-${Date.now()}.png`;
+
+    var Filesystem = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
+    var Share = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
+    if(Filesystem && Share){
+      await Filesystem.writeFile({ path: fileName, data: base64, directory: 'CACHE' });
+      var fileResult = await Filesystem.getUri({ path: fileName, directory: 'CACHE' });
+      await Share.share({ title: 'Ridemate 라이딩 카드', url: fileResult.uri, dialogTitle: '라이딩 카드 공유' });
+    } else {
+      var a = document.createElement('a');
+      a.href = dataUrl; a.download = fileName; a.click();
+    }
+    logAnalyticsEvent('ride_card_shared', {has_memo: !!memo});
+  } catch(e){
+    if(!(e && e.message && e.message.includes('cancel'))) showToast('카드 공유에 실패했어요: ' + (e.message||e));
+  } finally {
+    if(btn){ btn.textContent = origLabel; btn.disabled = false; }
+  }
 }
 
 function _sosBufReset() {
@@ -3358,6 +4024,7 @@ function _gpsDistance(lat1, lon1, lat2, lon2) {
 }
 
 function _sosTrigger() {
+  logAnalyticsEvent('sos_triggered', {type:'auto'});
   _sos.phase = 'COUNTDOWN';
   _sos.startLat = null;
   _sos.startLng = null;
@@ -3523,6 +4190,171 @@ function checkFirstLaunch(){
   if(D.bikes.length>0) return;
   document.getElementById('welcome-overlay').classList.add('open');
 }
+
+// ═══════════════════════════════════════════
+//  온보딩
+// ═══════════════════════════════════════════
+const ONBOARDING_SLIDES = [
+  {
+    images:[{src:'./assets/onboarding/slide1_consumables.png'}],
+    title:'소모품 교체, 놓치지 마세요',
+    desc:'엔진오일부터 브레이크패드까지, 교체 시기를 자동으로 계산해서 알려드려요.'
+  },
+  {
+    images:[{src:'./assets/onboarding/slide2_start.png', highlight:{top:'13%', left:'68%', width:'30%', height:'9%', radius:'16px'}}],
+    title:'자동 라이딩 기록',
+    desc:'"시작" 버튼 하나면 거리·시간·속도가 자동으로 기록돼요.'
+  },
+  {
+    images:[{src:'./assets/onboarding/slide3_sos.png', highlight:{top:'61.5%', left:'77.5%', width:'24%', height:'11%', radius:'50%'}}],
+    title:'긴급 상황 자동 알림',
+    desc:'사고가 감지되면 등록해둔 긴급연락처로 자동으로 문자가 발송돼요.'
+  },
+  {
+    images:[
+      {src:'./assets/onboarding/slide4_characters.png'},
+      {src:'./assets/onboarding/slide4_card.png'}
+    ],
+    title:'추억을 카드로',
+    desc:'라이딩할 때마다 나만의 캐릭터로 예쁜 카드를 만들어 SNS에 공유해보세요.'
+  }
+];
+let onboardingIdx = 0;
+
+const RIDEMATE_TOS_URL = 'https://iconboxvn.github.io/moto-garage/landing/terms_of_service.html';
+const RIDEMATE_PRIVACY_URL = 'https://iconboxvn.github.io/moto-garage/landing/privacy_policy.html';
+
+function buildOnboardingTrack(){
+  var track = document.getElementById('onboarding-track');
+  if(!track) return;
+  var n = ONBOARDING_SLIDES.length;
+  track.style.width = (n*100) + '%';
+  track.innerHTML = ONBOARDING_SLIDES.map(function(s, idx){
+    var isLastSlide = idx === n - 1;
+    var imagesHtml = s.images.map(function(img){
+      var highlightHtml = img.highlight ? `<div class="onb-highlight" style="top:${img.highlight.top};left:${img.highlight.left};width:${img.highlight.width};height:${img.highlight.height};border-radius:${img.highlight.radius||'14px'};"></div>` : '';
+      return `<div style="position:relative;display:inline-block;max-height:${s.images.length>1?'34vh':'46vh'};">
+        <img src="${img.src}" style="max-height:${s.images.length>1?'34vh':'46vh'};width:auto;border-radius:14px;border:1px solid var(--border-bright);box-shadow:0 8px 24px rgba(0,0,0,0.4);display:block;">
+        ${highlightHtml}
+      </div>`;
+    }).join('<div style="width:10px;display:inline-block;"></div>');
+    var consentHtml = isLastSlide ? `
+      <div style="margin-top:20px;display:flex;align-items:flex-start;gap:8px;max-width:320px;text-align:left;">
+        <input type="checkbox" id="onboarding-consent-check" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;">
+        <div style="font-size:16px;color:var(--text-dim);line-height:1.5;">
+          <span onclick="window.open('${RIDEMATE_TOS_URL}','_system')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">이용약관</span> 및 <span onclick="window.open('${RIDEMATE_PRIVACY_URL}','_system')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">개인정보처리방침</span>에 동의합니다 (필수)
+        </div>
+      </div>` : '';
+    return `<div class="onb-slide" style="flex:0 0 ${100/n}%;width:${100/n}%;height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:16px 24px 0;">
+      <div style="margin-bottom:20px;">${imagesHtml}</div>
+      <div style="font-size:21px;font-weight:700;color:var(--text);margin-bottom:10px;">${s.title}</div>
+      <div style="font-size:16px;color:var(--text-dim);line-height:1.6;max-width:320px;">${s.desc}</div>
+      ${consentHtml}
+    </div>`;
+  }).join('');
+}
+
+function updateOnboardingTrackPosition(animate){
+  var el = document.getElementById('onboarding-slides');
+  var track = document.getElementById('onboarding-track');
+  if(!el || !track) return;
+  track.style.transition = animate ? 'transform 0.32s cubic-bezier(0.22,1,0.36,1)' : 'none';
+  track.style.transform = 'translateX(' + (-onboardingIdx * el.clientWidth) + 'px)';
+}
+
+function renderOnboardingSlide(){
+  updateOnboardingTrackPosition(true);
+  var isLastSlide = onboardingIdx === ONBOARDING_SLIDES.length - 1;
+  var dots = document.getElementById('onboarding-dots');
+  if(dots){
+    dots.innerHTML = ONBOARDING_SLIDES.map((_,i)=>
+      `<div style="width:${i===onboardingIdx?'20px':'8px'};height:8px;border-radius:4px;background:${i===onboardingIdx?'var(--accent)':'var(--border)'};transition:all 0.2s;"></div>`
+    ).join('');
+  }
+  var btn = document.getElementById('onboarding-next-btn');
+  if(btn) btn.textContent = isLastSlide ? '시작하기' : '다음';
+}
+
+function onboardingNext(){
+  if(onboardingIdx < ONBOARDING_SLIDES.length-1){
+    onboardingIdx++;
+    renderOnboardingSlide();
+  } else {
+    var check = document.getElementById('onboarding-consent-check');
+    if(check && !check.checked){
+      showToast('이용약관 및 개인정보처리방침에 동의해주세요');
+      return;
+    }
+    localStorage.setItem('mg2-tos-consent', '1');
+    logConsentToServer('onboarding');
+    closeOnboarding();
+  }
+}
+
+function onboardingPrev(){
+  if(onboardingIdx > 0){
+    onboardingIdx--;
+    renderOnboardingSlide();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var touchStartX = null;
+  var dragging = false;
+  var startTranslate = 0;
+  var el = document.getElementById('onboarding-slides');
+  var track = document.getElementById('onboarding-track');
+  if(!el || !track) return;
+
+  el.addEventListener('touchstart', function(e){
+    touchStartX = e.touches[0].clientX;
+    dragging = true;
+    startTranslate = -onboardingIdx * el.clientWidth;
+    track.style.transition = 'none';
+  }, {passive:true});
+
+  el.addEventListener('touchmove', function(e){
+    if(!dragging || touchStartX===null) return;
+    var dx = e.touches[0].clientX - touchStartX;
+    var atFirst = onboardingIdx === 0;
+    var atLast = onboardingIdx === ONBOARDING_SLIDES.length - 1;
+    if((atFirst && dx>0) || (atLast && dx<0)) dx *= 0.3;
+    track.style.transform = 'translateX(' + (startTranslate + dx) + 'px)';
+  }, {passive:true});
+
+  el.addEventListener('touchend', function(e){
+    if(touchStartX===null){ dragging = false; return; }
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    touchStartX = null;
+    dragging = false;
+    if(Math.abs(dx) > 40){
+      if(dx < 0) onboardingNext();
+      else onboardingPrev();
+    } else {
+      updateOnboardingTrackPosition(true);
+    }
+  }, {passive:true});
+
+  window.addEventListener('resize', function(){
+    if(!dragging) updateOnboardingTrackPosition(false);
+  });
+});
+
+function showOnboarding(){
+  onboardingIdx = 0;
+  buildOnboardingTrack();
+  renderOnboardingSlide();
+  updateOnboardingTrackPosition(false);
+  var el = document.getElementById('onboarding-overlay');
+  if(el) el.style.display = 'flex';
+}
+
+function closeOnboarding(){
+  var el = document.getElementById('onboarding-overlay');
+  if(el) el.style.display = 'none';
+  localStorage.removeItem('mg2-onboarding-pending');
+  checkFirstLaunch();
+}
 function loadSampleData(){
   D=JSON.parse(JSON.stringify(SAMPLE_DATA_KO));
   save();
@@ -3589,14 +4421,19 @@ function devTap(){
 }
 
 window.addEventListener('load', function(){
-  migrateConsumableIntervals(); // 기존 차량 공식 데이터 자동 적용
-  requestNotificationPermission();
-  registerPushNotifications();
-  scheduleConsumableAlerts();
-  scheduleInsuranceAlerts();
+  function safe(fn, label){ try{ fn(); }catch(e){ console.warn('[init] '+label+' 실패', e); } }
+  safe(migrateConsumableIntervals, 'migrateConsumableIntervals'); // 기존 차량 공식 데이터 자동 적용
+  safe(requestNotificationPermission, 'requestNotificationPermission');
+  safe(registerPushNotifications, 'registerPushNotifications');
+  safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
+  safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
   renderDash();
   renderSampleBanner();
-  checkFirstLaunch();
+  if(localStorage.getItem('mg2-onboarding-pending') === '1'){
+    showOnboarding();
+  } else {
+    checkFirstLaunch();
+  }
   updateRidingBar();
 });
 // 날씨 모달 자동 표시 (약간 딜레이)
@@ -4021,6 +4858,7 @@ function openSOS() {
   }
   loadSOSLocation();
   openModal('m-sos');
+  logAnalyticsEvent('sos_triggered', {type:'manual'});
 }
 
 function selectSOS(type,el){
@@ -4325,6 +5163,32 @@ function renderMedicalCard(){
 </div>
 
 <!-- SMS 권한 설명 모달 -->
+<!-- SOS 최초 동의 모달 -->
+<div class="modal-overlay" id="m-sos-consent">
+  <div class="modal" style="max-width:320px;">
+    <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
+      <div style="font-size:44px;margin-bottom:14px;">⚠️</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;">긴급 SOS 자동 알림 안내</div>
+      <div style="font-size:15px;color:var(--text);line-height:1.85;text-align:left;">
+        Ridemate는 충격이 감지되면 등록하신 긴급연락처로 자동 문자를 보내드려요.<br><br>
+        다만 GPS 신호, 네트워크 상태, 배터리 잔량, 기기 설정 등에 따라 감지가 안 되거나 문자가 늦게·안 보내질 수 있어요.<br><br>
+        <span style="color:var(--accent);font-weight:700;">이 기능은 보조 수단이에요.</span><br>
+        사고가 났거나 위험하다고 느끼시면, 앱과 상관없이 즉시 <span style="color:var(--accent);font-weight:700;">119(또는 현지 긴급번호)</span>에 직접 신고해주세요.
+      </div>
+      <div id="sos-consent-tos-block" style="display:none;margin-top:18px;align-items:flex-start;gap:8px;text-align:left;">
+        <input type="checkbox" id="sos-consent-tos-check" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;">
+        <div style="font-size:13px;color:var(--text-dim);line-height:1.5;">
+          <span onclick="window.open(RIDEMATE_TOS_URL,'_system')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">이용약관</span> 및 <span onclick="window.open(RIDEMATE_PRIVACY_URL,'_system')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">개인정보처리방침</span>에 동의합니다 (필수)
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="acceptSosConsent()">확인했어요, 계속할게요</button>
+    </div>
+  </div>
+</div>
+
+<!-- SMS 권한 모달 -->
 <div class="modal-overlay" id="m-sms-perm">
   <div class="modal" style="max-width:300px;">
     <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
@@ -4368,7 +5232,8 @@ function renderMedicalCard(){
   <div class="modal" style="max-width:320px;">
     <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
       <div style="font-size:44px;margin-bottom:10px;">🏁</div>
-      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:18px;">라이딩 요약</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;">라이딩 요약</div>
+      <div id="ride-summary-insight" style="display:none;font-size:15px;font-weight:700;color:#4ade80;background:rgba(74,222,128,0.14);border:1px solid rgba(74,222,128,0.4);border-radius:10px;padding:10px 14px;margin-bottom:16px;"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;">
         <div>
           <div style="font-size:11px;color:var(--text-dim);">주행 시간</div>
@@ -4390,11 +5255,91 @@ function renderMedicalCard(){
       <div id="ride-summary-note" style="display:none;margin-top:16px;font-size:11px;color:var(--text-dim);line-height:1.6;">
         ⚠ GPS 신호가 약해 정확한 기록을 남기지 못했어요.
       </div>
+      <div id="ride-summary-memo-wrap" style="margin-top:18px;text-align:left;">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">🏍 캐릭터 선택</div>
+        <div onclick="openCharacterPicker()" style="display:flex;align-items:center;gap:12px;background:var(--surface,#161618);border:1px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;">
+          <div style="width:52px;height:52px;border-radius:8px;background:#000;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+            <img id="ride-summary-char-preview" src="" style="width:100%;height:100%;object-fit:contain;">
+          </div>
+          <div style="flex:1;">
+            <div id="ride-summary-char-preview-label" style="font-size:14px;font-weight:600;color:var(--text);"></div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">탭해서 다른 캐릭터로 변경</div>
+          </div>
+          <div style="font-size:18px;color:var(--text-dim);">›</div>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);margin:14px 0 6px;">📝 한 줄 메모 (선택)</div>
+        <input type="text" class="form-input" id="ride-summary-memo" placeholder="예: 한강 라이딩, 비 조심" maxlength="40" style="font-size:13px;">
+      </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary" style="width:100%;" onclick="closeModal('m-ride-summary')">확인</button>
+    <div class="modal-footer" style="flex-direction:column;gap:8px;">
+      <button class="btn btn-primary" id="ride-summary-share-btn" style="width:100%;" onclick="shareRideCard()">SNS로 공유하기</button>
+      <button class="btn btn-sm" style="width:100%;justify-content:center;" onclick="closeModal('m-ride-summary')">닫기</button>
     </div>
   </div>
+</div>
+
+<!-- 월별 통계 모달 -->
+<!-- 캐릭터 선택 모달 -->
+<div class="modal-overlay" id="m-character-picker">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header"><span class="modal-title">캐릭터 선택</span><button class="modal-close" onclick="closeModal('m-character-picker')">✕</button></div>
+    <div class="modal-body">
+      <div id="character-picker-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 라이딩 공유 카드 템플릿 (화면 밖에 렌더링 후 html2canvas로 캡처) -->
+<div id="ride-share-card" style="position:fixed;top:0;left:-9999px;width:420px;background:#f7f1e3;font-family:'Inter',sans-serif;box-sizing:border-box;overflow:hidden;">
+  <div style="background:linear-gradient(180deg,#efe3c8 0%,#f7f1e3 100%);padding-bottom:4px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:22px 24px 0;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#e02020;">RIDEMATE</div>
+      <div id="rsc-date" style="font-size:14px;color:#6b6255;font-weight:600;"></div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:14px 20px 0;">
+      <img id="rsc-character" src="./assets/characters/char_01.png" style="width:230px;height:auto;margin-left:-14px;flex-shrink:0;">
+      <div id="rsc-memo-bubble" style="position:relative;background:#fff;border:2.5px solid #1f2a3a;border-radius:22px;padding:16px 18px;min-width:110px;max-width:150px;text-align:center;flex-shrink:0;">
+        <div id="rsc-memo" style="font-size:23px;font-weight:800;color:#1f2a3a;line-height:1.25;word-break:keep-all;"></div>
+        <div style="position:absolute;left:-11px;top:50%;transform:translateY(-50%) rotate(45deg);width:18px;height:18px;background:#fff;border-left:2.5px solid #1f2a3a;border-bottom:2.5px solid #1f2a3a;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:0 20px;margin-top:10px;">
+    <div style="background:#3d4a30;border-radius:14px;padding:14px 0;width:100%;text-align:center;">
+      <div style="font-size:14px;color:#dbe4c8;letter-spacing:1.5px;font-weight:700;">TOTAL DISTANCE</div>
+      <div id="rsc-distance" style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:#ffffff;line-height:1.25;margin-top:2px;">-</div>
+    </div>
+  </div>
+
+  <div id="rsc-bike" style="text-align:center;font-size:18px;color:#4a4438;font-weight:700;margin-top:12px;"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:18px 24px 0;padding-top:18px;border-top:1px solid #eef0f2;">
+    <div style="text-align:center;">
+      <div style="width:85px;height:85px;border-radius:50%;background:#eaf1ff;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+        <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="#3b6fd1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 3.5"/></svg>
+      </div>
+      <div id="rsc-duration" style="font-size:22px;font-weight:800;color:#1f2a3a;margin-top:10px;">-</div>
+      <div style="font-size:14px;color:#6b7280;font-weight:600;margin-top:2px;">주행 시간</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="width:85px;height:85px;border-radius:50%;background:#e9f9ef;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+        <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="#2f9e55" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15a8 8 0 0 1 16 0"/><path d="M12 15 15.5 9.5"/><circle cx="12" cy="15" r="1.2" fill="#2f9e55" stroke="none"/></svg>
+      </div>
+      <div id="rsc-avg" style="font-size:22px;font-weight:800;color:#1f2a3a;margin-top:10px;">-</div>
+      <div style="font-size:14px;color:#6b7280;font-weight:600;margin-top:2px;">평균 속도</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="width:85px;height:85px;border-radius:50%;background:#fdece6;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="#d1573b"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6z"/></svg>
+      </div>
+      <div id="rsc-max" style="font-size:22px;font-weight:800;color:#d1573b;margin-top:10px;">-</div>
+      <div style="font-size:14px;color:#6b7280;font-weight:600;margin-top:2px;">최고 속도</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:22px 24px 26px;font-style:italic;color:#7a7264;font-size:16px;font-weight:600;">"Ride Together. Keep the Memories"</div>
 </div>
 
 <!-- SOS 모달 -->
@@ -4505,6 +5450,17 @@ function renderMedicalCard(){
       <button class="btn" onclick="closeModal('m-medical')">취소</button>
       <button class="btn btn-primary" onclick="saveMedical()">저장</button>
     </div>
+  </div>
+</div>
+
+<!-- 온보딩 -->
+<div id="onboarding-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:1000;flex-direction:column;">
+  <div id="onboarding-slides" style="flex:1;position:relative;overflow:hidden;">
+    <div id="onboarding-track" style="display:flex;height:100%;"></div>
+  </div>
+  <div style="padding:20px 24px calc(24px + env(safe-area-inset-bottom));">
+    <div id="onboarding-dots" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;"></div>
+    <button class="btn btn-primary" id="onboarding-next-btn" style="width:100%;justify-content:center;" onclick="onboardingNext()">다음</button>
   </div>
 </div>
 </body>
