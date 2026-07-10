@@ -159,7 +159,7 @@ option{background:var(--surface2);}
 .h-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:8px;}
 .h-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .h-card-bike{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
-.h-card-meta{font-size:12px;color:var(--text-dim);line-height:1.65;}
+.h-card-meta{font-size:15px;color:var(--text-dim);line-height:1.65;}
 .h-card-actions{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 .mono{font-family:'JetBrains Mono',monospace;font-size:17px;}
 .badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:15px;font-weight:700;letter-spacing:0.5px;}
@@ -2265,7 +2265,7 @@ function renderExtraSection(){
   el.innerHTML=header+logs.map(l=>{
     const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
     const label=localizeType(l.type);
-    return `<div class="h-card"><div class="h-card-top"><span class="badge ${typeBadge[l.type]||'badge-other'}">${label}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${l.date}</span></div><div class="h-card-bike">${bike.brand} ${bike.model}</div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button></div></div>`;
+    return `<div class="h-card"><div class="h-card-top"><div style="display:flex;align-items:center;gap:6px;overflow:hidden;"><span class="badge ${typeBadge[l.type]||'badge-other'}">${label}</span><span style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">/ ${bike.brand} ${bike.model}</span></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);flex-shrink:0;padding-left:8px;">${l.date}</span></div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button></div></div>`;
   }).join('');
 }
 
@@ -2573,7 +2573,7 @@ function renderHistory(){
     const b=D.bikes.find(x=>x.id==l.bikeId);
     const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
     const label=localizeType(l.type);
-    return `<div class="h-card"><div class="h-card-top"><span class="badge ${typeBadge[l.type]||'badge-other'}">${label}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">${l.date}</span></div><div class="h-card-bike">${b?b.brand+' '+b.model:'Xe đã xóa'}</div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button></div></div>`;
+    return `<div class="h-card"><div class="h-card-top"><div style="display:flex;align-items:center;gap:6px;overflow:hidden;"><span class="badge ${typeBadge[l.type]||'badge-other'}">${label}</span><span style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">/ ${b?b.brand+' '+b.model:'Xe đã xóa'}</span></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);flex-shrink:0;padding-left:8px;">${l.date}</span></div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button></div></div>`;
   }).join('');
 }
 
