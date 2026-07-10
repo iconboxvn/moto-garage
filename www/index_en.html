@@ -480,7 +480,7 @@ option{background:var(--surface2);}
   .sample-banner-text{flex:1;font-size:12px;color:#6ab0f5;font-weight:600;}
   .sample-banner-arrow{font-size:18px;color:#6ab0f5;opacity:0.7;}
   /* ── RIDING CTRL BAR ── */
-  .riding-ctrl{margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .riding-ctrl{margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
   .riding-ctrl.on{background:linear-gradient(135deg,#0a2018,#061410);border-color:rgba(56,168,104,0.35);}
   .riding-dot{width:9px;height:9px;border-radius:50%;background:var(--border-bright);flex-shrink:0;}
   .riding-dot.on{background:var(--green);animation:ridingPulse 1.5s ease-in-out infinite;}
@@ -514,16 +514,16 @@ option{background:var(--surface2);}
 <div class="nav-wrap">
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('dashboard',this)">
-      <span class="nav-icon">📊</span><span class="nav-label">Home</span><span class="nav-dot"></span>
+      <span class="nav-icon">🏠</span><span class="nav-label">Home</span><span class="nav-dot"></span>
     </button>
     <button class="nav-btn" onclick="showPage('consumables',this)">
       <span class="nav-icon">🔧</span><span class="nav-label">Service</span><span class="nav-dot"></span>
     </button>
-    <button class="nav-btn" onclick="showPage('riding',this)">
-      <span class="nav-icon">📍</span><span class="nav-label">Mileage</span><span class="nav-dot"></span>
-    </button>
     <button class="nav-btn" onclick="showPage('history',this)">
       <span class="nav-icon">📋</span><span class="nav-label">History</span><span class="nav-dot"></span>
+    </button>
+    <button class="nav-btn" id="nav-ridehistory-btn" onclick="showPage('rideHistory',this)">
+      <span class="nav-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;"><path d="M5 19C5 19 5 11 12 9C19 7 19 5 19 5" stroke="var(--text-muted)" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1.5 2.8"/><circle cx="5" cy="19" r="2.6" fill="#e0453c"/><circle cx="19" cy="5" r="2.6" fill="#e0453c"/></svg></span><span class="nav-label">Rides</span><span class="nav-dot"></span>
     </button>
     <button class="nav-btn" id="nav-more-btn" onclick="openModal('m-more')">
       <span class="nav-icon">☰</span><span class="nav-label">More</span><span class="nav-dot"></span>
@@ -544,11 +544,11 @@ option{background:var(--surface2);}
         <div id="riding-ctrl-dot" class="riding-dot"></div>
         <div>
           <div id="riding-ctrl-title" style="font-size:14px;font-weight:700;color:var(--accent);">Riding Standby</div>
-          <div id="riding-ctrl-sub" style="font-size:12px;color:var(--text);line-height:1.7;margin-top:4px;">• Provides distance / time / speed after each ride.<br>• Attempts to send an automatic text to your emergency contact if an impact is detected (supplementary feature, detection may fail).<br>• In an emergency, please contact local emergency services directly.</div>
+          <div id="riding-ctrl-sub" style="font-size:12px;color:var(--text);line-height:1.7;margin-top:4px;"></div>
         </div>
       </div>
-      <div id="riding-ctrl-btn">
-        <button class="btn btn-primary" style="font-size:13px;padding:8px 14px;" onclick="startRiding()">▶ Start</button>
+      <div id="riding-ctrl-btn" style="width:100%;">
+        <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:11px 14px;" onclick="startRiding()">▶ Start recording</button>
       </div>
     </div>
     <div id="dash-content"></div>
@@ -566,12 +566,6 @@ option{background:var(--surface2);}
     <div id="c-bike-tabs" style="margin-bottom:12px;"></div>
     <div id="c-content"></div>
     <div id="c-extra-section"></div>
-  </div>
-
-  <!-- 주행거리 -->
-  <div class="page" id="page-riding">
-    <div class="sec-header"><span class="sec-title">Mileage Management</span><div class="sec-line"></div></div>
-    <div id="odo-cards"></div>
   </div>
 
   <!-- 정비이력 -->
@@ -594,7 +588,7 @@ option{background:var(--surface2);}
   <!-- Ride History -->
   <div class="page" id="page-rideHistory">
     <div class="sec-header"><span class="sec-title">RIDE HISTORY</span><div class="sec-line"></div></div>
-    <button class="btn btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats')">📅 View Monthly Stats</button>
+    <button class="btn btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats', document.getElementById('nav-ridehistory-btn'))">📅 View Monthly Stats</button>
     <div id="ride-history-list"></div>
     <button class="btn btn-full" id="ride-history-more-btn" onclick="showMoreRideHistory()" style="display:none;margin-top:8px;">Load more</button>
   </div>
@@ -602,7 +596,7 @@ option{background:var(--surface2);}
   <!-- Monthly Stats -->
   <div class="page" id="page-monthlyStats">
     <div class="sec-header">
-      <button class="btn btn-sm" onclick="showPage('rideHistory', document.getElementById('nav-more-btn'))" style="padding:6px 12px;margin-right:10px;">←</button>
+      <button class="btn btn-sm" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))" style="padding:6px 12px;margin-right:10px;">←</button>
       <span class="sec-title">Monthly Stats</span>
       <div class="sec-line"></div>
     </div>
@@ -860,14 +854,12 @@ option{background:var(--surface2);}
   </div>
 </div>
 
-<!-- MODAL: 소모품 수정 -->
+<!-- MODAL: Replacement interval -->
 <div class="modal-overlay" id="m-edit-consumable">
   <div class="modal">
-    <div class="modal-header"><span class="modal-title" id="m-edit-c-title">EDIT CONSUMABLE</span><button class="modal-close" onclick="closeModal('m-edit-consumable')">✕</button></div>
+    <div class="modal-header"><span class="modal-title" id="m-edit-c-title">REPLACEMENT INTERVAL</span><button class="modal-close" onclick="closeModal('m-edit-consumable')">✕</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group"><label class="form-label">Odometer at replacement (km)</label><input type="number" class="form-input" id="edit-c-km"></div>
-        <div class="form-group"><label class="form-label">Replacement date</label><input type="date" class="form-input" id="edit-c-date"></div>
         <div class="form-group full">
           <label class="form-label">Next interval (km)</label>
           <div class="pill-group" style="margin-bottom:8px;" id="edit-c-interval-pills">
@@ -1488,7 +1480,6 @@ function showPage(name,btn){
   if(name==='dashboard') renderDash();
   if(name==='bikes') renderBikes();
   if(name==='consumables') renderConsumables();
-  if(name==='riding') renderRiding();
   if(name==='history') renderHistory();
   if(name==='backup') renderBackupPage();
   if(name==='rideHistory') renderRideHistoryPage();
@@ -1609,16 +1600,19 @@ function _renderDashInner(){
   });
   const recentHistory=D.history.filter(l=>l.bikeId==sb.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
   const typeBadge={'Parts Replacement':'badge-cons','Inspection':'badge-maint','Repair':'badge-repair','Other':'badge-other','소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
+  const _now=new Date();
+  const _monthPrefix=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');
+  const monthRides=(D.rides||[]).filter(r=>r.bikeId===sb.id && r.date && r.date.indexOf(_monthPrefix)===0);
+  const monthDistance=monthRides.reduce((s,r)=>s+(r.distanceKm||0),0);
+  const monthDuration=monthRides.reduce((s,r)=>s+(r.durationMs||0),0);
+  const monthMaxSpeed=monthRides.reduce((m,r)=>Math.max(m,r.maxKmh||0),0);
+  const monthAvgSpeed=monthDuration>0?monthDistance/(monthDuration/3600000):0;
   el.innerHTML=`
     ${D.bikes.length>1?`<div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;">
       ${D.bikes.map(b=>{
         const sel=b.id===dashSelectedBikeId;
-        const u=b.consumables.filter(c=>(b.odometer-c.lastKm)/c.km>=1).length;
-        const w=b.consumables.filter(c=>{const p=(b.odometer-c.lastKm)/c.km;return p>=0.8&&p<1;}).length;
-        return `<div onclick="selectDashBike(${b.id})" style="flex-shrink:0;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:10px;padding:10px 14px;cursor:pointer;">
-          <div style="font-size:15px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:${sel?'var(--accent)':'var(--text-dim)'};margin-top:3px;">${b.odometer.toLocaleString()} km</div>
-          <div style="margin-top:4px;">${u?`<span class="c-tag danger" style="font-size:11px;">🚨 ${u}</span>`:w?`<span class="c-tag warn" style="font-size:11px;">⚠ ${w}</span>`:`<span class="c-tag ok" style="font-size:11px;">✓</span>`}</div>
+        return `<div onclick="selectDashBike(${b.id})" style="flex-shrink:0;width:112px;height:82px;box-sizing:border-box;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:10px;padding:0 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;">
+          <div style="font-size:14px;font-weight:700;line-height:1.3;color:${sel?'var(--accent)':'var(--text)'};overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${b.brand} ${b.model}</div>
         </div>`;
       }).join('')}
     </div>`:''}
@@ -1635,27 +1629,16 @@ function _renderDashInner(){
         </div>
       </div>
     </div>
-    <div class="sec-header"><span class="sec-title">Consumable Status</span><div class="sec-line"></div></div>
-    <div class="card" style="padding:6px 0;margin-bottom:14px;">
-      ${consumableRows.map(({c,pct,remain,cls,fillColor,tag})=>`
-        <div style="padding:9px 14px;border-bottom:1px solid var(--border);" onclick="showPage('consumables',document.querySelector('.nav-btn:nth-child(2)'))">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-            <div style="display:flex;align-items:center;gap:7px;">
-              <span style="font-size:16px;width:22px;text-align:center;">${c.icon}</span>
-              <span style="font-size:15px;font-weight:600;">${c.name}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:7px;">
-              <span style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--text-dim);">${remain>0?'+'+remain.toLocaleString()+'km':'Overdue'}</span>
-              <span class="c-tag ${cls}" style="font-size:12px;">${tag}</span>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:7px;">
-            <div style="flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
-              <div style="width:${pct}%;height:100%;background:${fillColor};border-radius:2px;"></div>
-            </div>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--text-dim);width:30px;text-align:right;">${pct}%</span>
-          </div>
-        </div>`).join('')}
+    <div class="card" style="padding:14px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="showPage('consumables',document.querySelector('.nav-btn:nth-child(2)'))">
+      <div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:3px;">Parts status</div>
+        <div style="font-size:15px;font-weight:700;color:var(--text);">${sb.brand} ${sb.model}</div>
+      </div>
+      ${(()=>{const dc=consumableRows.filter(r=>r.cls==='danger').length;const wc=consumableRows.filter(r=>r.cls==='warn').length;const n=dc+wc;
+        return n>0
+          ? `<span class="c-tag ${dc>0?'danger':'warn'}" style="font-size:13px;padding:5px 12px;">${dc>0?'🚨':'⚠'} ${n} need attention</span>`
+          : `<span class="c-tag ok" style="font-size:13px;padding:5px 12px;">✓ Good</span>`;
+      })()}
     </div>
     <div class="sec-header"><span class="sec-title">Recent Service</span><div class="sec-line"></div></div>
     ${recentHistory.length
@@ -1667,7 +1650,26 @@ function _renderDashInner(){
           </tr>`).join('')}
         </tbody></table></div>`
       :`<div class="card" style="text-align:center;padding:16px;font-size:15px;color:var(--text-muted);">No service records</div>`
-    }`;
+    }
+    <div class="sec-header" style="margin-top:14px;"><span class="sec-title">This Month's Riding</span><div class="sec-line"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;cursor:pointer;" onclick="showPage('monthlyStats',document.getElementById('nav-ridehistory-btn'))">
+      <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+        <div style="font-size:11px;color:var(--text-dim);">Total distance</div>
+        <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${monthDistance.toFixed(1)} km</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+        <div style="font-size:11px;color:var(--text-dim);">Total rides</div>
+        <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${monthRides.length}</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+        <div style="font-size:11px;color:var(--text-dim);">Avg speed</div>
+        <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${Math.round(monthAvgSpeed)} km/h</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+        <div style="font-size:11px;color:var(--text-dim);">Top speed</div>
+        <div style="font-size:19px;font-weight:800;color:var(--accent);margin-top:2px;">${Math.round(monthMaxSpeed)} km/h</div>
+      </div>
+    </div>`;
 }
 
 function selectDashBike(id){ dashSelectedBikeId=id; renderDash(); }
@@ -1700,6 +1702,15 @@ function renderBikes(){
         <div class="bstat-val" style="color:${countAlerts(b)>0?'var(--red)':'var(--green)'}">${countAlerts(b)}</div>
         <div class="bstat-lbl">Alerts</div>
       </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-top:10px;">
+      <div style="font-size:13px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Update total mileage</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <input type="number" class="num-input-styled" id="odo-input-${b.id}" value="${b.odometer}" style="width:150px;">
+        <span style="font-size:14px;color:var(--text-dim);">km</span>
+        <button class="btn btn-primary" onclick="updateOdometer(${b.id})">Update</button>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:7px;">Enter the current odometer reading</div>
     </div>
     <div class="ins-section">
       <div class="ins-header" onclick="toggleInsSection(${b.id})">
@@ -2157,7 +2168,6 @@ function consumableCard(c,km){
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
           <span class="c-tag ${cls}">${tag}</span>
-          <button class="btn btn-sm" style="padding:3px 8px;font-size:12px;" onclick="event.stopPropagation();openEditConsumable('${c.id}')">✏</button>
         </div>
       </div>
       <div style="padding-left:26px;">
@@ -2212,7 +2222,7 @@ function saveConsumable(){
   c.lastKm=kmVal; c.lastDate=date;
   c.km=parseInt(document.getElementById('mc-interval').value)||c.km;
   c.memo=document.getElementById('mc-memo').value;
-  D.history.push({id:Date.now(),bikeId:bike.id,date,km:kmVal,type:'Parts Replacement',desc:c.name+' replaced'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
+  D.history.push({id:Date.now(),bikeId:bike.id,consumableId:c.id,date,km:kmVal,type:'Parts Replacement',desc:c.name+' replaced'+(c.memo?' — '+c.memo:''),cost:0,shop:c.memo});
   save(); closeModal('m-consumable'); renderConsumables(); renderDash();
   scheduleConsumableAlerts();
   showToast(`✓ ${c.name} replacement recorded`);
@@ -2224,9 +2234,7 @@ function openEditConsumable(cId){
   const bike=D.bikes[cState.bikeIdx];
   const c=bike.consumables.find(x=>x.id===cId);
   editingCId=cId;
-  document.getElementById('m-edit-c-title').textContent=c.name+' Edit';
-  document.getElementById('edit-c-km').value=c.lastKm||0;
-  document.getElementById('edit-c-date').value=c.lastDate||todayStr();
+  document.getElementById('m-edit-c-title').textContent=c.name+' Replacement Interval';
   document.getElementById('edit-c-interval').value=c.km;
   document.getElementById('edit-c-memo').value=c.memo||'';
   clearPills('edit-c-interval-pills');
@@ -2237,13 +2245,11 @@ function setEditCInterval(val,el){ clearPills('edit-c-interval-pills'); el.class
 function updateConsumable(){
   const bike=D.bikes[cState.bikeIdx];
   const c=bike.consumables.find(x=>x.id===editingCId);
-  c.lastKm=parseInt(document.getElementById('edit-c-km').value)||0;
-  c.lastDate=document.getElementById('edit-c-date').value;
   c.km=parseInt(document.getElementById('edit-c-interval').value)||c.km;
   c.memo=document.getElementById('edit-c-memo').value;
   save(); closeModal('m-edit-consumable'); renderConsumables();
   scheduleConsumableAlerts();
-  showToast('✓ Consumable updated');
+  showToast('✓ Replacement interval saved');
 }
 
 // 기타 정비 섹션
@@ -2308,62 +2314,6 @@ function saveExtra(){
   } else { D.history.push({id:Date.now(),...record}); }
   save(); closeModal('m-extra'); renderExtraSection(); renderDash();
   showToast('✓ Maintenance record saved');
-}
-
-// ═══════════════════════════════════════════
-//  주행거리
-// ═══════════════════════════════════════════
-function renderRiding(){
-  const el=document.getElementById('odo-cards');
-  if(!D.bikes.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">🏍</div><div class="empty-text">Please register a vehicle first</div></div>`; return; }
-  el.innerHTML=D.bikes.map(bike=>{
-    const alerts=bike.consumables.filter(c=>(bike.odometer-c.lastKm)/c.km>=0.8);
-    const urgents=alerts.filter(c=>(bike.odometer-c.lastKm)/c.km>=1);
-    const warns=alerts.filter(c=>{ const p=(bike.odometer-c.lastKm)/c.km; return p>=0.8&&p<1; });
-    return `<div class="bike-card" style="margin-bottom:14px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-        <div><div class="bike-name">${bike.brand} ${bike.model}</div><div class="bike-meta">${bike.year}${bike.cc?' · '+bike.cc+'cc':''}${bike.plate?' · '+bike.plate:''}</div></div>
-        <div style="text-align:right;"><div style="font-size:16px;color:var(--text-dim);margin-bottom:3px;">Current Total</div><div style="font-family:'JetBrains Mono',monospace;font-size:25px;color:var(--accent);line-height:1;">${bike.odometer.toLocaleString()}</div><div style="font-size:16px;color:var(--text-dim);">km</div></div>
-      </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;">
-        <div style="font-size:16px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Update Odometer</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <input type="number" class="num-input-styled" id="odo-input-${bike.id}" value="${bike.odometer}" style="width:150px;">
-          <span style="font-size:16px;color:var(--text-dim);">km</span>
-          <button class="btn btn-primary" onclick="updateOdometer(${bike.id})">Update</button>
-        </div>
-        <div style="font-size:16px;color:var(--text-muted);margin-top:7px;">Enter the current odometer reading</div>
-      </div>
-      ${alerts.length?`
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-        <div style="font-size:16px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Service Alerts</div>
-        ${urgents.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:15px;">${c.icon} ${c.name}</span><span class="c-tag danger">🚨 Replace Now</span></div>`).join('')}
-        ${warns.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:15px;">${c.icon} ${c.name}</span><span class="c-tag warn">⚠ Due Soon</span></div>`).join('')}
-      </div>`:`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:15px;color:var(--green);">✓ 모든 소모품 양호</div>`}
-    </div>`;
-  }).join('');
-  renderRecentRides();
-}
-
-// Recent rides (max 5, newest first)
-function renderRecentRides(){
-  const el=document.getElementById('odo-cards');
-  if(!el) return;
-  const rides=(D.rides||[]).slice().sort((a,b)=>b.id-a.id).slice(0,5);
-  const html=`<div class="bike-card" style="margin-top:14px;">
-    <div style="font-size:16px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:10px;">🏁 Recent Rides</div>
-    ${rides.length?rides.map(r=>{
-      const bike=D.bikes.find(b=>b.id===r.bikeId);
-      return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:15px;color:var(--text);">${r.date} · ${r.startTime}~${r.endTime}</span>
-          <span style="font-size:15px;color:var(--accent);font-weight:700;">${r.distanceKm}km</span>
-        </div>
-        <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">${bike?bike.brand+' '+bike.model+' · ':''}Avg ${r.avgKmh}km/h · Top ${r.maxKmh}km/h</div>
-      </div>`;
-    }).join(''):`<div style="font-size:15px;color:var(--text-muted);">No rides recorded yet</div>`}
-  </div>`;
-  el.insertAdjacentHTML('beforeend', html);
 }
 
 // ═══════════════════════════════════════════
@@ -2599,7 +2549,7 @@ function updateOdometer(bikeId){
   const newKm=parseInt(document.getElementById('odo-input-'+bikeId).value)||0;
   if(newKm<bike.odometer){ if(!confirm(`Current: ${bike.odometer.toLocaleString()} km.\nDo you still want to update?`)) return; }
   const oldKm = bike.odometer;
-  bike.odometer=newKm; save(); renderRiding(); renderDash();
+  bike.odometer=newKm; save(); renderBikes(); renderDash();
   scheduleConsumableAlerts();
   showToast(`✓ ${bike.brand} ${bike.model} · ${newKm.toLocaleString()} km updated`);
 }
@@ -3053,8 +3003,7 @@ const ONBOARDING_SLIDES = [
   },
   {
     images:[
-      {src:'./assets/onboarding/slide4_characters.png'},
-      {src:'./assets/onboarding/slide4_card.png'}
+      {src:'./assets/onboarding/slide4_characters.png'}
     ],
     title:'Turn memories into cards',
     desc:'After every ride, create a beautiful card with your own character and share it on social media.'
@@ -3074,22 +3023,22 @@ function buildOnboardingTrack(){
     var isLastSlide = idx === n - 1;
     var imagesHtml = s.images.map(function(img){
       var highlightHtml = img.highlight ? `<div class="onb-highlight" style="top:${img.highlight.top};left:${img.highlight.left};width:${img.highlight.width};height:${img.highlight.height};border-radius:${img.highlight.radius||'14px'};"></div>` : '';
-      return `<div style="position:relative;display:inline-block;max-height:${s.images.length>1?'34vh':'46vh'};">
-        <img src="${img.src}" style="max-height:${s.images.length>1?'34vh':'46vh'};width:auto;border-radius:14px;border:1px solid var(--border-bright);box-shadow:0 8px 24px rgba(0,0,0,0.4);display:block;">
+      return `<div style="position:relative;display:inline-block;max-width:${s.images.length>1?'46%':'100%'};max-height:${s.images.length>1?'34vh':'46vh'};vertical-align:top;">
+        <img src="${img.src}" style="max-width:100%;max-height:${s.images.length>1?'34vh':'46vh'};width:auto;height:auto;border-radius:14px;border:1px solid var(--border-bright);box-shadow:0 8px 24px rgba(0,0,0,0.4);display:block;">
         ${highlightHtml}
       </div>`;
     }).join('<div style="width:10px;display:inline-block;"></div>');
     var consentHtml = isLastSlide ? `
-      <div style="margin-top:20px;display:flex;align-items:flex-start;gap:8px;max-width:320px;text-align:left;">
+      <div style="margin-top:20px;display:flex;align-items:flex-start;gap:8px;max-width:100%;text-align:left;">
         <input type="checkbox" id="onboarding-consent-check" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;">
         <div style="font-size:16px;color:var(--text-dim);line-height:1.5;">
           I agree to the <span onclick="window.open('${RIDEMATE_TOS_URL}','_system')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">Terms of Service</span> and <span onclick="window.open('${RIDEMATE_PRIVACY_URL}','_system')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">Privacy Policy</span> (required)
         </div>
       </div>` : '';
-    return `<div class="onb-slide" style="flex:0 0 ${100/n}%;width:${100/n}%;height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:16px 24px 0;">
-      <div style="margin-bottom:20px;">${imagesHtml}</div>
+    return `<div class="onb-slide" style="flex:0 0 ${100/n}%;width:${100/n}%;height:100%;box-sizing:border-box;overflow:hidden;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:16px 24px 0;">
+      <div style="margin-bottom:20px;max-width:100%;">${imagesHtml}</div>
       <div style="font-size:21px;font-weight:700;color:var(--text);margin-bottom:10px;">${s.title}</div>
-      <div style="font-size:16px;color:var(--text-dim);line-height:1.6;max-width:320px;">${s.desc}</div>
+      <div style="font-size:16px;color:var(--text-dim);line-height:1.6;max-width:100%;">${s.desc}</div>
       ${consentHtml}
     </div>`;
   }).join('');
@@ -3311,14 +3260,14 @@ function updateRidingBar() {
     title.style.color = 'var(--green)';
     title.textContent = 'Riding · Impact detection active';
     sub.textContent = '⏳ Connecting GPS speed...';
-    btn.innerHTML = '<button class="riding-stop-btn" onclick="stopRiding()">■ Stop</button>';
+    btn.innerHTML = '<button class="riding-stop-btn" style="width:100%;justify-content:center;" onclick="stopRiding()">■ Stop</button>';
   } else {
     bar.className = 'riding-ctrl';
     dot.className = 'riding-dot';
     title.style.color = 'var(--accent)';
     title.textContent = 'Riding Standby';
-    sub.innerHTML = '• Provides distance / time / speed after each ride.<br>• Attempts to send an automatic text to your emergency contact if an impact is detected (supplementary feature, detection may fail).<br>• In an emergency, please contact local emergency services directly.';
-    btn.innerHTML = '<button class="btn btn-primary" style="font-size:13px;padding:8px 14px;" onclick="startRiding()">▶ Start</button>';
+    sub.textContent = '';
+    btn.innerHTML = '<button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:11px 14px;" onclick="startRiding()">▶ Start recording</button>';
   }
 }
 
@@ -3465,7 +3414,6 @@ function saveRideRecord(s){
     maxKmh: Math.round(s.maxKmh)
   });
   save();
-  renderRiding();
 }
 
 // Compute ride summary (distance / avg / top speed)
@@ -4050,6 +3998,23 @@ function renderAiGuide(guide, con, pct, bike) {
   const cost  = guide.cost  || '';
   const tip   = guide.tip   || '';
 
+  const replaceHistory = D.history
+    .filter(h => h.bikeId === bike.id && h.consumableId === con.id)
+    .sort((a,b) => b.date.localeCompare(a.date));
+
+  const historySection = `
+    <div class="ai-guide-section">
+      <div class="ai-guide-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>🗂 Replacement history</span>
+        <span style="font-size:13px;font-weight:400;color:var(--accent);cursor:pointer;" onclick="closeModal('m-ai-guide');openEditConsumable('${con.id}')">⚙ Change interval</span>
+      </div>
+      <div class="ai-guide-text">
+        ${replaceHistory.length
+          ? replaceHistory.map(h=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>${h.date}</span><span style="font-family:'JetBrains Mono',monospace;">${h.km.toLocaleString()} km</span></div>`).join('')
+          : `<div style="color:var(--text-muted);">No replacements recorded yet</div>`}
+      </div>
+    </div>`;
+
   const urgentBanner = pct >= 100 ? `
     <div style="background:var(--red-dim);border:1px solid rgba(208,64,64,0.4);border-radius:8px;
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
@@ -4070,6 +4035,7 @@ function renderAiGuide(guide, con, pct, bike) {
 
   document.getElementById('ai-guide-body').innerHTML = `
     ${urgentBanner}
+    ${historySection}
     ${why ? `<div class="ai-guide-section danger">
       <div class="ai-guide-section-title">🔥 왜 교체해야 하나요?</div>
       <div class="ai-guide-text">${why.split('\n').join('<br>')}</div>
@@ -4732,9 +4698,6 @@ function renderMedicalCard(){
     <div class="more-sheet-grid">
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('bikes',document.getElementById('nav-more-btn'));">
         <span class="more-tile-icon">🏍</span><span class="more-tile-label">My Bikes</span>
-      </div>
-      <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('rideHistory',document.getElementById('nav-more-btn'));">
-        <span class="more-tile-icon">🏁</span><span class="more-tile-label">Ride History</span>
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('backup',document.getElementById('nav-more-btn'));">
         <span class="more-tile-icon">⚙️</span><span class="more-tile-label">Settings</span>
