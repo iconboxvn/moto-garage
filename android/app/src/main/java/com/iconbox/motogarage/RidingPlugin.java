@@ -62,4 +62,11 @@ public class RidingPlugin extends Plugin {
         getContext().stopService(new Intent(getContext(), RidingService.class));
         call.resolve();
     }
+
+    @PluginMethod
+    public void isDebugBuild(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("isDebug", BuildConfig.DEBUG);
+        call.resolve(ret);
+    }
 }

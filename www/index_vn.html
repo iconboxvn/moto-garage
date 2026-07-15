@@ -3321,6 +3321,38 @@ function devTap(){
 }
 
 // ═══════════════════════════════════════════
+//  Debug-build-only riding event logger
+//  (native BuildConfig.DEBUG is false in release builds, so this stays off automatically)
+// ═══════════════════════════════════════════
+window._isDebugBuild = false;
+var _dbg = {events: []};
+var DBG_MAX_EVENTS = 3000;
+
+function _dbgLog(type, data){
+  if (!window._isDebugBuild) return;
+  data = data || {};
+  data.t = Date.now();
+  data.type = type;
+  _dbg.events.push(data);
+  if (_dbg.events.length > DBG_MAX_EVENTS) _dbg.events.shift();
+  try { localStorage.setItem('mg2-dbglog', JSON.stringify(_dbg.events)); } catch(e){}
+}
+
+function initDebugMode(){
+  var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (!RidingPlugin || !RidingPlugin.isDebugBuild) return;
+  RidingPlugin.isDebugBuild().then(function(res){
+    window._isDebugBuild = !!(res && res.isDebug);
+    if (window._isDebugBuild) {
+      try {
+        var saved = localStorage.getItem('mg2-dbglog');
+        if (saved) _dbg.events = JSON.parse(saved);
+      } catch(e){}
+    }
+  }).catch(function(){});
+}
+
+// ═══════════════════════════════════════════
 //  RIDING / AUTO SOS
 // ═══════════════════════════════════════════
 var ridingState = {active: false, paused: false};
@@ -3481,6 +3513,7 @@ function _requestSmsAndStart() {
 }
 
 function _doStartRiding() {
+  _dbgLog('ride_start', {});
   ridingState.active = true;
   ridingState.paused = true;
   localStorage.setItem('mg2-riding', '1');
@@ -3502,6 +3535,7 @@ function _doStartRiding() {
 
 function stopRiding(customMsg) {
   var summary = _buildRideSummary();
+  _dbgLog('ride_stop', {distanceKm: summary ? Math.round(summary.distanceKm*10)/10 : null, durationMs: summary ? summary.durationMs : null});
   ridingState.active = false;
   ridingState.paused = false;
   if (_ridingPauseTimer) { clearInterval(_ridingPauseTimer); _ridingPauseTimer = null; }
@@ -3589,6 +3623,7 @@ function _checkRidingPauseTimer(){
 }
 
 function _forceStartRiding(){
+  _dbgLog('riding_state', {event:'force_start'});
   ridingState.paused = false;
   _ride.pauseStartedAt = null;
   _ride.hasStartedMoving = true;
@@ -3598,6 +3633,7 @@ function _forceStartRiding(){
 }
 
 function _pauseRiding(){
+  _dbgLog('riding_state', {event:'pause'});
   ridingState.paused = true;
   // Tính lùi lại từ thời điểm di chuyển thực tế cuối cùng, không phải lúc phát hiện (chỉ áp dụng cho "thời gian")
   // (không khôi phục quãng đường/lộ trình nữa - việc này từng làm mất quãng đường thực khi việc xác nhận di chuyển bị ngắt quãng trong đoạn kẹt xe)
@@ -3607,6 +3643,7 @@ function _pauseRiding(){
 }
 
 function _resumeRiding(){
+  _dbgLog('riding_state', {event:'resume'});
   if (_ride.pauseStartedAt) _ride.pausedMs = (_ride.pausedMs || 0) + (Date.now() - _ride.pauseStartedAt);
   ridingState.paused = false;
   _ride.pauseStartedAt = null;
@@ -3620,6 +3657,7 @@ function _resumeRiding(){
 }
 
 function _autoEndRiding(){
+  _dbgLog('riding_state', {event:'auto_end'});
   stopRiding('⏹ Phát hiện dừng lâu, đã tự động kết thúc chuyến đi');
 }
 
@@ -3993,13 +4031,16 @@ function _rideTrackSpeed(kmh, now, lat, lon){
 
     var signedDeltaPerSec = dtSec > 0 ? (kmh - _ride.lastAcceptedKmh) / dtSec : 0;
     var sinceLastEvent = _ride.lastHarshEventT ? (now - _ride.lastHarshEventT) : Infinity;
+    _dbgLog('speed', {kmh: Math.round(kmh*10)/10, deltaPerSec: Math.round(signedDeltaPerSec*10)/10});
     if (sinceLastEvent >= RIDING_HARSH_EVENT_COOLDOWN_MS) {
       if (signedDeltaPerSec >= RIDING_HARSH_ACCEL_KMH_PER_SEC) {
         _ride.harshAccelCount = (_ride.harshAccelCount || 0) + 1;
         _ride.lastHarshEventT = now;
+        _dbgLog('harsh_accel', {kmh: Math.round(kmh*10)/10, deltaPerSec: Math.round(signedDeltaPerSec*10)/10});
       } else if (signedDeltaPerSec <= -RIDING_HARSH_BRAKE_KMH_PER_SEC) {
         _ride.harshBrakeCount = (_ride.harshBrakeCount || 0) + 1;
         _ride.lastHarshEventT = now;
+        _dbgLog('harsh_brake', {kmh: Math.round(kmh*10)/10, deltaPerSec: Math.round(signedDeltaPerSec*10)/10});
       }
     }
   }
@@ -4087,17 +4128,19 @@ function _sosAccel(x, y, z) {
     if (!_sos.speedOk) { _sos.ffStart = null; return; }
     if (mag < _FF_MAG) {
       if (!_sos.ffStart) _sos.ffStart = now;
-      if (now - _sos.ffStart >= _FF_DUR) { _sos.phase = 'FREEFALL'; _sos.phaseT = now; }
+      if (now - _sos.ffStart >= _FF_DUR) { _dbgLog('sos_phase', {from:'MONITORING', to:'FREEFALL', mag:Math.round(mag*100)/100}); _sos.phase = 'FREEFALL'; _sos.phaseT = now; }
     } else {
       _sos.ffStart = null;
-      if (mag > _IMP_MAG) { _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now; }
+      if (mag > _IMP_MAG) { _dbgLog('sos_phase', {from:'MONITORING', to:'IMPACT', mag:Math.round(mag*100)/100}); _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now; }
     }
     return;
   }
   if (_sos.phase === 'FREEFALL') {
     if (mag > _FF_IMP_MAG) {
+      _dbgLog('sos_phase', {from:'FREEFALL', to:'IMPACT', mag:Math.round(mag*100)/100});
       _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now;
     } else if (_sos.phaseT && now - _sos.phaseT > 2000) {
+      _dbgLog('sos_phase', {from:'FREEFALL', to:'MONITORING', mag:Math.round(mag*100)/100, reason:'timeout'});
       _sos.phase = 'MONITORING'; _sos.ffStart = null;
     }
     return;
@@ -4107,6 +4150,7 @@ function _sosAccel(x, y, z) {
     if (r1.length >= 4) {
       var m1 = r1.map(function(r) { return r.mag; });
       if (Math.max.apply(null, m1) - Math.min.apply(null, m1) > 3) {
+        _dbgLog('sos_phase', {from:'IMPACT', to:'MONITORING', mag:Math.round(mag*100)/100, reason:'movement_detected'});
         _sos.phase = 'MONITORING'; _sosBufReset(); return;
       }
     }
@@ -4257,6 +4301,7 @@ function _sosDoSend(phone, body, mapsUrl) {
 // ═══════════════════════════════════════════
 window.addEventListener('load', function(){
   function safe(fn, label){ try{ fn(); }catch(e){ console.warn('[init] '+label+' failed', e); } }
+  safe(initDebugMode, 'initDebugMode');
   safe(migrateConsumableIntervals, 'migrateConsumableIntervals');
   safe(requestNotificationPermission, 'requestNotificationPermission');
   safe(registerPushNotifications, 'registerPushNotifications');
