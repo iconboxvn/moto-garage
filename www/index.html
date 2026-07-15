@@ -1921,10 +1921,20 @@ function _renderDashInner(){
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:3px;">소모품 상태</div>
         <div style="font-size:15px;font-weight:700;color:var(--text);">${sb.brand} ${sb.model}</div>
       </div>
-      ${(()=>{const dc=consumableRows.filter(r=>r.cls==='danger').length;const wc=consumableRows.filter(r=>r.cls==='warn').length;const n=dc+wc;
-        return n>0
-          ? `<span class="c-tag ${dc>0?'danger':'warn'}" style="font-size:13px;padding:5px 12px;">${dc>0?'🚨':'⚠'} 관리 필요 ${n}건</span>`
-          : `<span class="c-tag ok" style="font-size:13px;padding:5px 12px;">✓ 양호</span>`;
+      ${(()=>{
+        const dc=consumableRows.filter(r=>r.cls==='danger').length;
+        const wc=consumableRows.filter(r=>r.cls==='warn').length;
+        const okc=consumableRows.filter(r=>r.cls==='ok').length;
+        const total=consumableRows.length;
+        const n=dc+wc;
+        const score = total>0 ? Math.round((okc*100 + wc*50) / total) : 100;
+        const face = score>=90?'status_1_happy.png':score>=75?'status_2_good.png':score>=55?'status_3_worried.png':score>=35?'status_4_urgent.png':'status_5_angry.png';
+        return `<div style="display:flex;align-items:center;gap:8px;">
+          <img src="./assets/status/${face}" style="width:36px;height:36px;flex-shrink:0;" alt="차량 상태">
+          ${n>0
+            ? `<span class="c-tag ${dc>0?'danger':'warn'}" style="font-size:13px;padding:5px 12px;">${dc>0?'🚨':'⚠'} 관리 필요 ${n}건</span>`
+            : `<span class="c-tag ok" style="font-size:13px;padding:5px 12px;">✓ 양호</span>`}
+        </div>`;
       })()}
     </div>
     <div class="sec-header"><span class="sec-title">최근 정비</span><div class="sec-line"></div></div>
@@ -2738,6 +2748,14 @@ function openRideDetail(id){
   document.getElementById('ride-detail-duration').textContent = h>0 ? `${h}시간 ${m}분` : m>0 ? `${m}분 ${sec}초` : `${sec}초`;
   document.getElementById('ride-detail-avg').textContent = r.avgKmh+' km/h';
   document.getElementById('ride-detail-max').textContent = r.maxKmh+' km/h';
+  var accelEl = document.getElementById('ride-detail-accel');
+  var brakeEl = document.getElementById('ride-detail-brake');
+  var accelN = r.harshAccelCount || 0;
+  var brakeN = r.harshBrakeCount || 0;
+  accelEl.textContent = accelN+'회';
+  accelEl.style.color = accelN > 0 ? 'var(--red)' : 'var(--text)';
+  brakeEl.textContent = brakeN+'회';
+  brakeEl.style.color = brakeN > 0 ? 'var(--red)' : 'var(--text)';
   document.getElementById('ride-detail-modal').classList.remove('ride-detail-fs');
   openModal('m-ride-detail');
 
@@ -3430,8 +3448,18 @@ function registerPushNotifications(){
 // ═══════════════════════════════════════════
 //  자동 SOS — 충격/낙차 감지
 // ═══════════════════════════════════════════
-var ridingState = {active: false};
-var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null};
+var ridingState = {active: false, paused: false};
+var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+var _ridingPauseTimer = null;
+var RIDING_MOVING_SPD   = 8;              // km/h 이상이면 "이동 중" 후보로 판단 (GPS 정지 오차 + 도보 이동 감안)
+var RIDING_MOVING_CONFIRM_MS = 20*1000;   // 이 기준을 20초 이상 "끊김 없이" 유지해야 진짜 이동(재개)으로 확정 — 화장실/주문 등 짧은 도보 이동 필터링
+var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;  // 초당 이만큼 속도가 늘면 급가속으로 판정
+var RIDING_HARSH_BRAKE_KMH_PER_SEC = 15;  // 초당 이만큼 속도가 줄면 급감속으로 판정
+var RIDING_HARSH_EVENT_COOLDOWN_MS = 3000; // 같은 상황이 여러 번 중복 카운트되지 않도록 최소 간격
+var RIDING_PAUSE_MS     = 10*60*1000;     // 10분간 정지 시 자동 일시정지
+var RIDING_AUTOEND_MS   = 2*60*60*1000;   // 일시정지 2시간 지속 시 자동 종료
+var RIDING_PAUSE_CHECK_MS = 60*1000;      // 1분마다 체크
+var RIDING_DEPARTURE_TIMEOUT_MS = 5*60*1000; // 출발 확인 대기 최대 5분 - 넘으면 GPS 안 잡혀도 강제 시작 처리
 
 // 두 GPS 좌표 사이의 거리 계산 (km)
 function _haversineKm(lat1, lon1, lat2, lon2){
@@ -3473,11 +3501,19 @@ function updateRidingBar() {
   var btn   = document.getElementById('riding-ctrl-btn');
   if (!bar) return;
   if (ridingState.active) {
-    bar.className = 'riding-ctrl on';
-    dot.className = 'riding-dot on';
-    title.style.color = 'var(--green)';
-    title.textContent = '라이딩 중 · 충격 감지 활성';
-    sub.textContent = '⏳ GPS 속도 연결 중...';
+    bar.className = ridingState.paused ? 'riding-ctrl' : 'riding-ctrl on';
+    dot.className = ridingState.paused ? 'riding-dot' : 'riding-dot on';
+    title.style.color = ridingState.paused ? 'var(--accent)' : 'var(--green)';
+    if (ridingState.paused && !_ride.hasStartedMoving) {
+      title.textContent = '🏁 출발 대기 중 · 이동하면 자동 시작';
+      sub.textContent = '헬멧·짐 챙기고 출발하면 그때부터 기록돼요 (최대 5분 대기)';
+    } else if (ridingState.paused) {
+      title.textContent = '⏸ 일시정지 중 · 이동하면 자동 재개';
+      sub.textContent = '움직임이 감지되면 자동으로 다시 시작해요';
+    } else {
+      title.textContent = '라이딩 중 · 충격 감지 활성';
+      sub.textContent = '⏳ GPS 속도 연결 중...';
+    }
     btn.innerHTML = '<button class="riding-stop-btn" style="width:100%;justify-content:center;" onclick="stopRiding()">■ 종료</button>';
   } else {
     bar.className = 'riding-ctrl';
@@ -3574,8 +3610,10 @@ function _requestSmsAndStart() {
 
 function _doStartRiding() {
   ridingState.active = true;
+  ridingState.paused = true; // 실제 출발 전까지 "출발 대기" - 단, 5분 넘으면 강제 시작 (안전장치)
   localStorage.setItem('mg2-riding', '1');
-  _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null};
+  var _now0 = Date.now();
+  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
   _sos.phase = 'MONITORING';
   _sos.speedOk = false;
   _sosBufReset();
@@ -3583,14 +3621,18 @@ function _doStartRiding() {
   _sosMotionStart();
   var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (R) R.startForeground().catch(function() {});
+  if (_ridingPauseTimer) clearInterval(_ridingPauseTimer);
+  _ridingPauseTimer = setInterval(_checkRidingPauseTimer, RIDING_PAUSE_CHECK_MS);
   updateRidingBar();
   showToast('🏍 라이딩 시작! 충격 감지 활성');
   logAnalyticsEvent('riding_started', {});
 }
 
-function stopRiding() {
+function stopRiding(customMsg) {
   var summary = _buildRideSummary();
   ridingState.active = false;
+  ridingState.paused = false;
+  if (_ridingPauseTimer) { clearInterval(_ridingPauseTimer); _ridingPauseTimer = null; }
   localStorage.removeItem('mg2-riding');
   _sosCountdownCancel();
   _sosGPSStop();
@@ -3603,7 +3645,7 @@ function stopRiding() {
   var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (R) R.stopForeground().catch(function() {});
   updateRidingBar();
-  showToast('■ 라이딩 종료');
+  showToast(customMsg || '■ 라이딩 종료');
   if (summary) {
     saveRideRecord(summary);
     showRideSummary(summary);
@@ -3635,7 +3677,9 @@ function saveRideRecord(s){
     maxKmh: Math.round(s.maxKmh),
     path: (_ride.path||[]).map(function(p){ return [p.lat, p.lon]; }),
     maxSpeedLat: _ride.maxSpeedLat || null,
-    maxSpeedLon: _ride.maxSpeedLon || null
+    maxSpeedLon: _ride.maxSpeedLon || null,
+    harshAccelCount: _ride.harshAccelCount || 0,
+    harshBrakeCount: _ride.harshBrakeCount || 0
   });
   save();
 }
@@ -3643,10 +3687,64 @@ function saveRideRecord(s){
 // 라이딩 요약 계산 (총 거리 / 평균속도 / 최고속도)
 function _buildRideSummary(){
   if (!_ride || !_ride.startTime) return null;
-  var durationMs = Date.now() - _ride.startTime;
+  var pausedMs = _ride.pausedMs || 0;
+  if (ridingState.paused && _ride.pauseStartedAt) pausedMs += (Date.now() - _ride.pauseStartedAt);
+  var durationMs = (Date.now() - _ride.startTime) - pausedMs;
+  if (durationMs < 0) durationMs = 0;
   var distKm = _ride.distance;
   var avgKmh = durationMs > 0 ? distKm / (durationMs/3600000) : 0;
   return { durationMs: durationMs, distanceKm: distKm, avgKmh: avgKmh, maxKmh: _ride.maxSpeed };
+}
+
+// 정지 상태가 길어지면 자동 일시정지 / 자동 종료 처리 (1분마다 체크)
+function _checkRidingPauseTimer(){
+  if (!ridingState.active) return;
+  var now = Date.now();
+  if (!ridingState.paused) {
+    var sinceMoving = now - (_ride.lastMovingT || _ride.startTime);
+    if (sinceMoving >= RIDING_PAUSE_MS) _pauseRiding();
+  } else if (!_ride.hasStartedMoving) {
+    // 아직 출발 확인 전 - GPS가 계속 안 잡혀도 5분 넘으면 강제로 시작 처리 (라이딩 통째로 유실 방지)
+    if (now - _ride.startTime >= RIDING_DEPARTURE_TIMEOUT_MS) _forceStartRiding();
+  } else {
+    var sincePause = now - (_ride.pauseStartedAt || now);
+    if (sincePause >= RIDING_AUTOEND_MS) _autoEndRiding();
+  }
+}
+
+function _forceStartRiding(){
+  ridingState.paused = false;
+  _ride.pauseStartedAt = null;
+  _ride.hasStartedMoving = true;
+  _ride.lastMovingT = Date.now();
+  updateRidingBar();
+  showToast('🏍 GPS 신호 대기 5분 경과, 라이딩 기록을 시작해요');
+}
+
+function _pauseRiding(){
+  ridingState.paused = true;
+  // 감지된 시점이 아니라, 실제로 마지막까지 움직였던 시각으로 소급해서 "시간"만 정지로 처리
+  // (거리/경로는 더 이상 롤백하지 않음 - 정체 구간에서 이동확정이 자주 끊기면 실제 주행거리까지 지워지는 문제가 있었음)
+  _ride.pauseStartedAt = _ride.lastMovingT || Date.now();
+  updateRidingBar();
+  showToast('⏸ 정지 감지, 라이딩을 잠시 멈췄어요');
+}
+
+function _resumeRiding(){
+  if (_ride.pauseStartedAt) _ride.pausedMs = (_ride.pausedMs || 0) + (Date.now() - _ride.pauseStartedAt);
+  ridingState.paused = false;
+  _ride.pauseStartedAt = null;
+  updateRidingBar();
+  if (!_ride.hasStartedMoving) {
+    _ride.hasStartedMoving = true;
+    showToast('🏍 이동 감지, 라이딩 기록을 시작해요');
+  } else {
+    showToast('▶ 이동 감지, 라이딩을 다시 시작해요');
+  }
+}
+
+function _autoEndRiding(){
+  stopRiding('⏹ 장시간 정지가 감지돼 라이딩을 자동 종료했어요');
 }
 
 // ═══════════════════════════════════════════
@@ -3997,14 +4095,35 @@ function _rideTrackSpeed(kmh, now, lat, lon){
     var dtSec = (now - _ride.lastAcceptedT) / 1000;
     var deltaPerSec = dtSec > 0 ? Math.abs(kmh - _ride.lastAcceptedKmh) / dtSec : 0;
     if (deltaPerSec > 40) return; // 초당 40km/h 넘게 튀는 값은 노이즈로 판단하고 버림
+
+    // 급가속/급감속 감지 (쿨다운 있어야 같은 상황이 여러 번 안 잡힘)
+    var signedDeltaPerSec = dtSec > 0 ? (kmh - _ride.lastAcceptedKmh) / dtSec : 0;
+    var sinceLastEvent = _ride.lastHarshEventT ? (now - _ride.lastHarshEventT) : Infinity;
+    if (sinceLastEvent >= RIDING_HARSH_EVENT_COOLDOWN_MS) {
+      if (signedDeltaPerSec >= RIDING_HARSH_ACCEL_KMH_PER_SEC) {
+        _ride.harshAccelCount = (_ride.harshAccelCount || 0) + 1;
+        _ride.lastHarshEventT = now;
+      } else if (signedDeltaPerSec <= -RIDING_HARSH_BRAKE_KMH_PER_SEC) {
+        _ride.harshBrakeCount = (_ride.harshBrakeCount || 0) + 1;
+        _ride.lastHarshEventT = now;
+      }
+    }
   }
   _ride.lastAcceptedKmh = kmh;
   _ride.lastAcceptedT = now;
 
-  _ride.speedBuf.push({kmh: kmh, t: now});
-  _ride.speedBuf = _ride.speedBuf.filter(function(r){ return now - r.t < 4000; });
-  var nearCount = _ride.speedBuf.filter(function(r){ return Math.abs(r.kmh - kmh) < 5; }).length;
-  if (nearCount >= 2 && kmh > _ride.maxSpeed) {
+  if (kmh >= RIDING_MOVING_SPD) {
+    if (!_ride.movingStreakStartT) _ride.movingStreakStartT = now;
+    if (now - _ride.movingStreakStartT >= RIDING_MOVING_CONFIRM_MS) {
+      _ride.lastMovingT = now;
+      _ride.distanceAtLastMoving = _ride.distance;
+      if (ridingState.paused) _resumeRiding();
+    }
+  } else {
+    _ride.movingStreakStartT = null;
+  }
+
+  if (kmh > _ride.maxSpeed) {
     _ride.maxSpeed = kmh;
     if (lat != null && lon != null) { _ride.maxSpeedLat = lat; _ride.maxSpeedLon = lon; }
   }
@@ -4012,7 +4131,7 @@ function _rideTrackSpeed(kmh, now, lat, lon){
 
 function _updateRidingSpeedUI() {
   var sub = document.getElementById('riding-ctrl-sub');
-  if (!sub || !ridingState.active) return;
+  if (!sub || !ridingState.active || ridingState.paused) return;
   sub.textContent = _sos.speedOk ? '⚡ 충격 감지 활성 (20 km/h+)' : '⏳ 속도 대기 중 (20 km/h 미만)';
 }
 
@@ -4245,10 +4364,12 @@ function _sosDoSend(phone, body, mapsUrl) {
 (function() {
   if (localStorage.getItem('mg2-riding')) {
     ridingState.active = true;
-    if (!_ride.startTime) _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null};
+    if (!_ride.startTime) _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
     _sos.phase = 'MONITORING';
     _sosGPSStart();
     _sosMotionStart();
+    if (_ridingPauseTimer) clearInterval(_ridingPauseTimer);
+    _ridingPauseTimer = setInterval(_checkRidingPauseTimer, RIDING_PAUSE_CHECK_MS);
   }
   document.addEventListener('DOMContentLoaded', updateRidingBar);
   if (document.readyState !== 'loading') updateRidingBar();
@@ -5366,6 +5487,14 @@ function renderMedicalCard(){
           <div style="background:var(--surface2);border-radius:10px;padding:12px;">
             <div style="font-size:11px;color:var(--text-dim);">최고 속도</div>
             <div id="ride-detail-max" style="font-size:19px;font-weight:800;color:var(--accent);margin-top:2px;"></div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+            <div style="font-size:11px;color:var(--text-dim);">급가속</div>
+            <div id="ride-detail-accel" style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;"></div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+            <div style="font-size:11px;color:var(--text-dim);">급감속</div>
+            <div id="ride-detail-brake" style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;"></div>
           </div>
         </div>
       </div>
