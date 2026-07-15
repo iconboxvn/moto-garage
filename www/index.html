@@ -549,7 +549,7 @@ option{background:var(--surface2);}
     <button class="nav-btn" onclick="showPage('history',this)">
       <span class="nav-icon">📋</span><span class="nav-label">정비이력</span><span class="nav-dot"></span>
     </button>
-    <button class="nav-btn" id="nav-ridehistory-btn" onclick="showPage('rideHistory',this)">
+    <button class="nav-btn" id="nav-ridehistory-btn" onclick="showPage('monthlyStats',this)">
       <span class="nav-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;"><path d="M5 19C5 19 5 11 12 9C19 7 19 5 19 5" stroke="var(--text-muted)" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1.5 2.8"/><circle cx="5" cy="19" r="2.6" fill="#e0453c"/><circle cx="19" cy="5" r="2.6" fill="#e0453c"/></svg></span><span class="nav-label">라이딩이력</span><span class="nav-dot"></span>
     </button>
     <button class="nav-btn" id="nav-more-btn" onclick="openModal('m-more')">
@@ -621,11 +621,8 @@ option{background:var(--surface2);}
 
   <!-- 월별 통계 -->
   <div class="page" id="page-monthlyStats">
-    <div class="sec-header">
-      <button class="btn btn-sm" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))" style="padding:6px 12px;margin-right:10px;">←</button>
-      <span class="sec-title">월별 통계</span>
-      <div class="sec-line"></div>
-    </div>
+    <div class="sec-header"><span class="sec-title">월별 통계</span><div class="sec-line"></div></div>
+    <button class="btn btn-full" style="margin-bottom:14px;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">📋 상세 라이딩 이력 보기</button>
 
     <div id="mstat-bike-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;"></div>
 
@@ -2919,6 +2916,7 @@ function mstatRender(){
   var startWeekday = firstDay.getDay(); // 0=일
 
   var todayStr = new Date().toISOString().split('T')[0];
+  var milestoneMap = _computeBikeMilestones(mstatState.bikeId);
   var cells = [];
   for(var i=0; i<startWeekday; i++){ cells.push('<div></div>'); }
   for(var day=1; day<=daysInMonth; day++){
@@ -2926,8 +2924,13 @@ function mstatRender(){
     var info = byDay[dateStr];
     var isToday = dateStr === todayStr;
     var isSelected = dateStr === mstatState.selectedDate;
+    var milestoneKm = milestoneMap[dateStr];
     var dotHtml;
-    if(info && info.distance > 0){
+    if(milestoneKm){
+      // 누적 500km 배수 달성일 - 골드 배지로 구분 표시, 탭하면 달성 카드
+      var achSize = info && info.distance > 0 ? (info.distance <= 10 ? 19 : info.distance <= 50 ? 25 : info.distance <= 100 ? 31 : 36) : 25;
+      dotHtml = `<div onclick="mstatSelectDay('${dateStr}'); showAchievementSummary(${mstatState.bikeId}, ${milestoneKm}, '${dateStr}')" style="width:${achSize}px;height:${achSize}px;margin:0 auto;cursor:pointer;border-radius:50%;position:relative;background:linear-gradient(135deg,#ffd76a,#e8a020);${isSelected?'box-shadow:0 0 0 3px var(--accent-dim);':''}"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:${Math.round(achSize*0.55)}px;line-height:1;">🏆</span></div>`;
+    } else if(info && info.distance > 0){
       var tier = info.distance <= 10 ? {size:19, rings:2} : info.distance <= 50 ? {size:25, rings:3} : info.distance <= 100 ? {size:31, rings:4} : {size:36, rings:5};
       dotHtml = `<div onclick="mstatSelectDay('${dateStr}')" style="width:${tier.size}px;height:${tier.size}px;margin:0 auto;cursor:pointer;border-radius:50%;${isSelected?'box-shadow:0 0 0 3px var(--accent-dim);':''}">${_mstatRingSvg(tier.rings, tier.size)}</div>`;
     } else {
@@ -2980,6 +2983,21 @@ function mstatRender(){
 
 // 바깥→안쪽 색상 (진한 색이 바깥, 연한 색이 안쪽)
 var MSTAT_RING_COLORS = ['#7a3b12','#a8551a','#d17a22','#e8a020','#fbe3b8'];
+
+// 차량별 누적 주행거리가 500km 배수를 넘은 날짜 맵 { 'YYYY-MM-DD': 달성한 배수(km) }
+// 라이딩 기록을 시간순(id 오름차순)으로 누적 계산 - 기록을 수정/삭제해도 항상 다시 계산되므로 별도 저장이 필요 없음
+function _computeBikeMilestones(bikeId){
+  var rides = (D.rides||[]).filter(function(r){ return r.bikeId===bikeId; }).slice().sort(function(a,b){ return a.id-b.id; });
+  var cum = 0;
+  var map = {};
+  rides.forEach(function(r){
+    var beforeTier = Math.floor(cum/500);
+    cum += (r.distanceKm||0);
+    var afterTier = Math.floor(cum/500);
+    if(afterTier > beforeTier) map[r.date] = afterTier*500;
+  });
+  return map;
+}
 
 function _mstatRingSvg(numRings, size){
   var cx = size/2, cy = size/2;
@@ -3665,14 +3683,17 @@ function saveRideRecord(s){
   var startD = new Date(_ride.startTime);
   var endD = new Date();
   var fmtTime = d => d.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+  var rideBikeId = (D.bikes.find(b=>b.id===dashSelectedBikeId) ? dashSelectedBikeId : (D.bikes[0] ? D.bikes[0].id : null));
+  var rideDistKm = Math.round(s.distanceKm*10)/10;
+  var prevTotal = (D.rides||[]).filter(function(r){ return r.bikeId===rideBikeId; }).reduce(function(sum,r){ return sum+(r.distanceKm||0); }, 0);
   D.rides.push({
     id: Date.now(),
-    bikeId: (D.bikes.find(b=>b.id===dashSelectedBikeId) ? dashSelectedBikeId : (D.bikes[0] ? D.bikes[0].id : null)),
+    bikeId: rideBikeId,
     date: startD.toISOString().split('T')[0],
     startTime: fmtTime(startD),
     endTime: fmtTime(endD),
     durationMs: s.durationMs,
-    distanceKm: Math.round(s.distanceKm*10)/10,
+    distanceKm: rideDistKm,
     avgKmh: Math.round(s.avgKmh),
     maxKmh: Math.round(s.maxKmh),
     path: (_ride.path||[]).map(function(p){ return [p.lat, p.lon]; }),
@@ -3682,6 +3703,10 @@ function saveRideRecord(s){
     harshBrakeCount: _ride.harshBrakeCount || 0
   });
   save();
+  var newTier = Math.floor((prevTotal+rideDistKm)/500);
+  if(newTier > Math.floor(prevTotal/500)){
+    setTimeout(function(){ showToast('🏆 누적 '+(newTier*500).toLocaleString()+'km 달성했어요! 라이딩 이력에서 확인해보세요'); }, 1500);
+  }
 }
 
 // 라이딩 요약 계산 (총 거리 / 평균속도 / 최고속도)
@@ -3880,6 +3905,11 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
   window._lastRideSummary = s;
   window._lastRideDate = dateOverride || null;
   window._lastRideBikeId = (bikeIdOverride!=null) ? bikeIdOverride : null;
+  window._achievementMilestone = null;
+  document.getElementById('ride-summary-emoji').textContent = '🏁';
+  document.getElementById('ride-summary-title').textContent = '라이딩 요약';
+  document.getElementById('ride-summary-ach-headline').style.display = 'none';
+  document.getElementById('ride-summary-stat-grid').style.display = 'grid';
   window._selectedCharacterId = RIDE_CHARACTERS[0].id;
   renderCharacterPicker();
   var memoEl = document.getElementById('ride-summary-memo');
@@ -3923,32 +3953,69 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
   openModal('m-ride-summary');
 }
 
+// 누적 500km 배수 달성 카드 (라이딩 요약 모달 재활용)
+function showAchievementSummary(bikeId, milestoneKm, dateStr){
+  var bike = D.bikes.find(function(b){ return b.id===bikeId; });
+  window._lastRideSummary = null;
+  window._lastRideDate = dateStr;
+  window._lastRideBikeId = bikeId;
+  window._achievementMilestone = milestoneKm;
+  window._selectedCharacterId = RIDE_CHARACTERS[0].id;
+  renderCharacterPicker();
+  var memoEl = document.getElementById('ride-summary-memo');
+  if(memoEl) memoEl.value = `🏆 ${milestoneKm.toLocaleString()}km 달성!!`;
+  document.getElementById('ride-summary-emoji').textContent = '🏆';
+  document.getElementById('ride-summary-title').textContent = '달성!';
+  var headline = document.getElementById('ride-summary-ach-headline');
+  headline.textContent = (bike ? `${bike.brand} ${bike.model} · ` : '') + `누적 ${milestoneKm.toLocaleString()}km 돌파!`;
+  headline.style.display = 'block';
+  document.getElementById('ride-summary-stat-grid').style.display = 'none';
+  var note = document.getElementById('ride-summary-note');
+  if(note) note.style.display = 'none';
+  var insightEl = document.getElementById('ride-summary-insight');
+  if(insightEl) insightEl.style.display = 'none';
+  var memoWrap = document.getElementById('ride-summary-memo-wrap');
+  if(memoWrap) memoWrap.style.display = 'block';
+  var shareBtn = document.getElementById('ride-summary-share-btn');
+  if(shareBtn) shareBtn.style.display = 'block';
+  openModal('m-ride-summary');
+}
+
 function _rideCardDateStr(){
   var d = new Date();
   return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
 }
 
 async function shareRideCard(){
+  var isAch = !!window._achievementMilestone;
   var s = window._lastRideSummary;
-  if(!s){ showToast('공유할 라이딩 정보가 없어요'); return; }
+  if(!isAch && !s){ showToast('공유할 라이딩 정보가 없어요'); return; }
   var btn = document.getElementById('ride-summary-share-btn');
   var origLabel = btn ? btn.textContent : '';
   if(btn){ btn.textContent = '카드 생성 중...'; btn.disabled = true; }
   try{
     var bike = D.bikes.find(b=>b.id===(window._lastRideBikeId!=null ? window._lastRideBikeId : dashSelectedBikeId)) || D.bikes[0];
-    var memo = (document.getElementById('ride-summary-memo').value||'').trim() || '무복..!';
-    var h = Math.floor(s.durationMs/3600000);
-    var m = Math.floor((s.durationMs%3600000)/60000);
-    var sec = Math.floor((s.durationMs%60000)/1000);
+    var memo = (document.getElementById('ride-summary-memo').value||'').trim() || (isAch ? `🏆 ${window._achievementMilestone.toLocaleString()}km 달성!!` : '무복..!');
 
     document.getElementById('rsc-date').textContent = window._lastRideDate ? window._lastRideDate.replace(/-/g,'.') : _rideCardDateStr();
     document.getElementById('rsc-bike').textContent = bike ? `${bike.brand} ${bike.model}` : '';
     document.getElementById('rsc-memo').textContent = memo;
     document.getElementById('rsc-memo-bubble').style.display = 'block';
-    document.getElementById('rsc-distance').textContent = s.distanceKm.toFixed(1) + ' km';
-    document.getElementById('rsc-duration').textContent = h>0 ? `${h}시간 ${m}분` : m>0 ? `${m}분 ${sec}초` : `${sec}초`;
-    document.getElementById('rsc-avg').textContent = Math.round(s.avgKmh)+' km/h';
-    document.getElementById('rsc-max').textContent = Math.round(s.maxKmh)+' km/h';
+    if(isAch){
+      document.getElementById('rsc-distance-label').textContent = 'MILESTONE';
+      document.getElementById('rsc-distance').textContent = window._achievementMilestone.toLocaleString() + ' km';
+      document.getElementById('rsc-stat-grid').style.display = 'none';
+    } else {
+      var h = Math.floor(s.durationMs/3600000);
+      var m = Math.floor((s.durationMs%3600000)/60000);
+      var sec = Math.floor((s.durationMs%60000)/1000);
+      document.getElementById('rsc-distance-label').textContent = 'TOTAL DISTANCE';
+      document.getElementById('rsc-distance').textContent = s.distanceKm.toFixed(1) + ' km';
+      document.getElementById('rsc-stat-grid').style.display = 'grid';
+      document.getElementById('rsc-duration').textContent = h>0 ? `${h}시간 ${m}분` : m>0 ? `${m}분 ${sec}초` : `${sec}초`;
+      document.getElementById('rsc-avg').textContent = Math.round(s.avgKmh)+' km/h';
+      document.getElementById('rsc-max').textContent = Math.round(s.maxKmh)+' km/h';
+    }
 
     var cardEl = document.getElementById('ride-share-card');
     if(typeof html2canvas !== 'function'){ showToast('카드 생성 라이브러리를 불러오지 못했어요'); return; }
@@ -3997,19 +4064,19 @@ async function shareRideCard(){
     ctx.drawImage(rawCanvas, 0, 0);
     var dataUrl = canvas.toDataURL('image/png');
     var base64 = dataUrl.split(',')[1];
-    var fileName = `ridemate-ride-${Date.now()}.png`;
+    var fileName = isAch ? `ridemate-achievement-${Date.now()}.png` : `ridemate-ride-${Date.now()}.png`;
 
     var Filesystem = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
     var Share = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
     if(Filesystem && Share){
       await Filesystem.writeFile({ path: fileName, data: base64, directory: 'CACHE' });
       var fileResult = await Filesystem.getUri({ path: fileName, directory: 'CACHE' });
-      await Share.share({ title: 'Ridemate 라이딩 카드', url: fileResult.uri, dialogTitle: '라이딩 카드 공유' });
+      await Share.share({ title: isAch ? 'Ridemate 달성 카드' : 'Ridemate 라이딩 카드', url: fileResult.uri, dialogTitle: isAch ? '달성 카드 공유' : '라이딩 카드 공유' });
     } else {
       var a = document.createElement('a');
       a.href = dataUrl; a.download = fileName; a.click();
     }
-    logAnalyticsEvent('ride_card_shared', {has_memo: !!memo});
+    logAnalyticsEvent(isAch ? 'achievement_card_shared' : 'ride_card_shared', {has_memo: !!memo});
   } catch(e){
     if(!(e && e.message && e.message.includes('cancel'))) showToast('카드 공유에 실패했어요: ' + (e.message||e));
   } finally {
@@ -5506,10 +5573,11 @@ function renderMedicalCard(){
 <div class="modal-overlay" id="m-ride-summary">
   <div class="modal" style="max-width:320px;">
     <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
-      <div style="font-size:44px;margin-bottom:10px;">🏁</div>
-      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;">라이딩 요약</div>
+      <div id="ride-summary-emoji" style="font-size:44px;margin-bottom:10px;">🏁</div>
+      <div id="ride-summary-title" style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;">라이딩 요약</div>
+      <div id="ride-summary-ach-headline" style="display:none;font-size:15px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:10px;padding:10px 14px;margin-bottom:16px;"></div>
       <div id="ride-summary-insight" style="display:none;font-size:15px;font-weight:700;color:#4ade80;background:rgba(74,222,128,0.14);border:1px solid rgba(74,222,128,0.4);border-radius:10px;padding:10px 14px;margin-bottom:16px;"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;">
+      <div id="ride-summary-stat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;">
         <div>
           <div style="font-size:11px;color:var(--text-dim);">주행 시간</div>
           <div id="ride-summary-duration" style="font-size:18px;font-weight:700;color:var(--text);">-</div>
@@ -5583,14 +5651,14 @@ function renderMedicalCard(){
 
   <div style="padding:0 20px;margin-top:10px;">
     <div style="background:#3d4a30;border-radius:14px;padding:14px 0;width:100%;text-align:center;">
-      <div style="font-size:14px;color:#dbe4c8;letter-spacing:1.5px;font-weight:700;">TOTAL DISTANCE</div>
+      <div id="rsc-distance-label" style="font-size:14px;color:#dbe4c8;letter-spacing:1.5px;font-weight:700;">TOTAL DISTANCE</div>
       <div id="rsc-distance" style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:#ffffff;line-height:1.25;margin-top:2px;">-</div>
     </div>
   </div>
 
   <div id="rsc-bike" style="text-align:center;font-size:18px;color:#4a4438;font-weight:700;margin-top:12px;"></div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:18px 24px 0;padding-top:18px;border-top:1px solid #eef0f2;">
+  <div id="rsc-stat-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:18px 24px 0;padding-top:18px;border-top:1px solid #eef0f2;">
     <div style="text-align:center;">
       <div style="width:85px;height:85px;border-radius:50%;background:#eaf1ff;display:flex;align-items:center;justify-content:center;margin:0 auto;">
         <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="#3b6fd1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 3.5"/></svg>
