@@ -3642,9 +3642,12 @@ function _pauseRiding(){
   showToast('⏸ Phát hiện dừng, tạm dừng ghi chuyến đi');
 }
 
-function _resumeRiding(){
+function _resumeRiding(resumeAt){
   _dbgLog('riding_state', {event:'resume'});
-  if (_ride.pauseStartedAt) _ride.pausedMs = (_ride.pausedMs || 0) + (Date.now() - _ride.pauseStartedAt);
+  // resumeAt: thời điểm thực tế xảy ra việc tiếp tục (theo mốc thời gian GPS). Nếu không có thì dùng Date.now().
+  // Nếu dùng Date.now() ở đây, khi JS bị treo ở nền rồi xử lý dồn lại, thời điểm sẽ bị ghi sai thành lúc JS chạy lại chứ không phải lúc thực sự tiếp tục di chuyển.
+  var t = resumeAt || Date.now();
+  if (_ride.pauseStartedAt) _ride.pausedMs = (_ride.pausedMs || 0) + (t - _ride.pauseStartedAt);
   ridingState.paused = false;
   _ride.pauseStartedAt = null;
   updateRidingBar();
@@ -3966,7 +3969,8 @@ function _sosGPSStart() {
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (RidingPlugin && RidingPlugin.addListener) {
     RidingPlugin.addListener('locationUpdate', function(loc) {
-      var now = Date.now();
+      // Dùng thời điểm GPS thực sự ghi nhận vị trí, để tính thời gian không bị sai kể cả khi JS bị treo ở nền rồi xử lý dồn
+      var now = (loc.time && loc.time > 0) ? loc.time : Date.now();
       var speedMs = (loc.speed !== undefined && loc.speed >= 0) ? loc.speed : null;
       if (speedMs !== null) {
         var kmh = speedMs * 3.6;
@@ -3988,13 +3992,15 @@ function _sosGPSStart() {
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
+      // Lưới an toàn tạm dừng/bắt buộc khởi động: cũng kiểm tra ngay khi có sự kiện GPS, phòng khi setInterval bị treo ở nền
+      if (ridingState.active) _checkRidingPauseTimer();
     });
     return;
   }
   if (!navigator.geolocation) return;
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
-      var now = Date.now();
+      var now = (p.timestamp && p.timestamp > 0) ? p.timestamp : Date.now();
       var spd = p.coords.speed;
       if (spd !== null && spd !== undefined) {
         _sos.speedOk = (spd * 3.6) >= _MIN_SPD;
@@ -4016,6 +4022,7 @@ function _sosGPSStart() {
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
+      if (ridingState.active) _checkRidingPauseTimer();
     },
     function(err) { console.warn('[SOS] GPS error', err.code, err.message); },
     {enableHighAccuracy: true, maximumAge: 2000}
@@ -4026,6 +4033,7 @@ function _sosGPSStart() {
 function _rideTrackSpeed(kmh, now, lat, lon){
   if (_ride.lastAcceptedKmh !== null) {
     var dtSec = (now - _ride.lastAcceptedT) / 1000;
+    if (dtSec > 30) _dbgLog('gps_gap', {gapSec: Math.round(dtSec)});
     var deltaPerSec = dtSec > 0 ? Math.abs(kmh - _ride.lastAcceptedKmh) / dtSec : 0;
     if (deltaPerSec > 40) return;
 
@@ -4052,7 +4060,7 @@ function _rideTrackSpeed(kmh, now, lat, lon){
     if (now - _ride.movingStreakStartT >= RIDING_MOVING_CONFIRM_MS) {
       _ride.lastMovingT = now;
       _ride.distanceAtLastMoving = _ride.distance;
-      if (ridingState.paused) _resumeRiding();
+      if (ridingState.paused) _resumeRiding(now);
     }
   } else {
     _ride.movingStreakStartT = null;

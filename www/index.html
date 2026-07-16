@@ -3791,9 +3791,12 @@ function _pauseRiding(){
   showToast('⏸ 정지 감지, 라이딩을 잠시 멈췄어요');
 }
 
-function _resumeRiding(){
+function _resumeRiding(resumeAt){
   _dbgLog('riding_state', {event:'resume'});
-  if (_ride.pauseStartedAt) _ride.pausedMs = (_ride.pausedMs || 0) + (Date.now() - _ride.pauseStartedAt);
+  // resumeAt: 재개가 실제로 일어난 시각(GPS 실측 시각). 없으면 지금(Date.now())으로 폴백.
+  // JS가 백그라운드에서 지연됐다가 몰아서 처리하는 경우, Date.now()를 쓰면 처리 시점이 실제 재개 시각인 것처럼 잘못 기록됨.
+  var t = resumeAt || Date.now();
+  if (_ride.pauseStartedAt) _ride.pausedMs = (_ride.pausedMs || 0) + (t - _ride.pauseStartedAt);
   ridingState.paused = false;
   _ride.pauseStartedAt = null;
   updateRidingBar();
@@ -4132,7 +4135,8 @@ function _sosGPSStart() {
   // 네이티브 Riding 플러그인이 있으면 → 백그라운드 GPS (RidingService에서 FusedLocation)
   if (RidingPlugin && RidingPlugin.addListener) {
     RidingPlugin.addListener('locationUpdate', function(loc) {
-      var now = Date.now();
+      // GPS가 실제로 찍힌 시각을 사용 (JS가 백그라운드에서 지연/몰아서 처리해도 시간 계산이 안 틀어지게)
+      var now = (loc.time && loc.time > 0) ? loc.time : Date.now();
       var speedMs = (loc.speed !== undefined && loc.speed >= 0) ? loc.speed : null;
 
       if (speedMs !== null) {
@@ -4157,6 +4161,8 @@ function _sosGPSStart() {
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
+      // 일시정지/강제출발 안전장치 - setInterval이 백그라운드에서 멈춰도 GPS 이벤트가 들어올 때마다 한 번 더 체크
+      if (ridingState.active) _checkRidingPauseTimer();
     });
     return;
   }
@@ -4165,7 +4171,7 @@ function _sosGPSStart() {
   if (!navigator.geolocation) return;
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
-      var now = Date.now();
+      var now = (p.timestamp && p.timestamp > 0) ? p.timestamp : Date.now();
       var spd = p.coords.speed;
       if (spd !== null && spd !== undefined) {
         _sos.speedOk = (spd * 3.6) >= _MIN_SPD;
@@ -4187,6 +4193,7 @@ function _sosGPSStart() {
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
+      if (ridingState.active) _checkRidingPauseTimer();
     },
     function(err) { console.warn('[SOS] GPS error', err.code, err.message); },
     {enableHighAccuracy: true, maximumAge: 2000}
@@ -4198,6 +4205,7 @@ function _sosGPSStart() {
 function _rideTrackSpeed(kmh, now, lat, lon){
   if (_ride.lastAcceptedKmh !== null) {
     var dtSec = (now - _ride.lastAcceptedT) / 1000;
+    if (dtSec > 30) _dbgLog('gps_gap', {gapSec: Math.round(dtSec)}); // GPS 실측 시각 기준으로 실제 공백 구간이 있었는지 기록 (백그라운드 지연 처리와 구분용)
     var deltaPerSec = dtSec > 0 ? Math.abs(kmh - _ride.lastAcceptedKmh) / dtSec : 0;
     if (deltaPerSec > 40) return; // 초당 40km/h 넘게 튀는 값은 노이즈로 판단하고 버림
 
@@ -4225,7 +4233,7 @@ function _rideTrackSpeed(kmh, now, lat, lon){
     if (now - _ride.movingStreakStartT >= RIDING_MOVING_CONFIRM_MS) {
       _ride.lastMovingT = now;
       _ride.distanceAtLastMoving = _ride.distance;
-      if (ridingState.paused) _resumeRiding();
+      if (ridingState.paused) _resumeRiding(now);
     }
   } else {
     _ride.movingStreakStartT = null;

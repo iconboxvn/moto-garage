@@ -3641,9 +3641,12 @@ function _pauseRiding(){
   showToast('⏸ Stop detected, pausing the ride');
 }
 
-function _resumeRiding(){
+function _resumeRiding(resumeAt){
   _dbgLog('riding_state', {event:'resume'});
-  if (_ride.pauseStartedAt) _ride.pausedMs = (_ride.pausedMs || 0) + (Date.now() - _ride.pauseStartedAt);
+  // resumeAt: the real-world time the resume happened (from the GPS fix). Falls back to Date.now() if unavailable.
+  // Using Date.now() here would misdate the resume to whenever the JS thread happened to catch up after being backgrounded.
+  var t = resumeAt || Date.now();
+  if (_ride.pauseStartedAt) _ride.pausedMs = (_ride.pausedMs || 0) + (t - _ride.pauseStartedAt);
   ridingState.paused = false;
   _ride.pauseStartedAt = null;
   updateRidingBar();
@@ -3965,7 +3968,8 @@ function _sosGPSStart() {
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (RidingPlugin && RidingPlugin.addListener) {
     RidingPlugin.addListener('locationUpdate', function(loc) {
-      var now = Date.now();
+      // Use the time the GPS fix was actually taken, so time math stays correct even if JS was backgrounded and processes events in a delayed batch
+      var now = (loc.time && loc.time > 0) ? loc.time : Date.now();
       var speedMs = (loc.speed !== undefined && loc.speed >= 0) ? loc.speed : null;
       if (speedMs !== null) {
         var kmh = speedMs * 3.6;
@@ -3987,6 +3991,8 @@ function _sosGPSStart() {
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
+      // Pause/force-start safety net: also check reactively on each GPS event in case the setInterval got throttled in the background
+      if (ridingState.active) _checkRidingPauseTimer();
     });
     return;
   }
@@ -3994,7 +4000,7 @@ function _sosGPSStart() {
   if (!navigator.geolocation) return;
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
-      var now = Date.now();
+      var now = (p.timestamp && p.timestamp > 0) ? p.timestamp : Date.now();
       var spd = p.coords.speed;
       if (spd !== null && spd !== undefined) {
         _sos.speedOk = (spd * 3.6) >= _MIN_SPD;
@@ -4016,6 +4022,7 @@ function _sosGPSStart() {
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
+      if (ridingState.active) _checkRidingPauseTimer();
     },
     function(err) { console.warn('[SOS] GPS error', err.code, err.message); },
     {enableHighAccuracy: true, maximumAge: 2000}
@@ -4026,6 +4033,7 @@ function _sosGPSStart() {
 function _rideTrackSpeed(kmh, now, lat, lon){
   if (_ride.lastAcceptedKmh !== null) {
     var dtSec = (now - _ride.lastAcceptedT) / 1000;
+    if (dtSec > 30) _dbgLog('gps_gap', {gapSec: Math.round(dtSec)}); // real gap between GPS fixes, based on fix time (distinct from background processing delay)
     var deltaPerSec = dtSec > 0 ? Math.abs(kmh - _ride.lastAcceptedKmh) / dtSec : 0;
     if (deltaPerSec > 40) return; // reject readings that jump more than 40 km/h per second as GPS noise
 
@@ -4053,7 +4061,7 @@ function _rideTrackSpeed(kmh, now, lat, lon){
     if (now - _ride.movingStreakStartT >= RIDING_MOVING_CONFIRM_MS) {
       _ride.lastMovingT = now;
       _ride.distanceAtLastMoving = _ride.distance;
-      if (ridingState.paused) _resumeRiding();
+      if (ridingState.paused) _resumeRiding(now);
     }
   } else {
     _ride.movingStreakStartT = null;
