@@ -2258,6 +2258,7 @@ function updateConsumable(){
   const bike=D.bikes[cState.bikeIdx];
   const c=bike.consumables.find(x=>x.id===editingCId);
   c.km=parseInt(document.getElementById('edit-c-interval').value)||c.km;
+  c.userEdited=true;
   c.memo=document.getElementById('edit-c-memo').value;
   save(); closeModal('m-edit-consumable'); renderConsumables();
   scheduleConsumableAlerts();
@@ -2886,11 +2887,13 @@ function migrateConsumableIntervals() {
       const intervals = CATEGORY_INTERVALS_ELECTRIC.electric;
       bike.consumables = CONSUMABLES_ELECTRIC.map(con => {
         const existing = (bike.consumables || []).find(e => e.id === con.id);
+        const userEdited = existing ? !!existing.userEdited : false;
         return {
           ...con,
-          km: intervals[con.id] || con.km,
+          km: userEdited ? existing.km : (intervals[con.id] || con.km),
           category: 'electric',
           isOfficial: false,
+          userEdited,
           lastKm:   existing ? (existing.lastKm   || 0)  : 0,
           lastDate: existing ? (existing.lastDate  || '') : '',
           memo:     existing ? (existing.memo      || '') : '',
@@ -2907,11 +2910,13 @@ function migrateConsumableIntervals() {
       const km = intervals[con.id];
       if (con.id === 'chain' && km === 0) return null;
       const existing = (bike.consumables || []).find(e => e.id === con.id);
+      const userEdited = existing ? !!existing.userEdited : false;
       return {
         ...con,
-        km: km || con.km,
+        km: userEdited ? existing.km : (km || con.km),
         category: cat,
         isOfficial: !!modelData,
+        userEdited,
         lastKm:   existing ? (existing.lastKm   || 0)  : 0,
         lastDate: existing ? (existing.lastDate  || '') : '',
         memo:     existing ? (existing.memo      || '') : '',
