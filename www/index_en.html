@@ -3368,6 +3368,34 @@ var RIDING_PAUSE_MS     = 10*60*1000;     // auto-pause after 10 min stopped
 var RIDING_AUTOEND_MS   = 2*60*60*1000;   // auto-end after 2 hours paused
 var RIDING_PAUSE_CHECK_MS = 60*1000;      // check every 1 minute
 var RIDING_DEPARTURE_TIMEOUT_MS = 5*60*1000; // wait up to 5 min for departure confirmation — force-start if GPS never locks (prevents losing the whole ride)
+var RIDE_PROGRESS_SAVE_INTERVAL_MS = 20*1000; // minimum interval between riding-progress saves (used to recover if the app process restarts)
+
+// If the app restarts mid-ride, periodically persist the core progress (minus the path array,
+// which would make writes too expensive) so distance/time don't get reset to zero.
+var _lastRideProgressSaveT = 0;
+function _persistRideProgress(force){
+  if (!ridingState.active || !_ride || !_ride.startTime) return;
+  var now = Date.now();
+  if (!force && now - _lastRideProgressSaveT < RIDE_PROGRESS_SAVE_INTERVAL_MS) return;
+  _lastRideProgressSaveT = now;
+  try {
+    localStorage.setItem('mg2-ride-progress', JSON.stringify({
+      startTime: _ride.startTime,
+      distance: _ride.distance,
+      maxSpeed: _ride.maxSpeed,
+      maxSpeedLat: _ride.maxSpeedLat,
+      maxSpeedLon: _ride.maxSpeedLon,
+      pausedMs: _ride.pausedMs,
+      hasStartedMoving: _ride.hasStartedMoving,
+      lastMovingT: _ride.lastMovingT,
+      distanceAtLastMoving: _ride.distanceAtLastMoving,
+      harshAccelCount: _ride.harshAccelCount,
+      harshBrakeCount: _ride.harshBrakeCount,
+      lastLat: _ride.lastLat,
+      lastLon: _ride.lastLon
+    }));
+  } catch(e){}
+}
 var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;  // harsh acceleration threshold (km/h gained per second)
 var RIDING_HARSH_BRAKE_KMH_PER_SEC = 15;  // harsh braking threshold (km/h lost per second)
 var RIDING_HARSH_EVENT_COOLDOWN_MS = 3000; // minimum gap between counted events to avoid double-counting
@@ -3523,6 +3551,7 @@ function _doStartRiding() {
   localStorage.setItem('mg2-riding', '1');
   var _now0 = Date.now();
   _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+  _persistRideProgress(true);
   _sos.phase = 'MONITORING';
   _sos.speedOk = false;
   _sosBufReset();
@@ -3544,6 +3573,7 @@ function stopRiding(customMsg) {
   ridingState.paused = false;
   if (_ridingPauseTimer) { clearInterval(_ridingPauseTimer); _ridingPauseTimer = null; }
   localStorage.removeItem('mg2-riding');
+  localStorage.removeItem('mg2-ride-progress');
   _sosCountdownCancel();
   _sosGPSStop();
   _sosMotionStop();
@@ -3632,6 +3662,7 @@ function _forceStartRiding(){
   _ride.pauseStartedAt = null;
   _ride.hasStartedMoving = true;
   _ride.lastMovingT = Date.now();
+  _persistRideProgress(true);
   updateRidingBar();
   showToast('🏍 5-minute GPS wait elapsed, starting the ride recording');
 }
@@ -3642,6 +3673,7 @@ function _pauseRiding(){
   // Retroactively use the last confirmed moving time, not the detection moment, for "time" only
   // (distance/path are no longer rolled back here - doing so used to wipe real ride distance when moving-confirmation flickered in stop-and-go traffic)
   _ride.pauseStartedAt = _ride.lastMovingT || Date.now();
+  _persistRideProgress(true);
   updateRidingBar();
   showToast('⏸ Stop detected, pausing the ride');
 }
@@ -3654,6 +3686,7 @@ function _resumeRiding(resumeAt){
   if (_ride.pauseStartedAt) _ride.pausedMs = (_ride.pausedMs || 0) + (t - _ride.pauseStartedAt);
   ridingState.paused = false;
   _ride.pauseStartedAt = null;
+  _persistRideProgress(true);
   updateRidingBar();
   if (!_ride.hasStartedMoving) {
     _ride.hasStartedMoving = true;
@@ -3998,6 +4031,7 @@ function _sosGPSStart() {
       _updateRidingSpeedUI();
       // Pause/force-start safety net: also check reactively on each GPS event in case the setInterval got throttled in the background
       if (ridingState.active) _checkRidingPauseTimer();
+      _persistRideProgress();
     });
     return;
   }
@@ -4028,6 +4062,7 @@ function _sosGPSStart() {
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
       if (ridingState.active) _checkRidingPauseTimer();
+      _persistRideProgress();
     },
     function(err) { console.warn('[SOS] GPS error', err.code, err.message); },
     {enableHighAccuracy: true, maximumAge: 2000}
@@ -4299,7 +4334,17 @@ function _sosDoSend(phone, body, mapsUrl) {
 (function() {
   if (localStorage.getItem('mg2-riding')) {
     ridingState.active = true;
-    if (!_ride.startTime) _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+    if (!_ride.startTime) {
+      // If the app restarted mid-ride, restore from whatever _persistRideProgress() last saved
+      // so distance/time aren't reset to zero (fall back to starting fresh only if nothing was saved).
+      var _savedProgress = null;
+      try { _savedProgress = JSON.parse(localStorage.getItem('mg2-ride-progress') || 'null'); } catch(e){}
+      if (_savedProgress && _savedProgress.startTime) {
+        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null};
+      } else {
+        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+      }
+    }
     _sos.phase = 'MONITORING';
     _sosGPSStart();
     _sosMotionStart();
