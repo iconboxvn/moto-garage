@@ -3380,10 +3380,10 @@ function _maintNotifId(bikeId, consumableId, urgent){
   return 3000000 + h*10 + (urgent?1:0);
 }
 
-function _atNineAm(daysFromNow){
+function _atEightAm(daysFromNow){
   const d = new Date();
   d.setDate(d.getDate() + daysFromNow);
-  d.setHours(9,0,0,0);
+  d.setHours(8,0,0,0);
   if (d.getTime() <= Date.now()) d.setDate(d.getDate()+1);
   return d;
 }
@@ -3413,14 +3413,14 @@ function scheduleConsumableAlerts(){
             id: _maintNotifId(bike.id, c.id, true),
             title: `🚨 ${bike.brand} ${bike.model} — ${getCName(c.id)} 교체 필요`,
             body: '교체 주기를 초과했습니다. 앱에서 확인해보세요.',
-            schedule: {at: _atNineAm(1)}
+            schedule: {at: _atEightAm(1)}
           });
         } else if (pct>=80){
           toSchedule.push({
             id: _maintNotifId(bike.id, c.id, false),
             title: `⚠ ${bike.brand} ${bike.model} — ${getCName(c.id)} 곧 교체`,
             body: '교체 시기가 다가오고 있습니다.',
-            schedule: {at: _atNineAm(7)}
+            schedule: {at: _atEightAm(7)}
           });
         }
       });

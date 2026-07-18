@@ -9,7 +9,7 @@
 |---|---|---|
 | 앱 이름 | `Ridemate` | `strings.xml`, `capacitor.config.json` |
 | 패키지명 | `com.iconbox.motogarage` | `AndroidManifest.xml`, `build.gradle`, `capacitor.config.json` |
-| 정비 알림 시각 | **오전 8시** (`t.setHours(8, 0, 0, 0)`) | `scheduleMaintNotifs()` — 9시 아님 |
+| 정비 알림 시각 | **오전 8시** (`_atEightAm()` 내부 `setHours(8, 0, 0, 0)`) | `scheduleConsumableAlerts()` — 9시 아님. 과거 `_atNineAm()`으로 잘못 회귀된 적 있음(2026-07 재발견·수정), 함수명 자체가 시각을 나타내니 이름과 실제 값이 항상 일치하는지 확인할 것 |
 | 충격 감지 최소 속도 | **20 km/h** (`_MIN_SPD = 20`) | `www/index*.html` |
 | SOS 카운트다운 | **60초** (`_sos.cdVal = 60`) | `www/index*.html` |
 

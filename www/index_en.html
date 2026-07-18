@@ -2987,10 +2987,10 @@ function _maintNotifId(bikeId, consumableId, urgent){
   return 3000000 + h*10 + (urgent?1:0);
 }
 
-function _atNineAm(daysFromNow){
+function _atEightAm(daysFromNow){
   const d = new Date();
   d.setDate(d.getDate() + daysFromNow);
-  d.setHours(9,0,0,0);
+  d.setHours(8,0,0,0);
   if (d.getTime() <= Date.now()) d.setDate(d.getDate()+1);
   return d;
 }
@@ -3019,14 +3019,14 @@ function scheduleConsumableAlerts(){
             id: _maintNotifId(bike.id, c.id, true),
             title: `🚨 ${bike.brand} ${bike.model} — ${getCName(c.id)} needs replacement`,
             body: 'This item is past its service interval. Check the app.',
-            schedule: {at: _atNineAm(1)},
+            schedule: {at: _atEightAm(1)},
           });
         } else if (pct>=80){
           toSchedule.push({
             id: _maintNotifId(bike.id, c.id, false),
             title: `⚠ ${bike.brand} ${bike.model} — ${getCName(c.id)} due soon`,
             body: 'This item will need replacement soon.',
-            schedule: {at: _atNineAm(7)},
+            schedule: {at: _atEightAm(7)},
           });
         }
       });
