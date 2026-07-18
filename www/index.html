@@ -1034,6 +1034,19 @@ option{background:var(--surface2);}
     </div>
   </div>
 </div>
+<div class="pwa-banner" id="app-update-banner">
+  <div class="pwa-banner-inner">
+    <div class="pwa-banner-icon">🆙</div>
+    <div class="pwa-banner-text">
+      <div class="pwa-banner-title" id="app-update-title">새 버전이 있어요</div>
+      <div class="pwa-banner-sub" id="app-update-sub">최신 버전으로 업데이트하세요</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="dismissAppUpdate()">나중에</button>
+      <button class="btn btn-primary btn-sm" id="app-update-btn" onclick="startAppUpdate()">업데이트</button>
+    </div>
+  </div>
+</div>
 <div class="pwa-installed-toast" id="pwa-toast">✓ 홈 화면에 추가되었습니다!</div>
 <div class="backup-toast" id="backup-toast"></div>
 <div class="success-toast" id="success-toast"></div>
@@ -3463,6 +3476,43 @@ function syncNotifyTarget(){
   } catch(e){ console.warn('[MOTO] syncNotifyTarget error', e); }
 }
 
+// Play Store 업데이트 확인 (앱 최초 로드 시 1회 호출)
+function checkAppUpdate(){
+  var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
+  if (!AU) return;
+  if (sessionStorage.getItem('mg2-update-dismissed')) return;
+  AU.checkForUpdate().then(function(res){
+    if (res && res.available) {
+      document.getElementById('app-update-title').textContent = '새 버전이 있어요';
+      document.getElementById('app-update-sub').textContent = '최신 버전으로 업데이트하세요';
+      var btn = document.getElementById('app-update-btn');
+      btn.textContent = '업데이트';
+      btn.onclick = startAppUpdate;
+      document.getElementById('app-update-banner').classList.add('show');
+    }
+  }).catch(function(){});
+  AU.addListener('updateDownloaded', function(){
+    document.getElementById('app-update-title').textContent = '업데이트 준비 완료';
+    document.getElementById('app-update-sub').textContent = '재시작하면 새 버전이 적용돼요';
+    var btn = document.getElementById('app-update-btn');
+    btn.textContent = '재시작';
+    btn.onclick = completeAppUpdate;
+    document.getElementById('app-update-banner').classList.add('show');
+  });
+}
+function startAppUpdate(){
+  var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
+  if (AU) AU.startUpdate().catch(function(){});
+}
+function completeAppUpdate(){
+  var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
+  if (AU) AU.completeUpdate().catch(function(){});
+}
+function dismissAppUpdate(){
+  document.getElementById('app-update-banner').classList.remove('show');
+  sessionStorage.setItem('mg2-update-dismissed', '1');
+}
+
 // FCM 푸시 토큰 등록 (앱 최초 로드 시 1회 호출)
 function registerPushNotifications(){
   try{
@@ -4839,6 +4889,7 @@ window.addEventListener('load', function(){
   safe(migrateConsumableIntervals, 'migrateConsumableIntervals'); // 기존 차량 공식 데이터 자동 적용
   safe(requestNotificationPermission, 'requestNotificationPermission');
   safe(registerPushNotifications, 'registerPushNotifications');
+  safe(checkAppUpdate, 'checkAppUpdate');
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
   safe(loadCharactersFromCache, 'loadCharactersFromCache');

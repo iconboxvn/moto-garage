@@ -994,6 +994,19 @@ option{background:var(--surface2);}
     </div>
   </div>
 </div>
+<div class="pwa-banner" id="app-update-banner">
+  <div class="pwa-banner-inner">
+    <div class="pwa-banner-icon">🆙</div>
+    <div class="pwa-banner-text">
+      <div class="pwa-banner-title" id="app-update-title">A new version is available</div>
+      <div class="pwa-banner-sub" id="app-update-sub">Update to the latest version</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="dismissAppUpdate()">Later</button>
+      <button class="btn btn-primary btn-sm" id="app-update-btn" onclick="startAppUpdate()">Update</button>
+    </div>
+  </div>
+</div>
 <div class="pwa-installed-toast" id="pwa-toast">✓ Added to home screen!</div>
 <div class="backup-toast" id="backup-toast"></div>
 <div class="success-toast" id="success-toast"></div>
@@ -3067,6 +3080,42 @@ function syncNotifyTarget(){
   } catch(e){ console.warn('[MOTO] syncNotifyTarget error', e); }
 }
 
+function checkAppUpdate(){
+  var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
+  if (!AU) return;
+  if (sessionStorage.getItem('mg2-update-dismissed')) return;
+  AU.checkForUpdate().then(function(res){
+    if (res && res.available) {
+      document.getElementById('app-update-title').textContent = 'A new version is available';
+      document.getElementById('app-update-sub').textContent = 'Update to the latest version';
+      var btn = document.getElementById('app-update-btn');
+      btn.textContent = 'Update';
+      btn.onclick = startAppUpdate;
+      document.getElementById('app-update-banner').classList.add('show');
+    }
+  }).catch(function(){});
+  AU.addListener('updateDownloaded', function(){
+    document.getElementById('app-update-title').textContent = 'Update ready';
+    document.getElementById('app-update-sub').textContent = 'Restart to apply the new version';
+    var btn = document.getElementById('app-update-btn');
+    btn.textContent = 'Restart';
+    btn.onclick = completeAppUpdate;
+    document.getElementById('app-update-banner').classList.add('show');
+  });
+}
+function startAppUpdate(){
+  var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
+  if (AU) AU.startUpdate().catch(function(){});
+}
+function completeAppUpdate(){
+  var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
+  if (AU) AU.completeUpdate().catch(function(){});
+}
+function dismissAppUpdate(){
+  document.getElementById('app-update-banner').classList.remove('show');
+  sessionStorage.setItem('mg2-update-dismissed', '1');
+}
+
 function registerPushNotifications(){
   try{
     var PN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications;
@@ -4392,6 +4441,7 @@ window.addEventListener('load', function(){
   safe(migrateConsumableIntervals, 'migrateConsumableIntervals');
   safe(requestNotificationPermission, 'requestNotificationPermission');
   safe(registerPushNotifications, 'registerPushNotifications');
+  safe(checkAppUpdate, 'checkAppUpdate');
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
   safe(loadCharactersFromCache, 'loadCharactersFromCache');
