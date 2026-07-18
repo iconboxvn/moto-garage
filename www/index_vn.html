@@ -493,6 +493,10 @@ option{background:var(--surface2);}
   .auto-sos-overlay.show{display:flex;}
   .auto-sos-num{font-family:'Bebas Neue',sans-serif;font-size:120px;color:#fff;line-height:1;text-shadow:0 0 60px rgba(255,80,80,0.5);}
   .auto-sos-cancel{background:#fff;color:#7a0606;font-family:'Inter',sans-serif;font-size:17px;font-weight:800;padding:16px 56px;border-radius:50px;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:28px;}
+  /* ── Modal thông tin y tế: nhỏ hơn toàn cục 1px, chỉ áp dụng trong modal này ── */
+  #m-medical .modal-title{font-size:16px;}
+  #m-medical .form-label{font-size:16px;}
+  #m-medical .form-input,#m-medical .form-select{font-size:16px;}
 </style>
 <link rel="stylesheet" href="./lib/leaflet.css">
 <script src="./lib/html2canvas.min.js"></script>
@@ -509,9 +513,9 @@ option{background:var(--surface2);}
     </div>
   </div>
   <div style="display:flex;gap:4px;">
-    <a href="./index.html"    class="lang-btn" title="한국어">🇰🇷</a>
-    <a href="./index_vn.html" class="lang-btn active"        title="Tiếng Việt">🇻🇳</a>
-    <a href="./index_en.html" class="lang-btn"        title="English">🇺🇸</a>
+    <a href="./index.html"    class="lang-btn" title="한국어" onclick="localStorage.setItem('mg2-lang','ko')">🇰🇷</a>
+    <a href="./index_vn.html" class="lang-btn active"        title="Tiếng Việt" onclick="localStorage.setItem('mg2-lang','vn')">🇻🇳</a>
+    <a href="./index_en.html" class="lang-btn"        title="English" onclick="localStorage.setItem('mg2-lang','en')">🇺🇸</a>
   </div>
 </div>
 
@@ -2137,6 +2141,16 @@ function saveEditBike(){
   showToast(`✓ Đã cập nhật ${brand} ${model}`);
 }
 
+function openViolationLookup(){
+  var VL = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ViolationLookup;
+  if(!VL){ showToast('Tính năng này chỉ dùng được trong ứng dụng'); return; }
+  var sel = D.bikes.find(function(b){ return b.id===dashSelectedBikeId; });
+  var bike = (sel && sel.plate) ? sel : D.bikes.find(function(b){ return b.plate; });
+  var plate = bike ? bike.plate.trim() : '';
+  if(!plate) showToast('Chưa đăng ký biển số — thêm ở mục Xe của tôi để tự động điền');
+  VL.open({ plate: plate, lang: 'vn' });
+}
+
 // ═══════════════════════════════════════════
 //  소모품 & 정비
 // ═══════════════════════════════════════════
@@ -3353,8 +3367,17 @@ function initDebugMode(){
         var saved = localStorage.getItem('mg2-dbglog');
         if (saved) _dbg.events = JSON.parse(saved);
       } catch(e){}
+      _dbgDump();
     }
   }).catch(function(){});
+}
+
+function _dbgDump(){
+  var since = Date.now() - 2*24*60*60*1000;
+  var recent = _dbg.events.filter(function(e){ return e.t >= since; });
+  console.log('MG2_DBGLOG_START total=' + recent.length);
+  recent.forEach(function(e){ console.log('MG2_DBGLOG:' + JSON.stringify(e)); });
+  console.log('MG2_DBGLOG_END');
 }
 
 // ═══════════════════════════════════════════
@@ -3417,6 +3440,7 @@ var _sos = {
   stillStart: null,
   buf: [],
   gpsId: null,
+  gpsListening: false,
   cdTimer: null,
   cdVal: 60,
   motAdded: false,
@@ -4004,8 +4028,10 @@ function _sosBufReset() {
 }
 
 function _sosGPSStart() {
+  if (_sos.gpsListening) { console.log('[SOS] gps already listening'); return; }
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (RidingPlugin && RidingPlugin.addListener) {
+    _sos.gpsListening = true;
     RidingPlugin.addListener('locationUpdate', function(loc) {
       // Dùng thời điểm GPS thực sự ghi nhận vị trí, để tính thời gian không bị sai kể cả khi JS bị treo ở nền rồi xử lý dồn
       var now = (loc.time && loc.time > 0) ? loc.time : Date.now();
@@ -4037,6 +4063,7 @@ function _sosGPSStart() {
     return;
   }
   if (!navigator.geolocation) return;
+  _sos.gpsListening = true;
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
       var now = (p.timestamp && p.timestamp > 0) ? p.timestamp : Date.now();
@@ -4119,6 +4146,7 @@ function _updateRidingSpeedUI() {
 }
 
 function _sosGPSStop() {
+  _sos.gpsListening = false;
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (RidingPlugin && RidingPlugin.removeAllListeners) {
     RidingPlugin.removeAllListeners('locationUpdate').catch(function(){});
@@ -4418,7 +4446,7 @@ function openAiGuide(cId) {
     document.getElementById('ai-guide-body').innerHTML = `
       <div class="ai-error">
         <div style="font-size:27px;margin-bottom:10px;">🔧</div>
-        <div>가이드 데이터 준비 중입니다</div>
+        <div>Đang chuẩn bị dữ liệu hướng dẫn</div>
       </div>`;
     return;
   }
@@ -4454,16 +4482,16 @@ function renderAiGuide(guide, con, pct, bike) {
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:19px;">🚨</span>
       <div>
-        <div style="font-size:16px;font-weight:700;color:var(--red);">교체 주기 초과!</div>
-        <div style="font-size:16px;color:#c06060;margin-top:2px;">즉시 교체를 권장합니다</div>
+        <div style="font-size:16px;font-weight:700;color:var(--red);">Đã quá chu kỳ thay thế!</div>
+        <div style="font-size:16px;color:#c06060;margin-top:2px;">Nên thay thế ngay lập tức</div>
       </div>
     </div>` : pct >= 80 ? `
     <div style="background:var(--accent-dim);border:1px solid rgba(232,160,32,0.4);border-radius:8px;
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:19px;">⚠️</span>
       <div>
-        <div style="font-size:16px;font-weight:700;color:var(--accent);">교체 시기가 다가왔습니다</div>
-        <div style="font-size:16px;color:#b08030;margin-top:2px;">다음 정비 시 교체 예정으로 잡으세요</div>
+        <div style="font-size:16px;font-weight:700;color:var(--accent);">Sắp đến kỳ thay thế</div>
+        <div style="font-size:16px;color:#b08030;margin-top:2px;">Hãy lên kế hoạch thay thế ở lần bảo dưỡng tới</div>
       </div>
     </div>` : '';
 
@@ -4471,23 +4499,23 @@ function renderAiGuide(guide, con, pct, bike) {
     ${urgentBanner}
     ${historySection}
     ${why ? `<div class="ai-guide-section danger">
-      <div class="ai-guide-section-title">🔥 왜 교체해야 하나요?</div>
+      <div class="ai-guide-section-title">🔥 Vì sao cần thay thế?</div>
       <div class="ai-guide-text">${why.split('\n').join('<br>')}</div>
     </div>` : ''}
     ${check ? `<div class="ai-guide-section tip">
-      <div class="ai-guide-section-title">🔍 직접 점검 방법</div>
+      <div class="ai-guide-section-title">🔍 Cách tự kiểm tra</div>
       <div class="ai-guide-text">${check.split('\n').join('<br>')}</div>
     </div>` : ''}
     ${cost ? `<div class="ai-guide-section cost">
-      <div class="ai-guide-section-title">💰 예상 비용 (하노이 기준)</div>
+      <div class="ai-guide-section-title">💰 Chi phí ước tính (tại Hà Nội)</div>
       <div class="ai-guide-text">${cost.split('\n').join('<br>')}</div>
     </div>` : ''}
     ${tip ? `<div class="ai-guide-section">
-      <div class="ai-guide-section-title">💡 관리 팁</div>
+      <div class="ai-guide-section-title">💡 Mẹo bảo dưỡng</div>
       <div class="ai-guide-text">${tip.split('\n').join('<br>')}</div>
     </div>` : ''}
     <div style="font-size:16px;color:var(--text-muted);text-align:center;margin-top:8px;">
-      ✦ 정비 가이드 · ${bike ? bike.brand+' '+bike.model : ''} · ${new Date().toLocaleDateString('ko-KR')}
+      ✦ Hướng dẫn bảo dưỡng · ${bike ? bike.brand+' '+bike.model : ''} · ${new Date().toLocaleDateString('vi-VN')}
     </div>`;
 }
 
@@ -4867,6 +4895,7 @@ function saveMedical(){
     history:document.getElementById('med-history').value,
     emergency:getMedical().emergency||'',
     insurance:document.getElementById('med-insurance').value,
+    passport:document.getElementById('med-passport').value,
   };
   localStorage.setItem('mg2-medical',JSON.stringify(data));
   closeModal('m-medical');
@@ -4884,6 +4913,7 @@ function openMedicalEdit(){
   document.getElementById('med-history').value=d.history||'';
   // Emergency contact managed in Settings
   document.getElementById('med-insurance').value=d.insurance||'';
+  document.getElementById('med-passport').value=d.passport||'';
   openModal('m-medical');
 }
 
@@ -4908,6 +4938,7 @@ function renderMedicalCard(){
     +(d.emergency?'<div class="medical-row"><span class="medical-label">📞 비상연락처 / Emergency</span><span class="medical-value" style="font-size:13px;">'+d.emergency+'</span></div>':'')
     +(d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📱 비상연락처 전화 / Phone</span><span class="medical-value" style="font-size:13px;">'+d.emergencyPhone+'</span></div>':(!d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📞 비상연락처</span><span class="medical-value" style="font-size:12px;color:var(--accent);">설정 → SOS 긴급연락처에서 등록하세요</span></div>':''))
     +(d.insurance?'<div class="medical-row"><span class="medical-label">📋 보험사 / Insurance</span><span class="medical-value" style="font-size:13px;">'+d.insurance+'</span></div>':'')
+    +(d.passport?'<div class="medical-row"><span class="medical-label">🛂 여권번호 / Passport</span><span class="medical-value" style="font-size:13px;">'+d.passport+'</span></div>':'')
     +'</div>'
     +'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;">🇰🇷 한국인 라이더 · Korean Motorcycle Rider</div>';
 }
@@ -5037,13 +5068,13 @@ function renderMedicalCard(){
     <div class="ai-guide-body" id="ai-guide-body">
       <div class="ai-guide-loading">
         <div class="ai-spinner"></div>
-        <div style="font-size:16px;color:var(--text-dim);">AI 분석 중...</div>
+        <div style="font-size:16px;color:var(--text-dim);">Đang phân tích...</div>
       </div>
     </div>
     <div class="ai-guide-footer">
       <button class="btn" onclick="closeModal('m-ai-guide')">Đóng</button>
       <button class="btn btn-primary" onclick="closeModal('m-ai-guide');openConsumModal(currentGuideId)">
-        🔧 교체 기록 입력
+        🔧 Ghi nhận thay thế
       </button>
     </div>
   </div>
@@ -5136,6 +5167,37 @@ function renderMedicalCard(){
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('backup',document.getElementById('nav-more-btn'));">
         <span class="more-tile-icon">⚙️</span><span class="more-tile-label">Cài đặt</span>
       </div>
+      <div class="more-sheet-tile" onclick="closeModal('m-more');openModal('m-violation-info');">
+        <span class="more-tile-icon">🚔</span><span class="more-tile-label">Tra cứu vi phạm</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hướng dẫn tra cứu vi phạm giao thông -->
+<div class="modal-overlay" id="m-violation-info">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">🚔 Tra cứu vi phạm giao thông</span><button class="modal-close" onclick="closeModal('m-violation-info')">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--text);line-height:1.7;">
+        Thao tác này sẽ mở trang tra cứu vi phạm giao thông chính thức của Việt Nam (CSGT) với biển số xe đã đăng ký được điền sẵn.
+      </div>
+      <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--text-dim);line-height:1.7;">
+        <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">⚠ Bạn cần đăng nhập bằng tài khoản VNeTraffic của chính mình để xem kết quả</div>
+        Người nước ngoài cư trú hợp pháp cũng có thể đăng ký, nhưng không thể thực hiện trực tiếp trong ứng dụng này. Cần:
+        <div style="margin-top:8px;">
+          • Trực tiếp đến <b>Phòng Quản lý xuất nhập cảnh</b> nơi cư trú (không đăng ký online)<br>
+          • Chuẩn bị: hộ chiếu, số điện thoại chính chủ, email<br>
+          • Thời gian xử lý: khoảng 3–7 ngày làm việc
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text-muted);">
+        Nếu chưa có tài khoản, bạn có thể không qua được màn hình đăng nhập. Hãy dùng chức năng này để kiểm tra biển số đã đúng chưa trong lúc chờ.
+      </div>
+    </div>
+    <div class="modal-footer" style="flex-direction:column;gap:8px;">
+      <button class="btn btn-primary" style="width:100%;" onclick="closeModal('m-violation-info');openViolationLookup();">Mở trang tra cứu</button>
+      <button class="btn btn-sm" style="width:100%;justify-content:center;" onclick="closeModal('m-violation-info')">Đóng</button>
     </div>
   </div>
 </div>
@@ -5398,8 +5460,13 @@ function renderMedicalCard(){
   <div class="modal">
     <div class="modal-header"><span class="modal-title">🏥 나의 의료 정보</span><button class="modal-close" onclick="closeModal('m-medical')">✕</button></div>
     <div class="modal-body">
-      <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px;padding:10px;background:var(--surface2);border-radius:6px;">💡 병원에서 이 화면을 보여주면 의료진이 도움을 줄 수 있어요</div>
-      <div class="form-grid">
+      <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text-dim);margin-bottom:20px;padding:12px;background:var(--surface2);border-radius:8px;">
+        <span style="font-size:18px;flex-shrink:0;">💡</span>
+        <span>Cho nhân viên bệnh viện xem màn hình này để được hỗ trợ</span>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">Thông tin cơ bản</div>
+      <div class="form-grid" style="margin-bottom:22px;">
         <div class="form-group full"><label class="form-label">이름 / Name</label><input type="text" class="form-input" id="med-name" placeholder="홍길동 / Hong Gil-dong"></div>
         <div class="form-group"><label class="form-label">혈액형 / Blood Type</label>
           <select class="form-select" id="med-blood"><option value="">모름</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
@@ -5407,12 +5474,24 @@ function renderMedicalCard(){
         <div class="form-group"><label class="form-label">국적 / Nationality</label>
           <select class="form-select" id="med-nationality"><option value="한국 / Korean">한국 / Korean</option><option value="베트남 / Vietnamese">베트남 / Vietnamese</option><option value="기타 / Other">기타 / Other</option></select>
         </div>
-        <div class="form-group full"><label class="form-label">⚠️ 알레르기 / Allergy</label><input type="text" class="form-input" id="med-allergy" placeholder="페니실린 / Penicillin (없으면 공백)"></div>
-        <div class="form-group full"><label class="form-label">💊 복용 중인 약 / Medication</label><input type="text" class="form-input" id="med-medicine" placeholder="없음 / None"></div>
-        <div class="form-group full"><label class="form-label">🩺 지병 / Medical History</label><input type="text" class="form-input" id="med-history" placeholder="없음 / None"></div>
-        <div style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:6px;font-size:12px;color:var(--text-muted);">📞 Đăng ký liên hệ khẩn cấp tại <strong style="color:var(--accent);">Menu → Cài đặt → Liên hệ khẩn cấp SOS</strong></div>
-        <div class="form-group full"><label class="form-label">🏥 여행자보험사 연락처</label><input type="text" class="form-input" id="med-insurance" placeholder="삼성화재 1588-xxxx"></div>
       </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--red);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:5px;"><span>⚠</span><span>Thông tin khẩn cấp</span></div>
+      <div style="background:var(--red-dim);border:1px solid rgba(208,64,64,0.3);border-radius:8px;padding:14px;margin-bottom:22px;">
+        <div class="form-grid">
+          <div class="form-group full"><label class="form-label">⚠️ 알레르기 / Allergy</label><input type="text" class="form-input" id="med-allergy" placeholder="페니실린 / Penicillin (없으면 공백)"></div>
+          <div class="form-group full"><label class="form-label">💊 복용 중인 약 / Medication</label><input type="text" class="form-input" id="med-medicine" placeholder="없음 / None"></div>
+          <div class="form-group full"><label class="form-label">🩺 지병 / Medical History</label><input type="text" class="form-input" id="med-history" placeholder="없음 / None"></div>
+        </div>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">Bảo hiểm & Giấy tờ tùy thân</div>
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">🏥 여행자보험사 연락처</label><input type="text" class="form-input" id="med-insurance" placeholder="삼성화재 1588-xxxx"></div>
+        <div class="form-group full"><label class="form-label">🛂 여권번호 / Passport No.</label><input type="text" class="form-input" id="med-passport" placeholder="M12345678 (선택)"></div>
+      </div>
+
+      <div style="margin-top:16px;padding:10px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text-muted);">📞 Đăng ký liên hệ khẩn cấp tại <strong style="color:var(--accent);">Menu → Cài đặt → Liên hệ khẩn cấp SOS</strong></div>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('m-medical')">취소</button>

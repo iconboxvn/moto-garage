@@ -515,6 +515,10 @@ option{background:var(--surface2);}
   .sample-banner:hover{border-color:rgba(74,144,216,0.6);}
   .sample-banner-text{flex:1;font-size:12px;color:#6ab0f5;font-weight:600;}
   .sample-banner-arrow{font-size:18px;color:#6ab0f5;opacity:0.7;}
+  /* ── 의료 정보 모달: 이 모달 안에서만 전역보다 1px 작게 ── */
+  #m-medical .modal-title{font-size:16px;}
+  #m-medical .form-label{font-size:16px;}
+  #m-medical .form-input,#m-medical .form-select{font-size:16px;}
 </style>
 <link rel="stylesheet" href="./lib/leaflet.css">
 <script src="./lib/html2canvas.min.js"></script>
@@ -531,9 +535,9 @@ option{background:var(--surface2);}
     </div>
   </div>
   <div style="display:flex;gap:4px;">
-    <a href="./index.html"    class="lang-btn active" title="한국어">🇰🇷</a>
-    <a href="./index_vn.html" class="lang-btn"        title="Tiếng Việt">🇻🇳</a>
-    <a href="./index_en.html" class="lang-btn"        title="English">🇺🇸</a>
+    <a href="./index.html"    class="lang-btn active" title="한국어" onclick="localStorage.setItem('mg2-lang','ko')">🇰🇷</a>
+    <a href="./index_vn.html" class="lang-btn"        title="Tiếng Việt" onclick="localStorage.setItem('mg2-lang','vn')">🇻🇳</a>
+    <a href="./index_en.html" class="lang-btn"        title="English" onclick="localStorage.setItem('mg2-lang','en')">🇺🇸</a>
   </div>
 </div>
 
@@ -2503,6 +2507,16 @@ function saveEditBike(){
   showToast(`✓ ${brand} ${model} 정보가 수정됐습니다`);
 }
 
+function openViolationLookup(){
+  var VL = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ViolationLookup;
+  if(!VL){ showToast('이 기능은 앱에서만 사용할 수 있어요'); return; }
+  var sel = D.bikes.find(function(b){ return b.id===dashSelectedBikeId; });
+  var bike = (sel && sel.plate) ? sel : D.bikes.find(function(b){ return b.plate; });
+  var plate = bike ? bike.plate.trim() : '';
+  if(!plate) showToast('등록된 번호판이 없어요 — 내 차량에서 번호판을 등록하면 자동으로 입력돼요');
+  VL.open({ plate: plate, lang: 'ko' });
+}
+
 // ═══════════════════════════════════════════
 //  소모품 & 정비
 // ═══════════════════════════════════════════
@@ -3496,8 +3510,17 @@ function initDebugMode(){
         var saved = localStorage.getItem('mg2-dbglog');
         if (saved) _dbg.events = JSON.parse(saved);
       } catch(e){}
+      _dbgDump();
     }
   }).catch(function(){});
+}
+
+function _dbgDump(){
+  var since = Date.now() - 2*24*60*60*1000;
+  var recent = _dbg.events.filter(function(e){ return e.t >= since; });
+  console.log('MG2_DBGLOG_START total=' + recent.length);
+  recent.forEach(function(e){ console.log('MG2_DBGLOG:' + JSON.stringify(e)); });
+  console.log('MG2_DBGLOG_END');
 }
 
 // ═══════════════════════════════════════════
@@ -3561,6 +3584,7 @@ var _sos = {
   stillStart: null,
   buf: [],
   gpsId: null,
+  gpsListening: false,
   cdTimer: null,
   cdVal: 60,
   motAdded: false,
@@ -4168,10 +4192,12 @@ function _sosBufReset() {
 }
 
 function _sosGPSStart() {
+  if (_sos.gpsListening) { console.log('[SOS] gps already listening'); return; }
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
 
   // 네이티브 Riding 플러그인이 있으면 → 백그라운드 GPS (RidingService에서 FusedLocation)
   if (RidingPlugin && RidingPlugin.addListener) {
+    _sos.gpsListening = true;
     RidingPlugin.addListener('locationUpdate', function(loc) {
       // GPS가 실제로 찍힌 시각을 사용 (JS가 백그라운드에서 지연/몰아서 처리해도 시간 계산이 안 틀어지게)
       var now = (loc.time && loc.time > 0) ? loc.time : Date.now();
@@ -4208,6 +4234,7 @@ function _sosGPSStart() {
 
   // 폴백: 네이티브 플러그인 없으면 기존 watchPosition (웹 테스트용)
   if (!navigator.geolocation) return;
+  _sos.gpsListening = true;
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
       var now = (p.timestamp && p.timestamp > 0) ? p.timestamp : Date.now();
@@ -4292,6 +4319,7 @@ function _updateRidingSpeedUI() {
 }
 
 function _sosGPSStop() {
+  _sos.gpsListening = false;
   // 네이티브 리스너 제거
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (RidingPlugin && RidingPlugin.removeAllListeners) {
@@ -5335,6 +5363,7 @@ function saveMedical(){
     medicine:document.getElementById('med-medicine').value,
     history:document.getElementById('med-history').value,
     insurance:document.getElementById('med-insurance').value,
+    passport:document.getElementById('med-passport').value,
     // 긴급연락처는 설정에서 관리 — 기존 값 유지
     emergency:prev.emergency||'',
     emergencyPhone:prev.emergencyPhone||'',
@@ -5354,6 +5383,7 @@ function openMedicalEdit(){
   document.getElementById('med-medicine').value=d.medicine||'';
   document.getElementById('med-history').value=d.history||'';
   document.getElementById('med-insurance').value=d.insurance||'';
+  document.getElementById('med-passport').value=d.passport||'';
   openModal('m-medical');
 }
 
@@ -5379,6 +5409,7 @@ function renderMedicalCard(){
     +(d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📱 비상연락처 전화 / Phone</span><span class="medical-value" style="font-size:13px;">'+d.emergencyPhone+'</span></div>':'')
     +(!d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📞 비상연락처</span><span class="medical-value" style="font-size:12px;color:var(--accent);">설정 → SOS 긴급연락처에서 등록하세요</span></div>':'')
     +(d.insurance?'<div class="medical-row"><span class="medical-label">📋 보험사 / Insurance</span><span class="medical-value" style="font-size:13px;">'+d.insurance+'</span></div>':'')
+    +(d.passport?'<div class="medical-row"><span class="medical-label">🛂 여권번호 / Passport</span><span class="medical-value" style="font-size:13px;">'+d.passport+'</span></div>':'')
     +'</div>'
     +'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;">🇰🇷 한국인 라이더 · Korean Motorcycle Rider</div>';
 }
@@ -5626,6 +5657,37 @@ function renderMedicalCard(){
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('backup',document.getElementById('nav-more-btn'));">
         <span class="more-tile-icon">⚙️</span><span class="more-tile-label">설정</span>
       </div>
+      <div class="more-sheet-tile" onclick="closeModal('m-more');openModal('m-violation-info');">
+        <span class="more-tile-icon">🚔</span><span class="more-tile-label">교통위반 조회</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 교통위반 조회 안내 -->
+<div class="modal-overlay" id="m-violation-info">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">🚔 교통위반 조회 안내</span><button class="modal-close" onclick="closeModal('m-violation-info')">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--text);line-height:1.7;">
+        등록해둔 번호판이 자동으로 입력된 상태로 베트남 공식 교통위반 조회 사이트(CSGT)가 열려요.
+      </div>
+      <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--text-dim);line-height:1.7;">
+        <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">⚠ 결과를 보려면 본인 명의 VNeTraffic 계정 로그인이 필요해요</div>
+        외국인 거주자도 유효한 거주증(임시거주증)이 있으면 가입할 수 있지만, 앱에서 바로 되는 건 아니고 아래 절차가 필요해요.
+        <div style="margin-top:8px;">
+          • 관할 <b>출입국관리소</b>에 직접 방문 (온라인 가입 불가)<br>
+          • 준비물: 여권, 본인 명의 휴대폰 번호, 이메일<br>
+          • 처리 기간: 약 3~7영업일
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text-muted);">
+        계정이 없다면 로그인 화면에서 더 진행이 안 될 수 있어요. 번호판만 미리 확인하고 싶을 때 참고해주세요.
+      </div>
+    </div>
+    <div class="modal-footer" style="flex-direction:column;gap:8px;">
+      <button class="btn btn-primary" style="width:100%;" onclick="closeModal('m-violation-info');openViolationLookup();">조회 열기</button>
+      <button class="btn btn-sm" style="width:100%;justify-content:center;" onclick="closeModal('m-violation-info')">닫기</button>
     </div>
   </div>
 </div>
@@ -5874,8 +5936,13 @@ function renderMedicalCard(){
   <div class="modal">
     <div class="modal-header"><span class="modal-title">🏥 나의 의료 정보</span><button class="modal-close" onclick="closeModal('m-medical')">✕</button></div>
     <div class="modal-body">
-      <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px;padding:10px;background:var(--surface2);border-radius:6px;">💡 병원에서 이 화면을 보여주면 의료진이 도움을 줄 수 있어요</div>
-      <div class="form-grid">
+      <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text-dim);margin-bottom:20px;padding:12px;background:var(--surface2);border-radius:8px;">
+        <span style="font-size:18px;flex-shrink:0;">💡</span>
+        <span>병원에서 이 화면을 보여주면 의료진이 도움을 줄 수 있어요</span>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">기본 정보</div>
+      <div class="form-grid" style="margin-bottom:22px;">
         <div class="form-group full"><label class="form-label">이름 / Name</label><input type="text" class="form-input" id="med-name" placeholder="홍길동 / Hong Gil-dong"></div>
         <div class="form-group"><label class="form-label">혈액형 / Blood Type</label>
           <select class="form-select" id="med-blood"><option value="">모름</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
@@ -5883,13 +5950,25 @@ function renderMedicalCard(){
         <div class="form-group"><label class="form-label">국적 / Nationality</label>
           <select class="form-select" id="med-nationality"><option value="한국 / Korean">한국 / Korean</option><option value="베트남 / Vietnamese">베트남 / Vietnamese</option><option value="기타 / Other">기타 / Other</option></select>
         </div>
-        <div class="form-group full"><label class="form-label">⚠️ 알레르기 / Allergy</label><input type="text" class="form-input" id="med-allergy" placeholder="페니실린 / Penicillin (없으면 공백)"></div>
-        <div class="form-group full"><label class="form-label">💊 복용 중인 약 / Medication</label><input type="text" class="form-input" id="med-medicine" placeholder="없음 / None"></div>
-        <div class="form-group full"><label class="form-label">🩺 지병 / Medical History</label><input type="text" class="form-input" id="med-history" placeholder="없음 / None"></div>
-        <div class="form-group full"><label class="form-label">🏥 여행자보험사 연락처</label><input type="text" class="form-input" id="med-insurance" placeholder="삼성화재 1588-xxxx"></div>
-        <div style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:6px;font-size:12px;color:var(--text-muted);">
-          📞 긴급연락처는 <strong style="color:var(--accent);">더보기 → 설정 → SOS 긴급연락처</strong>에서 등록하세요
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--red);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:5px;"><span>⚠</span><span>위급 시 확인 사항</span></div>
+      <div style="background:var(--red-dim);border:1px solid rgba(208,64,64,0.3);border-radius:8px;padding:14px;margin-bottom:22px;">
+        <div class="form-grid">
+          <div class="form-group full"><label class="form-label">⚠️ 알레르기 / Allergy</label><input type="text" class="form-input" id="med-allergy" placeholder="페니실린 / Penicillin (없으면 공백)"></div>
+          <div class="form-group full"><label class="form-label">💊 복용 중인 약 / Medication</label><input type="text" class="form-input" id="med-medicine" placeholder="없음 / None"></div>
+          <div class="form-group full"><label class="form-label">🩺 지병 / Medical History</label><input type="text" class="form-input" id="med-history" placeholder="없음 / None"></div>
         </div>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">보험 / 신분 확인</div>
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">🏥 여행자보험사 연락처</label><input type="text" class="form-input" id="med-insurance" placeholder="삼성화재 1588-xxxx"></div>
+        <div class="form-group full"><label class="form-label">🛂 여권번호 / Passport No.</label><input type="text" class="form-input" id="med-passport" placeholder="M12345678 (선택)"></div>
+      </div>
+
+      <div style="margin-top:16px;padding:10px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text-muted);">
+        📞 긴급연락처는 <strong style="color:var(--accent);">더보기 → 설정 → SOS 긴급연락처</strong>에서 등록하세요
       </div>
     </div>
     <div class="modal-footer">

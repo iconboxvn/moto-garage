@@ -39,6 +39,12 @@
             android:foregroundServiceType="location"
             android:exported="false" />
 
+        <activity
+            android:name=".ViolationLookupActivity"
+            android:label="교통위반 조회"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:exported="false" />
+
     </application>
 
     <!-- Permissions -->
