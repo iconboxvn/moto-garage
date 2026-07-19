@@ -645,7 +645,7 @@ option{background:var(--surface2);}
     </div>
 
     <!-- SOS Contact -->
-    <div class="card" style="margin-bottom:12px;">
+    <div class="card" style="margin-bottom:12px;" id="settings-sos-card">
       <div class="setting-section-title">🆘 Liên hệ khẩn cấp SOS</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Tin nhắn tự động sẽ được gửi đến số này khi phát hiện tai nạn</div>
       <div style="margin-bottom:10px;">
@@ -3446,10 +3446,9 @@ function _dbgDump(){
 //  RIDING / AUTO SOS
 // ═══════════════════════════════════════════
 var ridingState = {active: false, paused: false};
-var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
 var _ridingPauseTimer = null;
-var RIDING_MOVING_SPD   = 8;
-var RIDING_MOVING_CONFIRM_MS = 20*1000;
+var RIDING_MOVING_SPD   = 8;              // a single sample at/above this speed immediately confirms movement (a 20s-unbroken-streak requirement used to freeze lastMovingT under real GPS noise — 2026-07)
 var RIDING_PAUSE_MS     = 10*60*1000;
 var RIDING_AUTOEND_MS   = 2*60*60*1000;
 var RIDING_PAUSE_CHECK_MS = 60*1000;
@@ -3509,6 +3508,8 @@ var _sos = {
   motListening: false,
   startLat: null,
   startLng: null,
+  startAccuracy: null,
+  moveConfirmCount: 0,
   gpsCheckTimer: null
 };
 var _FF_MAG    = 3;
@@ -3637,7 +3638,7 @@ function _doStartRiding() {
   ridingState.paused = true;
   localStorage.setItem('mg2-riding', '1');
   var _now0 = Date.now();
-  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
   _persistRideProgress(true);
   _sos.phase = 'MONITORING';
   _sos.speedOk = false;
@@ -4184,15 +4185,12 @@ function _rideTrackSpeed(kmh, now, lat, lon){
   _ride.lastAcceptedKmh = kmh;
   _ride.lastAcceptedT = now;
 
+  // A single sample at/above threshold confirms movement immediately (no unbroken-streak requirement) —
+  // "genuinely stopped" is still gated by 10 minutes with zero qualifying samples, so it stays noise-resistant.
   if (kmh >= RIDING_MOVING_SPD) {
-    if (!_ride.movingStreakStartT) _ride.movingStreakStartT = now;
-    if (now - _ride.movingStreakStartT >= RIDING_MOVING_CONFIRM_MS) {
-      _ride.lastMovingT = now;
-      _ride.distanceAtLastMoving = _ride.distance;
-      if (ridingState.paused) _resumeRiding(now);
-    }
-  } else {
-    _ride.movingStreakStartT = null;
+    _ride.lastMovingT = now;
+    _ride.distanceAtLastMoving = _ride.distance;
+    if (ridingState.paused) _resumeRiding(now);
   }
 
   if (kmh > _ride.maxSpeed) {
@@ -4309,6 +4307,8 @@ function _sosTrigger() {
   _sos.phase = 'COUNTDOWN';
   _sos.startLat = null;
   _sos.startLng = null;
+  _sos.startAccuracy = null;
+  _sos.moveConfirmCount = 0;
   _sos.cdVal = 60;
   var ov = document.getElementById('auto-sos-overlay');
   if (ov) ov.classList.add('show');
@@ -4322,16 +4322,26 @@ function _sosTrigger() {
   navigator.geolocation.getCurrentPosition(function(p) {
     _sos.startLat = p.coords.latitude;
     _sos.startLng = p.coords.longitude;
-    if (dbgEl) dbgEl.textContent = '📍 Khoảng cách di chuyển: 0m (hủy nếu 10m+)';
+    _sos.startAccuracy = p.coords.accuracy || 30;
+    if (dbgEl) dbgEl.textContent = '📍 Khoảng cách di chuyển: 0m (đã tính đến sai số GPS)';
   }, function() {
     if (dbgEl) dbgEl.textContent = '📍 Không thể xác định vị trí GPS';
   }, {timeout: 10000, enableHighAccuracy: true});
+  // Chỉ hủy khi khoảng cách vượt quá sai số cộng dồn của cả hai lần đo, và được xác nhận 2 lần liên tiếp —
+  // hủy nhầm do nhiễu GPS có thể khiến tình huống khẩn cấp thật sự không được báo.
   _sos.gpsCheckTimer = setInterval(function() {
     if (_sos.phase !== 'COUNTDOWN' || _sos.startLat === null) return;
     navigator.geolocation.getCurrentPosition(function(p) {
       var dist = _gpsDistance(_sos.startLat, _sos.startLng, p.coords.latitude, p.coords.longitude);
-      if (dbgEl) dbgEl.textContent = '📍 Khoảng cách di chuyển: ' + dist.toFixed(0) + 'm (hủy nếu 10m+)';
-      if (dist >= 10) { cancelAutoSOS(); showToast('✓ Phát hiện di chuyển — Tự động SOS đã hủy'); }
+      var acc = p.coords.accuracy || 30;
+      var margin = Math.max(10, _sos.startAccuracy + acc);
+      if (dbgEl) dbgEl.textContent = '📍 Khoảng cách di chuyển: ' + dist.toFixed(0) + 'm (sai số ' + margin.toFixed(0) + 'm)';
+      if (dist > margin) {
+        _sos.moveConfirmCount = (_sos.moveConfirmCount || 0) + 1;
+        if (_sos.moveConfirmCount >= 2) { cancelAutoSOS(); showToast('✓ Phát hiện di chuyển — Tự động SOS đã hủy'); }
+      } else {
+        _sos.moveConfirmCount = 0;
+      }
     }, null, {timeout: 8000, enableHighAccuracy: true});
   }, 10000);
   try {
@@ -4429,9 +4439,9 @@ function _sosDoSend(phone, body, mapsUrl) {
       var _savedProgress = null;
       try { _savedProgress = JSON.parse(localStorage.getItem('mg2-ride-progress') || 'null'); } catch(e){}
       if (_savedProgress && _savedProgress.startTime) {
-        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null};
+        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null};
       } else {
-        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
       }
     }
     _sos.phase = 'MONITORING';
@@ -4876,9 +4886,6 @@ function showWeatherError(msg) {
 // ─────────────────────────────────────────
 function openSOS() {
   document.querySelectorAll('#sos-checklist .sos-check').forEach(function(el){ el.classList.remove('checked'); el.textContent='☐'; });
-  document.getElementById('sos-colleague').style.display='none';
-  document.getElementById('sos-medical').style.display='none';
-  document.querySelectorAll('.sos-choice-btn').forEach(function(b){ b.classList.remove('selected'); });
   var med=getMedical();
   var insBtn=document.getElementById('sos-insurance-btn');
   if(med.insurance){
@@ -4888,7 +4895,19 @@ function openSOS() {
   }
   loadSOSLocation();
   openModal('m-sos');
+  var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
+  if (colleagueBtn) selectSOS('colleague', colleagueBtn);
   logAnalyticsEvent('sos_triggered', {type:'manual'});
+}
+
+function goToSosSettings(){
+  closeModal('m-medical');
+  closeModal('m-sos');
+  showPage('backup',document.getElementById('nav-more-btn'));
+  setTimeout(function(){
+    var el=document.getElementById('settings-sos-card');
+    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  },150);
 }
 
 function selectSOS(type,el){
@@ -5554,7 +5573,7 @@ function renderMedicalCard(){
         <div class="form-group full"><label class="form-label">🛂 여권번호 / Passport No.</label><input type="text" class="form-input" id="med-passport" placeholder="M12345678 (선택)"></div>
       </div>
 
-      <div style="margin-top:16px;padding:10px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text-muted);">📞 Đăng ký liên hệ khẩn cấp tại <strong style="color:var(--accent);">Menu → Cài đặt → Liên hệ khẩn cấp SOS</strong></div>
+      <div style="margin-top:16px;padding:10px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text-muted);">📞 Đăng ký liên hệ khẩn cấp tại <strong style="color:var(--accent);text-decoration:underline;cursor:pointer;" onclick="goToSosSettings()">Menu → Cài đặt → Liên hệ khẩn cấp SOS</strong></div>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('m-medical')">취소</button>

@@ -669,7 +669,7 @@ option{background:var(--surface2);}
     </div>
 
     <!-- SOS 긴급연락처 설정 -->
-    <div class="card" style="margin-bottom:12px;">
+    <div class="card" style="margin-bottom:12px;" id="settings-sos-card">
       <div class="setting-section-title">🆘 SOS 긴급연락처</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">사고 감지 시 아래 번호로 자동 문자가 발송됩니다</div>
       <div style="margin-bottom:10px;">
@@ -3590,10 +3590,9 @@ function _dbgDump(){
 //  자동 SOS — 충격/낙차 감지
 // ═══════════════════════════════════════════
 var ridingState = {active: false, paused: false};
-var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
 var _ridingPauseTimer = null;
-var RIDING_MOVING_SPD   = 8;              // km/h 이상이면 "이동 중" 후보로 판단 (GPS 정지 오차 + 도보 이동 감안)
-var RIDING_MOVING_CONFIRM_MS = 20*1000;   // 이 기준을 20초 이상 "끊김 없이" 유지해야 진짜 이동(재개)으로 확정 — 화장실/주문 등 짧은 도보 이동 필터링
+var RIDING_MOVING_SPD   = 8;              // km/h 이상 샘플 1개만 봐도 즉시 "이동 확정" (GPS 노이즈로 20초 연속 조건이 실주행 중 깨지는 문제 방지 — 2026-07)
 var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;  // 초당 이만큼 속도가 늘면 급가속으로 판정
 var RIDING_HARSH_BRAKE_KMH_PER_SEC = 15;  // 초당 이만큼 속도가 줄면 급감속으로 판정
 var RIDING_HARSH_EVENT_COOLDOWN_MS = 3000; // 같은 상황이 여러 번 중복 카운트되지 않도록 최소 간격
@@ -3654,6 +3653,8 @@ var _sos = {
   motListening: false,
   startLat: null,
   startLng: null,
+  startAccuracy: null,
+  moveConfirmCount: 0,
   gpsCheckTimer: null
 };
 var _FF_MAG    = 3;
@@ -3784,7 +3785,7 @@ function _doStartRiding() {
   ridingState.paused = true; // 실제 출발 전까지 "출발 대기" - 단, 5분 넘으면 강제 시작 (안전장치)
   localStorage.setItem('mg2-riding', '1');
   var _now0 = Date.now();
-  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
   _persistRideProgress(true);
   _sos.phase = 'MONITORING';
   _sos.speedOk = false;
@@ -4358,15 +4359,13 @@ function _rideTrackSpeed(kmh, now, lat, lon){
   _ride.lastAcceptedKmh = kmh;
   _ride.lastAcceptedT = now;
 
+  // GPS 노이즈(±2~7km/h)만으로도 20초 연속 스트릭이 실주행 중에 깨질 수 있어서,
+  // "끊김없이 20초 지속" 조건 없이 8km/h 이상 샘플 1개만 봐도 즉시 이동 확정으로 갱신한다.
+  // (오래 멈춰있는 판정은 이후 10분간 단 한 번도 이 갱신이 없어야 하므로 여전히 노이즈에 강함)
   if (kmh >= RIDING_MOVING_SPD) {
-    if (!_ride.movingStreakStartT) _ride.movingStreakStartT = now;
-    if (now - _ride.movingStreakStartT >= RIDING_MOVING_CONFIRM_MS) {
-      _ride.lastMovingT = now;
-      _ride.distanceAtLastMoving = _ride.distance;
-      if (ridingState.paused) _resumeRiding(now);
-    }
-  } else {
-    _ride.movingStreakStartT = null;
+    _ride.lastMovingT = now;
+    _ride.distanceAtLastMoving = _ride.distance;
+    if (ridingState.paused) _resumeRiding(now);
   }
 
   if (kmh > _ride.maxSpeed) {
@@ -4493,6 +4492,8 @@ function _sosTrigger() {
   _sos.phase = 'COUNTDOWN';
   _sos.startLat = null;
   _sos.startLng = null;
+  _sos.startAccuracy = null;
+  _sos.moveConfirmCount = 0;
   _sos.cdVal = 60;
   var ov = document.getElementById('auto-sos-overlay');
   if (ov) ov.classList.add('show');
@@ -4507,20 +4508,29 @@ function _sosTrigger() {
   navigator.geolocation.getCurrentPosition(function(p) {
     _sos.startLat = p.coords.latitude;
     _sos.startLng = p.coords.longitude;
-    console.log('[SOS] start GPS', _sos.startLat.toFixed(6), _sos.startLng.toFixed(6));
-    if (dbgEl) dbgEl.textContent = '📍 이동 거리: 0m (10m 이상 이동 시 취소)';
+    _sos.startAccuracy = p.coords.accuracy || 30;
+    console.log('[SOS] start GPS', _sos.startLat.toFixed(6), _sos.startLng.toFixed(6), 'acc=' + _sos.startAccuracy.toFixed(0) + 'm');
+    if (dbgEl) dbgEl.textContent = '📍 이동 거리: 0m (오차범위 감안하여 판단)';
   }, function() {
     console.warn('[SOS] GPS 초기 위치 확보 실패');
     if (dbgEl) dbgEl.textContent = '📍 GPS 위치 확인 실패';
   }, {timeout: 10000, enableHighAccuracy: true});
-  // 10초마다 이동 거리 체크
+  // 10초마다 이동 거리 체크 — 오차범위(양쪽 accuracy 합산)를 넘어서는 이동이 연속 2회 확인돼야 취소
+  // (단발성 GPS 노이즈로 오취소되면 실제 사고 시 SOS가 안 나갈 수 있어, 취소는 신중하게)
   _sos.gpsCheckTimer = setInterval(function() {
     if (_sos.phase !== 'COUNTDOWN' || _sos.startLat === null) return;
     navigator.geolocation.getCurrentPosition(function(p) {
       var dist = _gpsDistance(_sos.startLat, _sos.startLng, p.coords.latitude, p.coords.longitude);
-      console.log('[SOS] GPS check dist=' + dist.toFixed(1) + 'm');
-      if (dbgEl) dbgEl.textContent = '📍 이동 거리: ' + dist.toFixed(0) + 'm (10m 이상 이동 시 취소)';
-      if (dist >= 10) { cancelAutoSOS(); showToast('✓ 이동 감지 — 자동 SOS 취소'); }
+      var acc = p.coords.accuracy || 30;
+      var margin = Math.max(10, _sos.startAccuracy + acc);
+      console.log('[SOS] GPS check dist=' + dist.toFixed(1) + 'm margin=' + margin.toFixed(1) + 'm confirmCount=' + _sos.moveConfirmCount);
+      if (dbgEl) dbgEl.textContent = '📍 이동 거리: ' + dist.toFixed(0) + 'm (오차범위 ' + margin.toFixed(0) + 'm)';
+      if (dist > margin) {
+        _sos.moveConfirmCount = (_sos.moveConfirmCount || 0) + 1;
+        if (_sos.moveConfirmCount >= 2) { cancelAutoSOS(); showToast('✓ 이동 감지 — 자동 SOS 취소'); }
+      } else {
+        _sos.moveConfirmCount = 0;
+      }
     }, null, {timeout: 8000, enableHighAccuracy: true});
   }, 10000);
   try {
@@ -4620,9 +4630,9 @@ function _sosDoSend(phone, body, mapsUrl) {
       var _savedProgress = null;
       try { _savedProgress = JSON.parse(localStorage.getItem('mg2-ride-progress') || 'null'); } catch(e){}
       if (_savedProgress && _savedProgress.startTime) {
-        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null};
+        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null};
       } else {
-        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, movingStreakStartT:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
       }
     }
     _sos.phase = 'MONITORING';
@@ -5344,9 +5354,6 @@ function showWeatherError(msg) {
 // ─────────────────────────────────────────
 function openSOS() {
   document.querySelectorAll('#sos-checklist .sos-check').forEach(function(el){ el.classList.remove('checked'); el.textContent='☐'; });
-  document.getElementById('sos-colleague').style.display='none';
-  document.getElementById('sos-medical').style.display='none';
-  document.querySelectorAll('.sos-choice-btn').forEach(function(b){ b.classList.remove('selected'); });
   var med=getMedical();
   var insBtn=document.getElementById('sos-insurance-btn');
   if(med.insurance){
@@ -5356,7 +5363,19 @@ function openSOS() {
   }
   loadSOSLocation();
   openModal('m-sos');
+  var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
+  if (colleagueBtn) selectSOS('colleague', colleagueBtn);
   logAnalyticsEvent('sos_triggered', {type:'manual'});
+}
+
+function goToSosSettings(){
+  closeModal('m-medical');
+  closeModal('m-sos');
+  showPage('backup',document.getElementById('nav-more-btn'));
+  setTimeout(function(){
+    var el=document.getElementById('settings-sos-card');
+    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  },150);
 }
 
 function selectSOS(type,el){
@@ -6032,7 +6051,7 @@ function renderMedicalCard(){
       </div>
 
       <div style="margin-top:16px;padding:10px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text-muted);">
-        📞 긴급연락처는 <strong style="color:var(--accent);">더보기 → 설정 → SOS 긴급연락처</strong>에서 등록하세요
+        📞 긴급연락처는 <strong style="color:var(--accent);text-decoration:underline;cursor:pointer;" onclick="goToSosSettings()">더보기 → 설정 → SOS 긴급연락처</strong>에서 등록하세요
       </div>
     </div>
     <div class="modal-footer">
