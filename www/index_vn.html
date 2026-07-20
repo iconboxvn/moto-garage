@@ -522,7 +522,7 @@ option{background:var(--surface2);}
 <!-- BOTTOM NAV -->
 <div class="nav-wrap">
   <nav class="nav">
-    <button class="nav-btn active" onclick="showPage('dashboard',this)">
+    <button class="nav-btn active" id="nav-dashboard-btn" onclick="showPage('dashboard',this)">
       <span class="nav-icon">🏠</span><span class="nav-label">Trang chủ</span><span class="nav-dot"></span>
     </button>
     <button class="nav-btn" onclick="showPage('consumables',this)">
@@ -3130,6 +3130,34 @@ function dismissAppUpdate(){
   sessionStorage.setItem('mg2-update-dismissed', '1');
 }
 
+// Nút quay lại vật lý: đóng modal đang mở -> về trang chủ -> ở trang chủ thì bấm lần nữa để thoát
+var _backPressedOnce = false;
+var _backPressTimer = null;
+function initBackButton(){
+  var CapApp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if (!CapApp) return;
+  CapApp.addListener('backButton', function(){
+    var openModals = document.querySelectorAll('.modal-overlay.open');
+    if (openModals.length) {
+      openModals.forEach(function(m){ m.classList.remove('open'); });
+      return;
+    }
+    var dash = document.getElementById('page-dashboard');
+    if (dash && !dash.classList.contains('active')) {
+      showPage('dashboard', document.getElementById('nav-dashboard-btn'));
+      return;
+    }
+    if (_backPressedOnce) {
+      CapApp.exitApp();
+      return;
+    }
+    _backPressedOnce = true;
+    showToast('Bấm quay lại lần nữa để thoát ứng dụng');
+    if (_backPressTimer) clearTimeout(_backPressTimer);
+    _backPressTimer = setTimeout(function(){ _backPressedOnce = false; }, 2000);
+  });
+}
+
 function registerPushNotifications(){
   try{
     var PN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications;
@@ -4464,6 +4492,7 @@ window.addEventListener('load', function(){
   safe(requestNotificationPermission, 'requestNotificationPermission');
   safe(registerPushNotifications, 'registerPushNotifications');
   safe(checkAppUpdate, 'checkAppUpdate');
+  safe(initBackButton, 'initBackButton');
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
   safe(loadCharactersFromCache, 'loadCharactersFromCache');
