@@ -3618,7 +3618,7 @@ function _dbgDump(){
 //  자동 SOS — 충격/낙차 감지
 // ═══════════════════════════════════════════
 var ridingState = {active: false, paused: false};
-var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
 var _ridingPauseTimer = null;
 var RIDING_MOVING_SPD   = 8;              // km/h 이상 샘플 1개만 봐도 즉시 "이동 확정" (GPS 노이즈로 20초 연속 조건이 실주행 중 깨지는 문제 방지 — 2026-07)
 var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;  // 초당 이만큼 속도가 늘면 급가속으로 판정
@@ -3651,6 +3651,9 @@ function _persistRideProgress(force){
       distanceAtLastMoving: _ride.distanceAtLastMoving,
       harshAccelCount: _ride.harshAccelCount,
       harshBrakeCount: _ride.harshBrakeCount,
+      pauseCount: _ride.pauseCount,
+      gpsGapCount: _ride.gpsGapCount,
+      maxGpsGapSec: _ride.maxGpsGapSec,
       lastLat: _ride.lastLat,
       lastLon: _ride.lastLon
     }));
@@ -3813,7 +3816,7 @@ function _doStartRiding() {
   ridingState.paused = true; // 실제 출발 전까지 "출발 대기" - 단, 5분 넘으면 강제 시작 (안전장치)
   localStorage.setItem('mg2-riding', '1');
   var _now0 = Date.now();
-  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
   _persistRideProgress(true);
   _sos.phase = 'MONITORING';
   _sos.speedOk = false;
@@ -3859,11 +3862,23 @@ function stopRiding(customMsg) {
 function saveRideRecord(s){
   // 너무 짧은 라이딩(실수로 시작/종료)은 기록하지 않음
   if (s.durationMs < 60000 && s.distanceKm < 0.05) return;
+  var wallClockSec = Math.round((s.wallClockMs||0)/1000);
+  var pausedSec = Math.round((s.pausedMs||0)/1000);
   logAnalyticsEvent('riding_completed', {
     distance_km: Math.round(s.distanceKm*10)/10,
     duration_sec: Math.round(s.durationMs/1000),
     avg_kmh: Math.round(s.avgKmh),
-    max_kmh: Math.round(s.maxKmh)
+    max_kmh: Math.round(s.maxKmh),
+    harsh_accel_count: _ride.harshAccelCount||0,
+    harsh_brake_count: _ride.harshBrakeCount||0,
+    pause_count: _ride.pauseCount||0,
+    wall_clock_sec: wallClockSec,
+    paused_sec: pausedSec,
+    paused_pct: wallClockSec>0 ? Math.round((pausedSec/wallClockSec)*100) : 0,
+    gps_gap_count: _ride.gpsGapCount||0,
+    max_gps_gap_sec: Math.round(_ride.maxGpsGapSec||0),
+    auto_ended: _ride.autoEnded ? 1 : 0,
+    is_anomalous: s.avgKmh > 200 ? 1 : 0
   });
   var startD = new Date(_ride.startTime);
   var endD = new Date();
@@ -3899,11 +3914,12 @@ function _buildRideSummary(){
   if (!_ride || !_ride.startTime) return null;
   var pausedMs = _ride.pausedMs || 0;
   if (ridingState.paused && _ride.pauseStartedAt) pausedMs += (Date.now() - _ride.pauseStartedAt);
-  var durationMs = (Date.now() - _ride.startTime) - pausedMs;
+  var wallClockMs = Date.now() - _ride.startTime;
+  var durationMs = wallClockMs - pausedMs;
   if (durationMs < 0) durationMs = 0;
   var distKm = _ride.distance;
   var avgKmh = durationMs > 0 ? distKm / (durationMs/3600000) : 0;
-  return { durationMs: durationMs, distanceKm: distKm, avgKmh: avgKmh, maxKmh: _ride.maxSpeed };
+  return { durationMs: durationMs, distanceKm: distKm, avgKmh: avgKmh, maxKmh: _ride.maxSpeed, wallClockMs: wallClockMs, pausedMs: pausedMs };
 }
 
 // 정지 상태가 길어지면 자동 일시정지 / 자동 종료 처리 (1분마다 체크)
@@ -3942,6 +3958,7 @@ function _forceStartRiding(nowArg){
 function _pauseRiding(){
   _dbgLog('riding_state', {event:'pause'});
   ridingState.paused = true;
+  _ride.pauseCount = (_ride.pauseCount || 0) + 1;
   // 감지된 시점이 아니라, 실제로 마지막까지 움직였던 시각으로 소급해서 "시간"만 정지로 처리
   // (거리/경로는 더 이상 롤백하지 않음 - 정체 구간에서 이동확정이 자주 끊기면 실제 주행거리까지 지워지는 문제가 있었음)
   _ride.pauseStartedAt = _ride.lastMovingT || Date.now();
@@ -3970,6 +3987,7 @@ function _resumeRiding(resumeAt){
 
 function _autoEndRiding(){
   _dbgLog('riding_state', {event:'auto_end'});
+  _ride.autoEnded = true;
   stopRiding('⏹ 장시간 정지가 감지돼 라이딩을 자동 종료했어요');
 }
 
@@ -4371,7 +4389,11 @@ function _sosGPSStart() {
 function _rideTrackSpeed(kmh, now, lat, lon){
   if (_ride.lastAcceptedKmh !== null) {
     var dtSec = (now - _ride.lastAcceptedT) / 1000;
-    if (dtSec > 30) _dbgLog('gps_gap', {gapSec: Math.round(dtSec)}); // GPS 실측 시각 기준으로 실제 공백 구간이 있었는지 기록 (백그라운드 지연 처리와 구분용)
+    if (dtSec > 30) { // GPS 실측 시각 기준으로 실제 공백 구간이 있었는지 기록 (백그라운드 지연 처리와 구분용)
+      _dbgLog('gps_gap', {gapSec: Math.round(dtSec)});
+      _ride.gpsGapCount = (_ride.gpsGapCount || 0) + 1;
+      if (dtSec > (_ride.maxGpsGapSec || 0)) _ride.maxGpsGapSec = dtSec;
+    }
     var deltaPerSec = dtSec > 0 ? Math.abs(kmh - _ride.lastAcceptedKmh) / dtSec : 0;
     if (deltaPerSec > 40) return; // 초당 40km/h 넘게 튀는 값은 노이즈로 판단하고 버림
 
@@ -4665,9 +4687,9 @@ function _sosDoSend(phone, body, mapsUrl) {
       var _savedProgress = null;
       try { _savedProgress = JSON.parse(localStorage.getItem('mg2-ride-progress') || 'null'); } catch(e){}
       if (_savedProgress && _savedProgress.startTime) {
-        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null};
+        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null, pauseCount:_savedProgress.pauseCount||0, gpsGapCount:_savedProgress.gpsGapCount||0, maxGpsGapSec:_savedProgress.maxGpsGapSec||0, autoEnded:false};
       } else {
-        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
       }
     }
     _sos.phase = 'MONITORING';

@@ -3474,7 +3474,7 @@ function _dbgDump(){
 //  RIDING / AUTO SOS
 // ═══════════════════════════════════════════
 var ridingState = {active: false, paused: false};
-var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
 var _ridingPauseTimer = null;
 var RIDING_MOVING_SPD   = 8;              // a single sample at/above this speed immediately confirms movement (a 20s-unbroken-streak requirement used to freeze lastMovingT under real GPS noise — 2026-07)
 var RIDING_PAUSE_MS     = 10*60*1000;
@@ -3504,6 +3504,9 @@ function _persistRideProgress(force){
       distanceAtLastMoving: _ride.distanceAtLastMoving,
       harshAccelCount: _ride.harshAccelCount,
       harshBrakeCount: _ride.harshBrakeCount,
+      pauseCount: _ride.pauseCount,
+      gpsGapCount: _ride.gpsGapCount,
+      maxGpsGapSec: _ride.maxGpsGapSec,
       lastLat: _ride.lastLat,
       lastLon: _ride.lastLon
     }));
@@ -3666,7 +3669,7 @@ function _doStartRiding() {
   ridingState.paused = true;
   localStorage.setItem('mg2-riding', '1');
   var _now0 = Date.now();
-  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
   _persistRideProgress(true);
   _sos.phase = 'MONITORING';
   _sos.speedOk = false;
@@ -3711,11 +3714,23 @@ function stopRiding(customMsg) {
 // Lưu bản ghi chuyến đi vào D.rides (kèm ngày / giờ bắt đầu & kết thúc)
 function saveRideRecord(s){
   if (s.durationMs < 60000 && s.distanceKm < 0.05) return;
+  var wallClockSec = Math.round((s.wallClockMs||0)/1000);
+  var pausedSec = Math.round((s.pausedMs||0)/1000);
   logAnalyticsEvent('riding_completed', {
     distance_km: Math.round(s.distanceKm*10)/10,
     duration_sec: Math.round(s.durationMs/1000),
     avg_kmh: Math.round(s.avgKmh),
-    max_kmh: Math.round(s.maxKmh)
+    max_kmh: Math.round(s.maxKmh),
+    harsh_accel_count: _ride.harshAccelCount||0,
+    harsh_brake_count: _ride.harshBrakeCount||0,
+    pause_count: _ride.pauseCount||0,
+    wall_clock_sec: wallClockSec,
+    paused_sec: pausedSec,
+    paused_pct: wallClockSec>0 ? Math.round((pausedSec/wallClockSec)*100) : 0,
+    gps_gap_count: _ride.gpsGapCount||0,
+    max_gps_gap_sec: Math.round(_ride.maxGpsGapSec||0),
+    auto_ended: _ride.autoEnded ? 1 : 0,
+    is_anomalous: s.avgKmh > 200 ? 1 : 0
   });
   var startD = new Date(_ride.startTime);
   var endD = new Date();
@@ -3751,11 +3766,12 @@ function _buildRideSummary(){
   if (!_ride || !_ride.startTime) return null;
   var pausedMs = _ride.pausedMs || 0;
   if (ridingState.paused && _ride.pauseStartedAt) pausedMs += (Date.now() - _ride.pauseStartedAt);
-  var durationMs = (Date.now() - _ride.startTime) - pausedMs;
+  var wallClockMs = Date.now() - _ride.startTime;
+  var durationMs = wallClockMs - pausedMs;
   if (durationMs < 0) durationMs = 0;
   var distKm = _ride.distance;
   var avgKmh = durationMs > 0 ? distKm / (durationMs/3600000) : 0;
-  return { durationMs: durationMs, distanceKm: distKm, avgKmh: avgKmh, maxKmh: _ride.maxSpeed };
+  return { durationMs: durationMs, distanceKm: distKm, avgKmh: avgKmh, maxKmh: _ride.maxSpeed, wallClockMs: wallClockMs, pausedMs: pausedMs };
 }
 
 // nowArg: khi gọi phản ứng từ callback GPS, truyền vào thời điểm thực đo của sự kiện đó.
@@ -3791,6 +3807,7 @@ function _forceStartRiding(nowArg){
 function _pauseRiding(){
   _dbgLog('riding_state', {event:'pause'});
   ridingState.paused = true;
+  _ride.pauseCount = (_ride.pauseCount || 0) + 1;
   // Tính lùi lại từ thời điểm di chuyển thực tế cuối cùng, không phải lúc phát hiện (chỉ áp dụng cho "thời gian")
   // (không khôi phục quãng đường/lộ trình nữa - việc này từng làm mất quãng đường thực khi việc xác nhận di chuyển bị ngắt quãng trong đoạn kẹt xe)
   _ride.pauseStartedAt = _ride.lastMovingT || Date.now();
@@ -3819,6 +3836,7 @@ function _resumeRiding(resumeAt){
 
 function _autoEndRiding(){
   _dbgLog('riding_state', {event:'auto_end'});
+  _ride.autoEnded = true;
   stopRiding('⏹ Phát hiện dừng lâu, đã tự động kết thúc chuyến đi');
 }
 
@@ -4197,7 +4215,11 @@ function _sosGPSStart() {
 function _rideTrackSpeed(kmh, now, lat, lon){
   if (_ride.lastAcceptedKmh !== null) {
     var dtSec = (now - _ride.lastAcceptedT) / 1000;
-    if (dtSec > 30) _dbgLog('gps_gap', {gapSec: Math.round(dtSec)});
+    if (dtSec > 30) {
+      _dbgLog('gps_gap', {gapSec: Math.round(dtSec)});
+      _ride.gpsGapCount = (_ride.gpsGapCount || 0) + 1;
+      if (dtSec > (_ride.maxGpsGapSec || 0)) _ride.maxGpsGapSec = dtSec;
+    }
     var deltaPerSec = dtSec > 0 ? Math.abs(kmh - _ride.lastAcceptedKmh) / dtSec : 0;
     if (deltaPerSec > 40) return;
 
@@ -4473,9 +4495,9 @@ function _sosDoSend(phone, body, mapsUrl) {
       var _savedProgress = null;
       try { _savedProgress = JSON.parse(localStorage.getItem('mg2-ride-progress') || 'null'); } catch(e){}
       if (_savedProgress && _savedProgress.startTime) {
-        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null};
+        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null, pauseCount:_savedProgress.pauseCount||0, gpsGapCount:_savedProgress.gpsGapCount||0, maxGpsGapSec:_savedProgress.maxGpsGapSec||0, autoEnded:false};
       } else {
-        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null};
+        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
       }
     }
     _sos.phase = 'MONITORING';
