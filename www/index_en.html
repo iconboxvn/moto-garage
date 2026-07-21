@@ -3757,26 +3757,31 @@ function _buildRideSummary(){
   return { durationMs: durationMs, distanceKm: distKm, avgKmh: avgKmh, maxKmh: _ride.maxSpeed };
 }
 
-function _checkRidingPauseTimer(){
+// nowArg: when called reactively from a GPS callback, pass that event's own measured time.
+// If Android delayed location updates in the background and delivers them in a delayed batch,
+// using Date.now() (processing time) here would wrongly count real moving time as stopped —
+// so we follow the data's own timeline in that case. The plain setInterval call (no arg) is
+// meant to detect a genuine loss of GPS signal, so it correctly uses real time (Date.now()).
+function _checkRidingPauseTimer(nowArg){
   if (!ridingState.active) return;
-  var now = Date.now();
+  var now = nowArg || Date.now();
   if (!ridingState.paused) {
     var sinceMoving = now - (_ride.lastMovingT || _ride.startTime);
     if (sinceMoving >= RIDING_PAUSE_MS) _pauseRiding();
   } else if (!_ride.hasStartedMoving) {
-    if (now - _ride.startTime >= RIDING_DEPARTURE_TIMEOUT_MS) _forceStartRiding();
+    if (now - _ride.startTime >= RIDING_DEPARTURE_TIMEOUT_MS) _forceStartRiding(now);
   } else {
     var sincePause = now - (_ride.pauseStartedAt || now);
     if (sincePause >= RIDING_AUTOEND_MS) _autoEndRiding();
   }
 }
 
-function _forceStartRiding(){
+function _forceStartRiding(nowArg){
   _dbgLog('riding_state', {event:'force_start'});
   ridingState.paused = false;
   _ride.pauseStartedAt = null;
   _ride.hasStartedMoving = true;
-  _ride.lastMovingT = Date.now();
+  _ride.lastMovingT = nowArg || Date.now();
   _persistRideProgress(true);
   updateRidingBar();
   showToast('🏍 5-minute GPS wait elapsed, starting the ride recording');
@@ -4147,7 +4152,8 @@ function _sosGPSStart() {
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
       // Pause/force-start safety net: also check reactively on each GPS event in case the setInterval got throttled in the background
-      if (ridingState.active) _checkRidingPauseTimer();
+      // (pass this event's own measured time, in case a delayed batch is being caught up on)
+      if (ridingState.active) _checkRidingPauseTimer(now);
       _persistRideProgress();
     });
     return;
@@ -4179,7 +4185,7 @@ function _sosGPSStart() {
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
-      if (ridingState.active) _checkRidingPauseTimer();
+      if (ridingState.active) _checkRidingPauseTimer(now);
       _persistRideProgress();
     },
     function(err) { console.warn('[SOS] GPS error', err.code, err.message); },

@@ -3758,26 +3758,31 @@ function _buildRideSummary(){
   return { durationMs: durationMs, distanceKm: distKm, avgKmh: avgKmh, maxKmh: _ride.maxSpeed };
 }
 
-function _checkRidingPauseTimer(){
+// nowArg: khi gọi phản ứng từ callback GPS, truyền vào thời điểm thực đo của sự kiện đó.
+// Nếu Android trì hoãn cập nhật vị trí ở nền rồi gửi dồn theo lô, dùng Date.now() (thời điểm xử lý)
+// ở đây sẽ tính nhầm thời gian di chuyển thực tế thành thời gian dừng — nên trong trường hợp đó
+// phải theo dòng thời gian của chính dữ liệu. Lệnh gọi từ setInterval (không truyền tham số) dùng
+// để phát hiện mất tín hiệu GPS thực sự, nên dùng đúng thời gian thực (Date.now()).
+function _checkRidingPauseTimer(nowArg){
   if (!ridingState.active) return;
-  var now = Date.now();
+  var now = nowArg || Date.now();
   if (!ridingState.paused) {
     var sinceMoving = now - (_ride.lastMovingT || _ride.startTime);
     if (sinceMoving >= RIDING_PAUSE_MS) _pauseRiding();
   } else if (!_ride.hasStartedMoving) {
-    if (now - _ride.startTime >= RIDING_DEPARTURE_TIMEOUT_MS) _forceStartRiding();
+    if (now - _ride.startTime >= RIDING_DEPARTURE_TIMEOUT_MS) _forceStartRiding(now);
   } else {
     var sincePause = now - (_ride.pauseStartedAt || now);
     if (sincePause >= RIDING_AUTOEND_MS) _autoEndRiding();
   }
 }
 
-function _forceStartRiding(){
+function _forceStartRiding(nowArg){
   _dbgLog('riding_state', {event:'force_start'});
   ridingState.paused = false;
   _ride.pauseStartedAt = null;
   _ride.hasStartedMoving = true;
-  _ride.lastMovingT = Date.now();
+  _ride.lastMovingT = nowArg || Date.now();
   _persistRideProgress(true);
   updateRidingBar();
   showToast('🏍 Đã chờ GPS 5 phút, bắt đầu ghi lại chuyến đi');
@@ -4148,7 +4153,8 @@ function _sosGPSStart() {
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
       // Lưới an toàn tạm dừng/bắt buộc khởi động: cũng kiểm tra ngay khi có sự kiện GPS, phòng khi setInterval bị treo ở nền
-      if (ridingState.active) _checkRidingPauseTimer();
+      // (truyền thời điểm thực đo của sự kiện GPS này, phòng trường hợp đang xử lý dồn theo lô)
+      if (ridingState.active) _checkRidingPauseTimer(now);
       _persistRideProgress();
     });
     return;
@@ -4179,7 +4185,7 @@ function _sosGPSStart() {
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
-      if (ridingState.active) _checkRidingPauseTimer();
+      if (ridingState.active) _checkRidingPauseTimer(now);
       _persistRideProgress();
     },
     function(err) { console.warn('[SOS] GPS error', err.code, err.message); },

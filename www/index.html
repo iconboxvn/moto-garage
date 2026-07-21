@@ -3907,27 +3907,33 @@ function _buildRideSummary(){
 }
 
 // 정지 상태가 길어지면 자동 일시정지 / 자동 종료 처리 (1분마다 체크)
-function _checkRidingPauseTimer(){
+// nowArg: GPS 콜백에서 반응적으로 호출할 때는 그 GPS 이벤트의 실측 시각을 넘겨받는다.
+// 안드로이드가 백그라운드에서 위치 업데이트를 지연시켰다가 몰아서 처리하는 경우, 여기서
+// Date.now()(처리 시각)를 쓰면 "과거 이동 시각 ~ 지금" 사이에 실제로는 안 멈췄던 시간이
+// 통째로 정지로 오판된다 — 이 경우엔 그 데이터 자체의 시간 흐름(과거 GPS 시각)을 따라야 한다.
+// 반대로 setInterval에서 인자 없이 호출될 때는 "진짜 GPS 신호 자체가 끊긴 상황"을 감지하는
+// 용도이므로 실시간 기준(Date.now())이 맞다.
+function _checkRidingPauseTimer(nowArg){
   if (!ridingState.active) return;
-  var now = Date.now();
+  var now = nowArg || Date.now();
   if (!ridingState.paused) {
     var sinceMoving = now - (_ride.lastMovingT || _ride.startTime);
     if (sinceMoving >= RIDING_PAUSE_MS) _pauseRiding();
   } else if (!_ride.hasStartedMoving) {
     // 아직 출발 확인 전 - GPS가 계속 안 잡혀도 5분 넘으면 강제로 시작 처리 (라이딩 통째로 유실 방지)
-    if (now - _ride.startTime >= RIDING_DEPARTURE_TIMEOUT_MS) _forceStartRiding();
+    if (now - _ride.startTime >= RIDING_DEPARTURE_TIMEOUT_MS) _forceStartRiding(now);
   } else {
     var sincePause = now - (_ride.pauseStartedAt || now);
     if (sincePause >= RIDING_AUTOEND_MS) _autoEndRiding();
   }
 }
 
-function _forceStartRiding(){
+function _forceStartRiding(nowArg){
   _dbgLog('riding_state', {event:'force_start'});
   ridingState.paused = false;
   _ride.pauseStartedAt = null;
   _ride.hasStartedMoving = true;
-  _ride.lastMovingT = Date.now();
+  _ride.lastMovingT = nowArg || Date.now();
   _persistRideProgress(true);
   updateRidingBar();
   showToast('🏍 GPS 신호 대기 5분 경과, 라이딩 기록을 시작해요');
@@ -4318,7 +4324,8 @@ function _sosGPSStart() {
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
       // 일시정지/강제출발 안전장치 - setInterval이 백그라운드에서 멈춰도 GPS 이벤트가 들어올 때마다 한 번 더 체크
-      if (ridingState.active) _checkRidingPauseTimer();
+      // (밀린 데이터를 몰아서 처리하는 경우를 대비해 이 GPS 이벤트의 실측 시각을 넘긴다)
+      if (ridingState.active) _checkRidingPauseTimer(now);
       _persistRideProgress();
     });
     return;
@@ -4351,7 +4358,7 @@ function _sosGPSStart() {
       }
       _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
       _updateRidingSpeedUI();
-      if (ridingState.active) _checkRidingPauseTimer();
+      if (ridingState.active) _checkRidingPauseTimer(now);
       _persistRideProgress();
     },
     function(err) { console.warn('[SOS] GPS error', err.code, err.message); },
