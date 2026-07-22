@@ -2660,6 +2660,7 @@ function mstatRender(){
         <div><span style="color:var(--text-dim);">TB</span> <strong style="color:var(--text);">${Math.round(info2.avgSum/info2.count)}km/h</strong></div>
         <div><span style="color:var(--text-dim);">Tối đa</span> <strong style="color:var(--accent);">${Math.round(info2.max)}km/h</strong></div>
       </div>
+      <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="shareMonthlyDayCard()">Chia sẻ</button>
     `;
   } else if(mstatState.selectedDate){
     detailEl.style.display = 'block';
@@ -2683,8 +2684,25 @@ function mstatRender(){
 }
 
 function mstatSelectDay(dateStr){
-  mstatState.selectedDate = (mstatState.selectedDate === dateStr) ? null : dateStr;
+  var opening = (mstatState.selectedDate !== dateStr);
+  mstatState.selectedDate = opening ? dateStr : null;
   mstatRender();
+  if(opening){
+    window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'});
+  }
+}
+
+function shareMonthlyDayCard(){
+  var dateStr = mstatState.selectedDate;
+  if(!dateStr) return;
+  var rides = (D.rides||[]).filter(function(r){ return r.bikeId===mstatState.bikeId && r.date===dateStr; });
+  if(!rides.length) return;
+  var distance = rides.reduce(function(sum,r){ return sum + (r.distanceKm||0); }, 0);
+  var duration = rides.reduce(function(sum,r){ return sum + (r.durationMs||0); }, 0);
+  var max = rides.reduce(function(m,r){ return Math.max(m, r.maxKmh||0); }, 0);
+  var avgSum = rides.reduce(function(sum,r){ return sum + (r.avgKmh||0); }, 0);
+  var s = {durationMs:duration, distanceKm:distance, avgKmh:avgSum/rides.length, maxKmh:max};
+  showRideSummary(s, dateStr, mstatState.bikeId);
 }
 
 function deleteRide(id){
