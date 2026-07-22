@@ -3421,6 +3421,7 @@ function scheduleConsumableAlerts(){
       cancelPrev.finally(function(){ localStorage.setItem('mg2-scheduled-notif-ids','[]'); });
       syncNotifyTarget(); return;
     }
+    const toSchedule = [];
     D.bikes.forEach(bike=>{
       (bike.consumables||[]).forEach(c=>{
         if (!c.km) return;
@@ -3636,6 +3637,66 @@ function _dbgDump(){
 //  자동 SOS — 충격/낙차 감지
 // ═══════════════════════════════════════════
 var ridingState = {active: false, paused: false};
+
+// 홈 화면 위젯에 현재 라이딩 상태(기록중/자동일시정지/대기중)를 알려준다.
+function _syncWidgetState(){
+  try{
+    var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+    if(R && R.setState) R.setState({active: ridingState.active, paused: ridingState.paused}).catch(function(){});
+  }catch(e){}
+}
+
+// 위젯에서 넘어온 시작/종료 요청 처리
+var _widgetPendingBackground = false;
+var _widgetActionBusy = false; // 짧은 시간 안에 위젯을 연타했을 때 중복 처리 방지
+var _openedViaWidget = false; // 위젯으로 열린 세션이면 날씨 모달 등 자동 팝업을 띄우지 않음(백그라운드로 내려간 뒤 안 닫힌 채 남는 문제 방지)
+function _handleWidgetAction(action){
+  _openedViaWidget = true;
+  if(_widgetActionBusy) return;
+  // 실제 상태 변경 로직은 항상 동기적으로 끝나므로, 백그라운드 복귀(연출용 700ms 지연)와
+  // 별개로 busy 플래그는 여기서 바로 풀어준다 - 다음 위젯 탭이 곧바로 씹히지 않도록.
+  _widgetActionBusy = true;
+  if(action === 'start'){
+    if(!ridingState.active){
+      // 동의/권한 모달이 뜨면 그 단계에선 백그라운드로 내리지 않고,
+      // 실제로 _doStartRiding()까지 도달했을 때만(=모든 확인 통과) 자동 복귀시킨다.
+      _widgetPendingBackground = true;
+      startRiding();
+    } else {
+      _widgetReturnToBackground(); // 이미 시작된 상태 - 그냥 홈으로 복귀
+    }
+  } else if(action === 'stop'){
+    if(ridingState.active){
+      stopRiding(null, true); // 위젯 흐름에선 라이딩 요약 모달을 띄우지 않음(안 닫힌 채로 남는 문제 방지)
+      _widgetReturnToBackground();
+    } else {
+      _widgetReturnToBackground(); // 이미 종료된 상태 - 그냥 홈으로 복귀
+    }
+  }
+  _widgetActionBusy = false;
+}
+
+// 위젯 탭으로 처리 끝낸 뒤 앱을 다시 백그라운드로 내림 (토스트 잠깐 보일 시간만 대기)
+function _widgetReturnToBackground(){
+  setTimeout(function(){
+    _widgetActionBusy = false;
+    try{
+      var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+      if(R && R.moveToBackground) R.moveToBackground().catch(function(){});
+    }catch(e){}
+  }, 700);
+}
+
+// 안드로이드 웹뷰가 백그라운드에서 렌더러를 회수했다가 복귀할 때 Capacitor가
+// 모든 플러그인 리스너를 초기화해버리는 경우가 있어(bridge.reset()), 위젯 탭 리스너가
+// 조용히 끊길 수 있다. 앱이 포그라운드로 돌아올 때마다 다시 걸어서 항상 살아있게 한다.
+var _widgetActionListenerHandle = null;
+function _ensureWidgetActionListener(){
+  var RidingW = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if(!RidingW) return;
+  if(_widgetActionListenerHandle){ try{ _widgetActionListenerHandle.remove(); }catch(e){} }
+  _widgetActionListenerHandle = RidingW.addListener('widgetAction', function(data){ _handleWidgetAction(data && data.action); });
+}
 var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
 var _ridingPauseTimer = null;
 var RIDING_MOVING_SPD   = 8;              // km/h 이상 샘플 1개만 봐도 즉시 "이동 확정" (GPS 노이즈로 20초 연속 조건이 실주행 중 깨지는 문제 방지 — 2026-07)
@@ -3832,6 +3893,8 @@ function _doStartRiding() {
   _dbgLog('ride_start', {});
   ridingState.active = true;
   ridingState.paused = true; // 실제 출발 전까지 "출발 대기" - 단, 5분 넘으면 강제 시작 (안전장치)
+  _syncWidgetState();
+  if(_widgetPendingBackground){ _widgetPendingBackground = false; _widgetReturnToBackground(); }
   localStorage.setItem('mg2-riding', '1');
   var _now0 = Date.now();
   _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
@@ -3850,11 +3913,12 @@ function _doStartRiding() {
   logAnalyticsEvent('riding_started', {});
 }
 
-function stopRiding(customMsg) {
+function stopRiding(customMsg, skipSummary) {
   var summary = _buildRideSummary();
   _dbgLog('ride_stop', {distanceKm: summary ? Math.round(summary.distanceKm*10)/10 : null, durationMs: summary ? summary.durationMs : null});
   ridingState.active = false;
   ridingState.paused = false;
+  _syncWidgetState();
   if (_ridingPauseTimer) { clearInterval(_ridingPauseTimer); _ridingPauseTimer = null; }
   localStorage.removeItem('mg2-riding');
   localStorage.removeItem('mg2-ride-progress');
@@ -3872,7 +3936,7 @@ function stopRiding(customMsg) {
   showToast(customMsg || '■ 라이딩 종료');
   if (summary) {
     saveRideRecord(summary);
-    showRideSummary(summary);
+    if (!skipSummary) showRideSummary(summary);
   }
 }
 
@@ -3965,6 +4029,7 @@ function _checkRidingPauseTimer(nowArg){
 function _forceStartRiding(nowArg){
   _dbgLog('riding_state', {event:'force_start'});
   ridingState.paused = false;
+  _syncWidgetState();
   _ride.pauseStartedAt = null;
   _ride.hasStartedMoving = true;
   _ride.lastMovingT = nowArg || Date.now();
@@ -3976,6 +4041,7 @@ function _forceStartRiding(nowArg){
 function _pauseRiding(){
   _dbgLog('riding_state', {event:'pause'});
   ridingState.paused = true;
+  _syncWidgetState();
   _ride.pauseCount = (_ride.pauseCount || 0) + 1;
   // 감지된 시점이 아니라, 실제로 마지막까지 움직였던 시각으로 소급해서 "시간"만 정지로 처리
   // (거리/경로는 더 이상 롤백하지 않음 - 정체 구간에서 이동확정이 자주 끊기면 실제 주행거리까지 지워지는 문제가 있었음)
@@ -3992,6 +4058,7 @@ function _resumeRiding(resumeAt){
   var t = resumeAt || Date.now();
   if (_ride.pauseStartedAt) _ride.pausedMs = (_ride.pausedMs || 0) + (t - _ride.pauseStartedAt);
   ridingState.paused = false;
+  _syncWidgetState();
   _ride.pauseStartedAt = null;
   _persistRideProgress(true);
   updateRidingBar();
@@ -4724,6 +4791,19 @@ function _sosDoSend(phone, body, mapsUrl) {
   }
   document.addEventListener('DOMContentLoaded', updateRidingBar);
   if (document.readyState !== 'loading') updateRidingBar();
+
+  // 홈 화면 위젯 연동: 위젯 탭으로 앱이 열리며 전달되는 시작/종료 이벤트 수신
+  // (콜드 스타트로 리스너가 늦게 붙어도 네이티브 쪽에서 retainUntilConsumed로 재전달해줌)
+  _ensureWidgetActionListener();
+  var CapAppW = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if (CapAppW) {
+    CapAppW.addListener('resume', _ensureWidgetActionListener);
+  }
+  _syncWidgetState();
+  try{
+    var RidingLangW = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+    if(RidingLangW && RidingLangW.setLanguage) RidingLangW.setLanguage({lang:'ko'}).catch(function(){});
+  }catch(e){}
 })();
 
 // ═══════════════════════════════════════════
@@ -5125,6 +5205,8 @@ function renderAiGuide(guide, con, pct, bike) {
 const OWM_KEY = '2ada65daac7051c6dda621ccff724063';
 
 function shouldShowWeather() {
+  // 위젯으로 열린 세션이면 표시 안 함 (백그라운드 복귀 전에 못 닫고 남는 문제 방지)
+  if(_openedViaWidget) return false;
   // 날씨 자동 표시 설정이 OFF면 표시 안 함
   const settings = _getNotifSettings();
   if(settings.weatherAuto === false) return false;
