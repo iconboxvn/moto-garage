@@ -4942,7 +4942,7 @@ function showWeatherError(msg) {
 //  SOS 긴급 기능
 // ─────────────────────────────────────────
 function openSOS() {
-  document.querySelectorAll('#sos-checklist .sos-check').forEach(function(el){ el.classList.remove('checked'); el.textContent='☐'; });
+  document.querySelectorAll('.sos-checklist-item .sos-check').forEach(function(el){ el.classList.remove('checked'); el.textContent='☐'; });
   var med=getMedical();
   var insBtn=document.getElementById('sos-insurance-btn');
   if(med.insurance){
@@ -4951,10 +4951,39 @@ function openSOS() {
     insBtn.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:8px;text-align:center;">보험사 연락처를 의료 정보 카드에 등록해두세요</div>';
   }
   loadSOSLocation();
-  openModal('m-sos');
+  // 국가 판별 전에는 안전하게 "의료 정보 카드"만 보여주고, 동료 사고는 판별되면 노출
   var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
-  if (colleagueBtn) selectSOS('colleague', colleagueBtn);
+  var medicalBtn = document.querySelector('.sos-choice-btn[onclick*="medical"]');
+  if (colleagueBtn) colleagueBtn.style.display = 'none';
+  if (medicalBtn) selectSOS('medical', medicalBtn);
+  openModal('m-sos');
+  _sosResolveCountry();
   logAnalyticsEvent('sos_triggered', {type:'manual'});
+}
+
+// 위도/경도로 베트남/한국/그 외(제3국) 판별 - 정식 국가 API 없이 대략의 영토 범위로만 구분
+// (지금은 두 나라만 지원하면 되므로 단순 bounding box로 충분, 필요해지면 더 정교한 방식으로 교체)
+function _sosDetectCountry(lat, lon){
+  if (lat >= 8 && lat <= 24 && lon >= 102 && lon <= 110) return 'vn';
+  if (lat >= 33 && lat <= 39 && lon >= 124 && lon <= 132) return 'kr';
+  return 'etc';
+}
+
+var _sosCountry = null;
+function _sosResolveCountry(){
+  if (!navigator.geolocation) return; // 의료 정보 카드 폴백 유지
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      _sosCountry = _sosDetectCountry(pos.coords.latitude, pos.coords.longitude);
+      if (_sosCountry === 'vn' || _sosCountry === 'kr') {
+        var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
+        if (colleagueBtn) { colleagueBtn.style.display = ''; selectSOS('colleague', colleagueBtn); }
+      }
+      // 'etc'(제3국)는 현지 정보가 없으므로 의료 정보 카드 폴백을 그대로 유지
+    },
+    function(){ /* 위치 실패 시에도 의료 정보 카드 폴백 유지 */ },
+    {timeout: 8000, maximumAge: 60000}
+  );
 }
 
 function goToSosSettings(){
@@ -4970,7 +4999,9 @@ function goToSosSettings(){
 function selectSOS(type,el){
   document.querySelectorAll('.sos-choice-btn').forEach(function(b){b.classList.remove('selected');});
   el.classList.add('selected');
-  document.getElementById('sos-colleague').style.display=type==='colleague'?'block':'none';
+  var showColleague = type==='colleague';
+  document.getElementById('sos-colleague').style.display = (showColleague && _sosCountry!=='kr') ? 'block' : 'none';
+  document.getElementById('sos-colleague-kr').style.display = (showColleague && _sosCountry==='kr') ? 'block' : 'none';
   document.getElementById('sos-medical').style.display=type==='medical'?'block':'none';
   if(type==='medical') renderMedicalCard();
 }
@@ -4985,16 +5016,17 @@ function speakVietnamese(text){
 
 var sosLocationData=null;
 function loadSOSLocation(){
-  var el=document.getElementById('sos-location');
-  if(!el||!navigator.geolocation){if(el)el.textContent='위치 서비스 불가';return;}
+  var els=document.querySelectorAll('.sos-location-box');
+  if(!els.length||!navigator.geolocation){els.forEach(function(el){el.textContent='위치 서비스 불가';});return;}
   navigator.geolocation.getCurrentPosition(
     function(pos){
       var lat=pos.coords.latitude.toFixed(6);
       var lng=pos.coords.longitude.toFixed(6);
       sosLocationData=lat+', '+lng;
-      el.innerHTML='📍 <strong style="color:var(--accent);">'+lat+', '+lng+'</strong><br><span style="font-size:11px;">탭하면 복사 · Google Maps 열기</span>';
+      var html='📍 <strong style="color:var(--accent);">'+lat+', '+lng+'</strong><br><span style="font-size:11px;">탭하면 복사 · Google Maps 열기</span>';
+      els.forEach(function(el){el.innerHTML=html;});
     },
-    function(){ if(el) el.textContent='📍 위치를 불러올 수 없습니다'; }
+    function(){ els.forEach(function(el){el.textContent='📍 위치를 불러올 수 없습니다';}); }
   );
 }
 
@@ -5575,6 +5607,27 @@ function renderMedicalCard(){
         <div class="sos-section">
           <div class="sos-section-title"><span class="sos-step">5</span>사고 기록 (보험 처리용)</div>
           <div id="sos-checklist">
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 상대 차량 번호판 사진</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 차량 전체 사진</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 부상 부위 사진</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 도로 상황 사진</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 신호등/표지판 사진</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 목격자 연락처 확보</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 사고 일시/장소 메모</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- 동료 사고 (한국) -->
+      <div id="sos-colleague-kr" style="display:none;">
+        <div class="sos-section">
+          <div class="sos-section-title"><span class="sos-step">1</span>즉시 신고</div>
+          <a href="tel:112" class="sos-call-btn emergency"><div><div class="sos-call-name">🚔 경찰</div><div class="sos-call-sub">교통사고 · 범죄 신고</div></div><div class="sos-call-num">112</div></a>
+          <a href="tel:119" class="sos-call-btn emergency"><div><div class="sos-call-name">🚑 소방·구급</div><div class="sos-call-sub">응급 구조 요청</div></div><div class="sos-call-num">119</div></a>
+          <div class="sos-location-box" onclick="copySOSLocation()">📍 위치 불러오는 중... (탭하면 복사)</div>
+        </div>
+        <div class="sos-section">
+          <div class="sos-section-title"><span class="sos-step">2</span>사고 기록 (보험 처리용)</div>
+          <div id="sos-checklist-kr">
             <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 상대 차량 번호판 사진</div></div>
             <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 차량 전체 사진</div></div>
             <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 부상 부위 사진</div></div>
