@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Set-Location*)",
+      "PowerShell(Get-ChildItem*)",
+      "PowerShell(adb devices)",
+      "Bash(adb forward *)",
+      "PowerShell(Test-Path*)",
+      "Bash(adb logcat *)",
+      "PowerShell(adb logcat*)",
+      "PowerShell(Get-Content*)",
+      "PowerShell(Write-Output*)",
+      "Bash(adb devices)",
+      "PowerShell(Select-String*)"
+    ]
+  }
+}

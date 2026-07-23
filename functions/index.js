@@ -32,3 +32,4 @@ setGlobalOptions({ maxInstances: 10 });
 // });
 
 Object.assign(exports, require('./ridemate-notify'));
+Object.assign(exports, require('./brandNews'));

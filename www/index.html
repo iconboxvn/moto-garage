@@ -738,6 +738,22 @@ option{background:var(--surface2);}
       <button class="btn btn-sm" style="border-color:#4a3800;color:#a07820;" onclick="resetFirstLaunch()">↺ 첫 실행 상태로 초기화</button>
     </div>
   </div>
+
+  <!-- 바이크 소식 -->
+  <div class="page" id="page-brandNews">
+    <div class="sec-header"><span class="sec-title">🗞 바이크 소식</span><div class="sec-line"></div></div>
+    <div id="brand-news-cat-filter" style="display:flex;gap:6px;overflow-x:auto;padding:10px 0 12px;white-space:nowrap;position:sticky;top:calc(52px + env(safe-area-inset-top));background:var(--bg);z-index:50;">
+      <button class="brand-news-chip" data-cat="all" onclick="_brandNewsSelectCategory('all')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--accent);color:#fff;">전체</button>
+      <button class="brand-news-chip" data-cat="safety" onclick="_brandNewsSelectCategory('safety')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🚨 안전</button>
+      <button class="brand-news-chip" data-cat="product" onclick="_brandNewsSelectCategory('product')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🆕 신제품</button>
+      <button class="brand-news-chip" data-cat="tech" onclick="_brandNewsSelectCategory('tech')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🔧 기술</button>
+      <button class="brand-news-chip" data-cat="service" onclick="_brandNewsSelectCategory('service')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🛠 서비스</button>
+      <button class="brand-news-chip" data-cat="event" onclick="_brandNewsSelectCategory('event')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🎪 이벤트</button>
+      <button class="brand-news-chip" data-cat="policy" onclick="_brandNewsSelectCategory('policy')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">📋 정책</button>
+      <button class="brand-news-chip" data-cat="info" onclick="_brandNewsSelectCategory('info')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">💡 정보</button>
+    </div>
+    <div id="brand-news-debug-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
   <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a></div>
 </div>
 
@@ -1794,6 +1810,7 @@ function showPage(name,btn){
   if(name==='backup') renderBackupPage();
   if(name==='rideHistory') renderRideHistoryPage();
   if(name==='monthlyStats') openMonthlyStats();
+  if(name==='brandNews') renderBrandNewsPage();
   logAnalyticsEvent('app_screen_view', {screen_name:name});
 }
 
@@ -4142,6 +4159,117 @@ function loadCharactersFromFirestore(){
   }catch(e){ console.warn('[characters] 오류', e); }
 }
 
+// 바이크 소식 뷰어 ("소식" 탭 신설 전 임시 화면. CLAUDE.md 브랜드 소식 기능 설계 참고)
+var BRAND_NEWS_CATEGORY_LABEL = {
+  safety: '🚨 안전/리콜', product: '🆕 신제품', tech: '🔧 기술',
+  service: '🛠 서비스', event: '🎪 이벤트', policy: '📋 정책', info: '💡 정보/팁'
+};
+var BRAND_NEWS_MAX_AGE_MS = 2 * 365 * 86400000; // 발행일 기준 2년 이내만 노출
+var _brandNewsAllItems = [];
+var _brandNewsActiveCategory = 'all';
+
+function _brandNewsFmtDate(ts){
+  try{
+    var d = ts && ts.seconds ? new Date(ts.seconds*1000) : (ts ? new Date(ts) : null);
+    if(!d || isNaN(d.getTime())) return '';
+    return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+  }catch(e){ return ''; }
+}
+// 수집일(collectedAt) 기준 그룹핑용 — 발행일(publishedAt)과는 별개 표시
+function _brandNewsCollectedGroupInfo(ts){
+  try{
+    var d = ts && ts.seconds ? new Date(ts.seconds*1000) : (ts ? new Date(ts) : null);
+    if(!d || isNaN(d.getTime())) return {key:'unknown', sortTime:0, label:'수집일 미상'};
+    var startOfDay = function(x){ return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
+    var diffDays = Math.round((startOfDay(new Date()) - startOfDay(d)) / 86400000);
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    var label = diffDays === 0 ? '오늘 수집됨' : diffDays === 1 ? '어제 수집됨' : (d.getMonth()+1)+'월 '+d.getDate()+'일 수집됨';
+    return {key:key, sortTime:startOfDay(d), label:label};
+  }catch(e){ return {key:'unknown', sortTime:0, label:'수집일 미상'}; }
+}
+function _brandNewsCardHtml(d){
+  var title = (d.title && d.title.ko) || '(제목 없음)';
+  var summary = (d.summary && d.summary.ko) || '';
+  var catLabel = BRAND_NEWS_CATEGORY_LABEL[d.category] || d.category || '';
+  var isSafety = d.category === 'safety';
+  var cardStyle = 'border-radius:10px;padding:12px;'
+    + (isSafety ? 'background:var(--red-dim);border:1px solid rgba(208,64,64,0.35);border-left:3px solid var(--red);' : 'background:var(--surface2);');
+  var vnWarn = d.vnConfirmed === false
+    ? '<div style="font-size:13px;color:var(--orange,#e0a030);background:rgba(224,160,48,0.12);border-radius:6px;padding:5px 9px;margin-bottom:6px;">⚠ 해외(미국 등)에서 발표된 소식이며, 베트남 판매 차량 적용 여부는 확인되지 않았습니다</div>'
+    : '';
+  return '<div style="'+cardStyle+'">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+    + '<span style="font-size:13px;font-weight:700;color:'+(isSafety?'var(--red)':'var(--accent)')+';">'+catLabel+'</span>'
+    + '<span style="font-size:13px;color:var(--text-dim);">'+_brandNewsFmtDate(d.publishedAt)+'</span>'
+    + '</div>'
+    + '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">'+title+'</div>'
+    + vnWarn
+    + '<div style="font-size:14px;color:var(--text-dim);line-height:1.5;">'+summary+'</div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">'
+    + '<span style="font-size:13px;color:var(--text-muted);">'+(d.sourceName||'')+'</span>'
+    + (d.sourceUrl ? '<span data-url="'+String(d.sourceUrl).replace(/"/g,'&quot;')+'" onclick="window.open(this.dataset.url,\'_system\')" style="font-size:13px;color:var(--accent);text-decoration:underline;cursor:pointer;">원문 보기 →</span>' : '')
+    + '</div>'
+    + '</div>';
+}
+function _brandNewsRenderList(){
+  var el = document.getElementById('brand-news-debug-list');
+  if(!el) return;
+  var items = _brandNewsActiveCategory === 'all'
+    ? _brandNewsAllItems
+    : _brandNewsAllItems.filter(function(d){ return d.category === _brandNewsActiveCategory; });
+  if(!items.length){ el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px 0;">해당 카테고리에 소식이 없습니다</div>'; return; }
+
+  var groups = {};
+  items.forEach(function(d){
+    var g = _brandNewsCollectedGroupInfo(d.collectedAt);
+    if(!groups[g.key]) groups[g.key] = {label:g.label, sortTime:g.sortTime, items:[]};
+    groups[g.key].items.push(d);
+  });
+  var groupKeys = Object.keys(groups).sort(function(a,b){ return groups[b].sortTime - groups[a].sortTime; });
+
+  el.innerHTML = groupKeys.map(function(k){
+    var g = groups[k];
+    return '<div style="font-size:17px;font-weight:700;color:var(--text-dim);margin:16px 0 8px;padding-left:2px;">'+g.label+'</div>'
+      + '<div style="display:flex;flex-direction:column;gap:10px;">'+g.items.map(_brandNewsCardHtml).join('')+'</div>';
+  }).join('');
+}
+function _brandNewsSelectCategory(cat){
+  _brandNewsActiveCategory = cat;
+  document.querySelectorAll('#brand-news-cat-filter .brand-news-chip').forEach(function(c){
+    var active = c.dataset.cat === cat;
+    c.style.background = active ? 'var(--accent)' : 'var(--surface2)';
+    c.style.color = active ? '#fff' : 'var(--text)';
+  });
+  _brandNewsRenderList();
+}
+function renderBrandNewsPage(){
+  var el = document.getElementById('brand-news-debug-list');
+  if(!el) return;
+  el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px 0;">불러오는 중...</div>';
+  var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseFirestore;
+  if(!FS){ el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px 0;">Firestore 플러그인 없음</div>'; return; }
+  FS.getCollection({
+    reference: 'brand_news',
+    queryConstraints: [
+      {type:'orderBy', fieldPath:'publishedAt', directionStr:'desc'},
+      {type:'limit', limit:200}
+    ]
+  }).then(function(result){
+    var snapshots = (result && result.snapshots) || [];
+    var cutoff = Date.now() - BRAND_NEWS_MAX_AGE_MS;
+    _brandNewsAllItems = snapshots.map(function(s){ return s.data || {}; }).filter(function(d){
+      var ts = d.publishedAt;
+      var t = ts && ts.seconds ? ts.seconds*1000 : (ts ? new Date(ts).getTime() : 0);
+      return t >= cutoff;
+    });
+    if(!_brandNewsAllItems.length){ el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px 0;">아직 데이터 없음</div>'; return; }
+    _brandNewsActiveCategory = 'all';
+    _brandNewsSelectCategory('all');
+  }).catch(function(e){
+    el.innerHTML = '<div style="text-align:center;color:var(--red);padding:20px 0;">조회 실패: '+(e.message||e)+'</div>';
+  });
+}
+
 function renderCharacterPicker(){
   var c = RIDE_CHARACTERS.find(x=>x.id===window._selectedCharacterId) || RIDE_CHARACTERS[0];
   var img = document.getElementById('ride-summary-char-preview');
@@ -5941,6 +6069,9 @@ function renderMedicalCard(){
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');openModal('m-violation-info');">
         <span class="more-tile-icon">🚔</span><span class="more-tile-label">교통위반 조회</span>
+      </div>
+      <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('brandNews',document.getElementById('nav-more-btn'));">
+        <span class="more-tile-icon">🗞</span><span class="more-tile-label">바이크 소식</span>
       </div>
     </div>
   </div>

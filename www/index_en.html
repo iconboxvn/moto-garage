@@ -707,6 +707,22 @@ option{background:var(--surface2);}
       <button class="btn btn-sm" style="border-color:#4a3800;color:#a07820;" onclick="resetFirstLaunch()">↺ Reset First Launch</button>
     </div>
   </div>
+
+  <!-- Bike News -->
+  <div class="page" id="page-brandNews">
+    <div class="sec-header"><span class="sec-title">🗞 Bike News</span><div class="sec-line"></div></div>
+    <div id="brand-news-cat-filter" style="display:flex;gap:6px;overflow-x:auto;padding:10px 0 12px;white-space:nowrap;position:sticky;top:calc(52px + env(safe-area-inset-top));background:var(--bg);z-index:50;">
+      <button class="brand-news-chip" data-cat="all" onclick="_brandNewsSelectCategory('all')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--accent);color:#fff;">All</button>
+      <button class="brand-news-chip" data-cat="safety" onclick="_brandNewsSelectCategory('safety')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🚨 Safety</button>
+      <button class="brand-news-chip" data-cat="product" onclick="_brandNewsSelectCategory('product')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🆕 New</button>
+      <button class="brand-news-chip" data-cat="tech" onclick="_brandNewsSelectCategory('tech')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🔧 Tech</button>
+      <button class="brand-news-chip" data-cat="service" onclick="_brandNewsSelectCategory('service')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🛠 Service</button>
+      <button class="brand-news-chip" data-cat="event" onclick="_brandNewsSelectCategory('event')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🎪 Event</button>
+      <button class="brand-news-chip" data-cat="policy" onclick="_brandNewsSelectCategory('policy')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">📋 Policy</button>
+      <button class="brand-news-chip" data-cat="info" onclick="_brandNewsSelectCategory('info')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">💡 Info</button>
+    </div>
+    <div id="brand-news-debug-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
   <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a></div>
 </div>
 
@@ -1513,6 +1529,7 @@ function showPage(name,btn){
   if(name==='backup') renderBackupPage();
   if(name==='rideHistory') renderRideHistoryPage();
   if(name==='monthlyStats') openMonthlyStats();
+  if(name==='brandNews') renderBrandNewsPage();
   logAnalyticsEvent('app_screen_view', {screen_name:name});
 }
 
@@ -3982,6 +3999,116 @@ function loadCharactersFromFirestore(){
   }catch(e){ console.warn('[characters] error', e); }
 }
 
+// Bike News page (see CLAUDE.md brand news feature design)
+var BRAND_NEWS_CATEGORY_LABEL = {
+  safety: '🚨 Safety/Recall', product: '🆕 New Product', tech: '🔧 Tech',
+  service: '🛠 Service', event: '🎪 Event', policy: '📋 Policy', info: '💡 Info/Tips'
+};
+var BRAND_NEWS_MAX_AGE_MS = 2 * 365 * 86400000; // only show items published within the last 2 years
+var _brandNewsAllItems = [];
+var _brandNewsActiveCategory = 'all';
+
+function _brandNewsFmtDate(ts){
+  try{
+    var d = ts && ts.seconds ? new Date(ts.seconds*1000) : (ts ? new Date(ts) : null);
+    if(!d || isNaN(d.getTime())) return '';
+    return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+  }catch(e){ return ''; }
+}
+function _brandNewsCollectedGroupInfo(ts){
+  try{
+    var d = ts && ts.seconds ? new Date(ts.seconds*1000) : (ts ? new Date(ts) : null);
+    if(!d || isNaN(d.getTime())) return {key:'unknown', sortTime:0, label:'Collected date unknown'};
+    var startOfDay = function(x){ return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
+    var diffDays = Math.round((startOfDay(new Date()) - startOfDay(d)) / 86400000);
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    var label = diffDays === 0 ? 'Collected today' : diffDays === 1 ? 'Collected yesterday' : 'Collected '+(d.getMonth()+1)+'/'+d.getDate();
+    return {key:key, sortTime:startOfDay(d), label:label};
+  }catch(e){ return {key:'unknown', sortTime:0, label:'Collected date unknown'}; }
+}
+function _brandNewsCardHtml(d){
+  var title = (d.title && d.title.en) || '(No title)';
+  var summary = (d.summary && d.summary.en) || '';
+  var catLabel = BRAND_NEWS_CATEGORY_LABEL[d.category] || d.category || '';
+  var isSafety = d.category === 'safety';
+  var cardStyle = 'border-radius:10px;padding:12px;'
+    + (isSafety ? 'background:var(--red-dim);border:1px solid rgba(208,64,64,0.35);border-left:3px solid var(--red);' : 'background:var(--surface2);');
+  var vnWarn = d.vnConfirmed === false
+    ? '<div style="font-size:13px;color:var(--orange,#e0a030);background:rgba(224,160,48,0.12);border-radius:6px;padding:5px 9px;margin-bottom:6px;">⚠ Reported overseas (e.g. US); not yet confirmed whether it applies to vehicles sold in Vietnam</div>'
+    : '';
+  return '<div style="'+cardStyle+'">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+    + '<span style="font-size:13px;font-weight:700;color:'+(isSafety?'var(--red)':'var(--accent)')+';">'+catLabel+'</span>'
+    + '<span style="font-size:13px;color:var(--text-dim);">'+_brandNewsFmtDate(d.publishedAt)+'</span>'
+    + '</div>'
+    + '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">'+title+'</div>'
+    + vnWarn
+    + '<div style="font-size:14px;color:var(--text-dim);line-height:1.5;">'+summary+'</div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">'
+    + '<span style="font-size:13px;color:var(--text-muted);">'+(d.sourceName||'')+'</span>'
+    + (d.sourceUrl ? '<span data-url="'+String(d.sourceUrl).replace(/"/g,'&quot;')+'" onclick="window.open(this.dataset.url,\'_system\')" style="font-size:13px;color:var(--accent);text-decoration:underline;cursor:pointer;">View source →</span>' : '')
+    + '</div>'
+    + '</div>';
+}
+function _brandNewsRenderList(){
+  var el = document.getElementById('brand-news-debug-list');
+  if(!el) return;
+  var items = _brandNewsActiveCategory === 'all'
+    ? _brandNewsAllItems
+    : _brandNewsAllItems.filter(function(d){ return d.category === _brandNewsActiveCategory; });
+  if(!items.length){ el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px 0;">No news in this category</div>'; return; }
+
+  var groups = {};
+  items.forEach(function(d){
+    var g = _brandNewsCollectedGroupInfo(d.collectedAt);
+    if(!groups[g.key]) groups[g.key] = {label:g.label, sortTime:g.sortTime, items:[]};
+    groups[g.key].items.push(d);
+  });
+  var groupKeys = Object.keys(groups).sort(function(a,b){ return groups[b].sortTime - groups[a].sortTime; });
+
+  el.innerHTML = groupKeys.map(function(k){
+    var g = groups[k];
+    return '<div style="font-size:17px;font-weight:700;color:var(--text-dim);margin:16px 0 8px;padding-left:2px;">'+g.label+'</div>'
+      + '<div style="display:flex;flex-direction:column;gap:10px;">'+g.items.map(_brandNewsCardHtml).join('')+'</div>';
+  }).join('');
+}
+function _brandNewsSelectCategory(cat){
+  _brandNewsActiveCategory = cat;
+  document.querySelectorAll('#brand-news-cat-filter .brand-news-chip').forEach(function(c){
+    var active = c.dataset.cat === cat;
+    c.style.background = active ? 'var(--accent)' : 'var(--surface2)';
+    c.style.color = active ? '#fff' : 'var(--text)';
+  });
+  _brandNewsRenderList();
+}
+function renderBrandNewsPage(){
+  var el = document.getElementById('brand-news-debug-list');
+  if(!el) return;
+  el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px 0;">Loading...</div>';
+  var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseFirestore;
+  if(!FS){ el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px 0;">Firestore plugin not available</div>'; return; }
+  FS.getCollection({
+    reference: 'brand_news',
+    queryConstraints: [
+      {type:'orderBy', fieldPath:'publishedAt', directionStr:'desc'},
+      {type:'limit', limit:200}
+    ]
+  }).then(function(result){
+    var snapshots = (result && result.snapshots) || [];
+    var cutoff = Date.now() - BRAND_NEWS_MAX_AGE_MS;
+    _brandNewsAllItems = snapshots.map(function(s){ return s.data || {}; }).filter(function(d){
+      var ts = d.publishedAt;
+      var t = ts && ts.seconds ? ts.seconds*1000 : (ts ? new Date(ts).getTime() : 0);
+      return t >= cutoff;
+    });
+    if(!_brandNewsAllItems.length){ el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px 0;">No news yet</div>'; return; }
+    _brandNewsActiveCategory = 'all';
+    _brandNewsSelectCategory('all');
+  }).catch(function(e){
+    el.innerHTML = '<div style="text-align:center;color:var(--red);padding:20px 0;">Failed to load: '+(e.message||e)+'</div>';
+  });
+}
+
 function renderCharacterPicker(){
   var c = RIDE_CHARACTERS.find(x=>x.id===window._selectedCharacterId) || RIDE_CHARACTERS[0];
   var img = document.getElementById('ride-summary-char-preview');
@@ -5442,6 +5569,9 @@ function renderMedicalCard(){
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');openModal('m-violation-info');">
         <span class="more-tile-icon">🚔</span><span class="more-tile-label">Traffic Violation Check</span>
+      </div>
+      <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('brandNews',document.getElementById('nav-more-btn'));">
+        <span class="more-tile-icon">🗞</span><span class="more-tile-label">Bike News</span>
       </div>
     </div>
   </div>
