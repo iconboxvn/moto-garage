@@ -39,6 +39,7 @@ public class RidingPlugin extends Plugin {
                 data.put("lon",      intent.getDoubleExtra("lon", 0));
                 data.put("speed",    intent.getFloatExtra("speed", -1f));
                 data.put("accuracy", intent.getFloatExtra("accuracy", 0f));
+                data.put("speedAccuracy", intent.getFloatExtra("speedAccuracy", -1f));
                 data.put("time",     intent.getLongExtra("time", 0L));
                 notifyListeners("locationUpdate", data);
             }

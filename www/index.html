@@ -3700,6 +3700,7 @@ function _ensureWidgetActionListener(){
 var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
 var _ridingPauseTimer = null;
 var RIDING_MOVING_SPD   = 8;              // km/h 이상 샘플 1개만 봐도 즉시 "이동 확정" (GPS 노이즈로 20초 연속 조건이 실주행 중 깨지는 문제 방지 — 2026-07)
+var RIDING_MAX_SPEED_ACCURACY_MPS = 3;    // 네이티브가 넘겨준 속도 정확도(m/s)가 이보다 나쁘면 그 샘플은 신뢰 안 함 (도심 GPS 튐 방지)
 var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;  // 초당 이만큼 속도가 늘면 급가속으로 판정
 var RIDING_HARSH_BRAKE_KMH_PER_SEC = 15;  // 초당 이만큼 속도가 줄면 급감속으로 판정
 var RIDING_HARSH_EVENT_COOLDOWN_MS = 3000; // 같은 상황이 여러 번 중복 카운트되지 않도록 최소 간격
@@ -4413,7 +4414,9 @@ function _sosGPSStart() {
       if (speedMs !== null) {
         var kmh = speedMs * 3.6;
         _sos.speedOk = kmh >= _MIN_SPD;
-        if (kmh < 300) _rideTrackSpeed(kmh, now, loc.lat, loc.lon);
+        // 속도 정확도가 나쁜 샘플(도심 GPS 튐 등)은 최고속도/거리 추적에서 제외
+        var speedAcc = (loc.speedAccuracy !== undefined && loc.speedAccuracy >= 0) ? loc.speedAccuracy : null;
+        if (kmh < 300 && (speedAcc === null || speedAcc <= RIDING_MAX_SPEED_ACCURACY_MPS)) _rideTrackSpeed(kmh, now, loc.lat, loc.lon);
       }
 
       var lat = loc.lat, lon = loc.lon;

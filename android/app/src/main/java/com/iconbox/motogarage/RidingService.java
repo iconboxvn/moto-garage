@@ -44,6 +44,13 @@ public class RidingService extends Service {
                 broadcast.putExtra("lon", loc.getLongitude());
                 broadcast.putExtra("speed", loc.hasSpeed() ? loc.getSpeed() : -1f);
                 broadcast.putExtra("accuracy", loc.getAccuracy());
+                // 속도값 자체의 신뢰도(m/s). API 26 미만이거나 값이 없으면 -1로 넘겨서
+                // JS 쪽에서 "판단 불가"로 처리하게 한다.
+                float speedAccuracy = -1f;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && loc.hasSpeedAccuracy()) {
+                    speedAccuracy = loc.getSpeedAccuracyMetersPerSecond();
+                }
+                broadcast.putExtra("speedAccuracy", speedAccuracy);
                 broadcast.putExtra("time", loc.getTime());
                 // LocalBroadcastManager 사용 (앱 내부 통신, 보안 정책 우회)
                 LocalBroadcastManager.getInstance(RidingService.this).sendBroadcast(broadcast);

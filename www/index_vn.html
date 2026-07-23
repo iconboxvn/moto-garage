@@ -3586,6 +3586,7 @@ function _persistRideProgress(force){
     }));
   } catch(e){}
 }
+var RIDING_MAX_SPEED_ACCURACY_MPS = 3;    // 네이티브가 넘겨준 속도 정확도(m/s)가 이보다 나쁘면 그 샘플은 신뢰 안 함 (도심 GPS 튐 방지)
 var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;
 var RIDING_HARSH_BRAKE_KMH_PER_SEC = 15;
 var RIDING_HARSH_EVENT_COOLDOWN_MS = 3000;
@@ -4239,7 +4240,9 @@ function _sosGPSStart() {
       if (speedMs !== null) {
         var kmh = speedMs * 3.6;
         _sos.speedOk = kmh >= _MIN_SPD;
-        if (kmh < 300) _rideTrackSpeed(kmh, now, loc.lat, loc.lon);
+        // 속도 정확도가 나쁜 샘플(도심 GPS 튐 등)은 최고속도/거리 추적에서 제외
+        var speedAcc = (loc.speedAccuracy !== undefined && loc.speedAccuracy >= 0) ? loc.speedAccuracy : null;
+        if (kmh < 300 && (speedAcc === null || speedAcc <= RIDING_MAX_SPEED_ACCURACY_MPS)) _rideTrackSpeed(kmh, now, loc.lat, loc.lon);
       }
       var lat = loc.lat, lon = loc.lon;
       if (_ride.lastLat !== null) {
