@@ -1,0 +1,9 @@
+🆕 New
+- 🗞 Bike News: Daily recalls, new models, and maintenance tips (in the More menu)
+- 🏠 Home screen widget: Start/stop riding without opening the app
+- 📤 Share your monthly riding stats
+- 🎨 6 new rider characters
+
+🛠 Improvements & fixes
+- More accurate top speed calculation (added GPS noise filtering)
+- Fixed a bug where consumable replacement reminders weren't being sent

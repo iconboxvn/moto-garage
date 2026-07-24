@@ -1,0 +1,9 @@
+🆕 Mới
+- 🗞 Tin xe máy: Cập nhật hàng ngày về triệu hồi, xe mới, mẹo bảo dưỡng (menu Thêm)
+- 🏠 Widget màn hình chính: Bắt đầu/kết thúc chuyến đi không cần mở app
+- 📤 Chia sẻ thống kê theo tháng
+- 🎨 Thêm 6 nhân vật mới
+
+🛠 Cải thiện & sửa lỗi
+- Tính tốc độ tối đa chính xác hơn (lọc nhiễu GPS)
+- Sửa lỗi thông báo thay phụ tùng không được gửi
