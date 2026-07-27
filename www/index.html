@@ -4365,10 +4365,12 @@ function renderBrandNewsPage(){
 
 function renderCharacterPicker(){
   var c = RIDE_CHARACTERS.find(x=>x.id===window._selectedCharacterId) || RIDE_CHARACTERS[0];
-  var img = document.getElementById('ride-summary-char-preview');
-  var label = document.getElementById('ride-summary-char-preview-label');
-  if(img) img.src = c.thumb;
-  if(label) label.textContent = c.label;
+  ['ride-summary', 'character-card'].forEach(function(prefix){
+    var img = document.getElementById(prefix + '-char-preview');
+    var label = document.getElementById(prefix + '-char-preview-label');
+    if(img) img.src = c.thumb;
+    if(label) label.textContent = c.label;
+  });
 }
 
 function openCharacterPicker(){
@@ -4518,6 +4520,41 @@ function _rideCardDateStr(){
   return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
 }
 
+// 공유 카드 캡처용 캐릭터 이미지 로드 (원격 이미지는 data URL로 변환해 html2canvas CORS 문제 회피)
+async function loadCharacterImgForShare(charImg, chosenChar){
+  if(!charImg) return;
+  var targetSrc = chosenChar.file;
+  var isRemote = /^https?:\/\//.test(targetSrc);
+  if(isRemote){
+    try{
+      if(charImg.getAttribute('data-src-origin') !== targetSrc){
+        var resp = await fetch(targetSrc, {mode:'cors'});
+        var blob = await resp.blob();
+        var dataUrl = await new Promise(function(resolve, reject){
+          var reader = new FileReader();
+          reader.onloadend = function(){ resolve(reader.result); };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        charImg.src = dataUrl;
+        charImg.setAttribute('data-src-origin', targetSrc);
+      }
+    }catch(e){
+      console.warn('[share] 캐릭터 이미지 fetch 실패, 기존 이미지로 진행', e);
+    }
+  } else if(charImg.getAttribute('src') !== targetSrc){
+    charImg.src = targetSrc;
+    charImg.removeAttribute('data-src-origin');
+  }
+  if(!charImg.complete){
+    await new Promise(function(resolve){
+      charImg.onload = resolve;
+      charImg.onerror = resolve;
+      setTimeout(resolve, 3000);
+    });
+  }
+}
+
 async function shareRideCard(){
   var isAch = !!window._achievementMilestone;
   var s = window._lastRideSummary;
@@ -4553,39 +4590,7 @@ async function shareRideCard(){
     if(typeof html2canvas !== 'function'){ showToast('카드 생성 라이브러리를 불러오지 못했어요'); return; }
     var charImg = document.getElementById('rsc-character');
     var chosenChar = RIDE_CHARACTERS.find(c=>c.id===window._selectedCharacterId) || RIDE_CHARACTERS[0];
-    if(charImg){
-      var targetSrc = chosenChar.file;
-      var isRemote = /^https?:\/\//.test(targetSrc);
-      if(isRemote){
-        // 원격(파이어스토리지) 이미지는 fetch로 받아 data URL로 변환 후 세팅 → 캔버스 캡처 시 CORS로 막히는 걸 원천 차단
-        try{
-          if(charImg.getAttribute('data-src-origin') !== targetSrc){
-            var resp = await fetch(targetSrc, {mode:'cors'});
-            var blob = await resp.blob();
-            var dataUrl = await new Promise(function(resolve, reject){
-              var reader = new FileReader();
-              reader.onloadend = function(){ resolve(reader.result); };
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-            });
-            charImg.src = dataUrl;
-            charImg.setAttribute('data-src-origin', targetSrc);
-          }
-        }catch(e){
-          console.warn('[share] 캐릭터 이미지 fetch 실패, 기존 이미지로 진행', e);
-        }
-      } else if(charImg.getAttribute('src') !== targetSrc){
-        charImg.src = targetSrc;
-        charImg.removeAttribute('data-src-origin');
-      }
-    }
-    if(charImg && !charImg.complete){
-      await new Promise(function(resolve){
-        charImg.onload = resolve;
-        charImg.onerror = resolve;
-        setTimeout(resolve, 3000);
-      });
-    }
+    await loadCharacterImgForShare(charImg, chosenChar);
     var rawCanvas = await html2canvas(cardEl, {backgroundColor:null, scale:2});
     // 일부 안드로이드 웹뷰에서 투명 처리가 불안정한 경우가 있어 알파 채널을 명시한 새 캔버스에 다시 그려서 보정
     var canvas = document.createElement('canvas');
@@ -4609,6 +4614,55 @@ async function shareRideCard(){
       a.href = dataUrl; a.download = fileName; a.click();
     }
     logAnalyticsEvent(isAch ? 'achievement_card_shared' : 'ride_card_shared', {has_memo: !!memo});
+  } catch(e){
+    if(!(e && e.message && e.message.includes('cancel'))) showToast('카드 공유에 실패했어요: ' + (e.message||e));
+  } finally {
+    if(btn){ btn.textContent = origLabel; btn.disabled = false; }
+  }
+}
+
+// 라이딩 기록과 무관하게 캐릭터+문구만으로 카드를 만드는 진입점 (더보기 메뉴)
+function openCharacterCardModal(){
+  renderCharacterPicker();
+  var memoInput = document.getElementById('character-card-memo');
+  if(memoInput) memoInput.value = '';
+  openModal('m-character-card');
+}
+
+async function shareCharacterCard(){
+  var btn = document.getElementById('character-card-share-btn');
+  var origLabel = btn ? btn.textContent : '';
+  if(btn){ btn.textContent = '카드 생성 중...'; btn.disabled = true; }
+  try{
+    if(typeof html2canvas !== 'function'){ showToast('카드 생성 라이브러리를 불러오지 못했어요'); return; }
+    var chosenChar = RIDE_CHARACTERS.find(c=>c.id===window._selectedCharacterId) || RIDE_CHARACTERS[0];
+    var memo = (document.getElementById('character-card-memo').value||'').trim() || '헬멧 끈까지 딱 조이고 출발!';
+    document.getElementById('csc-memo').textContent = '"' + memo + '"';
+    var charImg = document.getElementById('csc-character');
+    await loadCharacterImgForShare(charImg, chosenChar);
+    var cardEl = document.getElementById('character-share-card');
+    var rawCanvas = await html2canvas(cardEl, {backgroundColor:null, scale:2});
+    var canvas = document.createElement('canvas');
+    canvas.width = rawCanvas.width;
+    canvas.height = rawCanvas.height;
+    var ctx = canvas.getContext('2d', {alpha:true});
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(rawCanvas, 0, 0);
+    var dataUrl = canvas.toDataURL('image/png');
+    var base64 = dataUrl.split(',')[1];
+    var fileName = `ridemate-character-${Date.now()}.png`;
+
+    var Filesystem = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
+    var Share = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
+    if(Filesystem && Share){
+      await Filesystem.writeFile({ path: fileName, data: base64, directory: 'CACHE' });
+      var fileResult = await Filesystem.getUri({ path: fileName, directory: 'CACHE' });
+      await Share.share({ title: 'Ridemate 캐릭터 카드', url: fileResult.uri, dialogTitle: '캐릭터 카드 공유' });
+    } else {
+      var a = document.createElement('a');
+      a.href = dataUrl; a.download = fileName; a.click();
+    }
+    logAnalyticsEvent('character_card_shared', {has_memo: !!memo});
   } catch(e){
     if(!(e && e.message && e.message.includes('cancel'))) showToast('카드 공유에 실패했어요: ' + (e.message||e));
   } finally {
@@ -6168,6 +6222,9 @@ function renderMedicalCard(){
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('brandNews',document.getElementById('nav-more-btn'));">
         <span class="more-tile-icon">🗞</span><span class="more-tile-label">바이크 소식</span>
       </div>
+      <div class="more-sheet-tile" onclick="closeModal('m-more');openCharacterCardModal();">
+        <img src="./assets/status/status_1_happy.png" class="more-tile-icon" style="width:28px;height:28px;margin:0 auto 8px;" alt=""><span class="more-tile-label">캐릭터 카드</span>
+      </div>
     </div>
   </div>
 </div>
@@ -6288,8 +6345,36 @@ function renderMedicalCard(){
       </div>
     </div>
     <div class="modal-footer" style="flex-direction:column;gap:8px;">
-      <button class="btn btn-primary" id="ride-summary-share-btn" style="width:100%;" onclick="shareRideCard()">SNS로 공유하기</button>
+      <button class="btn btn-primary" id="ride-summary-share-btn" style="width:100%;justify-content:center;" onclick="shareRideCard()">SNS로 공유하기</button>
       <button class="btn btn-sm" style="width:100%;justify-content:center;" onclick="closeModal('m-ride-summary')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 캐릭터 카드 모달 (라이딩 기록과 무관하게 캐릭터+문구만 공유) -->
+<!-- ⚠ m-character-picker보다 DOM 순서상 앞에 있어야 함: 모달이 겹쳐 열릴 때 나중에 나오는 요소가 위에 그려지는데,
+     여기서 openCharacterPicker()를 호출하므로 픽커가 항상 이 모달보다 위에 와야 함 -->
+<div class="modal-overlay" id="m-character-card">
+  <div class="modal" style="max-width:320px;">
+    <div class="modal-header"><span class="modal-title">🎨 캐릭터 카드</span><button class="modal-close" onclick="closeModal('m-character-card')">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">🏍 캐릭터 선택</div>
+      <div onclick="openCharacterPicker()" style="display:flex;align-items:center;gap:12px;background:var(--surface,#161618);border:1px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;">
+        <div style="width:52px;height:52px;border-radius:8px;background:#000;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <img id="character-card-char-preview" src="" style="width:100%;height:100%;object-fit:contain;">
+        </div>
+        <div style="flex:1;">
+          <div id="character-card-char-preview-label" style="font-size:14px;font-weight:600;color:var(--text);"></div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">탭해서 다른 캐릭터로 변경</div>
+        </div>
+        <div style="font-size:18px;color:var(--text-dim);">›</div>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin:14px 0 6px;">📝 한마디 문구</div>
+      <input type="text" class="form-input" id="character-card-memo" placeholder="예: 헬멧 끈까지 딱 조이고 출발!" maxlength="40" style="font-size:13px;">
+    </div>
+    <div class="modal-footer" style="flex-direction:column;gap:8px;">
+      <button class="btn btn-primary" id="character-card-share-btn" style="width:100%;justify-content:center;" onclick="shareCharacterCard()">카드 공유하기</button>
+      <button class="btn btn-sm" style="width:100%;justify-content:center;" onclick="closeModal('m-character-card')">닫기</button>
     </div>
   </div>
 </div>
@@ -6356,6 +6441,13 @@ function renderMedicalCard(){
   </div>
 
   <div style="text-align:center;padding:22px 24px 26px;font-style:italic;color:#7a7264;font-size:16px;font-weight:600;">"Ride Together. Keep the Memories"</div>
+</div>
+
+<!-- 캐릭터 카드 템플릿 (라이딩 기록 없이 캐릭터+문구만, 화면 밖에 렌더링 후 html2canvas로 캡처) -->
+<div id="character-share-card" style="position:fixed;top:0;left:-9999px;width:420px;height:520px;background:#BACEE0;font-family:'Inter',sans-serif;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#e02020;margin-bottom:24px;">RIDEMATE</div>
+  <img id="csc-character" src="./assets/characters/char_01.png" crossorigin="anonymous" style="width:230px;height:auto;">
+  <div id="csc-memo" style="margin-top:24px;font-size:26px;font-weight:800;color:#1f2a3a;text-align:center;line-height:1.35;word-break:keep-all;"></div>
 </div>
 
 <!-- SOS 모달 -->
