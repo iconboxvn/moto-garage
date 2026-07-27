@@ -1978,6 +1978,7 @@ function _renderDashInner(){
         </div>`;
       })()}
     </div>
+    <div id="fuel-price-card"></div>
     <div class="sec-header"><span class="sec-title">최근 정비</span><div class="sec-line"></div></div>
     ${recentHistory.length
       ?`<div class="card" style="padding:0;overflow:hidden;"><table class="log-table"><tbody>
@@ -2008,6 +2009,7 @@ function _renderDashInner(){
         <div style="font-size:19px;font-weight:800;color:var(--accent);margin-top:2px;">${Math.round(monthMaxSpeed)} km/h</div>
       </div>
     </div>`;
+  try{ renderFuelPriceCard(); }catch(e){}
 }
 
 function selectDashBike(id){ dashSelectedBikeId=id; renderDash(); }
@@ -4159,6 +4161,97 @@ function loadCharactersFromFirestore(){
   }catch(e){ console.warn('[characters] 오류', e); }
 }
 
+// 유가 카드 (홈 화면. CLAUDE.md 유가 정보 기능 설계 참고)
+const FUEL_PRICE_CACHE_KEY = 'mg2-fuelprice-cache';
+var _fuelPriceLatest = null;
+var _fuelPricePrev = null;
+
+// 로컬 캐시에 저장된 유가가 있으면 즉시 적용 (네트워크 응답 기다리지 않고 바로 표시)
+function loadFuelPriceFromCache(){
+  var raw = localStorage.getItem(FUEL_PRICE_CACHE_KEY);
+  if(!raw) return;
+  var cached = JSON.parse(raw);
+  if(cached && cached.latest){ _fuelPriceLatest = cached.latest; _fuelPricePrev = cached.prev || null; }
+}
+
+// Firestore에서 최신 유가 2건(최신+직전, 증감 계산용)을 가져와 교체 + 캐싱
+function loadFuelPriceFromFirestore(){
+  try{
+    var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseFirestore;
+    if(!FS){ console.log('[fuelPrice] Firestore 플러그인 없음, 캐시 사용'); return; }
+    FS.getCollection({
+      reference: 'fuel_prices',
+      queryConstraints: [
+        {type:'orderBy', fieldPath:'effectiveAt', directionStr:'desc'},
+        {type:'limit', limit:2}
+      ]
+    }).then(function(result){
+      var snapshots = (result && result.snapshots) || [];
+      var docs = snapshots.map(function(s){ return s.data || {}; });
+      if(!docs.length) return;
+      _fuelPriceLatest = docs[0];
+      _fuelPricePrev = docs[1] || null;
+      localStorage.setItem(FUEL_PRICE_CACHE_KEY, JSON.stringify({latest:_fuelPriceLatest, prev:_fuelPricePrev}));
+      try{ renderFuelPriceCard(); }catch(e){}
+    }).catch(function(e){ console.warn('[fuelPrice] Firestore 조회 실패, 캐시 유지', e); });
+  }catch(e){ console.warn('[fuelPrice] 오류', e); }
+}
+
+function _fuelPriceTs(ts){
+  return ts && ts.seconds ? ts.seconds*1000 : (ts ? new Date(ts).getTime() : 0);
+}
+
+function _fuelPriceFmtEffective(ts){
+  var t = _fuelPriceTs(ts);
+  if(!t) return '';
+  var d = new Date(t);
+  return (d.getMonth()+1)+'월 '+d.getDate()+'일 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' 기준';
+}
+
+function _fuelPriceRow(label, price, delta){
+  if(price==null) return '';
+  var deltaHtml = '';
+  if(delta){
+    var up = delta > 0;
+    deltaHtml = '<span style="font-size:12px;font-weight:700;color:'+(up?'var(--red)':'var(--green)')+';margin-left:6px;">'+(up?'▲':'▼')+' '+Math.abs(delta).toLocaleString()+'</span>';
+  } else if(delta === 0){
+    deltaHtml = '<span style="font-size:12px;color:var(--text-dim);margin-left:6px;">-</span>';
+  }
+  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;">'
+    + '<span style="font-size:13px;color:var(--text-dim);">'+label+'</span>'
+    + '<span style="font-size:15px;font-weight:700;color:var(--text);">'+price.toLocaleString()+'đ/L'+deltaHtml+'</span>'
+    + '</div>';
+}
+
+// VietnamNet은 자체 발표가 아니라 MOIT(Bộ Công Thương) 자료를 재인용한 기사라, 링크는
+// VietnamNet 원문으로 정직하게 유지하면서 원 데이터 출처도 같이 밝힌다. MOIT 폴백
+// 소스는 그 자체가 공식 채널이라 별도 표기 불필요.
+function _fuelPriceSourceLabel(sourceName){
+  if(sourceName === 'VietnamNet') return 'VietnamNet (자료: Bộ Công Thương)';
+  return sourceName;
+}
+function renderFuelPriceCard(){
+  var el = document.getElementById('fuel-price-card');
+  if(!el) return;
+  if(!_fuelPriceLatest || !_fuelPriceLatest.prices){ el.innerHTML=''; return; }
+  var p = _fuelPriceLatest.prices || {};
+  var d = _fuelPriceLatest.deltas || {};
+  var ts = _fuelPriceLatest.effectiveAt;
+  var t = _fuelPriceTs(ts);
+  var stale = t && (Date.now() - t) > 10*86400000; // 10일 이상 지나면 "갱신 지연" 표시
+  var sourceName = _fuelPriceLatest.sourceName || '';
+  var metaText = _fuelPriceFmtEffective(ts) + (sourceName ? ' · '+_fuelPriceSourceLabel(sourceName) : '');
+  el.innerHTML = '<div class="card" style="padding:14px 16px;margin-bottom:14px;">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+    + '<span style="font-size:17px;color:var(--text-dim);">⛽ 유가</span>'
+    + (stale ? '<span style="font-size:11px;color:var(--text-muted);">갱신 지연 중</span>' : '')
+    + '</div>'
+    + _fuelPriceRow('E5 RON92', p.e5_ron92, d.e5_ron92)
+    + _fuelPriceRow('E10 RON95', p.e10_ron95, d.e10_ron95)
+    + '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">'+metaText+'</div>'
+    + '</div>';
+}
+
 // 바이크 소식 뷰어 ("소식" 탭 신설 전 임시 화면. CLAUDE.md 브랜드 소식 기능 설계 참고)
 var BRAND_NEWS_CATEGORY_LABEL = {
   safety: '🚨 안전/리콜', product: '🆕 신제품', tech: '🔧 기술',
@@ -5210,6 +5303,8 @@ window.addEventListener('load', function(){
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
   safe(loadCharactersFromCache, 'loadCharactersFromCache');
   loadCharactersFromFirestore();
+  safe(loadFuelPriceFromCache, 'loadFuelPriceFromCache');
+  loadFuelPriceFromFirestore();
   renderDash();
   renderSampleBanner();
   if(localStorage.getItem('mg2-onboarding-pending') === '1'){
