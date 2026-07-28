@@ -267,7 +267,7 @@ option{background:var(--surface2);}
   .ai-guide-footer {
     padding:14px 18px;
     border-top:1px solid var(--border);
-    display:flex; gap:8px; justify-content:flex-end;
+    display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;
     position:sticky; bottom:0; background:var(--surface);
   }
   .ai-error {
@@ -882,6 +882,50 @@ option{background:var(--surface2);}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('m-consumable')">Cancel</button>
       <button class="btn btn-primary" onclick="saveConsumable()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Checked, not replaced -->
+<div class="modal-overlay" id="m-consumable-check">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="cc-title">Check complete</span><button class="modal-close" onclick="closeModal('m-consumable-check')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">1</span>Check date</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="cc-date-pills">
+          <div class="pill selected" onclick="selectCcDate('today',this)">Today</div>
+          <div class="pill" onclick="selectCcDate('yesterday',this)">Yesterday</div>
+          <div class="pill" onclick="selectCcDate('pick',this)">Pick date</div>
+        </div>
+        <input type="date" class="form-input" id="cc-date-input" style="display:none;max-width:200px;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="step-label"><span class="step-num">2</span>How much further can you ride?</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Use what the mechanic told you, or a rough estimate.</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="cc-extend-pills">
+          <div class="pill" onclick="setCcExtend(1000,this)">+1,000 km</div>
+          <div class="pill" onclick="setCcExtend(2000,this)">+2,000 km</div>
+          <div class="pill" onclick="setCcExtend(3000,this)">+3,000 km</div>
+          <div class="pill" onclick="setCcExtend(5000,this)">+5,000 km</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="number" class="num-input-styled" id="cc-extend" style="width:140px;">
+          <span style="font-size:12px;color:var(--text-dim);">km</span>
+        </div>
+      </div>
+      <div>
+        <div class="step-label"><span class="step-num">3</span>Note (optional)</div>
+        <div class="pill-group" style="margin-bottom:8px;" id="cc-memo-pills">
+          <div class="pill" onclick="setCcMemo('Cleaned only',this)">Cleaned only</div>
+          <div class="pill" onclick="setCcMemo('Mechanic confirmed — still has life left',this)">Still has life left</div>
+        </div>
+        <input type="text" class="form-input" id="cc-memo" placeholder="Notes about the check">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('m-consumable-check')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveConsumCheck()">Save</button>
     </div>
   </div>
 </div>
@@ -2298,6 +2342,50 @@ function saveConsumable(){
   scheduleConsumableAlerts();
   showToast(`✓ ${c.name} replacement recorded`);
   logAnalyticsEvent('consumable_updated', {consumable_name:c.name});
+}
+
+// Checked but not replaced — instead of resetting lastKm all the way to the current
+// odometer, push it forward by only the chosen amount, so the full interval (c.km) stays
+// the same and this is just a one-time grace period.
+var ccDateVal = todayStr();
+function openConsumCheckModal(cId){
+  if(!D.bikes.length) return;
+  const bike=D.bikes[cState.bikeIdx];
+  const c=bike.consumables.find(x=>x.id===cId);
+  cState.cId=cId;
+  document.getElementById('cc-title').textContent=c.name+' — Check complete';
+  clearPills('cc-date-pills');
+  document.querySelector('#cc-date-pills .pill').classList.add('selected');
+  ccDateVal=todayStr();
+  document.getElementById('cc-date-input').style.display='none';
+  clearPills('cc-extend-pills');
+  document.getElementById('cc-extend').value='';
+  clearPills('cc-memo-pills');
+  document.getElementById('cc-memo').value='';
+  openModal('m-consumable-check');
+}
+function selectCcDate(type,el){
+  clearPills(el.parentElement); el.classList.add('selected');
+  const inp=document.getElementById('cc-date-input');
+  if(type==='pick'){ inp.style.display='block'; inp.value=todayStr(); }
+  else { inp.style.display='none'; ccDateVal=type==='today'?todayStr():yesterdayStr(); }
+}
+function setCcExtend(val,el){ clearPills('cc-extend-pills'); el.classList.add('selected'); document.getElementById('cc-extend').value=val; }
+function setCcMemo(val,el){ clearPills('cc-memo-pills'); el.classList.add('selected'); document.getElementById('cc-memo').value=val; }
+
+function saveConsumCheck(){
+  const bike=D.bikes[cState.bikeIdx];
+  const c=bike.consumables.find(x=>x.id===cState.cId);
+  const extendVal=parseInt(document.getElementById('cc-extend').value)||0;
+  const dateInp=document.getElementById('cc-date-input');
+  const date=dateInp.style.display!=='none'?dateInp.value:ccDateVal;
+  const memo=document.getElementById('cc-memo').value;
+  c.lastKm=(c.lastKm||0)+extendVal;
+  D.history.push({id:Date.now(),bikeId:bike.id,consumableId:c.id,date,km:bike.odometer,type:'Inspection',desc:c.name+' checked — replacement deferred'+(memo?' — '+memo:''),cost:'',shop:memo});
+  save(); closeModal('m-consumable-check'); renderConsumables(); renderDash();
+  scheduleConsumableAlerts();
+  showToast(`✓ ${c.name} check recorded`);
+  logAnalyticsEvent('consumable_checked', {consumable_name:c.name});
 }
 
 // 소모품 수정
@@ -5640,8 +5728,11 @@ function renderMedicalCard(){
     </div>
     <div class="ai-guide-footer">
       <button class="btn" onclick="closeModal('m-ai-guide')">Close</button>
+      <button class="btn btn-primary" onclick="closeModal('m-ai-guide');openConsumCheckModal(currentGuideId)">
+        🔍 Check Complete
+      </button>
       <button class="btn btn-primary" onclick="closeModal('m-ai-guide');openConsumModal(currentGuideId)">
-        🔧 Log Replacement
+        🔧 Replacement Complete
       </button>
     </div>
   </div>
