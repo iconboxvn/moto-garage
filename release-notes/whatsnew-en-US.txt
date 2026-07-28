@@ -1,9 +1,9 @@
 🆕 New
-- 🗞 Bike News: Daily recalls, new models, and maintenance tips (in the More menu)
-- 🏠 Home screen widget: Start/stop riding without opening the app
-- 📤 Share your monthly riding stats
-- 🎨 6 new rider characters
+- ⛽ Fuel price card: Today's fuel prices and change from last update, on the home screen
+- 🎴 Character card sharing: Share just your character and a message, no ride needed
+- 🧑‍💼 15 new office-themed characters, with Riding/Office tabs
 
 🛠 Improvements & fixes
-- More accurate top speed calculation (added GPS noise filtering)
-- Fixed a bug where consumable replacement reminders weren't being sent
+- Much faster card generation
+- Cleaned up share card layout (bigger character, fixed logo position)
+- Leaving the message blank now keeps the card blank (no placeholder text)

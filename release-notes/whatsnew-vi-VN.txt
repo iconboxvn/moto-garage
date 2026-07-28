@@ -1,9 +1,9 @@
 🆕 Mới
-- 🗞 Tin xe máy: Cập nhật hàng ngày về triệu hồi, xe mới, mẹo bảo dưỡng (menu Thêm)
-- 🏠 Widget màn hình chính: Bắt đầu/kết thúc chuyến đi không cần mở app
-- 📤 Chia sẻ thống kê theo tháng
-- 🎨 Thêm 6 nhân vật mới
+- ⛽ Thẻ giá xăng: Xem giá xăng hôm nay và mức tăng/giảm so với lần điều chỉnh trước ngay ở màn hình chính
+- 🎴 Chia sẻ thẻ nhân vật: Chỉ chia sẻ nhân vật + lời nhắn, không cần chuyến đi
+- 🧑‍💼 Thêm 15 nhân vật chủ đề công sở, phân tab Đi xe/Công sở
 
 🛠 Cải thiện & sửa lỗi
-- Tính tốc độ tối đa chính xác hơn (lọc nhiễu GPS)
-- Sửa lỗi thông báo thay phụ tùng không được gửi
+- Tạo thẻ nhanh hơn nhiều
+- Chỉnh lại bố cục thẻ chia sẻ (nhân vật to hơn, logo cố định vị trí)
+- Để trống lời nhắn thì thẻ giữ trống, không chèn câu mẫu
