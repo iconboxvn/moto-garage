@@ -3720,6 +3720,7 @@ var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0,
 var _ridingPauseTimer = null;
 var RIDING_MOVING_SPD   = 8;              // km/h 이상 샘플 1개만 봐도 즉시 "이동 확정" (GPS 노이즈로 20초 연속 조건이 실주행 중 깨지는 문제 방지 — 2026-07)
 var RIDING_MAX_SPEED_ACCURACY_MPS = 3;    // 네이티브가 넘겨준 속도 정확도(m/s)가 이보다 나쁘면 그 샘플은 신뢰 안 함 (도심 GPS 튐 방지)
+var RIDING_MAX_POS_ACCURACY_M = 30;       // GPS 위치 정확도(m)가 이보다 나쁘면 경로/거리 기록에서 제외 (터널·지하차도 멀티패스 방지)
 var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;  // 초당 이만큼 속도가 늘면 급가속으로 판정
 var RIDING_HARSH_BRAKE_KMH_PER_SEC = 15;  // 초당 이만큼 속도가 줄면 급감속으로 판정
 var RIDING_HARSH_EVENT_COOLDOWN_MS = 3000; // 같은 상황이 여러 번 중복 카운트되지 않도록 최소 간격
@@ -4182,6 +4183,27 @@ const FUEL_PRICE_CACHE_KEY = 'mg2-fuelprice-cache';
 var _fuelPriceLatest = null;
 var _fuelPricePrev = null;
 
+// 베트남 유가라 한국에서 타는 사용자에겐 의미가 없음 - 위치 권한이 이미 허용되어 있으면
+// GPS로 국가를 판별해서 한국이면 카드를 숨긴다. 권한이 아직 없으면 새로 요청하지 않고
+// (홈 화면 첫 진입부터 위치 권한 팝업이 뜨는 걸 피하기 위해) 기존처럼 그냥 보여준다.
+var _homeCountry = null;
+var _homeCountryResolveAttempted = false;
+function _resolveHomeCountryIfPermitted(){
+  if (_homeCountryResolveAttempted) return;
+  _homeCountryResolveAttempted = true;
+  var Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+  if (!Geo || !Geo.checkPermissions) return;
+  Geo.checkPermissions().then(function(perm){
+    var granted = perm && (perm.location === 'granted' || perm.coarseLocation === 'granted');
+    if (!granted) return;
+    return Geo.getCurrentPosition({enableHighAccuracy:false, timeout:5000, maximumAge:600000});
+  }).then(function(pos){
+    if (!pos) return;
+    _homeCountry = _sosDetectCountry(pos.coords.latitude, pos.coords.longitude);
+    if (_homeCountry === 'kr') renderFuelPriceCard();
+  }).catch(function(){});
+}
+
 // 로컬 캐시에 저장된 유가가 있으면 즉시 적용 (네트워크 응답 기다리지 않고 바로 표시)
 function loadFuelPriceFromCache(){
   var raw = localStorage.getItem(FUEL_PRICE_CACHE_KEY);
@@ -4249,6 +4271,8 @@ function _fuelPriceSourceLabel(sourceName){
 function renderFuelPriceCard(){
   var el = document.getElementById('fuel-price-card');
   if(!el) return;
+  _resolveHomeCountryIfPermitted();
+  if(_homeCountry === 'kr'){ el.innerHTML=''; return; }
   if(!_fuelPriceLatest || !_fuelPriceLatest.prices){ el.innerHTML=''; return; }
   var p = _fuelPriceLatest.prices || {};
   var d = _fuelPriceLatest.deltas || {};
@@ -4729,9 +4753,12 @@ function _sosGPSStart() {
     RidingPlugin.addListener('locationUpdate', function(loc) {
       // GPS가 실제로 찍힌 시각을 사용 (JS가 백그라운드에서 지연/몰아서 처리해도 시간 계산이 안 틀어지게)
       var now = (loc.time && loc.time > 0) ? loc.time : Date.now();
+      // 위치 정확도가 나쁜 샘플(터널·지하차도 등 멀티패스)은 경로/거리/속도 추적에서 통째로 제외
+      var posAcc = (loc.accuracy !== undefined && loc.accuracy >= 0) ? loc.accuracy : null;
+      var posOk = (posAcc === null || posAcc <= RIDING_MAX_POS_ACCURACY_M);
       var speedMs = (loc.speed !== undefined && loc.speed >= 0) ? loc.speed : null;
 
-      if (speedMs !== null) {
+      if (speedMs !== null && posOk) {
         var kmh = speedMs * 3.6;
         _sos.speedOk = kmh >= _MIN_SPD;
         // 속도 정확도가 나쁜 샘플(도심 GPS 튐 등)은 최고속도/거리 추적에서 제외
@@ -4740,7 +4767,7 @@ function _sosGPSStart() {
       }
 
       var lat = loc.lat, lon = loc.lon;
-      if (_ride.lastLat !== null) {
+      if (posOk && _ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
         var dtH = (now - _ride.lastT) / 3600000;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
@@ -4750,10 +4777,10 @@ function _sosGPSStart() {
           _rideTrackSpeed(instKmh, now, lat, lon);
         }
         if (instKmh < 300) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
-      } else {
+      } else if (posOk) {
         _ride.path.push({lat:lat, lon:lon, t:now});
       }
-      _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
+      if (posOk) { _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now; }
       _updateRidingSpeedUI();
       // 일시정지/강제출발 안전장치 - setInterval이 백그라운드에서 멈춰도 GPS 이벤트가 들어올 때마다 한 번 더 체크
       // (밀린 데이터를 몰아서 처리하는 경우를 대비해 이 GPS 이벤트의 실측 시각을 넘긴다)
@@ -4769,14 +4796,17 @@ function _sosGPSStart() {
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
       var now = (p.timestamp && p.timestamp > 0) ? p.timestamp : Date.now();
+      // 위치 정확도가 나쁜 샘플(터널·지하차도 등 멀티패스)은 경로/거리/속도 추적에서 통째로 제외
+      var posAcc = (p.coords.accuracy !== undefined && p.coords.accuracy >= 0) ? p.coords.accuracy : null;
+      var posOk = (posAcc === null || posAcc <= RIDING_MAX_POS_ACCURACY_M);
       var spd = p.coords.speed;
-      if (spd !== null && spd !== undefined) {
+      if (spd !== null && spd !== undefined && posOk) {
         _sos.speedOk = (spd * 3.6) >= _MIN_SPD;
         var kmh = spd * 3.6;
         if (kmh < 300) _rideTrackSpeed(kmh, now, p.coords.latitude, p.coords.longitude);
       }
       var lat = p.coords.latitude, lon = p.coords.longitude;
-      if (_ride.lastLat !== null) {
+      if (posOk && _ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
         var dtH = (now - _ride.lastT) / 3600000;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
@@ -4785,10 +4815,10 @@ function _sosGPSStart() {
           _rideTrackSpeed(instKmh, now, lat, lon);
         }
         if (instKmh < 300) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
-      } else {
+      } else if (posOk) {
         _ride.path.push({lat:lat, lon:lon, t:now});
       }
-      _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
+      if (posOk) { _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now; }
       _updateRidingSpeedUI();
       if (ridingState.active) _checkRidingPauseTimer(now);
       _persistRideProgress();

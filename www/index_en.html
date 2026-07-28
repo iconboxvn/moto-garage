@@ -3605,6 +3605,7 @@ function _persistRideProgress(force){
   } catch(e){}
 }
 var RIDING_MAX_SPEED_ACCURACY_MPS = 3;    // discard samples whose native speed accuracy (m/s) is worse than this (urban GPS spike guard)
+var RIDING_MAX_POS_ACCURACY_M = 30;       // discard samples whose GPS position accuracy (m) is worse than this (tunnel/underpass multipath guard)
 var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;  // harsh acceleration threshold (km/h gained per second)
 var RIDING_HARSH_BRAKE_KMH_PER_SEC = 15;  // harsh braking threshold (km/h lost per second)
 var RIDING_HARSH_EVENT_COOLDOWN_MS = 3000; // minimum gap between counted events to avoid double-counting
@@ -4022,6 +4023,28 @@ const FUEL_PRICE_CACHE_KEY = 'mg2-fuelprice-cache';
 var _fuelPriceLatest = null;
 var _fuelPricePrev = null;
 
+// This is Vietnam fuel pricing, meaningless for a user riding in Korea - if location
+// permission is already granted, detect the country via GPS and hide the card in Korea.
+// If permission isn't granted yet, don't request it just for this (avoid a location
+// prompt right at first home-screen load) and just keep showing the card as before.
+var _homeCountry = null;
+var _homeCountryResolveAttempted = false;
+function _resolveHomeCountryIfPermitted(){
+  if (_homeCountryResolveAttempted) return;
+  _homeCountryResolveAttempted = true;
+  var Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+  if (!Geo || !Geo.checkPermissions) return;
+  Geo.checkPermissions().then(function(perm){
+    var granted = perm && (perm.location === 'granted' || perm.coarseLocation === 'granted');
+    if (!granted) return;
+    return Geo.getCurrentPosition({enableHighAccuracy:false, timeout:5000, maximumAge:600000});
+  }).then(function(pos){
+    if (!pos) return;
+    _homeCountry = _sosDetectCountry(pos.coords.latitude, pos.coords.longitude);
+    if (_homeCountry === 'kr') renderFuelPriceCard();
+  }).catch(function(){});
+}
+
 // Apply cached fuel price immediately if available (don't wait for network)
 function loadFuelPriceFromCache(){
   var raw = localStorage.getItem(FUEL_PRICE_CACHE_KEY);
@@ -4090,6 +4113,8 @@ function _fuelPriceSourceLabel(sourceName){
 function renderFuelPriceCard(){
   var el = document.getElementById('fuel-price-card');
   if(!el) return;
+  _resolveHomeCountryIfPermitted();
+  if(_homeCountry === 'kr'){ el.innerHTML=''; return; }
   if(!_fuelPriceLatest || !_fuelPriceLatest.prices){ el.innerHTML=''; return; }
   var p = _fuelPriceLatest.prices || {};
   var d = _fuelPriceLatest.deltas || {};
@@ -4556,8 +4581,11 @@ function _sosGPSStart() {
     RidingPlugin.addListener('locationUpdate', function(loc) {
       // Use the time the GPS fix was actually taken, so time math stays correct even if JS was backgrounded and processes events in a delayed batch
       var now = (loc.time && loc.time > 0) ? loc.time : Date.now();
+      // Discard samples with poor position accuracy (tunnel/underpass multipath guard)
+      var posAcc = (loc.accuracy !== undefined && loc.accuracy >= 0) ? loc.accuracy : null;
+      var posOk = (posAcc === null || posAcc <= RIDING_MAX_POS_ACCURACY_M);
       var speedMs = (loc.speed !== undefined && loc.speed >= 0) ? loc.speed : null;
-      if (speedMs !== null) {
+      if (speedMs !== null && posOk) {
         var kmh = speedMs * 3.6;
         _sos.speedOk = kmh >= _MIN_SPD;
         // Discard samples with poor native speed accuracy (urban GPS spike guard)
@@ -4565,7 +4593,7 @@ function _sosGPSStart() {
         if (kmh < 300 && (speedAcc === null || speedAcc <= RIDING_MAX_SPEED_ACCURACY_MPS)) _rideTrackSpeed(kmh, now, loc.lat, loc.lon);
       }
       var lat = loc.lat, lon = loc.lon;
-      if (_ride.lastLat !== null) {
+      if (posOk && _ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
         var dtH = (now - _ride.lastT) / 3600000;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
@@ -4574,10 +4602,10 @@ function _sosGPSStart() {
           _rideTrackSpeed(instKmh, now, lat, lon);
         }
         if (instKmh < 300) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
-      } else {
+      } else if (posOk) {
         _ride.path.push({lat:lat, lon:lon, t:now});
       }
-      _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
+      if (posOk) { _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now; }
       _updateRidingSpeedUI();
       // Pause/force-start safety net: also check reactively on each GPS event in case the setInterval got throttled in the background
       // (pass this event's own measured time, in case a delayed batch is being caught up on)
@@ -4592,14 +4620,17 @@ function _sosGPSStart() {
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
       var now = (p.timestamp && p.timestamp > 0) ? p.timestamp : Date.now();
+      // Discard samples with poor position accuracy (tunnel/underpass multipath guard)
+      var posAcc = (p.coords.accuracy !== undefined && p.coords.accuracy >= 0) ? p.coords.accuracy : null;
+      var posOk = (posAcc === null || posAcc <= RIDING_MAX_POS_ACCURACY_M);
       var spd = p.coords.speed;
-      if (spd !== null && spd !== undefined) {
+      if (spd !== null && spd !== undefined && posOk) {
         _sos.speedOk = (spd * 3.6) >= _MIN_SPD;
         var kmh = spd * 3.6;
         if (kmh < 300) _rideTrackSpeed(kmh, now, p.coords.latitude, p.coords.longitude);
       }
       var lat = p.coords.latitude, lon = p.coords.longitude;
-      if (_ride.lastLat !== null) {
+      if (posOk && _ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
         var dtH = (now - _ride.lastT) / 3600000;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
@@ -4608,10 +4639,10 @@ function _sosGPSStart() {
           _rideTrackSpeed(instKmh, now, lat, lon);
         }
         if (instKmh < 300) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
-      } else {
+      } else if (posOk) {
         _ride.path.push({lat:lat, lon:lon, t:now});
       }
-      _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
+      if (posOk) { _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now; }
       _updateRidingSpeedUI();
       if (ridingState.active) _checkRidingPauseTimer(now);
       _persistRideProgress();

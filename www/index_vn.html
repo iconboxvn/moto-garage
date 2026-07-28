@@ -3606,6 +3606,7 @@ function _persistRideProgress(force){
   } catch(e){}
 }
 var RIDING_MAX_SPEED_ACCURACY_MPS = 3;    // 네이티브가 넘겨준 속도 정확도(m/s)가 이보다 나쁘면 그 샘플은 신뢰 안 함 (도심 GPS 튐 방지)
+var RIDING_MAX_POS_ACCURACY_M = 30;       // Độ chính xác vị trí GPS (m) tệ hơn mức này thì loại khỏi lộ trình/quãng đường (chống nhiễu đa đường trong hầm/gầm cầu)
 var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;
 var RIDING_HARSH_BRAKE_KMH_PER_SEC = 15;
 var RIDING_HARSH_EVENT_COOLDOWN_MS = 3000;
@@ -4023,6 +4024,28 @@ const FUEL_PRICE_CACHE_KEY = 'mg2-fuelprice-cache';
 var _fuelPriceLatest = null;
 var _fuelPricePrev = null;
 
+// Đây là giá xăng Việt Nam, không có ý nghĩa với người dùng đang chạy xe ở Hàn Quốc -
+// nếu đã có quyền vị trí thì dò quốc gia qua GPS và ẩn thẻ này ở Hàn Quốc. Nếu chưa có
+// quyền thì không xin quyền chỉ vì việc này (tránh hiện popup xin vị trí ngay từ màn
+// hình chính đầu tiên), cứ hiển thị thẻ như bình thường.
+var _homeCountry = null;
+var _homeCountryResolveAttempted = false;
+function _resolveHomeCountryIfPermitted(){
+  if (_homeCountryResolveAttempted) return;
+  _homeCountryResolveAttempted = true;
+  var Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+  if (!Geo || !Geo.checkPermissions) return;
+  Geo.checkPermissions().then(function(perm){
+    var granted = perm && (perm.location === 'granted' || perm.coarseLocation === 'granted');
+    if (!granted) return;
+    return Geo.getCurrentPosition({enableHighAccuracy:false, timeout:5000, maximumAge:600000});
+  }).then(function(pos){
+    if (!pos) return;
+    _homeCountry = _sosDetectCountry(pos.coords.latitude, pos.coords.longitude);
+    if (_homeCountry === 'kr') renderFuelPriceCard();
+  }).catch(function(){});
+}
+
 // Áp dụng ngay giá xăng đã lưu cache (không cần chờ mạng)
 function loadFuelPriceFromCache(){
   var raw = localStorage.getItem(FUEL_PRICE_CACHE_KEY);
@@ -4090,6 +4113,8 @@ function _fuelPriceSourceLabel(sourceName){
 function renderFuelPriceCard(){
   var el = document.getElementById('fuel-price-card');
   if(!el) return;
+  _resolveHomeCountryIfPermitted();
+  if(_homeCountry === 'kr'){ el.innerHTML=''; return; }
   if(!_fuelPriceLatest || !_fuelPriceLatest.prices){ el.innerHTML=''; return; }
   var p = _fuelPriceLatest.prices || {};
   var d = _fuelPriceLatest.deltas || {};
@@ -4556,8 +4581,11 @@ function _sosGPSStart() {
     RidingPlugin.addListener('locationUpdate', function(loc) {
       // Dùng thời điểm GPS thực sự ghi nhận vị trí, để tính thời gian không bị sai kể cả khi JS bị treo ở nền rồi xử lý dồn
       var now = (loc.time && loc.time > 0) ? loc.time : Date.now();
+      // Độ chính xác vị trí kém (nhiễu đa đường trong hầm/gầm cầu) thì loại khỏi lộ trình/quãng đường/tốc độ
+      var posAcc = (loc.accuracy !== undefined && loc.accuracy >= 0) ? loc.accuracy : null;
+      var posOk = (posAcc === null || posAcc <= RIDING_MAX_POS_ACCURACY_M);
       var speedMs = (loc.speed !== undefined && loc.speed >= 0) ? loc.speed : null;
-      if (speedMs !== null) {
+      if (speedMs !== null && posOk) {
         var kmh = speedMs * 3.6;
         _sos.speedOk = kmh >= _MIN_SPD;
         // 속도 정확도가 나쁜 샘플(도심 GPS 튐 등)은 최고속도/거리 추적에서 제외
@@ -4565,7 +4593,7 @@ function _sosGPSStart() {
         if (kmh < 300 && (speedAcc === null || speedAcc <= RIDING_MAX_SPEED_ACCURACY_MPS)) _rideTrackSpeed(kmh, now, loc.lat, loc.lon);
       }
       var lat = loc.lat, lon = loc.lon;
-      if (_ride.lastLat !== null) {
+      if (posOk && _ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
         var dtH = (now - _ride.lastT) / 3600000;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
@@ -4574,10 +4602,10 @@ function _sosGPSStart() {
           _rideTrackSpeed(instKmh, now, lat, lon);
         }
         if (instKmh < 300) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
-      } else {
+      } else if (posOk) {
         _ride.path.push({lat:lat, lon:lon, t:now});
       }
-      _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
+      if (posOk) { _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now; }
       _updateRidingSpeedUI();
       // Lưới an toàn tạm dừng/bắt buộc khởi động: cũng kiểm tra ngay khi có sự kiện GPS, phòng khi setInterval bị treo ở nền
       // (truyền thời điểm thực đo của sự kiện GPS này, phòng trường hợp đang xử lý dồn theo lô)
@@ -4591,14 +4619,17 @@ function _sosGPSStart() {
   _sos.gpsId = navigator.geolocation.watchPosition(
     function(p) {
       var now = (p.timestamp && p.timestamp > 0) ? p.timestamp : Date.now();
+      // Độ chính xác vị trí kém (nhiễu đa đường trong hầm/gầm cầu) thì loại khỏi lộ trình/quãng đường/tốc độ
+      var posAcc = (p.coords.accuracy !== undefined && p.coords.accuracy >= 0) ? p.coords.accuracy : null;
+      var posOk = (posAcc === null || posAcc <= RIDING_MAX_POS_ACCURACY_M);
       var spd = p.coords.speed;
-      if (spd !== null && spd !== undefined) {
+      if (spd !== null && spd !== undefined && posOk) {
         _sos.speedOk = (spd * 3.6) >= _MIN_SPD;
         var kmh = spd * 3.6;
         if (kmh < 300) _rideTrackSpeed(kmh, now, p.coords.latitude, p.coords.longitude);
       }
       var lat = p.coords.latitude, lon = p.coords.longitude;
-      if (_ride.lastLat !== null) {
+      if (posOk && _ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
         var dtH = (now - _ride.lastT) / 3600000;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
@@ -4607,10 +4638,10 @@ function _sosGPSStart() {
           _rideTrackSpeed(instKmh, now, lat, lon);
         }
         if (instKmh < 300) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
-      } else {
+      } else if (posOk) {
         _ride.path.push({lat:lat, lon:lon, t:now});
       }
-      _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now;
+      if (posOk) { _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now; }
       _updateRidingSpeedUI();
       if (ridingState.active) _checkRidingPauseTimer(now);
       _persistRideProgress();
