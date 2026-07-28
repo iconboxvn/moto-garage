@@ -1,6 +1,6 @@
 {
-  "name": "MOTO GARAGE",
-  "short_name": "MOTO",
+  "name": "Ridemate",
+  "short_name": "Ridemate",
   "description": "오토바이 소모품·주행·정비 통합 관리 by @iconbox.lee",
   "start_url": "/moto-garage/",
   "scope": "/moto-garage/",
