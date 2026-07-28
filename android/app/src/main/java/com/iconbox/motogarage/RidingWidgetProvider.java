@@ -82,9 +82,13 @@ public class RidingWidgetProvider extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.riding_widget);
         views.setTextViewText(R.id.widget_status, statusText);
         views.setTextViewText(R.id.widget_action_btn, btnText);
-        // 라이딩 진행 중(기록중/자동일시정지)이면 위젯 배경을 초록색으로 확 바꿔서 멀리서도 구분되게 한다.
+        // 라이딩 진행 중(기록중/자동일시정지)이면 위젯 전체를 파란색 계열로 바꿔서 멀리서도 구분되게 한다.
+        // 버튼이 위젯에서 가장 넓은 면적을 차지하므로, 배경(root)뿐 아니라 버튼 색도 같이 바꿔야
+        // 실제로 눈에 띄는 변화로 인식된다 (root만 바꿨을 때는 테두리만 얇게 바뀌어 잘 안 보였음).
         views.setInt(R.id.widget_root, "setBackgroundResource",
             active ? R.drawable.widget_bg_active : R.drawable.widget_bg);
+        views.setInt(R.id.widget_action_btn, "setBackgroundResource",
+            active ? R.drawable.widget_btn_bg_active : R.drawable.widget_btn_bg);
 
         Intent intent = new Intent(context, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
