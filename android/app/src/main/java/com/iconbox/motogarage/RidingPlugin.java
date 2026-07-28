@@ -18,6 +18,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 public class RidingPlugin extends Plugin {
 
     private BroadcastReceiver locationReceiver;
+    private BroadcastReceiver crashReceiver;
 
     // 홈 화면 위젯 → 앱 실행 시 전달되는 시작/종료 요청.
     // 콜드 스타트일 땐 이 이벤트가 JS 리스너가 붙기 전에 발생할 수 있어
@@ -47,6 +48,17 @@ public class RidingPlugin extends Plugin {
         // LocalBroadcastManager로 수신 (RidingService와 동일)
         LocalBroadcastManager.getInstance(getContext())
             .registerReceiver(locationReceiver, new IntentFilter(RidingService.ACTION_LOCATION));
+
+        crashReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                JSObject data = new JSObject();
+                data.put("mag", intent.getFloatExtra("mag", 0f));
+                notifyListeners("crashDetected", data);
+            }
+        };
+        LocalBroadcastManager.getInstance(getContext())
+            .registerReceiver(crashReceiver, new IntentFilter(RidingService.ACTION_CRASH_DETECTED));
     }
 
     @Override
@@ -54,6 +66,10 @@ public class RidingPlugin extends Plugin {
         if (locationReceiver != null) {
             LocalBroadcastManager.getInstance(getContext())
                 .unregisterReceiver(locationReceiver);
+        }
+        if (crashReceiver != null) {
+            LocalBroadcastManager.getInstance(getContext())
+                .unregisterReceiver(crashReceiver);
         }
         if (instance == this) instance = null;
     }
@@ -108,6 +124,21 @@ public class RidingPlugin extends Plugin {
     @PluginMethod
     public void stopForeground(PluginCall call) {
         getContext().stopService(new Intent(getContext(), RidingService.class));
+        call.resolve();
+    }
+
+    // JS가 자동 SOS 카운트다운을 취소했거나(cancelAutoSOS) 발송을 마쳤을 때(_sosSend) 호출 —
+    // 네이티브 충격감지 상태머신을 다시 감시 상태로 되돌린다.
+    @PluginMethod
+    public void resumeMonitoring(PluginCall call) {
+        RidingService.resumeMonitoring();
+        call.resolve();
+    }
+
+    // 디버그 빌드 전용 - 실제 가속도계 없이 crashDetected 브로드캐스트 경로를 테스트하기 위한 훅.
+    @PluginMethod
+    public void simulateCrash(PluginCall call) {
+        RidingService.debugTriggerCrash();
         call.resolve();
     }
 

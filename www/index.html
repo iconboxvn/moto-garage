@@ -3770,17 +3770,12 @@ function _haversineKm(lat1, lon1, lat2, lon2){
   return R*c;
 }
 var _sos = {
-  phase: 'IDLE',   // IDLE | MONITORING | FREEFALL | IMPACT | COUNTDOWN
+  phase: 'IDLE',   // IDLE | MONITORING | COUNTDOWN (자유낙하/충격/정지 판정은 네이티브 RidingService가 담당)
   speedOk: false,
-  ffStart: null,
-  phaseT: null,
-  stillStart: null,
-  buf: [],
   gpsId: null,
   gpsListening: false,
   cdTimer: null,
   cdVal: 60,
-  motAdded: false,
   motListening: false,
   startLat: null,
   startLng: null,
@@ -3788,11 +3783,8 @@ var _sos = {
   moveConfirmCount: 0,
   gpsCheckTimer: null
 };
-var _FF_MAG    = 3;
-var _FF_DUR    = 300;
-var _IMP_MAG   = 39.2;
-var _FF_IMP_MAG = 19.6;
-var _STILL_DUR = 5000;
+// 자유낙하/충격/정지 판정 상태머신은 android/.../RidingService.java로 이전됨 (백그라운드 WebView
+// suspend에 영향받지 않도록). 임계값(_FF_MAG 등)도 그쪽에 있으니 변경 시 반드시 같이 맞출 것.
 var _MIN_SPD   = 20;
 
 function updateRidingBar() {
@@ -3922,7 +3914,6 @@ function _doStartRiding() {
   _persistRideProgress(true);
   _sos.phase = 'MONITORING';
   _sos.speedOk = false;
-  _sosBufReset();
   _sosGPSStart();
   _sosMotionStart();
   var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
@@ -3948,7 +3939,6 @@ function stopRiding(customMsg, skipSummary) {
   _sosMotionStop();
   _sos.phase = 'IDLE';
   _sos.speedOk = false;
-  _sosBufReset();
   var ov = document.getElementById('auto-sos-overlay');
   if (ov) ov.classList.remove('show');
   var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
@@ -4739,10 +4729,6 @@ async function shareCharacterCard(){
   }
 }
 
-function _sosBufReset() {
-  _sos.buf = []; _sos.ffStart = null; _sos.phaseT = null; _sos.stillStart = null;
-}
-
 function _sosGPSStart() {
   if (_sos.gpsListening) { console.log('[SOS] gps already listening'); return; }
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
@@ -4893,91 +4879,34 @@ function _sosGPSStop() {
   _sos.speedOk = false;
 }
 
+// 자유낙하→충격→정지 판정 상태머신은 android/.../RidingService.java(네이티브)에서 돌아간다
+// (백그라운드에서 WebView JS가 suspend돼도 감지가 멈추지 않도록). 여기서는 네이티브가 확정
+// 신호를 보내면 바로 카운트다운을 시작하기만 한다.
+var _sos_crashListenerHandle = null;
 function _sosMotionStart() {
   if (_sos.motListening) { console.log('[SOS] motion already listening'); return; }
-  try {
-    var M = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Motion;
-    if (M) {
-      M.addListener('accel', function(e) {
-        var a = e.accelerationIncludingGravity || e.acceleration;
-        if (a) _sosAccel(a.x || 0, a.y || 0, a.z || 0);
-      });
-      _sos.motListening = true;
-      console.log('[SOS] motion listener started (Capacitor Motion)');
-      return;
-    }
-  } catch (e) { console.warn('[SOS] motion start error', e); }
-  if (typeof DeviceMotionEvent === 'undefined') return;
-  function addDM() {
-    window.addEventListener('devicemotion', _sosDMHandler);
-    _sos.motAdded = true;
-    _sos.motListening = true;
-    console.log('[SOS] motion listener started (DeviceMotionEvent)');
-  }
-  if (typeof DeviceMotionEvent.requestPermission === 'function') {
-    DeviceMotionEvent.requestPermission().then(function(s) { if (s === 'granted') addDM(); }).catch(addDM);
-  } else { addDM(); }
+  var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (!RidingPlugin || !RidingPlugin.addListener) return;
+  _sos.motListening = true;
+  RidingPlugin.addListener('crashDetected', function(e) {
+    _dbgLog('sos_phase', {to:'COUNTDOWN', mag: e && Math.round((e.mag||0)*100)/100});
+    _sosTrigger();
+  }).then(function(handle) { _sos_crashListenerHandle = handle; });
+  console.log('[SOS] native crash listener attached');
 }
 
 function _sosMotionStop() {
   _sos.motListening = false;
-  try {
-    var M = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Motion;
-    if (M) { M.removeAllListeners(); return; }
-  } catch (e) {}
-  if (_sos.motAdded) { window.removeEventListener('devicemotion', _sosDMHandler); _sos.motAdded = false; }
+  if (_sos_crashListenerHandle && _sos_crashListenerHandle.remove) {
+    _sos_crashListenerHandle.remove().catch(function() {});
+  }
+  _sos_crashListenerHandle = null;
 }
 
-function _sosDMHandler(e) {
-  var a = e.accelerationIncludingGravity;
-  if (a) _sosAccel(a.x || 0, a.y || 0, a.z || 0);
-}
-
-function _sosAccel(x, y, z) {
-  var mag = Math.sqrt(x * x + y * y + z * z);
-  var now = Date.now();
-  _sos.buf.push({mag: mag, t: now});
-  _sos.buf = _sos.buf.filter(function(r) { return now - r.t < 6000; });
-
-  // 카운트다운 중: GPS 기반 이동 감지로 취소 (가속도계 불필요)
-  if (_sos.phase === 'COUNTDOWN') return;
-
-  if (!ridingState.active || _sos.phase === 'IDLE') return;
-
-  if (_sos.phase === 'MONITORING') {
-    if (!_sos.speedOk) { _sos.ffStart = null; return; }
-    if (mag < _FF_MAG) {
-      if (!_sos.ffStart) _sos.ffStart = now;
-      if (now - _sos.ffStart >= _FF_DUR) { _dbgLog('sos_phase', {from:'MONITORING', to:'FREEFALL', mag:Math.round(mag*100)/100}); _sos.phase = 'FREEFALL'; _sos.phaseT = now; }
-    } else {
-      _sos.ffStart = null;
-      if (mag > _IMP_MAG) { _dbgLog('sos_phase', {from:'MONITORING', to:'IMPACT', mag:Math.round(mag*100)/100}); _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now; }
-    }
-    return;
-  }
-
-  if (_sos.phase === 'FREEFALL') {
-    if (mag > _FF_IMP_MAG) {
-      _dbgLog('sos_phase', {from:'FREEFALL', to:'IMPACT', mag:Math.round(mag*100)/100});
-      _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now;
-    } else if (_sos.phaseT && now - _sos.phaseT > 2000) {
-      _dbgLog('sos_phase', {from:'FREEFALL', to:'MONITORING', mag:Math.round(mag*100)/100, reason:'timeout'});
-      _sos.phase = 'MONITORING'; _sos.ffStart = null;
-    }
-    return;
-  }
-
-  if (_sos.phase === 'IMPACT') {
-    var r1 = _sos.buf.filter(function(r) { return now - r.t < 1000; });
-    if (r1.length >= 4) {
-      var m1 = r1.map(function(r) { return r.mag; });
-      if (Math.max.apply(null, m1) - Math.min.apply(null, m1) > 3) {
-        _dbgLog('sos_phase', {from:'IMPACT', to:'MONITORING', mag:Math.round(mag*100)/100, reason:'movement_detected'});
-        _sos.phase = 'MONITORING'; _sosBufReset(); return;
-      }
-    }
-    if (_sos.stillStart && now - _sos.stillStart >= _STILL_DUR) _sosTrigger();
-  }
+// 자동 SOS 취소/발송 완료 후 네이티브 상태머신을 다시 감시 상태로 되돌린다.
+function _sosResumeNativeMonitoring() {
+  var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (RidingPlugin && RidingPlugin.resumeMonitoring) RidingPlugin.resumeMonitoring().catch(function() {});
 }
 
 function _gpsDistance(lat1, lon1, lat2, lon2) {
@@ -5055,6 +4984,7 @@ function cancelAutoSOS() {
   var ov = document.getElementById('auto-sos-overlay');
   if (ov) ov.classList.remove('show');
   if (_sos.phase === 'COUNTDOWN') _sos.phase = 'MONITORING';
+  _sosResumeNativeMonitoring();
 }
 
 function _sosCountdownCancel() {
@@ -5073,6 +5003,7 @@ function _sosSend() {
   var ov = document.getElementById('auto-sos-overlay');
   if (ov) ov.classList.remove('show');
   _sos.phase = 'MONITORING';
+  _sosResumeNativeMonitoring();
   var med = getMedical();
   var phone = med.emergencyPhone ? med.emergencyPhone.replace(/[\s\-]/g,'') : _sosPhoneFrom(med.emergency||'');
   function sendWithLocation(lat, lng) {

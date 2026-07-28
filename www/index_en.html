@@ -3619,17 +3619,12 @@ function _haversineKm(lat1, lon1, lat2, lon2){
   return R*c;
 }
 var _sos = {
-  phase: 'IDLE',
+  phase: 'IDLE',   // IDLE | MONITORING | COUNTDOWN (free-fall/impact/stillness detection now lives in native RidingService)
   speedOk: false,
-  ffStart: null,
-  phaseT: null,
-  stillStart: null,
-  buf: [],
   gpsId: null,
   gpsListening: false,
   cdTimer: null,
   cdVal: 60,
-  motAdded: false,
   motListening: false,
   startLat: null,
   startLng: null,
@@ -3637,11 +3632,9 @@ var _sos = {
   moveConfirmCount: 0,
   gpsCheckTimer: null
 };
-var _FF_MAG    = 3;
-var _FF_DUR    = 300;
-var _IMP_MAG   = 39.2;
-var _FF_IMP_MAG = 19.6;
-var _STILL_DUR = 5000;
+// The free-fall/impact/stillness state machine moved to android/.../RidingService.java (so it
+// keeps running even if the WebView JS gets suspended in the background). Its thresholds
+// (_FF_MAG etc.) live there now too - keep them in sync if you ever change them.
 var _MIN_SPD   = 20;
 
 function updateRidingBar() {
@@ -3769,7 +3762,6 @@ function _doStartRiding() {
   _persistRideProgress(true);
   _sos.phase = 'MONITORING';
   _sos.speedOk = false;
-  _sosBufReset();
   _sosGPSStart();
   _sosMotionStart();
   var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
@@ -3795,7 +3787,6 @@ function stopRiding(customMsg, skipSummary) {
   _sosMotionStop();
   _sos.phase = 'IDLE';
   _sos.speedOk = false;
-  _sosBufReset();
   var ov = document.getElementById('auto-sos-overlay');
   if (ov) ov.classList.remove('show');
   var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
@@ -4569,10 +4560,6 @@ async function shareCharacterCard(){
   }
 }
 
-function _sosBufReset() {
-  _sos.buf = []; _sos.ffStart = null; _sos.phaseT = null; _sos.stillStart = null;
-}
-
 function _sosGPSStart() {
   if (_sos.gpsListening) { console.log('[SOS] gps already listening'); return; }
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
@@ -4713,83 +4700,34 @@ function _sosGPSStop() {
   _sos.speedOk = false;
 }
 
+// The free-fall/impact/stillness state machine runs in native RidingService now (so it
+// keeps working even if backgrounded WebView JS gets suspended). Here we just start the
+// countdown as soon as the native side signals a confirmed crash.
+var _sos_crashListenerHandle = null;
 function _sosMotionStart() {
   if (_sos.motListening) return;
-  try {
-    var M = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Motion;
-    if (M) {
-      M.addListener('accel', function(e) {
-        var a = e.accelerationIncludingGravity || e.acceleration;
-        if (a) _sosAccel(a.x || 0, a.y || 0, a.z || 0);
-      });
-      _sos.motListening = true;
-      return;
-    }
-  } catch (e) {}
-  if (typeof DeviceMotionEvent === 'undefined') return;
-  function addDM() {
-    window.addEventListener('devicemotion', _sosDMHandler);
-    _sos.motAdded = true;
-    _sos.motListening = true;
-  }
-  if (typeof DeviceMotionEvent.requestPermission === 'function') {
-    DeviceMotionEvent.requestPermission().then(function(s) { if (s === 'granted') addDM(); }).catch(addDM);
-  } else { addDM(); }
+  var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (!RidingPlugin || !RidingPlugin.addListener) return;
+  _sos.motListening = true;
+  RidingPlugin.addListener('crashDetected', function(e) {
+    _dbgLog('sos_phase', {to:'COUNTDOWN', mag: e && Math.round((e.mag||0)*100)/100});
+    _sosTrigger();
+  }).then(function(handle) { _sos_crashListenerHandle = handle; });
 }
 
 function _sosMotionStop() {
   _sos.motListening = false;
-  try {
-    var M = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Motion;
-    if (M) { M.removeAllListeners(); return; }
-  } catch (e) {}
-  if (_sos.motAdded) { window.removeEventListener('devicemotion', _sosDMHandler); _sos.motAdded = false; }
+  if (_sos_crashListenerHandle && _sos_crashListenerHandle.remove) {
+    _sos_crashListenerHandle.remove().catch(function() {});
+  }
+  _sos_crashListenerHandle = null;
 }
 
-function _sosDMHandler(e) {
-  var a = e.accelerationIncludingGravity;
-  if (a) _sosAccel(a.x || 0, a.y || 0, a.z || 0);
-}
-
-function _sosAccel(x, y, z) {
-  var mag = Math.sqrt(x * x + y * y + z * z);
-  var now = Date.now();
-  _sos.buf.push({mag: mag, t: now});
-  _sos.buf = _sos.buf.filter(function(r) { return now - r.t < 6000; });
-  if (_sos.phase === 'COUNTDOWN') return;
-  if (!ridingState.active || _sos.phase === 'IDLE') return;
-  if (_sos.phase === 'MONITORING') {
-    if (!_sos.speedOk) { _sos.ffStart = null; return; }
-    if (mag < _FF_MAG) {
-      if (!_sos.ffStart) _sos.ffStart = now;
-      if (now - _sos.ffStart >= _FF_DUR) { _dbgLog('sos_phase', {from:'MONITORING', to:'FREEFALL', mag:Math.round(mag*100)/100}); _sos.phase = 'FREEFALL'; _sos.phaseT = now; }
-    } else {
-      _sos.ffStart = null;
-      if (mag > _IMP_MAG) { _dbgLog('sos_phase', {from:'MONITORING', to:'IMPACT', mag:Math.round(mag*100)/100}); _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now; }
-    }
-    return;
-  }
-  if (_sos.phase === 'FREEFALL') {
-    if (mag > _FF_IMP_MAG) {
-      _dbgLog('sos_phase', {from:'FREEFALL', to:'IMPACT', mag:Math.round(mag*100)/100});
-      _sos.phase = 'IMPACT'; _sos.phaseT = now; _sos.stillStart = now;
-    } else if (_sos.phaseT && now - _sos.phaseT > 2000) {
-      _dbgLog('sos_phase', {from:'FREEFALL', to:'MONITORING', mag:Math.round(mag*100)/100, reason:'timeout'});
-      _sos.phase = 'MONITORING'; _sos.ffStart = null;
-    }
-    return;
-  }
-  if (_sos.phase === 'IMPACT') {
-    var r1 = _sos.buf.filter(function(r) { return now - r.t < 1000; });
-    if (r1.length >= 4) {
-      var m1 = r1.map(function(r) { return r.mag; });
-      if (Math.max.apply(null, m1) - Math.min.apply(null, m1) > 3) {
-        _dbgLog('sos_phase', {from:'IMPACT', to:'MONITORING', mag:Math.round(mag*100)/100, reason:'movement_detected'});
-        _sos.phase = 'MONITORING'; _sosBufReset(); return;
-      }
-    }
-    if (_sos.stillStart && now - _sos.stillStart >= _STILL_DUR) _sosTrigger();
-  }
+// Tell the native state machine to go back to monitoring after the auto-SOS countdown is
+// cancelled or the message has been sent.
+function _sosResumeNativeMonitoring() {
+  var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (RidingPlugin && RidingPlugin.resumeMonitoring) RidingPlugin.resumeMonitoring().catch(function() {});
 }
 
 function _gpsDistance(lat1, lon1, lat2, lon2) {
@@ -4863,6 +4801,7 @@ function cancelAutoSOS() {
   var ov = document.getElementById('auto-sos-overlay');
   if (ov) ov.classList.remove('show');
   if (_sos.phase === 'COUNTDOWN') _sos.phase = 'MONITORING';
+  _sosResumeNativeMonitoring();
 }
 
 function _sosCountdownCancel() {
@@ -4881,6 +4820,7 @@ function _sosSend() {
   var ov = document.getElementById('auto-sos-overlay');
   if (ov) ov.classList.remove('show');
   _sos.phase = 'MONITORING';
+  _sosResumeNativeMonitoring();
   var med = getMedical();
   var phone = med.emergencyPhone ? med.emergencyPhone.replace(/[\s\-]/g,'') : _sosPhoneFrom(med.emergency||'');
   function sendWithLocation(lat, lng) {

@@ -10,7 +10,7 @@
 | 앱 이름 | `Ridemate` | `strings.xml`, `capacitor.config.json` |
 | 패키지명 | `com.iconbox.motogarage` | `AndroidManifest.xml`, `build.gradle`, `capacitor.config.json` |
 | 정비 알림 시각 | **오전 8시** (`_atEightAm()` 내부 `setHours(8, 0, 0, 0)`) | `scheduleConsumableAlerts()` — 9시 아님. 과거 `_atNineAm()`으로 잘못 회귀된 적 있음(2026-07 재발견·수정), 함수명 자체가 시각을 나타내니 이름과 실제 값이 항상 일치하는지 확인할 것 |
-| 충격 감지 최소 속도 | **20 km/h** (`_MIN_SPD = 20`) | `www/index*.html` |
+| 충격 감지 최소 속도 | **20 km/h** — `www/index*.html`의 `_MIN_SPD`(라이딩 속도게이트/UI 표시용)와 `RidingService.java`의 `MIN_SPD_KMH`(네이티브 충격감지 상태머신 게이트용) **두 곳에 중복 존재, 항상 같이 변경할 것** | `www/index*.html`, `android/.../RidingService.java` |
 | SOS 카운트다운 | **60초** (`_sos.cdVal = 60`) | `www/index*.html` |
 
 ---
@@ -47,13 +47,40 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 ## 주요 JS 상수 (www/index*.html)
 
 ```javascript
-var _FF_MAG    = 3;      // 자유낙하 감지 임계값 (m/s²)
-var _FF_DUR    = 300;    // 자유낙하 지속 시간 (ms)
-var _IMP_MAG   = 39.2;  // 직접 충격 임계값 (4G, m/s²)
-var _FF_IMP_MAG = 19.6; // 낙차 후 충격 임계값 (2G, m/s²)
-var _STILL_DUR = 5000;  // 충격 후 정지 판정 시간 (ms)
-var _MIN_SPD   = 20;    // 감지 활성화 최소 속도 (km/h) ← 변경 금지
+var _MIN_SPD   = 20;    // 감지 활성화 최소 속도 (km/h) ← 변경 금지. 라이딩 속도게이트(_sos.speedOk)/UI 표시용
 ```
+
+## 충격/낙차 감지 상태머신 (네이티브, RidingService.java) — 2026-07-28 이전됨
+
+> 원래 JS(`_sosAccel()`)에 있었으나, 백그라운드에서 WebView JS가 suspend되면 감지 자체가
+> 멈출 수 있어(GPS 최고속도 오탐의 원인이었던 것과 동일한 문제) 네이티브로 이전함.
+> GPS는 이미 `RidingService`로 이전되어 있었으므로, 가속도계 리스닝+상태머신도 같은
+> 서비스에 추가하는 형태로 확장.
+
+```java
+// android/app/src/main/java/com/iconbox/motogarage/RidingService.java
+private static final float FF_MAG      = 3f;     // 자유낙하 감지 임계값 (m/s²)
+private static final long  FF_DUR      = 300L;   // 자유낙하 지속 시간 (ms)
+private static final float IMP_MAG     = 39.2f;  // 직접 충격 임계값 (4G, m/s²)
+private static final float FF_IMP_MAG  = 19.6f;  // 낙차 후 충격 임계값 (2G, m/s²)
+private static final long  STILL_DUR   = 5000L;  // 충격 후 정지 판정 시간 (ms) ← 변경 금지
+private static final float MIN_SPD_KMH = 20f;    // 감지 활성화 최소 속도 (km/h) ← 변경 금지, www/index*.html _MIN_SPD와 동일하게 유지
+```
+
+**아키텍처 (A안 — 단계적 이전의 1단계)**:
+- 가속도계 리스닝(`SensorManager`, TYPE_ACCELEROMETER) + 상태머신(MONITORING→FREEFALL→IMPACT)은
+  `RidingService`가 담당. 속도게이트도 GPS 콜백에서 자체 계산(JS 왕복 없음).
+- "충격+정지 확정" 시 `LocalBroadcastManager`로 `crashDetected` 이벤트를 JS에 전달하고, 자신은
+  즉시 대기 상태(PHASE_COUNTDOWN)로 전환해 중복 트리거 방지.
+- **카운트다운 UI, GPS 이동 취소 체크, 알림, SMS 발송은 그대로 JS(`_sosTrigger()` 이후 로직)가 담당**
+  — 이번 이전 범위에서 제외.
+- JS가 취소(`cancelAutoSOS`)하거나 발송 완료(`_sosSend`)하면 `Riding.resumeMonitoring()`을 호출해
+  네이티브 상태를 다시 MONITORING으로 리셋.
+- 디버그 전용 테스트 훅 `Riding.simulateCrash()` — 실제 가속도계 없이 `crashDetected` 브로드캐스트
+  경로를 검증하기 위함 (`BuildConfig.DEBUG`에서만 동작).
+
+**미이전 상태 (B안, 향후 검토)**: 카운트다운 UI/SMS 발송까지 전부 네이티브(알림+액션 버튼)로 옮겨서
+WebView가 완전히 죽어있어도 안전기능이 살아있게 하는 안. 지금은 A안(상태머신만 이전)까지만 완료.
 
 ---
 
