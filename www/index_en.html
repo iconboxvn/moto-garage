@@ -3943,24 +3943,39 @@ function _autoEndRiding(){
 //  Ride Share Card - Characters
 // ═══════════════════════════════════════════
 const RIDE_CHARACTERS_FALLBACK = [
-  {id:'char_01', file:'./assets/characters/char_01.png', thumb:'./assets/characters/char_01_thumb.png', label:'Thumbs Up', unlockKm:0},
-  {id:'char_02', file:'./assets/characters/char_02.png', thumb:'./assets/characters/char_02_thumb.png', label:'Hello', unlockKm:0},
-  {id:'char_03', file:'./assets/characters/char_03.png', thumb:'./assets/characters/char_03_thumb.png', label:'Cornering', unlockKm:0},
-  {id:'char_04', file:'./assets/characters/char_04.png', thumb:'./assets/characters/char_04_thumb.png', label:'Peace', unlockKm:0},
-  {id:'char_05', file:'./assets/characters/char_05.png', thumb:'./assets/characters/char_05_thumb.png', label:'Back View', unlockKm:0},
-  {id:'char_06', file:'./assets/characters/char_06.png', thumb:'./assets/characters/char_06_thumb.png', label:'Camping', unlockKm:0},
-  {id:'char_07', file:'./assets/characters/char_07.png', thumb:'./assets/characters/char_07_thumb.png', label:'Fuel Up', unlockKm:0},
-  {id:'char_08', file:'./assets/characters/char_08.png', thumb:'./assets/characters/char_08_thumb.png', label:'Rainy', unlockKm:0},
-  {id:'char_09', file:'./assets/characters/char_09.png', thumb:'./assets/characters/char_09_thumb.png', label:'Bike Wash', unlockKm:0},
-  {id:'char_10', file:'./assets/characters/char_10.png', thumb:'./assets/characters/char_10_thumb.png', label:'Selfie', unlockKm:0},
-  {id:'char_11', file:'./assets/characters/char_11.png', thumb:'./assets/characters/char_11_thumb.png', label:'Dozing', unlockKm:0},
-  {id:'char_12', file:'./assets/characters/char_12.png', thumb:'./assets/characters/char_12_thumb.png', label:'Wiped Out', unlockKm:0},
-  {id:'char_13', file:'./assets/characters/char_13.png', thumb:'./assets/characters/char_13_thumb.png', label:'Sweet Sleep', unlockKm:0},
-  {id:'char_14', file:'./assets/characters/char_14.png', thumb:'./assets/characters/char_14_thumb.png', label:'Lost', unlockKm:0},
-  {id:'char_15', file:'./assets/characters/char_15.png', thumb:'./assets/characters/char_15_thumb.png', label:'Checkpoint', unlockKm:0},
-  {id:'char_16', file:'./assets/characters/char_16.png', thumb:'./assets/characters/char_16_thumb.png', label:'Runaway', unlockKm:0},
-  {id:'char_17', file:'./assets/characters/char_17.png', thumb:'./assets/characters/char_17_thumb.png', label:'Escape', unlockKm:0},
-  {id:'char_18', file:'./assets/characters/char_18.png', thumb:'./assets/characters/char_18_thumb.png', label:'Emergency Refuel', unlockKm:0}
+  {id:'char_01', file:'./assets/characters/char_01.png', thumb:'./assets/characters/char_01_thumb.png', label:'Thumbs Up', unlockKm:0, group:'riding'},
+  {id:'char_02', file:'./assets/characters/char_02.png', thumb:'./assets/characters/char_02_thumb.png', label:'Hello', unlockKm:0, group:'riding'},
+  {id:'char_03', file:'./assets/characters/char_03.png', thumb:'./assets/characters/char_03_thumb.png', label:'Cornering', unlockKm:0, group:'riding'},
+  {id:'char_04', file:'./assets/characters/char_04.png', thumb:'./assets/characters/char_04_thumb.png', label:'Peace', unlockKm:0, group:'riding'},
+  {id:'char_05', file:'./assets/characters/char_05.png', thumb:'./assets/characters/char_05_thumb.png', label:'Back View', unlockKm:0, group:'riding'},
+  {id:'char_06', file:'./assets/characters/char_06.png', thumb:'./assets/characters/char_06_thumb.png', label:'Camping', unlockKm:0, group:'riding'},
+  {id:'char_07', file:'./assets/characters/char_07.png', thumb:'./assets/characters/char_07_thumb.png', label:'Fuel Up', unlockKm:0, group:'riding'},
+  {id:'char_08', file:'./assets/characters/char_08.png', thumb:'./assets/characters/char_08_thumb.png', label:'Rainy', unlockKm:0, group:'riding'},
+  {id:'char_09', file:'./assets/characters/char_09.png', thumb:'./assets/characters/char_09_thumb.png', label:'Bike Wash', unlockKm:0, group:'riding'},
+  {id:'char_10', file:'./assets/characters/char_10.png', thumb:'./assets/characters/char_10_thumb.png', label:'Selfie', unlockKm:0, group:'riding'},
+  {id:'char_11', file:'./assets/characters/char_11.png', thumb:'./assets/characters/char_11_thumb.png', label:'Dozing', unlockKm:0, group:'riding'},
+  {id:'char_12', file:'./assets/characters/char_12.png', thumb:'./assets/characters/char_12_thumb.png', label:'Wiped Out', unlockKm:0, group:'riding'},
+  {id:'char_13', file:'./assets/characters/char_13.png', thumb:'./assets/characters/char_13_thumb.png', label:'Sweet Sleep', unlockKm:0, group:'riding'},
+  {id:'char_14', file:'./assets/characters/char_14.png', thumb:'./assets/characters/char_14_thumb.png', label:'Lost', unlockKm:0, group:'riding'},
+  {id:'char_15', file:'./assets/characters/char_15.png', thumb:'./assets/characters/char_15_thumb.png', label:'Checkpoint', unlockKm:0, group:'riding'},
+  {id:'char_16', file:'./assets/characters/char_16.png', thumb:'./assets/characters/char_16_thumb.png', label:'Runaway', unlockKm:0, group:'riding'},
+  {id:'char_17', file:'./assets/characters/char_17.png', thumb:'./assets/characters/char_17_thumb.png', label:'Escape', unlockKm:0, group:'riding'},
+  {id:'char_18', file:'./assets/characters/char_18.png', thumb:'./assets/characters/char_18_thumb.png', label:'Emergency Refuel', unlockKm:0, group:'riding'},
+  {id:'office_01', file:'./assets/office/office_01.png', thumb:'./assets/office/office_01_thumb.png', label:'Off to Work', unlockKm:0, group:'office'},
+  {id:'office_02', file:'./assets/office/office_02.png', thumb:'./assets/office/office_02_thumb.png', label:'Clock-Out Watch', unlockKm:0, group:'office'},
+  {id:'office_03', file:'./assets/office/office_03.png', thumb:'./assets/office/office_03_thumb.png', label:'Sleepy Meeting', unlockKm:0, group:'office'},
+  {id:'office_04', file:'./assets/office/office_04.png', thumb:'./assets/office/office_04_thumb.png', label:'Left on Read', unlockKm:0, group:'office'},
+  {id:'office_05', file:'./assets/office/office_05.png', thumb:'./assets/office/office_05_thumb.png', label:'Cut Losses', unlockKm:0, group:'office'},
+  {id:'office_06', file:'./assets/office/office_06.png', thumb:'./assets/office/office_06_thumb.png', label:'Soul Left', unlockKm:0, group:'office'},
+  {id:'office_07', file:'./assets/office/office_07.png', thumb:'./assets/office/office_07_thumb.png', label:'Nagging', unlockKm:0, group:'office'},
+  {id:'office_08', file:'./assets/office/office_08.png', thumb:'./assets/office/office_08_thumb.png', label:'Grunt Work', unlockKm:0, group:'office'},
+  {id:'office_09', file:'./assets/office/office_09.png', thumb:'./assets/office/office_09_thumb.png', label:'Yes Sir', unlockKm:0, group:'office'},
+  {id:'office_10', file:'./assets/office/office_10.png', thumb:'./assets/office/office_10_thumb.png', label:'Sneaky Game', unlockKm:0, group:'office'},
+  {id:'office_11', file:'./assets/office/office_11.png', thumb:'./assets/office/office_11_thumb.png', label:'Daydreaming', unlockKm:0, group:'office'},
+  {id:'office_12', file:'./assets/office/office_12.png', thumb:'./assets/office/office_12_thumb.png', label:'Me Again?', unlockKm:0, group:'office'},
+  {id:'office_13', file:'./assets/office/office_13.png', thumb:'./assets/office/office_13_thumb.png', label:'Charge!', unlockKm:0, group:'office'},
+  {id:'office_14', file:'./assets/office/office_14.png', thumb:'./assets/office/office_14_thumb.png', label:'Burned Out', unlockKm:0, group:'office'},
+  {id:'office_15', file:'./assets/office/office_15.png', thumb:'./assets/office/office_15_thumb.png', label:'Reviewing', unlockKm:0, group:'office'}
 ];
 let RIDE_CHARACTERS = RIDE_CHARACTERS_FALLBACK.slice();
 const CHARACTERS_CACHE_KEY = 'mg2-characters-cache';
@@ -3989,7 +4004,8 @@ function loadCharactersFromFirestore(){
             file: s.data.imageUrl,
             thumb: s.data.thumbUrl,
             label: s.data.label || '',
-            unlockKm: s.data.unlockKm || 0
+            unlockKm: s.data.unlockKm || 0,
+            group: s.data.group || 'riding'
           };
         });
       if(list.length){
@@ -4213,19 +4229,33 @@ function renderCharacterPicker(){
   });
 }
 
-function openCharacterPicker(){
+var _characterPickerGroup = 'riding';
+function _renderCharacterPickerGrid(){
   var grid = document.getElementById('character-picker-grid');
-  if(grid){
-    grid.innerHTML = RIDE_CHARACTERS.map(function(c){
-      var sel = (window._selectedCharacterId === c.id);
-      return `<div onclick="selectCharacter('${c.id}')" style="text-align:center;cursor:pointer;">
-        <div style="width:100%;aspect-ratio:1;border-radius:12px;background:#000;border:3px solid ${sel?'var(--accent)':'var(--border)'};display:flex;align-items:center;justify-content:center;overflow:hidden;">
-          <img src="${c.thumb}" style="width:100%;height:100%;object-fit:contain;">
-        </div>
-        <div style="font-size:12px;color:${sel?'var(--accent)':'var(--text-dim)'};margin-top:5px;font-weight:${sel?'700':'400'};">${c.label}</div>
-      </div>`;
-    }).join('');
-  }
+  if(!grid) return;
+  var filtered = RIDE_CHARACTERS.filter(function(c){ return (c.group||'riding') === _characterPickerGroup; });
+  grid.innerHTML = filtered.map(function(c){
+    var sel = (window._selectedCharacterId === c.id);
+    return `<div onclick="selectCharacter('${c.id}')" style="text-align:center;cursor:pointer;">
+      <div style="width:100%;aspect-ratio:1;border-radius:12px;background:#000;border:3px solid ${sel?'var(--accent)':'var(--border)'};display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        <img src="${c.thumb}" style="width:100%;height:100%;object-fit:contain;">
+      </div>
+      <div style="font-size:12px;color:${sel?'var(--accent)':'var(--text-dim)'};margin-top:5px;font-weight:${sel?'700':'400'};">${c.label}</div>
+    </div>`;
+  }).join('');
+}
+function _selectCharacterGroup(group){
+  _characterPickerGroup = group;
+  document.querySelectorAll('#character-picker-tabs .char-picker-tab').forEach(function(t){
+    var active = t.dataset.group === group;
+    t.style.background = active ? 'var(--accent)' : 'var(--surface2)';
+    t.style.color = active ? '#fff' : 'var(--text)';
+  });
+  _renderCharacterPickerGrid();
+}
+function openCharacterPicker(){
+  var current = RIDE_CHARACTERS.find(function(x){ return x.id===window._selectedCharacterId; });
+  _selectCharacterGroup((current && current.group) || 'riding');
   openModal('m-character-picker');
 }
 
@@ -4233,6 +4263,7 @@ function selectCharacter(id){
   window._selectedCharacterId = id;
   renderCharacterPicker();
   closeModal('m-character-picker');
+  _prewarmCharacterShareImages(id);
 }
 
 function computeRideInsight(){
@@ -4282,8 +4313,9 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
   document.getElementById('ride-summary-stat-grid').style.display = 'grid';
   window._selectedCharacterId = RIDE_CHARACTERS[0].id;
   renderCharacterPicker();
+  _prewarmCharacterShareImages(window._selectedCharacterId);
   var memoEl = document.getElementById('ride-summary-memo');
-  if(memoEl) memoEl.value = 'Home safe..!';
+  if(memoEl) memoEl.value = '';
   var h = Math.floor(s.durationMs/3600000);
   var m = Math.floor((s.durationMs%3600000)/60000);
   var sec = Math.floor((s.durationMs%60000)/1000);
@@ -4326,6 +4358,7 @@ function showAchievementSummary(bikeId, milestoneKm, dateStr){
   window._achievementMilestone = milestoneKm;
   window._selectedCharacterId = RIDE_CHARACTERS[0].id;
   renderCharacterPicker();
+  _prewarmCharacterShareImages(window._selectedCharacterId);
   var memoEl = document.getElementById('ride-summary-memo');
   if(memoEl) memoEl.value = `🏆 ${milestoneKm.toLocaleString()}km reached!!`;
   document.getElementById('ride-summary-emoji').textContent = '🏆';
@@ -4385,6 +4418,15 @@ async function loadCharacterImgForShare(charImg, chosenChar){
   }
 }
 
+function _prewarmCharacterShareImages(charId){
+  var chosenChar = RIDE_CHARACTERS.find(function(x){ return x.id === charId; });
+  if(!chosenChar) return;
+  ['csc-character', 'rsc-character'].forEach(function(elId){
+    var el = document.getElementById(elId);
+    if(el) loadCharacterImgForShare(el, chosenChar);
+  });
+}
+
 async function shareRideCard(){
   var isAch = !!window._achievementMilestone;
   var s = window._lastRideSummary;
@@ -4394,12 +4436,12 @@ async function shareRideCard(){
   if(btn){ btn.textContent = 'Generating card...'; btn.disabled = true; }
   try{
     var bike = D.bikes.find(b=>b.id===(window._lastRideBikeId!=null ? window._lastRideBikeId : dashSelectedBikeId)) || D.bikes[0];
-    var memo = (document.getElementById('ride-summary-memo').value||'').trim() || (isAch ? `🏆 ${window._achievementMilestone.toLocaleString()}km reached!!` : 'Home safe..!');
+    var memo = (document.getElementById('ride-summary-memo').value||'').trim() || (isAch ? `🏆 ${window._achievementMilestone.toLocaleString()}km reached!!` : '');
 
     document.getElementById('rsc-date').textContent = window._lastRideDate ? window._lastRideDate.replace(/-/g,'.') : _rideCardDateStr();
     document.getElementById('rsc-bike').textContent = bike ? `${bike.brand} ${bike.model}` : '';
     document.getElementById('rsc-memo').textContent = memo;
-    document.getElementById('rsc-memo-bubble').style.display = 'block';
+    document.getElementById('rsc-memo-bubble').style.display = memo ? 'block' : 'none';
     if(isAch){
       document.getElementById('rsc-distance-label').textContent = 'MILESTONE';
       document.getElementById('rsc-distance').textContent = window._achievementMilestone.toLocaleString() + ' km';
@@ -4421,7 +4463,7 @@ async function shareRideCard(){
     var charImg = document.getElementById('rsc-character');
     var chosenChar = RIDE_CHARACTERS.find(c=>c.id===window._selectedCharacterId) || RIDE_CHARACTERS[0];
     await loadCharacterImgForShare(charImg, chosenChar);
-    var rawCanvas = await html2canvas(cardEl, {backgroundColor:null, scale:2});
+    var rawCanvas = await html2canvas(cardEl, {backgroundColor:null, scale:1});
     var canvas = document.createElement('canvas');
     canvas.width = rawCanvas.width;
     canvas.height = rawCanvas.height;
@@ -4456,6 +4498,8 @@ function openCharacterCardModal(){
   var memoInput = document.getElementById('character-card-memo');
   if(memoInput) memoInput.value = '';
   openModal('m-character-card');
+  var chosenChar = RIDE_CHARACTERS.find(function(c){ return c.id===window._selectedCharacterId; }) || RIDE_CHARACTERS[0];
+  _prewarmCharacterShareImages(chosenChar.id);
 }
 
 async function shareCharacterCard(){
@@ -4465,12 +4509,13 @@ async function shareCharacterCard(){
   try{
     if(typeof html2canvas !== 'function'){ showToast('Could not load the card generator'); return; }
     var chosenChar = RIDE_CHARACTERS.find(c=>c.id===window._selectedCharacterId) || RIDE_CHARACTERS[0];
-    var memo = (document.getElementById('character-card-memo').value||'').trim() || 'Buckle that chin strap and ride!';
-    document.getElementById('csc-memo').textContent = '"' + memo + '"';
+    var memo = (document.getElementById('character-card-memo').value||'').trim();
+    document.getElementById('csc-memo').textContent = memo ? '"' + memo + '"' : '';
+    document.getElementById('csc-memo').style.display = memo ? 'block' : 'none';
     var charImg = document.getElementById('csc-character');
     await loadCharacterImgForShare(charImg, chosenChar);
     var cardEl = document.getElementById('character-share-card');
-    var rawCanvas = await html2canvas(cardEl, {backgroundColor:null, scale:2});
+    var rawCanvas = await html2canvas(cardEl, {backgroundColor:null, scale:1});
     var canvas = document.createElement('canvas');
     canvas.width = rawCanvas.width;
     canvas.height = rawCanvas.height;
@@ -5886,6 +5931,10 @@ function renderMedicalCard(){
   <div class="modal" style="max-width:420px;">
     <div class="modal-header"><span class="modal-title">Choose a Character</span><button class="modal-close" onclick="closeModal('m-character-picker')">✕</button></div>
     <div class="modal-body">
+      <div id="character-picker-tabs" style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="char-picker-tab" data-group="riding" onclick="_selectCharacterGroup('riding')" style="flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:600;border:none;background:var(--accent);color:#fff;">🏍 Riding</button>
+        <button class="char-picker-tab" data-group="office" onclick="_selectCharacterGroup('office')" style="flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🏢 Office</button>
+      </div>
       <div id="character-picker-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"></div>
     </div>
   </div>
@@ -5945,10 +5994,12 @@ function renderMedicalCard(){
 </div>
 
 <!-- Character card template (character + phrase only, no ride data. rendered off-screen, captured with html2canvas) -->
-<div id="character-share-card" style="position:fixed;top:0;left:-9999px;width:420px;height:520px;background:#BACEE0;font-family:'Inter',sans-serif;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;">
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#e02020;margin-bottom:24px;">RIDEMATE</div>
-  <img id="csc-character" src="./assets/characters/char_01.png" crossorigin="anonymous" style="width:230px;height:auto;">
-  <div id="csc-memo" style="margin-top:24px;font-size:26px;font-weight:800;color:#1f2a3a;text-align:center;line-height:1.35;word-break:keep-all;"></div>
+<div id="character-share-card" style="position:fixed;top:0;left:-9999px;width:420px;height:520px;background:#BACEE0;font-family:'Inter',sans-serif;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:32px 16px 24px;">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#e02020;">RIDEMATE</div>
+  <div style="flex:1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <img id="csc-character" src="./assets/characters/char_01.png" crossorigin="anonymous" style="max-width:360px;max-height:320px;width:auto;height:auto;">
+    <div id="csc-memo" style="margin-top:16px;font-size:26px;font-weight:800;color:#1f2a3a;text-align:center;line-height:1.35;word-break:keep-all;"></div>
+  </div>
 </div>
 
 <div class="welcome-overlay" id="welcome-overlay">
