@@ -1,9 +1,8 @@
 🆕 Mới
-- ⛽ Thẻ giá xăng: Xem giá xăng hôm nay và mức tăng/giảm so với lần điều chỉnh trước ngay ở màn hình chính
-- 🎴 Chia sẻ thẻ nhân vật: Chỉ chia sẻ nhân vật + lời nhắn, không cần chuyến đi
-- 🧑‍💼 Thêm 15 nhân vật chủ đề công sở, phân tab Đi xe/Công sở
+- 🔧 Kiểm tra đèn cảnh báo (AI): Chụp bảng đồng hồ để biết ý nghĩa, mức độ khẩn cấp
+- 🔍 "Đã kiểm tra, chưa thay": Ghi nhận kiểm tra, gia hạn chu kỳ theo km bạn chọn
 
 🛠 Cải thiện & sửa lỗi
-- Tạo thẻ nhanh hơn nhiều
-- Chỉnh lại bố cục thẻ chia sẻ (nhân vật to hơn, logo cố định vị trí)
-- Để trống lời nhắn thì thẻ giữ trống, không chèn câu mẫu
+- Phát hiện va chạm/ngã xe ổn định hơn khi chạy nền
+- Thêm bộ lọc độ chính xác GPS, sửa lộ trình lệch, tốc độ tối đa ảo
+- Ẩn thẻ giá xăng với người dùng ở Hàn Quốc

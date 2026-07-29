@@ -1,9 +1,8 @@
 🆕 New
-- ⛽ Fuel price card: Today's fuel prices and change from last update, on the home screen
-- 🎴 Character card sharing: Share just your character and a message, no ride needed
-- 🧑‍💼 15 new office-themed characters, with Riding/Office tabs
+- 🔧 Warning Light Check (AI): Photograph your dashboard to see what each warning light means and how urgent it is
+- 🔍 "Checked, not replaced" for consumables: log an inspection and extend the interval without resetting it
 
 🛠 Improvements & fixes
-- Much faster card generation
-- Cleaned up share card layout (bigger character, fixed logo position)
-- Leaving the message blank now keeps the card blank (no placeholder text)
+- Crash/fall detection now runs reliably in the background
+- GPS accuracy filter fixes jagged routes and false top-speed spikes
+- Fuel price card hidden for users in Korea (Vietnam-only data)
