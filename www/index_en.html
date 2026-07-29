@@ -251,7 +251,7 @@ option{background:var(--surface2);}
     display:flex; align-items:center; gap:6px;
   }
   .ai-guide-text {
-    font-size:17px; line-height:1.7; color:var(--text);
+    font-size:15px; line-height:1.7; color:var(--text);
   }
   .ai-guide-loading {
     display:flex; flex-direction:column; align-items:center;
@@ -722,6 +722,26 @@ option{background:var(--surface2);}
       <button class="brand-news-chip" data-cat="info" onclick="_brandNewsSelectCategory('info')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">💡 Info</button>
     </div>
     <div id="brand-news-debug-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+
+  <!-- Warning Light Check -->
+  <div class="page" id="page-warningLight">
+    <div class="sec-header"><span class="sec-title">🔧 Warning Light Check</span><div class="sec-line"></div></div>
+    <div style="font-size:14px;color:var(--text-dim);margin-bottom:16px;line-height:1.5;">
+      An unfamiliar warning light on your dashboard? Take a photo and AI will tell you what it means and how urgent it is.
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="wlCapturePhoto()">📷 Take / choose photo</button>
+    <div style="margin-bottom:14px;">
+      <div class="step-label">Anything specific you're wondering about? (optional)</div>
+      <input type="text" class="form-input" id="wl-note" placeholder="e.g. There's a wrench icon top-left">
+    </div>
+    <div id="wl-preview" style="display:none;margin-bottom:14px;">
+      <img id="wl-preview-img" style="width:100%;border-radius:12px;">
+    </div>
+    <div id="wl-result"></div>
+    <div style="margin-top:20px;padding:12px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--text-muted);line-height:1.5;">
+      ⚠ This analysis is for reference only and not an exact diagnosis. If it's unclear or could be dangerous, please visit a repair shop.
+    </div>
   </div>
   <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a></div>
 </div>
@@ -1574,6 +1594,7 @@ function showPage(name,btn){
   if(name==='rideHistory') renderRideHistoryPage();
   if(name==='monthlyStats') openMonthlyStats();
   if(name==='brandNews') renderBrandNewsPage();
+  if(name==='warningLight') renderWarningLightPage();
   logAnalyticsEvent('app_screen_view', {screen_name:name});
 }
 
@@ -2014,6 +2035,102 @@ function _fileToBase64(file){
   });
 }
 
+// ─────────────────────────────────────────
+//  Warning Light Check — analyze a dashboard photo with Claude Vision
+// ─────────────────────────────────────────
+function renderWarningLightPage(){
+  const preview=document.getElementById('wl-preview');
+  const result=document.getElementById('wl-result');
+  const note=document.getElementById('wl-note');
+  if(preview) preview.style.display='none';
+  if(result) result.innerHTML='';
+  if(note) note.value='';
+}
+
+async function wlCapturePhoto(){
+  try{
+    const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
+    if(!Camera){ showToast('Camera is not available'); return; }
+    const photo=await Camera.getPhoto({quality:85, allowEditing:false, resultType:'base64', source:'PROMPT'});
+    const previewImg=document.getElementById('wl-preview-img');
+    previewImg.src='data:image/jpeg;base64,'+photo.base64String;
+    document.getElementById('wl-preview').style.display='block';
+    await wlAnalyze(photo.base64String);
+  }catch(err){
+    if(err && err.message!=='User cancelled photos app') showToast('Could not get a photo');
+  }
+}
+
+async function wlAnalyze(base64){
+  const note=(document.getElementById('wl-note').value||'').trim();
+  const resultEl=document.getElementById('wl-result');
+  resultEl.innerHTML=`<div class="ai-guide-loading" style="padding:30px 0;"><div class="ai-spinner"></div><div style="font-size:14px;color:var(--text-dim);margin-top:10px;">Analyzing photo...</div></div>`;
+  logAnalyticsEvent('warning_light_scan_used', {});
+  try{
+    const prompt=`This is a photo of a motorcycle dashboard/instrument cluster.
+
+Ignore the following indicators - they can be lit up normally: neutral gear (N), turn signal arrows, high beam indicator, speedometer/tachometer numbers or needles, fuel gauge, clock, trip meter/odometer, wifi/bluetooth connection icon.
+
+Besides those, find and explain every warning-type indicator that looks like it shouldn't normally be lit but currently is. Examples: wrench/spanner icon (service required), engine shape, battery shape, thermometer shape, ABS/oil/tire pressure icons, exclamation/question mark inside a circle or triangle, brand-specific feature warnings like quickshifter, electronic suspension/damper, traction control, ESD, or other text-based error messages/codes.
+${note?'\nThe user provided additional context: '+note:''}
+
+Reply with ONLY the following JSON format for each warning indicator found, no other text:
+{"findings":[{"name":"indicator name","meaning":"plain-language explanation","severity":"Stop immediately"|"Visit a repair shop"|"Minor","causes":["possible cause 1","possible cause 2"]}],"note":"overall comment (or a reassuring note if no warnings found)"}
+
+If unsure, be conservative and choose "Visit a repair shop".`;
+    const res=await fetch(ANTHROPIC_PROXY, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1200,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image', source:{type:'base64', media_type:'image/jpeg', data:base64}},
+            {type:'text', text:prompt}
+          ]
+        }]
+      })
+    });
+    const data=await res.json();
+    const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
+    let parsed=null;
+    try{ parsed=JSON.parse(text.replace(/```json|```/g,'').trim()); }catch(e){ console.warn('[WL] JSON parse failed, text:', text); }
+    if(parsed && Array.isArray(parsed.findings)){
+      wlRenderResult(parsed);
+    }else{
+      resultEl.innerHTML=`<div class="ai-error"><div style="font-size:27px;margin-bottom:10px;">🔧</div><div>Can't analyze this right now. Please try again later or ask a repair shop.</div></div>`;
+    }
+  }catch(e){
+    console.warn('[WL] analysis error', e);
+    resultEl.innerHTML=`<div class="ai-error"><div style="font-size:27px;margin-bottom:10px;">🔧</div><div>Can't analyze this right now. Please try again later or ask a repair shop.</div></div>`;
+  }
+}
+
+function wlRenderResult(parsed){
+  const resultEl=document.getElementById('wl-result');
+  if(!parsed.findings.length){
+    resultEl.innerHTML=`<div style="padding:20px;text-align:center;color:var(--text-dim);">
+      <div style="font-size:27px;margin-bottom:10px;">✓</div>
+      <div>${parsed.note||'No unusual warning lights spotted.'}</div>
+    </div>`;
+    return;
+  }
+  const sevColor=s=>s==='Stop immediately'?'var(--red)':s==='Visit a repair shop'?'var(--accent)':'var(--green)';
+  const sevIcon=s=>s==='Stop immediately'?'🚨':s==='Visit a repair shop'?'⚠':'✓';
+  resultEl.innerHTML=parsed.findings.map(f=>`
+    <div class="card" style="padding:14px 16px;margin-bottom:12px;border-left:3px solid ${sevColor(f.severity)};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">
+        <span style="font-size:16px;font-weight:700;">${f.name}</span>
+        <span style="font-size:12px;font-weight:700;color:${sevColor(f.severity)};flex-shrink:0;">${sevIcon(f.severity)} ${f.severity}</span>
+      </div>
+      <div style="font-size:14px;color:var(--text);margin-bottom:8px;">${f.meaning}</div>
+      ${f.causes&&f.causes.length?`<div style="font-size:13px;color:var(--text-dim);">Possible causes: ${f.causes.join(', ')}</div>`:''}
+    </div>
+  `).join('')+(parsed.note?`<div style="font-size:13px;color:var(--text-dim);margin-top:8px;">${parsed.note}</div>`:'');
+}
+
 function scheduleInsuranceAlerts(){
   try{
     var LN=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;
@@ -2258,6 +2375,15 @@ function _renderConsumablesCore(){
   const bike=D.bikes[cState.bikeIdx];
   el.innerHTML=`
     <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} Service</span><div class="sec-line"></div></div>
+    <div class="card" style="padding:12px 14px;margin-bottom:14px;border:1px solid rgba(208,64,64,0.35);background:var(--red-dim);cursor:pointer;" onclick="showPage('warningLight',document.getElementById('nav-more-btn'))">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:22px;">🚨</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);">Got a dashboard warning light?</div>
+          <div style="font-size:12px;color:var(--text-dim);">Take a photo and let AI check it</div>
+        </div>
+      </div>
+    </div>
     <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">Current Mileage <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
     <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
 }
@@ -3335,12 +3461,12 @@ const ONBOARDING_SLIDES = [
     desc:"From engine oil to brake pads, we automatically calculate when it's time to replace them."
   },
   {
-    images:[{src:'./assets/onboarding/slide2_start.png', highlight:{top:'13%', left:'68%', width:'30%', height:'9%', radius:'16px'}}],
+    images:[{src:'./assets/onboarding/slide2_start.png', highlight:{top:'18.7%', left:'8%', width:'84.2%', height:'4.9%', radius:'16px'}}],
     title:'Automatic ride tracking',
     desc:'Just tap "Start" — distance, time, and speed are recorded automatically.'
   },
   {
-    images:[{src:'./assets/onboarding/slide3_sos.png', highlight:{top:'61.5%', left:'77.5%', width:'24%', height:'11%', radius:'50%'}}],
+    images:[{src:'./assets/onboarding/slide3_sos.png', highlight:{top:'59.4%', left:'83.1%', width:'13.1%', height:'6.1%', radius:'50%'}}],
     title:'Automatic emergency alerts',
     desc:'If a crash is detected, a text is automatically sent to your emergency contact.'
   },
@@ -5830,6 +5956,9 @@ function renderMedicalCard(){
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('brandNews',document.getElementById('nav-more-btn'));">
         <span class="more-tile-icon">🗞</span><span class="more-tile-label">Bike News</span>
+      </div>
+      <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('warningLight',document.getElementById('nav-more-btn'));">
+        <span class="more-tile-icon">🔧</span><span class="more-tile-label">Warning Light</span>
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');openCharacterCardModal();">
         <img src="./assets/status/status_1_happy.png" class="more-tile-icon" style="width:28px;height:28px;margin:0 auto 8px;" alt=""><span class="more-tile-label">Character Card</span>

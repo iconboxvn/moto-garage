@@ -251,7 +251,7 @@ option{background:var(--surface2);}
     display:flex; align-items:center; gap:6px;
   }
   .ai-guide-text {
-    font-size:17px; line-height:1.7; color:var(--text);
+    font-size:15px; line-height:1.7; color:var(--text);
   }
   .ai-guide-loading {
     display:flex; flex-direction:column; align-items:center;
@@ -722,6 +722,26 @@ option{background:var(--surface2);}
       <button class="brand-news-chip" data-cat="info" onclick="_brandNewsSelectCategory('info')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">💡 Thông tin</button>
     </div>
     <div id="brand-news-debug-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+
+  <!-- Kiểm tra đèn cảnh báo -->
+  <div class="page" id="page-warningLight">
+    <div class="sec-header"><span class="sec-title">🔧 Kiểm tra đèn cảnh báo</span><div class="sec-line"></div></div>
+    <div style="font-size:14px;color:var(--text-dim);margin-bottom:16px;line-height:1.5;">
+      Có đèn cảnh báo lạ trên bảng đồng hồ? Chụp ảnh, AI sẽ cho biết đó là gì và mức độ khẩn cấp.
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="wlCapturePhoto()">📷 Chụp / chọn ảnh</button>
+    <div style="margin-bottom:14px;">
+      <div class="step-label">Bạn có thắc mắc cụ thể gì không? (tùy chọn)</div>
+      <input type="text" class="form-input" id="wl-note" placeholder="VD: Có hình cờ lê ở góc trên bên trái">
+    </div>
+    <div id="wl-preview" style="display:none;margin-bottom:14px;">
+      <img id="wl-preview-img" style="width:100%;border-radius:12px;">
+    </div>
+    <div id="wl-result"></div>
+    <div style="margin-top:20px;padding:12px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--text-muted);line-height:1.5;">
+      ⚠ Kết quả này chỉ mang tính tham khảo, không phải chẩn đoán chính xác. Nếu không chắc chắn hoặc có thể nguy hiểm, hãy đến tiệm sửa xe.
+    </div>
   </div>
   <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a></div>
 </div>
@@ -1574,6 +1594,7 @@ function showPage(name,btn){
   if(name==='rideHistory') renderRideHistoryPage();
   if(name==='monthlyStats') openMonthlyStats();
   if(name==='brandNews') renderBrandNewsPage();
+  if(name==='warningLight') renderWarningLightPage();
   logAnalyticsEvent('app_screen_view', {screen_name:name});
 }
 
@@ -2014,6 +2035,102 @@ function _fileToBase64(file){
   });
 }
 
+// ─────────────────────────────────────────
+//  Kiểm tra đèn cảnh báo — phân tích ảnh bảng đồng hồ bằng Claude Vision
+// ─────────────────────────────────────────
+function renderWarningLightPage(){
+  const preview=document.getElementById('wl-preview');
+  const result=document.getElementById('wl-result');
+  const note=document.getElementById('wl-note');
+  if(preview) preview.style.display='none';
+  if(result) result.innerHTML='';
+  if(note) note.value='';
+}
+
+async function wlCapturePhoto(){
+  try{
+    const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
+    if(!Camera){ showToast('Không thể sử dụng camera'); return; }
+    const photo=await Camera.getPhoto({quality:85, allowEditing:false, resultType:'base64', source:'PROMPT'});
+    const previewImg=document.getElementById('wl-preview-img');
+    previewImg.src='data:image/jpeg;base64,'+photo.base64String;
+    document.getElementById('wl-preview').style.display='block';
+    await wlAnalyze(photo.base64String);
+  }catch(err){
+    if(err && err.message!=='User cancelled photos app') showToast('Không lấy được ảnh');
+  }
+}
+
+async function wlAnalyze(base64){
+  const note=(document.getElementById('wl-note').value||'').trim();
+  const resultEl=document.getElementById('wl-result');
+  resultEl.innerHTML=`<div class="ai-guide-loading" style="padding:30px 0;"><div class="ai-spinner"></div><div style="font-size:14px;color:var(--text-dim);margin-top:10px;">Đang phân tích ảnh...</div></div>`;
+  logAnalyticsEvent('warning_light_scan_used', {});
+  try{
+    const prompt=`Đây là ảnh bảng đồng hồ (đồng hồ táp lô) của xe máy.
+
+Bỏ qua các đèn/biểu tượng sau vì chúng có thể sáng bình thường: đèn số 0/Neutral (N), mũi tên xi-nhan, đèn pha chiếu xa, số trên đồng hồ tốc độ/vòng tua hoặc kim đồng hồ, đồng hồ nhiên liệu, đồng hồ giờ, trip meter/công-tơ-mét, biểu tượng kết nối wifi/bluetooth.
+
+Ngoài ra, nếu có đèn cảnh báo nào trông như bình thường phải tắt nhưng hiện đang sáng, hãy tìm và giải thích tất cả. Ví dụ: biểu tượng cờ lê (cần bảo dưỡng), hình động cơ, hình bình ắc quy, hình nhiệt kế, biểu tượng ABS/dầu nhớt/áp suất lốp, dấu chấm than hoặc dấu hỏi trong hình tròn/tam giác, cảnh báo tính năng riêng của hãng như quickshifter, phuộc điện tử/giảm chấn, kiểm soát lực kéo, ESD, hoặc các mã lỗi/thông báo lỗi dạng chữ khác.
+${note?'\nThông tin bổ sung từ người dùng: '+note:''}
+
+Chỉ trả lời theo định dạng JSON sau cho từng đèn cảnh báo tìm thấy, không thêm chữ nào khác:
+{"findings":[{"name":"tên đèn cảnh báo","meaning":"giải thích dễ hiểu","severity":"Cần dừng xe ngay"|"Nên đến tiệm sửa xe"|"Nhẹ","causes":["nguyên nhân có thể 1","nguyên nhân có thể 2"]}],"note":"nhận xét tổng quát (hoặc lời trấn an nếu không thấy đèn cảnh báo nào)"}
+
+Nếu không chắc chắn, hãy chọn "Nên đến tiệm sửa xe" để an toàn.`;
+    const res=await fetch(ANTHROPIC_PROXY, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1200,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image', source:{type:'base64', media_type:'image/jpeg', data:base64}},
+            {type:'text', text:prompt}
+          ]
+        }]
+      })
+    });
+    const data=await res.json();
+    const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
+    let parsed=null;
+    try{ parsed=JSON.parse(text.replace(/```json|```/g,'').trim()); }catch(e){ console.warn('[WL] Lỗi phân tích JSON, văn bản:', text); }
+    if(parsed && Array.isArray(parsed.findings)){
+      wlRenderResult(parsed);
+    }else{
+      resultEl.innerHTML=`<div class="ai-error"><div style="font-size:27px;margin-bottom:10px;">🔧</div><div>Hiện chưa thể phân tích. Vui lòng thử lại sau hoặc hỏi tiệm sửa xe.</div></div>`;
+    }
+  }catch(e){
+    console.warn('[WL] lỗi phân tích', e);
+    resultEl.innerHTML=`<div class="ai-error"><div style="font-size:27px;margin-bottom:10px;">🔧</div><div>Hiện chưa thể phân tích. Vui lòng thử lại sau hoặc hỏi tiệm sửa xe.</div></div>`;
+  }
+}
+
+function wlRenderResult(parsed){
+  const resultEl=document.getElementById('wl-result');
+  if(!parsed.findings.length){
+    resultEl.innerHTML=`<div style="padding:20px;text-align:center;color:var(--text-dim);">
+      <div style="font-size:27px;margin-bottom:10px;">✓</div>
+      <div>${parsed.note||'Không thấy đèn cảnh báo bất thường nào.'}</div>
+    </div>`;
+    return;
+  }
+  const sevColor=s=>s==='Cần dừng xe ngay'?'var(--red)':s==='Nên đến tiệm sửa xe'?'var(--accent)':'var(--green)';
+  const sevIcon=s=>s==='Cần dừng xe ngay'?'🚨':s==='Nên đến tiệm sửa xe'?'⚠':'✓';
+  resultEl.innerHTML=parsed.findings.map(f=>`
+    <div class="card" style="padding:14px 16px;margin-bottom:12px;border-left:3px solid ${sevColor(f.severity)};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">
+        <span style="font-size:16px;font-weight:700;">${f.name}</span>
+        <span style="font-size:12px;font-weight:700;color:${sevColor(f.severity)};flex-shrink:0;">${sevIcon(f.severity)} ${f.severity}</span>
+      </div>
+      <div style="font-size:14px;color:var(--text);margin-bottom:8px;">${f.meaning}</div>
+      ${f.causes&&f.causes.length?`<div style="font-size:13px;color:var(--text-dim);">Nguyên nhân có thể: ${f.causes.join(', ')}</div>`:''}
+    </div>
+  `).join('')+(parsed.note?`<div style="font-size:13px;color:var(--text-dim);margin-top:8px;">${parsed.note}</div>`:'');
+}
+
 function scheduleInsuranceAlerts(){
   try{
     var LN=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;
@@ -2258,6 +2375,15 @@ function _renderConsumablesCore(){
   const bike=D.bikes[cState.bikeIdx];
   el.innerHTML=`
     <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} Bảo dưỡng</span><div class="sec-line"></div></div>
+    <div class="card" style="padding:12px 14px;margin-bottom:14px;border:1px solid rgba(208,64,64,0.35);background:var(--red-dim);cursor:pointer;" onclick="showPage('warningLight',document.getElementById('nav-more-btn'))">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:22px;">🚨</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);">Có đèn cảnh báo trên bảng đồng hồ?</div>
+          <div style="font-size:12px;color:var(--text-dim);">Chụp ảnh để AI kiểm tra giúp bạn</div>
+        </div>
+      </div>
+    </div>
     <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">Tổng số km <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
     <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
 }
@@ -3335,12 +3461,12 @@ const ONBOARDING_SLIDES = [
     desc:'Từ dầu động cơ đến má phanh, chúng tôi tự động tính thời điểm cần thay thế.'
   },
   {
-    images:[{src:'./assets/onboarding/slide2_start.png', highlight:{top:'13%', left:'68%', width:'30%', height:'9%', radius:'16px'}}],
+    images:[{src:'./assets/onboarding/slide2_start.png', highlight:{top:'18.7%', left:'8%', width:'84.2%', height:'4.9%', radius:'16px'}}],
     title:'Tự động ghi lại chuyến đi',
     desc:'Chỉ cần nhấn "Bắt đầu" — quãng đường, thời gian, tốc độ được ghi tự động.'
   },
   {
-    images:[{src:'./assets/onboarding/slide3_sos.png', highlight:{top:'61.5%', left:'77.5%', width:'24%', height:'11%', radius:'50%'}}],
+    images:[{src:'./assets/onboarding/slide3_sos.png', highlight:{top:'59.4%', left:'83.1%', width:'13.1%', height:'6.1%', radius:'50%'}}],
     title:'Cảnh báo khẩn cấp tự động',
     desc:'Nếu phát hiện tai nạn, tin nhắn sẽ tự động gửi đến liên hệ khẩn cấp của bạn.'
   },
@@ -5827,6 +5953,9 @@ function renderMedicalCard(){
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('brandNews',document.getElementById('nav-more-btn'));">
         <span class="more-tile-icon">🗞</span><span class="more-tile-label">Tin xe máy</span>
+      </div>
+      <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('warningLight',document.getElementById('nav-more-btn'));">
+        <span class="more-tile-icon">🔧</span><span class="more-tile-label">Đèn cảnh báo</span>
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');openCharacterCardModal();">
         <img src="./assets/status/status_1_happy.png" class="more-tile-icon" style="width:28px;height:28px;margin:0 auto 8px;" alt=""><span class="more-tile-label">Thẻ nhân vật</span>

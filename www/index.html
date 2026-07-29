@@ -272,7 +272,7 @@ option{background:var(--surface2);}
     display:flex; align-items:center; gap:6px;
   }
   .ai-guide-text {
-    font-size:17px; line-height:1.7; color:var(--text);
+    font-size:15px; line-height:1.7; color:var(--text);
   }
   .ai-guide-loading {
     display:flex; flex-direction:column; align-items:center;
@@ -753,6 +753,26 @@ option{background:var(--surface2);}
       <button class="brand-news-chip" data-cat="info" onclick="_brandNewsSelectCategory('info')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">💡 정보</button>
     </div>
     <div id="brand-news-debug-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+
+  <!-- 경고등 확인 -->
+  <div class="page" id="page-warningLight">
+    <div class="sec-header"><span class="sec-title">🔧 경고등 확인</span><div class="sec-line"></div></div>
+    <div style="font-size:14px;color:var(--text-dim);margin-bottom:16px;line-height:1.5;">
+      계기판에 낯선 경고등이 떴나요? 사진을 찍으면 AI가 어떤 경고인지, 얼마나 급한지 알려드려요.
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="wlCapturePhoto()">📷 사진 촬영 / 선택</button>
+    <div style="margin-bottom:14px;">
+      <div class="step-label">혹시 특별히 궁금한 부분이 있나요? (선택)</div>
+      <input type="text" class="form-input" id="wl-note" placeholder="예: 왼쪽 위에 스패너 모양이 떠요">
+    </div>
+    <div id="wl-preview" style="display:none;margin-bottom:14px;">
+      <img id="wl-preview-img" style="width:100%;border-radius:12px;">
+    </div>
+    <div id="wl-result"></div>
+    <div style="margin-top:20px;padding:12px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--text-muted);line-height:1.5;">
+      ⚠ 이 분석은 참고용이며 정확한 진단이 아닙니다. 애매하거나 위험할 수 있는 경우 반드시 정비소를 방문하세요.
+    </div>
   </div>
   <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a></div>
 </div>
@@ -1855,6 +1875,7 @@ function showPage(name,btn){
   if(name==='rideHistory') renderRideHistoryPage();
   if(name==='monthlyStats') openMonthlyStats();
   if(name==='brandNews') renderBrandNewsPage();
+  if(name==='warningLight') renderWarningLightPage();
   logAnalyticsEvent('app_screen_view', {screen_name:name});
 }
 
@@ -2360,6 +2381,102 @@ function _fileToBase64(file){
   });
 }
 
+// ─────────────────────────────────────────
+//  경고등 확인 — 계기판 사진을 Claude Vision으로 분석
+// ─────────────────────────────────────────
+function renderWarningLightPage(){
+  const preview=document.getElementById('wl-preview');
+  const result=document.getElementById('wl-result');
+  const note=document.getElementById('wl-note');
+  if(preview) preview.style.display='none';
+  if(result) result.innerHTML='';
+  if(note) note.value='';
+}
+
+async function wlCapturePhoto(){
+  try{
+    const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
+    if(!Camera){ showToast('카메라를 사용할 수 없습니다'); return; }
+    const photo=await Camera.getPhoto({quality:85, allowEditing:false, resultType:'base64', source:'PROMPT'});
+    const previewImg=document.getElementById('wl-preview-img');
+    previewImg.src='data:image/jpeg;base64,'+photo.base64String;
+    document.getElementById('wl-preview').style.display='block';
+    await wlAnalyze(photo.base64String);
+  }catch(err){
+    if(err && err.message!=='User cancelled photos app') showToast('사진을 가져오지 못했습니다');
+  }
+}
+
+async function wlAnalyze(base64){
+  const note=(document.getElementById('wl-note').value||'').trim();
+  const resultEl=document.getElementById('wl-result');
+  resultEl.innerHTML=`<div class="ai-guide-loading" style="padding:30px 0;"><div class="ai-spinner"></div><div style="font-size:14px;color:var(--text-dim);margin-top:10px;">사진 분석 중...</div></div>`;
+  logAnalyticsEvent('warning_light_scan_used', {});
+  try{
+    const prompt=`이 사진은 오토바이 계기판(대시보드) 사진입니다.
+
+다음 표시등/아이콘은 정상적으로 켜질 수 있으니 무시하세요: 중립기어(N), 방향지시등 화살표, 하이빔(상향등), 속도계/RPM 숫자나 바늘, 연료량 게이지, 시계, 트립미터/주행거리계, 와이파이/블루투스 연결 표시.
+
+그 외에 평소엔 꺼져 있어야 정상인데 지금 켜져 있는 것 같은 경고성 표시등이 보이면 전부 찾아서 설명하세요. 예: 스패너/렌치(정비 필요), 엔진 모양, 배터리 모양, 온도계 모양, ABS·오일·타이어공기압 아이콘, 느낌표·물음표가 그려진 원/삼각형, 퀵시프터·전자서스펜션·트랙션컨트롤·ESD 등 브랜드별 기능 경고 텍스트나 아이콘, 기타 에러 메시지/코드.
+${note?'\n사용자가 추가로 알려준 내용: '+note:''}
+
+찾은 경고 표시등 각각에 대해 아래 JSON 형식으로만 답하세요. 다른 텍스트 없이 JSON만:
+{"findings":[{"name":"표시등 이름","meaning":"쉬운 설명","severity":"즉시 정차 필요"|"정비소 방문 권장"|"경미함","causes":["가능한 원인1","가능한 원인2"]}],"note":"전반적인 코멘트 (경고등이 없으면 그에 대한 안내)"}
+
+확실하지 않으면 "정비소 방문 권장"으로 보수적으로 판단하세요.`;
+    const res=await fetch(ANTHROPIC_PROXY, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1200,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image', source:{type:'base64', media_type:'image/jpeg', data:base64}},
+            {type:'text', text:prompt}
+          ]
+        }]
+      })
+    });
+    const data=await res.json();
+    const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
+    let parsed=null;
+    try{ parsed=JSON.parse(text.replace(/```json|```/g,'').trim()); }catch(e){ console.warn('[WL] JSON 파싱 실패, 텍스트:', text); }
+    if(parsed && Array.isArray(parsed.findings)){
+      wlRenderResult(parsed);
+    }else{
+      resultEl.innerHTML=`<div class="ai-error"><div style="font-size:27px;margin-bottom:10px;">🔧</div><div>지금은 분석할 수 없어요. 잠시 후 다시 시도하거나 정비소에 문의해주세요.</div></div>`;
+    }
+  }catch(e){
+    console.warn('[WL] 분석 오류', e);
+    resultEl.innerHTML=`<div class="ai-error"><div style="font-size:27px;margin-bottom:10px;">🔧</div><div>지금은 분석할 수 없어요. 잠시 후 다시 시도하거나 정비소에 문의해주세요.</div></div>`;
+  }
+}
+
+function wlRenderResult(parsed){
+  const resultEl=document.getElementById('wl-result');
+  if(!parsed.findings.length){
+    resultEl.innerHTML=`<div style="padding:20px;text-align:center;color:var(--text-dim);">
+      <div style="font-size:27px;margin-bottom:10px;">✓</div>
+      <div>${parsed.note||'특별한 경고 표시등이 보이지 않아요.'}</div>
+    </div>`;
+    return;
+  }
+  const sevColor=s=>s==='즉시 정차 필요'?'var(--red)':s==='정비소 방문 권장'?'var(--accent)':'var(--green)';
+  const sevIcon=s=>s==='즉시 정차 필요'?'🚨':s==='정비소 방문 권장'?'⚠':'✓';
+  resultEl.innerHTML=parsed.findings.map(f=>`
+    <div class="card" style="padding:14px 16px;margin-bottom:12px;border-left:3px solid ${sevColor(f.severity)};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">
+        <span style="font-size:16px;font-weight:700;">${f.name}</span>
+        <span style="font-size:12px;font-weight:700;color:${sevColor(f.severity)};flex-shrink:0;">${sevIcon(f.severity)} ${f.severity}</span>
+      </div>
+      <div style="font-size:14px;color:var(--text);margin-bottom:8px;">${f.meaning}</div>
+      ${f.causes&&f.causes.length?`<div style="font-size:13px;color:var(--text-dim);">가능한 원인: ${f.causes.join(', ')}</div>`:''}
+    </div>
+  `).join('')+(parsed.note?`<div style="font-size:13px;color:var(--text-dim);margin-top:8px;">${parsed.note}</div>`:'');
+}
+
 // 보험 만료 알림 스케줄 (14일 전 1회 + 7일 전부터 매일)
 function scheduleInsuranceAlerts(){
   try{
@@ -2624,6 +2741,15 @@ function _renderConsumablesCore(){
   const bike=D.bikes[cState.bikeIdx];
   el.innerHTML=`
     <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} 소모품</span><div class="sec-line"></div></div>
+    <div class="card" style="padding:12px 14px;margin-bottom:14px;border:1px solid rgba(208,64,64,0.35);background:var(--red-dim);cursor:pointer;" onclick="showPage('warningLight',document.getElementById('nav-more-btn'))">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:22px;">🚨</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);">계기판에 경고등이 떴나요?</div>
+          <div style="font-size:12px;color:var(--text-dim);">사진 찍으면 AI가 확인해드려요</div>
+        </div>
+      </div>
+    </div>
     <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">현재 주행거리 <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
     <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
 }
@@ -5220,12 +5346,12 @@ const ONBOARDING_SLIDES = [
     desc:'엔진오일부터 브레이크패드까지, 교체 시기를 자동으로 계산해서 알려드려요.'
   },
   {
-    images:[{src:'./assets/onboarding/slide2_start.png', highlight:{top:'13%', left:'68%', width:'30%', height:'9%', radius:'16px'}}],
+    images:[{src:'./assets/onboarding/slide2_start.png', highlight:{top:'18.7%', left:'8%', width:'84.2%', height:'4.9%', radius:'16px'}}],
     title:'자동 라이딩 기록',
     desc:'"시작" 버튼 하나면 거리·시간·속도가 자동으로 기록돼요.'
   },
   {
-    images:[{src:'./assets/onboarding/slide3_sos.png', highlight:{top:'61.5%', left:'77.5%', width:'24%', height:'11%', radius:'50%'}}],
+    images:[{src:'./assets/onboarding/slide3_sos.png', highlight:{top:'59.4%', left:'83.1%', width:'13.1%', height:'6.1%', radius:'50%'}}],
     title:'긴급 상황 자동 알림',
     desc:'사고가 감지되면 등록해둔 긴급연락처로 자동으로 문자가 발송돼요.'
   },
@@ -6317,6 +6443,9 @@ function renderMedicalCard(){
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('brandNews',document.getElementById('nav-more-btn'));">
         <span class="more-tile-icon">🗞</span><span class="more-tile-label">바이크 소식</span>
+      </div>
+      <div class="more-sheet-tile" onclick="closeModal('m-more');showPage('warningLight',document.getElementById('nav-more-btn'));">
+        <span class="more-tile-icon">🔧</span><span class="more-tile-label">경고등 확인</span>
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');openCharacterCardModal();">
         <img src="./assets/status/status_1_happy.png" class="more-tile-icon" style="width:28px;height:28px;margin:0 auto 8px;" alt=""><span class="more-tile-label">캐릭터 카드</span>
