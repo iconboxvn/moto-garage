@@ -25,6 +25,18 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden;}
 
+/* ═══ 타이포그래피 스케일 (2026-08-01, 폰트 크기 정비 작업) ═══ */
+.tp-display{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;line-height:1;}     /* 대형 브랜드 타이틀 (바이크명 등) */
+.tp-section{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2.5px;color:var(--metal-light);} /* 섹션 제목 */
+.tp-title{font-size:15px;font-weight:700;color:var(--text);}                                          /* 카드/리스트 타이틀 */
+.tp-body{font-size:14px;color:var(--text);}                                                           /* 본문 */
+.tp-sub{font-size:13px;color:var(--text-dim);}                                                        /* 보조 설명 */
+.tp-caption{font-size:12px;color:var(--text-muted);}                                                  /* 캡션 / 타임스탬프 */
+.tp-label{font-size:11px;font-weight:600;color:var(--text-dim);letter-spacing:0.5px;}                 /* 작은 라벨 / 태그 */
+.tp-stat-sm{font-size:18px;font-weight:800;color:var(--text);}                                        /* 소형 강조 숫자 (그리드형) */
+.tp-stat{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:800;color:var(--text);line-height:1;}     /* 카드 안 강조 숫자 */
+.tp-stat-lg{font-family:'JetBrains Mono',monospace;font-size:44px;font-weight:800;color:var(--text);line-height:1;}  /* 대형 강조 숫자 */
+
 /* HEADER */
 .header{background:var(--surface);border-bottom:1px solid var(--border);padding:env(safe-area-inset-top) 14px 0;height:calc(52px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
 .header-left{display:flex;align-items:center;}
@@ -89,7 +101,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
   .toggle-slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.25s;}
   .toggle-wrap input:checked + .toggle-slider{background:var(--accent);}
   .toggle-wrap input:checked + .toggle-slider:before{transform:translateX(20px);}
-  .setting-section-title{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin:16px 0 6px;}
+  .setting-section-title{font-size:15px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin:16px 0 6px;}
 .bike-name{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;line-height:1;}
 .bike-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);margin-top:3px;}
 .bstat-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);}
@@ -100,9 +112,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .btn:hover{border-color:var(--metal);color:var(--text);}
 .btn-primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
 .btn-primary:hover{background:#f0b030;border-color:#f0b030;color:#000;}
-.btn-danger{border-color:transparent;color:var(--red);}
+.btn-danger{color:var(--red);}
 .btn-danger:hover{background:var(--red-dim);border-color:#5a2020;}
-.btn-sm{padding:5px 9px;font-size:17px;}
+.btn-sm{padding:5px 9px;font-size:13px;}
 .btn-full{width:100%;justify-content:center;padding:11px;}
 
 /* PILLS */
@@ -115,8 +127,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .form-group{display:flex;flex-direction:column;gap:5px;}
 .form-group.full{grid-column:1/-1;}
-.form-label{font-size:17px;color:var(--text-dim);letter-spacing:0.5px;font-weight:600;}
-.form-input,.form-select{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Inter',sans-serif;font-size:17px;padding:9px 11px;outline:none;width:100%;transition:border-color 0.15s;}
+.form-label{font-size:13px;color:var(--text-dim);letter-spacing:0.5px;font-weight:600;}
+.form-input,.form-select{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;padding:9px 11px;outline:none;width:100%;transition:border-color 0.15s;}
 .form-input:focus,.form-select:focus{border-color:var(--accent);}
 .form-select{cursor:pointer;}
 option{background:var(--surface2);}
@@ -133,7 +145,7 @@ option{background:var(--surface2);}
 .modal-close{background:none;border:none;color:var(--text-dim);font-size:17px;cursor:pointer;padding:2px 4px;}
 .modal-body{padding:18px;}
 .modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
-.step-label{font-size:17px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.step-label{font-size:15px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
 .step-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--surface3);border:1px solid var(--border-bright);font-size:15px;font-weight:700;color:var(--text-dim);flex-shrink:0;}
 
 /* CONSUMABLE GRID */
@@ -152,7 +164,7 @@ option{background:var(--surface2);}
 .c-info{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-dim);line-height:1.6;}
 .c-bar{height:3px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden;}
 .c-bar-fill{height:100%;border-radius:2px;transition:width 0.4s;}
-.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-top:5px;}
+.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-top:5px;}
 .c-tag.ok{background:var(--green-dim);color:var(--green);}
 .c-tag.warn{background:var(--accent-dim);color:var(--accent);}
 .c-tag.danger{background:var(--red-dim);color:var(--red);}
@@ -162,10 +174,10 @@ option{background:var(--surface2);}
 .h-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:8px;}
 .h-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .h-card-bike{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
-.h-card-meta{font-size:15px;color:var(--text-dim);line-height:1.65;}
-.h-card-actions{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.h-card-meta{font-size:14px;color:var(--text-dim);line-height:1.65;}
+.h-card-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 .mono{font-family:'JetBrains Mono',monospace;font-size:17px;}
-.badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:15px;font-weight:700;letter-spacing:0.5px;}
+.badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:11px;font-weight:700;letter-spacing:0.5px;}
 .badge-maint{background:#0e1e2e;color:#4a90d8;}
 .badge-cons{background:#2a1a08;color:var(--accent);}
 .badge-repair{background:var(--red-dim);color:var(--red);}
@@ -186,9 +198,9 @@ option{background:var(--surface2);}
 /* EMPTY */
 .empty{text-align:center;padding:40px 20px;}
 .empty-icon{font-size:31px;margin-bottom:8px;}
-.empty-text{font-size:17px;color:var(--text-dim);}
+.empty-text{font-size:15px;color:var(--text-dim);}
 .no-bikes-box{background:var(--surface);border:1px dashed var(--border-bright);border-radius:10px;padding:40px;text-align:center;}
-.tag-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:17px;color:var(--metal);font-family:'JetBrains Mono',monospace;}
+.tag-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--metal);font-family:'JetBrains Mono',monospace;}
 .num-input-styled{background:var(--surface2);border:1px solid var(--border-bright);border-radius:4px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:500;padding:10px 14px;outline:none;text-align:center;transition:border-color 0.15s;}
 .num-input-styled:focus{border-color:var(--accent);}
 
@@ -205,9 +217,9 @@ option{background:var(--surface2);}
 .backup-toast.error{background:var(--red);color:#fff;}
 .backup-toast.show,.pwa-installed-toast.show{display:block;}
 @keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-.backup-stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:17px;}
+.backup-stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:14px;}
 .backup-stat-row:last-child{border-bottom:none;}
-.backup-stat-val{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--accent);}
+.backup-stat-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--accent);}
 
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
@@ -246,7 +258,7 @@ option{background:var(--surface2);}
   .ai-guide-section.tip { border-left-color:#4a90d8; }
   .ai-guide-section.cost { border-left-color:var(--green); }
   .ai-guide-section-title {
-    font-size:17px; font-weight:700; color:var(--text-dim);
+    font-size:15px; font-weight:700; color:var(--text-dim);
     letter-spacing:1px; margin-bottom:8px;
     display:flex; align-items:center; gap:6px;
   }
@@ -495,8 +507,6 @@ option{background:var(--surface2);}
   .auto-sos-cancel{background:#fff;color:#7a0606;font-family:'Inter',sans-serif;font-size:17px;font-weight:800;padding:16px 56px;border-radius:50px;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:28px;}
   /* ── Modal thông tin y tế: nhỏ hơn toàn cục 1px, chỉ áp dụng trong modal này ── */
   #m-medical .modal-title{font-size:16px;}
-  #m-medical .form-label{font-size:16px;}
-  #m-medical .form-input,#m-medical .form-select{font-size:16px;}
 </style>
 <link rel="stylesheet" href="./lib/leaflet.css">
 <script src="./lib/html2canvas.min.js"></script>
@@ -597,7 +607,7 @@ option{background:var(--surface2);}
   <!-- Lịch sử lái xe -->
   <div class="page" id="page-rideHistory">
     <div class="sec-header"><span class="sec-title">LỊCH SỬ LÁI XE</span><div class="sec-line"></div></div>
-    <button class="btn btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats', document.getElementById('nav-ridehistory-btn'))">📅 Xem thống kê theo tháng</button>
+    <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats', document.getElementById('nav-ridehistory-btn'))">Xem thống kê theo tháng</button>
     <div id="ride-history-list"></div>
     <button class="btn btn-full" id="ride-history-more-btn" onclick="showMoreRideHistory()" style="display:none;margin-top:8px;">Xem thêm</button>
   </div>
@@ -605,13 +615,13 @@ option{background:var(--surface2);}
   <!-- Thống kê theo tháng -->
   <div class="page" id="page-monthlyStats">
     <div class="sec-header"><span class="sec-title">Thống kê theo tháng</span><div class="sec-line"></div></div>
-    <button class="btn btn-full" style="margin-bottom:14px;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">📋 Xem lịch sử chi tiết</button>
+    <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">Xem lịch sử chi tiết</button>
 
     <div id="mstat-bike-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;"></div>
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <button class="btn btn-sm" onclick="mstatChangeMonth(-1)">◀</button>
-      <div id="mstat-month-label" style="font-weight:700;font-size:17px;color:var(--text);"></div>
+      <div id="mstat-month-label" class="tp-title"></div>
       <button class="btn btn-sm" onclick="mstatChangeMonth(1)">▶</button>
     </div>
 
@@ -656,7 +666,7 @@ option{background:var(--surface2);}
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">Số điện thoại</div>
         <input type="tel" class="form-input" id="sos-contact-phone" placeholder="0xxx-xxx-xxxx" style="width:100%;">
       </div>
-      <button class="btn btn-primary btn-sm" onclick="saveSosContact()">Lưu</button>
+      <button class="btn btn-primary" onclick="saveSosContact()">Lưu</button>
     </div>
     <div class="card" style="margin-bottom:12px;">
       <div class="setting-section-title">🔔 Thông báo</div>
@@ -1695,7 +1705,7 @@ function _renderDashInner(){
   const el=document.getElementById('dash-content');
   if(!el) throw new Error('dash-content element not found');
   if(!D.bikes.length){
-    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:43px;margin-bottom:14px;">🏍</div><div style="font-size:16px;color:var(--text-dim);margin-bottom:6px;">Đăng ký xe để bắt đầu quản lý</div><div style="font-size:15px;color:var(--text-muted);margin-bottom:20px;">Cảnh báo · Số km · Lịch sử</div><button class="btn btn-primary" onclick="openModal('m-bike')">Đăng ký xe đầu tiên</button></div>`;
+    el.innerHTML=`<div class="no-bikes-box"><div style="font-size:43px;margin-bottom:14px;">🏍</div><div class="tp-title" style="margin-bottom:6px;">Đăng ký xe để bắt đầu quản lý</div><div class="tp-sub" style="margin-bottom:20px;">Cảnh báo · Số km · Lịch sử</div><button class="btn btn-primary" onclick="openModal('m-bike')">Đăng ký xe đầu tiên</button></div>`;
     return;
   }
   if(!dashSelectedBikeId||!D.bikes.find(b=>b.id===dashSelectedBikeId)) dashSelectedBikeId=D.bikes[0].id;
@@ -1722,7 +1732,7 @@ function _renderDashInner(){
     ${D.bikes.length>1?`<div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;">
       ${D.bikes.map(b=>{
         const sel=b.id===dashSelectedBikeId;
-        return `<div onclick="selectDashBike(${b.id})" style="flex-shrink:0;width:112px;height:82px;box-sizing:border-box;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:10px;padding:0 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;">
+        return `<div onclick="selectDashBike(${b.id})" style="flex-shrink:0;width:152px;height:60px;box-sizing:border-box;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:10px;padding:0 12px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;">
           <div style="font-size:14px;font-weight:700;line-height:1.3;color:${sel?'var(--accent)':'var(--text)'};overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${b.brand} ${b.model}</div>
         </div>`;
       }).join('')}
@@ -1732,18 +1742,18 @@ function _renderDashInner(){
         <div>
           <div class="bike-name">${sb.brand} ${sb.model}</div>
           <div class="bike-meta">${sb.year}${sb.cc?' · '+sb.cc+'cc':''}${sb.plate?' · '+sb.plate:''}</div>
-          ${sb.consumables[0]?.category?`<div style="margin-top:4px;"><span style="font-size:15px;font-weight:700;padding:2px 7px;border-radius:3px;background:var(--surface3);color:var(--metal);">${{sport:'🏁 SPORT',naked:'🏙 NAKED',adventure:'🌍 ADVENTURE',classic:'🛣 CLASSIC'}[sb.consumables[0].category]||''}</span></div>`:''}
+          ${sb.consumables[0]?.category?`<div style="margin-top:4px;"><span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:3px;background:var(--surface3);color:var(--metal);">${{sport:'🏁 SPORT',naked:'🏙 NAKED',adventure:'🌍 ADVENTURE',classic:'🛣 CLASSIC'}[sb.consumables[0].category]||''}</span></div>`:''}
         </div>
         <div style="text-align:right;cursor:pointer;" onclick="showPage('bikes',document.getElementById('nav-more-btn'))">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:29px;color:var(--accent);line-height:1;">${sb.odometer.toLocaleString()}</div>
-          <div style="font-size:16px;color:var(--text-dim);letter-spacing:1px;">Tổng KM</div>
+          <div class="tp-stat" style="color:var(--accent);">${sb.odometer.toLocaleString()}</div>
+          <div class="tp-caption" style="letter-spacing:1px;">Tổng KM</div>
         </div>
       </div>
     </div>
     <div class="card" style="padding:14px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="showPage('consumables',document.querySelector('.nav-btn:nth-child(2)'))">
       <div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:3px;">Tình trạng phụ tùng</div>
-        <div style="font-size:15px;font-weight:700;color:var(--text);">${sb.brand} ${sb.model}</div>
+        <div class="tp-sub" style="margin-bottom:3px;">Tình trạng phụ tùng</div>
+        <div class="tp-title">${sb.brand} ${sb.model}</div>
       </div>
       ${(()=>{
         const dc=consumableRows.filter(r=>r.cls==='danger').length;
@@ -1756,8 +1766,8 @@ function _renderDashInner(){
         return `<div style="display:flex;align-items:center;gap:8px;">
           <img src="./assets/status/${face}" style="width:36px;height:36px;flex-shrink:0;" alt="Tình trạng xe">
           ${n>0
-            ? `<span class="c-tag ${dc>0?'danger':'warn'}" style="font-size:13px;padding:5px 12px;">${dc>0?'🚨':'⚠'} Cần xử lý ${n}</span>`
-            : `<span class="c-tag ok" style="font-size:13px;padding:5px 12px;">✓ Tốt</span>`}
+            ? `<span class="c-tag ${dc>0?'danger':'warn'}" style="padding:5px 12px;">${dc>0?'🚨':'⚠'} Cần xử lý ${n}</span>`
+            : `<span class="c-tag ok" style="padding:5px 12px;">✓ Tốt</span>`}
         </div>`;
       })()}
     </div>
@@ -1766,30 +1776,30 @@ function _renderDashInner(){
     ${recentHistory.length
       ?`<div class="card" style="padding:0;overflow:hidden;"><table class="log-table"><tbody>
           ${recentHistory.map(l=>`<tr>
-            <td class="mono" style="color:var(--text-dim);white-space:nowrap;">${l.date}</td>
+            <td class="mono tp-caption" style="white-space:nowrap;font-size:14px;">${l.date}</td>
             <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${localizeType(l.type)}</span></td>
-            <td style="font-size:15px;">${l.desc||'—'}</td>
+            <td class="tp-body">${l.desc||'—'}</td>
           </tr>`).join('')}
         </tbody></table></div>`
-      :`<div class="card" style="text-align:center;padding:16px;font-size:15px;color:var(--text-muted);">Chưa có lịch sử bảo dưỡng</div>`
+      :`<div class="card tp-sub" style="text-align:center;padding:16px;">Chưa có lịch sử bảo dưỡng</div>`
     }
     <div class="sec-header" style="margin-top:14px;"><span class="sec-title">Lái xe tháng này</span><div class="sec-line"></div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;cursor:pointer;" onclick="showPage('monthlyStats',document.getElementById('nav-ridehistory-btn'))">
       <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-        <div style="font-size:11px;color:var(--text-dim);">Tổng quãng đường</div>
-        <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${monthDistance.toFixed(1)} km</div>
+        <div class="tp-label">Tổng quãng đường</div>
+        <div class="tp-stat-sm" style="margin-top:2px;">${monthDistance.toFixed(1)} km</div>
       </div>
       <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-        <div style="font-size:11px;color:var(--text-dim);">Tổng số chuyến</div>
-        <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${monthRides.length}</div>
+        <div class="tp-label">Tổng số chuyến</div>
+        <div class="tp-stat-sm" style="margin-top:2px;">${monthRides.length}</div>
       </div>
       <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-        <div style="font-size:11px;color:var(--text-dim);">Tốc độ TB</div>
-        <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${Math.round(monthAvgSpeed)} km/h</div>
+        <div class="tp-label">Tốc độ TB</div>
+        <div class="tp-stat-sm" style="margin-top:2px;">${Math.round(monthAvgSpeed)} km/h</div>
       </div>
       <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-        <div style="font-size:11px;color:var(--text-dim);">Tốc độ tối đa</div>
-        <div style="font-size:19px;font-weight:800;color:var(--accent);margin-top:2px;">${Math.round(monthMaxSpeed)} km/h</div>
+        <div class="tp-label">Tốc độ tối đa</div>
+        <div class="tp-stat-sm" style="color:var(--accent);margin-top:2px;">${Math.round(monthMaxSpeed)} km/h</div>
       </div>
     </div>`;
   try{ renderFuelPriceCard(); }catch(e){}
@@ -1814,7 +1824,7 @@ function renderBikes(){
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
         ${b.color?`<span class="tag-chip">${b.color}</span>`:''}
-        <button class="btn btn-sm" onclick="openEditBike(${b.id})">✏ Sửa</button>
+        <button class="btn btn-sm" onclick="openEditBike(${b.id})">Sửa</button>
         <button class="btn btn-sm btn-danger" onclick="deleteBike(${b.id})">Xóa</button>
       </div>
     </div>
@@ -2122,7 +2132,7 @@ function wlRenderResult(parsed){
   resultEl.innerHTML=parsed.findings.map(f=>`
     <div class="card" style="padding:14px 16px;margin-bottom:12px;border-left:3px solid ${sevColor(f.severity)};">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">
-        <span style="font-size:16px;font-weight:700;">${f.name}</span>
+        <span class="tp-title">${f.name}</span>
         <span style="font-size:12px;font-weight:700;color:${sevColor(f.severity)};flex-shrink:0;">${sevIcon(f.severity)} ${f.severity}</span>
       </div>
       <div style="font-size:14px;color:var(--text);margin-bottom:8px;">${f.meaning}</div>
@@ -2379,12 +2389,12 @@ function _renderConsumablesCore(){
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:22px;">🚨</span>
         <div>
-          <div style="font-size:14px;font-weight:700;color:var(--text);">Có đèn cảnh báo trên bảng đồng hồ?</div>
-          <div style="font-size:12px;color:var(--text-dim);">Chụp ảnh để AI kiểm tra giúp bạn</div>
+          <div class="tp-title">Có đèn cảnh báo trên bảng đồng hồ?</div>
+          <div class="tp-caption">Chụp ảnh để AI kiểm tra giúp bạn</div>
         </div>
       </div>
     </div>
-    <div style="font-size:16px;color:var(--text-dim);margin-bottom:10px;">Tổng số km <span class="mono" style="color:var(--accent);">${bike.odometer.toLocaleString()} km</span></div>
+    <div class="tp-body" style="margin-bottom:10px;">Tổng số km <span class="mono" style="color:var(--accent);font-size:14px;">${bike.odometer.toLocaleString()} km</span></div>
     <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
 }
 
@@ -2395,13 +2405,13 @@ function consumableCard(c,km){
   const cls=pct>=100?'danger':pct>=80?'warn':'ok';
   const fillColor=pct>=100?'var(--red)':pct>=80?'var(--accent)':'var(--green)';
   const tag=pct>=100?'🚨 Cần thay ngay':pct>=80?'⚠ Sắp thay':'✓ Tốt';
-  const officialBadge=c.isOfficial?'<span style="font-size:10px;background:#1a3020;color:#38a868;padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:middle;">Chính hãng</span>':'';
+  const officialBadge=c.isOfficial?'<span style="font-size:11px;font-weight:600;background:#1a3020;color:#38a868;padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:middle;">Chính hãng</span>':'';
   return `<div class="c-item ${cls}" onclick="openAiGuide('${c.id}')">
     <div style="width:100%;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:7px;">
           <span style="font-size:19px;line-height:1;">${c.icon}</span>
-          <span style="font-size:16px;font-weight:700;">${getCName(c.id)}</span>
+          <span class="tp-title">${getCName(c.id)}</span>
           ${officialBadge}
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
@@ -2550,7 +2560,7 @@ function renderExtraSection(){
   el.innerHTML=header+logs.map(l=>{
     const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
     const label=localizeType(l.type);
-    return `<div class="h-card"><div class="h-card-top"><div style="display:flex;align-items:center;gap:6px;overflow:hidden;"><span class="badge ${typeBadge[l.type]||'badge-other'}">${label}</span><span style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">/ ${bike.brand} ${bike.model}</span></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);flex-shrink:0;padding-left:8px;">${l.date}</span></div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button></div></div>`;
+    return `<div class="h-card"><div class="h-card-top"><div style="display:flex;align-items:center;gap:6px;overflow:hidden;"><span class="badge ${typeBadge[l.type]||'badge-other'}">${label}</span><span style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">/ ${bike.brand} ${bike.model}</span></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);flex-shrink:0;padding-left:8px;">${l.date}</span></div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button></div></div>`;
   }).join('');
 }
 
@@ -2628,8 +2638,8 @@ function renderRideHistoryList(){
     const bike=D.bikes.find(b=>b.id===r.bikeId);
     return `<div class="bike-card" style="margin-bottom:10px;cursor:pointer;" onclick="openRideDetail(${r.id})">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span style="font-size:15px;font-weight:700;color:var(--text);">${r.date} · ${r.startTime}~${r.endTime}</span>
-        <span style="font-size:17px;color:var(--accent);font-weight:700;">${r.distanceKm}km</span>
+        <span class="tp-title">${r.date} · ${r.startTime}~${r.endTime}</span>
+        <span class="tp-title" style="color:var(--accent);">${r.distanceKm}km</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:13px;color:var(--text-muted);">${bike?bike.brand+' '+bike.model+' · ':''}TB ${r.avgKmh}km/h · Tối đa ${r.maxKmh}km/h</span>
@@ -2830,20 +2840,20 @@ function mstatRender(){
 
   document.getElementById('mstat-summary').innerHTML = `
     <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-      <div style="font-size:11px;color:var(--text-dim);">Tổng quãng đường</div>
-      <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${totalDistance.toFixed(1)} km</div>
+      <div class="tp-label">Tổng quãng đường</div>
+      <div class="tp-stat-sm" style="margin-top:2px;">${totalDistance.toFixed(1)} km</div>
     </div>
     <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-      <div style="font-size:11px;color:var(--text-dim);">Tổng số chuyến</div>
-      <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${rides.length}</div>
+      <div class="tp-label">Tổng số chuyến</div>
+      <div class="tp-stat-sm" style="margin-top:2px;">${rides.length}</div>
     </div>
     <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-      <div style="font-size:11px;color:var(--text-dim);">Tốc độ TB</div>
-      <div style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;">${Math.round(avgSpeed)} km/h</div>
+      <div class="tp-label">Tốc độ TB</div>
+      <div class="tp-stat-sm" style="margin-top:2px;">${Math.round(avgSpeed)} km/h</div>
     </div>
     <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-      <div style="font-size:11px;color:var(--text-dim);">Tốc độ tối đa</div>
-      <div style="font-size:19px;font-weight:800;color:var(--accent);margin-top:2px;">${Math.round(maxSpeed)} km/h</div>
+      <div class="tp-label">Tốc độ tối đa</div>
+      <div class="tp-stat-sm" style="color:var(--accent);margin-top:2px;">${Math.round(maxSpeed)} km/h</div>
     </div>
   `;
 
@@ -2973,7 +2983,7 @@ function renderHistory(){
     const b=D.bikes.find(x=>x.id==l.bikeId);
     const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
     const label=localizeType(l.type);
-    return `<div class="h-card"><div class="h-card-top"><div style="display:flex;align-items:center;gap:6px;overflow:hidden;"><span class="badge ${typeBadge[l.type]||'badge-other'}">${label}</span><span style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">/ ${b?b.brand+' '+b.model:'Xe đã xóa'}</span></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);flex-shrink:0;padding-left:8px;">${l.date}</span></div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">✏ Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button></div></div>`;
+    return `<div class="h-card"><div class="h-card-top"><div style="display:flex;align-items:center;gap:6px;overflow:hidden;"><span class="badge ${typeBadge[l.type]||'badge-other'}">${label}</span><span style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">/ ${b?b.brand+' '+b.model:'Xe đã xóa'}</span></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);flex-shrink:0;padding-left:8px;">${l.date}</span></div><div class="h-card-meta">${parts.join(' · ')}</div><div class="h-card-actions"><button class="btn btn-sm" onclick="openEditHistory(${l.id})">Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteHistory(${l.id})">Xóa</button></div></div>`;
   }).join('');
 }
 
@@ -3013,7 +3023,7 @@ function renderSettingsPage(){
   if(el) el.innerHTML=`
     <div class="backup-stat-row"><span>Xe đã đăng ký</span><span class="backup-stat-val">${D.bikes.length}</span></div>
     <div class="backup-stat-row"><span>Lịch sử</span><span class="backup-stat-val">${D.history.length}</span></div>
-    <div class="backup-stat-row"><span>Sao lưu lần cuối</span><span class="backup-stat-val" style="font-size:16px;">${lastBackup||'Chưa có'}</span></div>`;
+    <div class="backup-stat-row"><span>Sao lưu lần cuối</span><span class="backup-stat-val">${lastBackup||'Chưa có'}</span></div>`;
   const curLang=localStorage.getItem('mg2-lang')||'vn';
   ['ko','vn','en'].forEach(l=>{
     const btn=document.getElementById('lang-btn-'+l);
@@ -4380,7 +4390,7 @@ function _brandNewsCardHtml(d){
     + '<span style="font-size:13px;font-weight:700;color:'+(isSafety?'var(--red)':'var(--accent)')+';">'+catLabel+'</span>'
     + '<span style="font-size:13px;color:var(--text-dim);">'+_brandNewsFmtDate(d.publishedAt)+'</span>'
     + '</div>'
-    + '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">'+title+'</div>'
+    + '<div class="tp-title" style="margin-bottom:4px;">'+title+'</div>'
     + vnWarn
     + '<div style="font-size:14px;color:var(--text-dim);line-height:1.5;">'+summary+'</div>'
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">'
@@ -4407,7 +4417,7 @@ function _brandNewsRenderList(){
 
   el.innerHTML = groupKeys.map(function(k){
     var g = groups[k];
-    return '<div style="font-size:17px;font-weight:700;color:var(--text-dim);margin:16px 0 8px;padding-left:2px;">'+g.label+'</div>'
+    return '<div class="tp-title" style="color:var(--text-dim);margin:16px 0 8px;padding-left:2px;">'+g.label+'</div>'
       + '<div style="display:flex;flex-direction:column;gap:10px;">'+g.items.map(_brandNewsCardHtml).join('')+'</div>';
   }).join('');
 }
@@ -5218,16 +5228,16 @@ function renderAiGuide(guide, con, pct, bike) {
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:19px;">🚨</span>
       <div>
-        <div style="font-size:16px;font-weight:700;color:var(--red);">Đã quá chu kỳ thay thế!</div>
-        <div style="font-size:16px;color:#c06060;margin-top:2px;">Nên thay thế ngay lập tức</div>
+        <div class="tp-title" style="color:var(--red);">Đã quá chu kỳ thay thế!</div>
+        <div class="tp-sub" style="color:#c06060;margin-top:2px;">Nên thay thế ngay lập tức</div>
       </div>
     </div>` : pct >= 80 ? `
     <div style="background:var(--accent-dim);border:1px solid rgba(232,160,32,0.4);border-radius:8px;
       padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:19px;">⚠️</span>
       <div>
-        <div style="font-size:16px;font-weight:700;color:var(--accent);">Sắp đến kỳ thay thế</div>
-        <div style="font-size:16px;color:#b08030;margin-top:2px;">Hãy lên kế hoạch thay thế ở lần bảo dưỡng tới</div>
+        <div class="tp-title" style="color:var(--accent);">Sắp đến kỳ thay thế</div>
+        <div class="tp-sub" style="color:#b08030;margin-top:2px;">Hãy lên kế hoạch thay thế ở lần bảo dưỡng tới</div>
       </div>
     </div>` : '';
 
@@ -5250,7 +5260,7 @@ function renderAiGuide(guide, con, pct, bike) {
       <div class="ai-guide-section-title">💡 Mẹo bảo dưỡng</div>
       <div class="ai-guide-text">${tip.split('\n').join('<br>')}</div>
     </div>` : ''}
-    <div style="font-size:16px;color:var(--text-muted);text-align:center;margin-top:8px;">
+    <div class="tp-caption" style="text-align:center;margin-top:8px;">
       ✦ Hướng dẫn bảo dưỡng · ${bike ? bike.brand+' '+bike.model : ''} · ${new Date().toLocaleDateString('vi-VN')}
     </div>`;
 }
@@ -5846,7 +5856,7 @@ function renderMedicalCard(){
     <div class="ai-guide-body" id="ai-guide-body">
       <div class="ai-guide-loading">
         <div class="ai-spinner"></div>
-        <div style="font-size:16px;color:var(--text-dim);">Đang phân tích...</div>
+        <div class="tp-sub">Đang phân tích...</div>
       </div>
     </div>
     <div class="ai-guide-footer">
@@ -5986,7 +5996,7 @@ function renderMedicalCard(){
       </div>
     </div>
     <div class="modal-footer" style="flex-direction:column;gap:8px;">
-      <button class="btn btn-primary" style="width:100%;" onclick="closeModal('m-violation-info');openViolationLookup();">Mở trang tra cứu</button>
+      <button class="btn btn-primary btn-full" onclick="closeModal('m-violation-info');openViolationLookup();">Mở trang tra cứu</button>
       <button class="btn btn-sm" style="width:100%;justify-content:center;" onclick="closeModal('m-violation-info')">Đóng</button>
     </div>
   </div>
@@ -6002,31 +6012,31 @@ function renderMedicalCard(){
         <button id="ride-detail-expand-btn" onclick="toggleRideDetailFullscreen()" style="position:absolute;top:10px;right:10px;z-index:1000;width:34px;height:34px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.5);">⛶</button>
       </div>
       <div id="ride-detail-stats" style="padding:16px;">
-        <div id="ride-detail-date" style="font-size:13px;color:var(--text-dim);margin-bottom:12px;"></div>
+        <div id="ride-detail-date" class="tp-sub" style="margin-bottom:12px;"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-            <div style="font-size:11px;color:var(--text-dim);">Quãng đường</div>
-            <div id="ride-detail-distance" style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;"></div>
+            <div class="tp-label">Quãng đường</div>
+            <div id="ride-detail-distance" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
           <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-            <div style="font-size:11px;color:var(--text-dim);">Thời gian</div>
-            <div id="ride-detail-duration" style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;"></div>
+            <div class="tp-label">Thời gian</div>
+            <div id="ride-detail-duration" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
           <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-            <div style="font-size:11px;color:var(--text-dim);">Tốc độ TB</div>
-            <div id="ride-detail-avg" style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;"></div>
+            <div class="tp-label">Tốc độ TB</div>
+            <div id="ride-detail-avg" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
           <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-            <div style="font-size:11px;color:var(--text-dim);">Tốc độ tối đa</div>
-            <div id="ride-detail-max" style="font-size:19px;font-weight:800;color:var(--accent);margin-top:2px;"></div>
+            <div class="tp-label">Tốc độ tối đa</div>
+            <div id="ride-detail-max" class="tp-stat-sm" style="color:var(--accent);margin-top:2px;"></div>
           </div>
           <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-            <div style="font-size:11px;color:var(--text-dim);">Tăng tốc gấp</div>
-            <div id="ride-detail-accel" style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;"></div>
+            <div class="tp-label">Tăng tốc gấp</div>
+            <div id="ride-detail-accel" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
           <div style="background:var(--surface2);border-radius:10px;padding:12px;">
-            <div style="font-size:11px;color:var(--text-dim);">Phanh gấp</div>
-            <div id="ride-detail-brake" style="font-size:19px;font-weight:800;color:var(--text);margin-top:2px;"></div>
+            <div class="tp-label">Phanh gấp</div>
+            <div id="ride-detail-brake" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
         </div>
       </div>
