@@ -1,8 +1,7 @@
-🆕 New
-- 🔧 Warning Light Check (AI): Photograph your dashboard to see what each warning light means and how urgent it is
-- 🔍 "Checked, not replaced" for consumables: log an inspection and extend the interval without resetting it
+🎨 App-wide design polish
+- Unified inconsistent font sizes across every screen for a cleaner look
+- Standardized button styling (edit/delete buttons, etc.)
 
 🛠 Improvements & fixes
-- Crash/fall detection now runs reliably in the background
-- GPS accuracy filter fixes jagged routes and false top-speed spikes
-- Fuel price card hidden for users in Korea (Vietnam-only data)
+- Fixed oversized text in input fields and dropdowns
+- Fixed some small buttons rendering larger than expected

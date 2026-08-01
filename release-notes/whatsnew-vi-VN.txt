@@ -1,8 +1,7 @@
-🆕 Mới
-- 🔧 Kiểm tra đèn cảnh báo (AI): Chụp bảng đồng hồ để biết ý nghĩa, mức độ khẩn cấp
-- 🔍 "Đã kiểm tra, chưa thay": Ghi nhận kiểm tra, gia hạn chu kỳ theo km bạn chọn
+🎨 Tinh chỉnh giao diện toàn ứng dụng
+- Đồng bộ cỡ chữ không đồng đều giữa các màn hình, giao diện gọn gàng hơn
+- Chuẩn hóa kiểu nút bấm (nút sửa/xóa, v.v.)
 
 🛠 Cải thiện & sửa lỗi
-- Phát hiện va chạm/ngã xe ổn định hơn khi chạy nền
-- Thêm bộ lọc độ chính xác GPS, sửa lộ trình lệch, tốc độ tối đa ảo
-- Ẩn thẻ giá xăng với người dùng ở Hàn Quốc
+- Sửa lỗi chữ trong ô nhập/danh sách chọn bị quá to
+- Sửa lỗi một số nút nhỏ lại hiển thị to hơn bình thường
