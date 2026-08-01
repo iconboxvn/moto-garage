@@ -97,6 +97,15 @@ const AQI_LABELS = {
 };
 const AQI_PREFIX = { ko: '대기질', en: 'Air quality', vn: 'Chất lượng không khí' };
 
+// ⏳ 한시적 버전 업데이트 안내 (2026-08-01~2026-09-01, Play Console 프로덕션 재신청을 위한
+// 비공개 테스트 참여 독려 목적. 기간 지나면 이 블록과 아래 body 덧붙이는 부분 제거할 것)
+const VERSION_NUDGE_UNTIL = new Date('2026-09-01T00:00:00+07:00').getTime();
+const VERSION_NUDGE_TEXT = {
+  ko: '🔄 최신 버전으로 업데이트해보세요',
+  en: '🔄 Check for the latest update',
+  vn: '🔄 Hãy cập nhật lên phiên bản mới nhất',
+};
+
 // 알림을 못 보낼 때(위치 정보 없음 등) 기본 문구
 const FALLBACK = {
   ko: { title: '🏍 Ridemate', body: '오늘도 안전 라이딩 하세요' },
@@ -277,6 +286,10 @@ exports.dailyWeatherPush = onSchedule(
       } else if (c.warn > 0) {
         const names = (c.warnNames || []).join(', ');
         body += ` · ${ctext.warn(c.warn, names)}`;
+      }
+
+      if (Date.now() < VERSION_NUDGE_UNTIL) {
+        body += ` · ${VERSION_NUDGE_TEXT[lang]}`;
       }
 
       try {
