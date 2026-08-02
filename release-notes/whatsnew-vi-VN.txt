@@ -1,7 +1,6 @@
-🎨 Tinh chỉnh giao diện toàn ứng dụng
-- Đồng bộ cỡ chữ không đồng đều giữa các màn hình, giao diện gọn gàng hơn
-- Chuẩn hóa kiểu nút bấm (nút sửa/xóa, v.v.)
+🐛 Sửa lỗi quan trọng
+- Sửa lỗi màn hình bị treo khi đổi ngôn ngữ trong lúc đang đi
+- Sửa lỗi trạng thái chuyến đi hiển thị không đúng thực tế
 
-🛠 Cải thiện & sửa lỗi
-- Sửa lỗi chữ trong ô nhập/danh sách chọn bị quá to
-- Sửa lỗi một số nút nhỏ lại hiển thị to hơn bình thường
+🛠 Cải thiện
+- Đóng gói sẵn font trong ứng dụng để màn hình luôn tải nhanh, kể cả khi sóng yếu

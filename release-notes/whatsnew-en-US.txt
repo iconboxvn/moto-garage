@@ -1,7 +1,6 @@
-🎨 App-wide design polish
-- Unified inconsistent font sizes across every screen for a cleaner look
-- Standardized button styling (edit/delete buttons, etc.)
+🐛 Important bug fixes
+- Fixed the screen freezing when switching languages during a ride
+- Fixed the riding status display sometimes showing incorrect info
 
-🛠 Improvements & fixes
-- Fixed oversized text in input fields and dropdowns
-- Fixed some small buttons rendering larger than expected
+🛠 Improvements
+- Fonts are now bundled with the app so screens always load quickly, even with weak signal
