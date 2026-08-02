@@ -628,7 +628,7 @@ option{background:var(--surface2);}
 
   <!-- Thống kê theo tháng -->
   <div class="page" id="page-monthlyStats">
-    <div class="sec-header"><span class="sec-title">Thống kê theo tháng</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">THỐNG KÊ THEO THÁNG</span><div class="sec-line"></div></div>
     <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">Xem lịch sử chi tiết</button>
 
     <div id="mstat-bike-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;"></div>
@@ -734,7 +734,7 @@ option{background:var(--surface2);}
 
   <!-- Tin xe máy -->
   <div class="page" id="page-brandNews">
-    <div class="sec-header"><span class="sec-title">🗞 Tin xe máy</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">🗞 TIN XE MÁY</span><div class="sec-line"></div></div>
     <div id="brand-news-cat-filter" style="display:flex;gap:6px;overflow-x:auto;padding:10px 0 12px;white-space:nowrap;position:sticky;top:calc(52px + env(safe-area-inset-top));background:var(--bg);z-index:50;">
       <button class="brand-news-chip" data-cat="all" onclick="_brandNewsSelectCategory('all')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--accent);color:#fff;">Tất cả</button>
       <button class="brand-news-chip" data-cat="safety" onclick="_brandNewsSelectCategory('safety')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🚨 An toàn</button>
@@ -750,7 +750,7 @@ option{background:var(--surface2);}
 
   <!-- Kiểm tra đèn cảnh báo -->
   <div class="page" id="page-warningLight">
-    <div class="sec-header"><span class="sec-title">🔧 Kiểm tra đèn cảnh báo</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">🔧 KIỂM TRA ĐÈN CẢNH BÁO</span><div class="sec-line"></div></div>
     <div style="font-size:14px;color:var(--text-dim);margin-bottom:16px;line-height:1.5;">
       Có đèn cảnh báo lạ trên bảng đồng hồ? Chụp ảnh, AI sẽ cho biết đó là gì và mức độ khẩn cấp.
     </div>
@@ -1786,7 +1786,7 @@ function _renderDashInner(){
       })()}
     </div>
     <div id="fuel-price-card"></div>
-    <div class="sec-header"><span class="sec-title">Bảo dưỡng gần đây</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">BẢO DƯỠNG GẦN ĐÂY</span><div class="sec-line"></div></div>
     ${recentHistory.length
       ?`<div class="card" style="padding:0;overflow:hidden;"><table class="log-table"><tbody>
           ${recentHistory.map(l=>`<tr>
@@ -1797,7 +1797,7 @@ function _renderDashInner(){
         </tbody></table></div>`
       :`<div class="card tp-sub" style="text-align:center;padding:16px;">Chưa có lịch sử bảo dưỡng</div>`
     }
-    <div class="sec-header" style="margin-top:14px;"><span class="sec-title">Lái xe tháng này</span><div class="sec-line"></div></div>
+    <div class="sec-header" style="margin-top:14px;"><span class="sec-title">LÁI XE THÁNG NÀY</span><div class="sec-line"></div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;cursor:pointer;" onclick="showPage('monthlyStats',document.getElementById('nav-ridehistory-btn'))">
       <div style="background:var(--surface2);border-radius:10px;padding:12px;">
         <div class="tp-label">Tổng quãng đường</div>
@@ -2398,7 +2398,7 @@ function _renderConsumablesCore(){
   tabs.innerHTML=`<div class="pill-group">${D.bikes.map((b,i)=>`<div class="pill ${i===cState.bikeIdx?'selected':''}" onclick="switchCBike(${i})">${b.brand} ${b.model}</div>`).join('')}</div>`;
   const bike=D.bikes[cState.bikeIdx];
   el.innerHTML=`
-    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} Bảo dưỡng</span><div class="sec-line"></div></div>
+    <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} BẢO DƯỠNG</span><div class="sec-line"></div></div>
     <div class="card" style="padding:12px 14px;margin-bottom:14px;border:1px solid rgba(208,64,64,0.35);background:var(--red-dim);cursor:pointer;" onclick="showPage('warningLight',document.getElementById('nav-more-btn'))">
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:22px;">🚨</span>
