@@ -4947,10 +4947,19 @@ function _sosMotionStart() {
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (!RidingPlugin || !RidingPlugin.addListener) return;
   _sos.motListening = true;
-  RidingPlugin.addListener('crashDetected', function(e) {
+  // addListener() có lúc trả về Promise, có lúc trả về handle trực tiếp (đặc biệt ngay sau khi
+  // chuyển trang, lúc bridge chưa gắn lại hoàn toàn). Gọi .then() vô điều kiện từng ném lỗi
+  // TypeError không được bắt, làm dừng toàn bộ khối script này (lỗi thực tế: màn hình chính
+  // trống trơn ngay sau khi đổi ngôn ngữ). Xử lý cả hai trường hợp.
+  var _crashListenResult = RidingPlugin.addListener('crashDetected', function(e) {
     _dbgLog('sos_phase', {to:'COUNTDOWN', mag: e && Math.round((e.mag||0)*100)/100});
     _sosTrigger();
-  }).then(function(handle) { _sos_crashListenerHandle = handle; });
+  });
+  if (_crashListenResult && typeof _crashListenResult.then === 'function') {
+    _crashListenResult.then(function(handle) { _sos_crashListenerHandle = handle; }).catch(function(){});
+  } else {
+    _sos_crashListenerHandle = _crashListenResult || null;
+  }
 }
 
 function _sosMotionStop() {
@@ -5155,16 +5164,21 @@ window.addEventListener('load', function(){
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
   safe(loadCharactersFromCache, 'loadCharactersFromCache');
-  loadCharactersFromFirestore();
+  safe(loadCharactersFromFirestore, 'loadCharactersFromFirestore');
   safe(loadFuelPriceFromCache, 'loadFuelPriceFromCache');
-  loadFuelPriceFromFirestore();
-  renderDash();
-  renderSampleBanner();
-  if(localStorage.getItem('mg2-onboarding-pending') === '1'){
-    showOnboarding();
-  } else {
-    checkFirstLaunch();
-  }
+  safe(loadFuelPriceFromFirestore, 'loadFuelPriceFromFirestore');
+  // Mọi bước bên dưới đây ảnh hưởng trực tiếp đến màn hình hiển thị, nên nếu bước phía trên
+  // ném lỗi mà không có safe() thì renderDash() cũng bị kéo theo không chạy (lỗi thực tế đã
+  // xảy ra: màn hình chính trống trơn). Bọc từng bước còn lại độc lập để một lỗi không kéo theo cả chuỗi.
+  safe(renderDash, 'renderDash');
+  safe(renderSampleBanner, 'renderSampleBanner');
+  safe(function(){
+    if(localStorage.getItem('mg2-onboarding-pending') === '1'){
+      showOnboarding();
+    } else {
+      checkFirstLaunch();
+    }
+  }, 'onboardingOrFirstLaunch');
 });
 // 날씨 모달 자동 표시 (약간 딜레이)
 setTimeout(showWeatherModal, 800);

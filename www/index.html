@@ -5130,10 +5130,19 @@ function _sosMotionStart() {
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (!RidingPlugin || !RidingPlugin.addListener) return;
   _sos.motListening = true;
-  RidingPlugin.addListener('crashDetected', function(e) {
+  // addListener()가 Promise를 반환할 때도, 핸들을 곧바로(동기) 반환할 때도 있어서(페이지 이동
+  // 직후 브릿지가 아직 완전히 붙지 않은 타이밍에 특히 그랬음) .then을 무조건 체이닝하면
+  // "TypeError: ...then is not a function"이 잡히지 않은 채 던져져서 이 스크립트 블록 전체가
+  // 중단되는 버그로 실제 발견됨(언어 전환 직후 홈 화면이 통째로 안 그려지던 원인). 두 경우 다 처리.
+  var _crashListenResult = RidingPlugin.addListener('crashDetected', function(e) {
     _dbgLog('sos_phase', {to:'COUNTDOWN', mag: e && Math.round((e.mag||0)*100)/100});
     _sosTrigger();
-  }).then(function(handle) { _sos_crashListenerHandle = handle; });
+  });
+  if (_crashListenResult && typeof _crashListenResult.then === 'function') {
+    _crashListenResult.then(function(handle) { _sos_crashListenerHandle = handle; }).catch(function(){});
+  } else {
+    _sos_crashListenerHandle = _crashListenResult || null;
+  }
   console.log('[SOS] native crash listener attached');
 }
 
@@ -5604,17 +5613,22 @@ window.addEventListener('load', function(){
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
   safe(loadCharactersFromCache, 'loadCharactersFromCache');
-  loadCharactersFromFirestore();
+  safe(loadCharactersFromFirestore, 'loadCharactersFromFirestore');
   safe(loadFuelPriceFromCache, 'loadFuelPriceFromCache');
-  loadFuelPriceFromFirestore();
-  renderDash();
-  renderSampleBanner();
-  if(localStorage.getItem('mg2-onboarding-pending') === '1'){
-    showOnboarding();
-  } else {
-    checkFirstLaunch();
-  }
-  updateRidingBar();
+  safe(loadFuelPriceFromFirestore, 'loadFuelPriceFromFirestore');
+  // renderDash() 등 이 아래 단계는 화면 표시에 직결되므로, 위 단계 중 하나가 safe() 없이
+  // 예외를 던지면 여기까지 아예 실행이 안 되는 문제가 실제로 있었음(홈 화면이 통째로
+  // 빈 채로 남는 버그로 발견). 안전하게 각각 독립적으로 실행되도록 전부 safe()로 감쌈.
+  safe(renderDash, 'renderDash');
+  safe(renderSampleBanner, 'renderSampleBanner');
+  safe(function(){
+    if(localStorage.getItem('mg2-onboarding-pending') === '1'){
+      showOnboarding();
+    } else {
+      checkFirstLaunch();
+    }
+  }, 'onboardingOrFirstLaunch');
+  safe(updateRidingBar, 'updateRidingBar');
 });
 // 날씨 모달 자동 표시 (약간 딜레이)
 setTimeout(showWeatherModal, 800);

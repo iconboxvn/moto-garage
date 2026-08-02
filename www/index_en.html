@@ -4950,10 +4950,19 @@ function _sosMotionStart() {
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (!RidingPlugin || !RidingPlugin.addListener) return;
   _sos.motListening = true;
-  RidingPlugin.addListener('crashDetected', function(e) {
+  // addListener() sometimes returns a Promise, sometimes the handle directly (especially right
+  // after a page navigation, before the bridge is fully reattached). Chaining .then() unconditionally
+  // threw an uncaught TypeError that aborted the rest of this script block (real bug: home screen
+  // stayed completely blank right after switching languages). Handle both cases.
+  var _crashListenResult = RidingPlugin.addListener('crashDetected', function(e) {
     _dbgLog('sos_phase', {to:'COUNTDOWN', mag: e && Math.round((e.mag||0)*100)/100});
     _sosTrigger();
-  }).then(function(handle) { _sos_crashListenerHandle = handle; });
+  });
+  if (_crashListenResult && typeof _crashListenResult.then === 'function') {
+    _crashListenResult.then(function(handle) { _sos_crashListenerHandle = handle; }).catch(function(){});
+  } else {
+    _sos_crashListenerHandle = _crashListenResult || null;
+  }
 }
 
 function _sosMotionStop() {
@@ -5158,16 +5167,21 @@ window.addEventListener('load', function(){
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
   safe(loadCharactersFromCache, 'loadCharactersFromCache');
-  loadCharactersFromFirestore();
+  safe(loadCharactersFromFirestore, 'loadCharactersFromFirestore');
   safe(loadFuelPriceFromCache, 'loadFuelPriceFromCache');
-  loadFuelPriceFromFirestore();
-  renderDash();
-  renderSampleBanner();
-  if(localStorage.getItem('mg2-onboarding-pending') === '1'){
-    showOnboarding();
-  } else {
-    checkFirstLaunch();
-  }
+  safe(loadFuelPriceFromFirestore, 'loadFuelPriceFromFirestore');
+  // Everything below this point is directly tied to what's shown on screen, so if a step above
+  // threw without safe() it could take down renderDash() with it (real bug: home screen stayed
+  // completely blank). Wrap every remaining step independently so one failure can't cascade.
+  safe(renderDash, 'renderDash');
+  safe(renderSampleBanner, 'renderSampleBanner');
+  safe(function(){
+    if(localStorage.getItem('mg2-onboarding-pending') === '1'){
+      showOnboarding();
+    } else {
+      checkFirstLaunch();
+    }
+  }, 'onboardingOrFirstLaunch');
 });
 // 날씨 모달 자동 표시 (약간 딜레이)
 setTimeout(showWeatherModal, 800);
