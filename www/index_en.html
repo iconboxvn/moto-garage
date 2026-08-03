@@ -717,6 +717,7 @@ option{background:var(--surface2);}
         <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
       </div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:10px;">Save the exported file somewhere safe</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">🔄 Your app data is also backed up automatically to the Google account signed in on this device (check Settings › System › Backup). To back up right now, use Export above.</div>
       <div id="backup-stats" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"></div>
       <div style="margin-top:14px;">
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 Reset All Data</button>
@@ -2852,6 +2853,9 @@ function mstatRender(){
   var maxSpeed = rides.reduce(function(m,r){ return Math.max(m, r.maxKmh||0); }, 0);
   var avgSpeed = totalDuration > 0 ? totalDistance / (totalDuration/3600000) : 0;
 
+  var monthHistory = (D.history||[]).filter(function(h){ return h.bikeId===mstatState.bikeId && h.date && h.date.indexOf(prefix)===0; });
+  var totalCost = monthHistory.reduce(function(sum,h){ return sum + (parseInt(h.cost)||0); }, 0);
+
   document.getElementById('mstat-summary').innerHTML = `
     <div style="background:var(--surface2);border-radius:10px;padding:12px;">
       <div class="tp-label">Total Distance</div>
@@ -2868,6 +2872,10 @@ function mstatRender(){
     <div style="background:var(--surface2);border-radius:10px;padding:12px;">
       <div class="tp-label">Top Speed</div>
       <div class="tp-stat-sm" style="color:var(--accent);margin-top:2px;">${Math.round(maxSpeed)} km/h</div>
+    </div>
+    <div style="grid-column:1/-1;background:var(--surface2);border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
+      <div class="tp-label">Maintenance Cost</div>
+      <div class="tp-stat-sm" style="color:var(--accent);">${totalCost>0?'₫'+totalCost.toLocaleString():'–'}</div>
     </div>
   `;
 
