@@ -637,6 +637,15 @@ option{background:var(--surface2);}
         <option>소모품교체</option><option>정기점검</option><option>수리</option><option>기타</option>
       </select>
     </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <button class="btn btn-sm" onclick="historyChangeMonth(-1)">◀</button>
+      <div id="history-month-label" class="tp-title"></div>
+      <button class="btn btn-sm" onclick="historyChangeMonth(1)">▶</button>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="tp-label">이번 달 정비비</div>
+      <div class="tp-stat-sm" id="history-month-cost" style="color:var(--accent);"></div>
+    </div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">정비 기록은 <strong style="color:var(--accent);">🔧 소모품</strong> 탭에서 추가하세요</div>
     <div id="history-table"></div>
   </div>
@@ -652,7 +661,10 @@ option{background:var(--surface2);}
   <!-- 월별 통계 -->
   <div class="page" id="page-monthlyStats">
     <div class="sec-header"><span class="sec-title">월별 통계</span><div class="sec-line"></div></div>
-    <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">상세 라이딩 이력 보기</button>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">상세 라이딩 이력 보기</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="showPage('visitedPlaces', document.getElementById('nav-ridehistory-btn'))">다녀온 곳 지도 보기</button>
+    </div>
 
     <div id="mstat-bike-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;"></div>
 
@@ -671,6 +683,15 @@ option{background:var(--surface2);}
 
     <div id="mstat-day-detail" style="display:none;margin-top:18px;background:var(--surface2);border-radius:10px;padding:14px;"></div>
     <div id="mstat-motivate" style="display:none;margin-top:16px;margin-bottom:20px;text-align:center;font-size:13px;color:var(--text-dim);line-height:1.6;"></div>
+  </div>
+
+  <!-- 다녀온 곳 -->
+  <div class="page" id="page-visitedPlaces">
+    <div class="sec-header"><span class="sec-title">다녀온 곳</span><div class="sec-line"></div></div>
+    <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats', document.getElementById('nav-ridehistory-btn'))">월별 통계로 돌아가기</button>
+    <div id="visited-places-note" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">한 곳에서 30분 이상 머문 라이딩만 집계됩니다 (오늘 이후 라이딩부터 적용)</div>
+    <div id="visited-places-map" style="width:100%;height:420px;border-radius:12px;overflow:hidden;background:#eef5fc;position:relative;z-index:0;"></div>
+    <div id="visited-places-list" style="margin-top:14px;"></div>
   </div>
 
   <!-- 백업 -->
@@ -1013,6 +1034,25 @@ option{background:var(--surface2);}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('m-consumable-check')">취소</button>
       <button class="btn btn-primary" onclick="saveConsumCheck()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 다녀온 곳 후보 확인 (디버그 빌드 전용) -->
+<div class="modal-overlay" id="m-visited-poi-confirm" style="z-index:320;">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="visited-poi-title">이 장소에 들렀나요?</span><button class="modal-close" onclick="_skipVisitedPoi()">✕</button></div>
+    <div class="modal-body">
+      <div id="visited-poi-time" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;"></div>
+      <div id="visited-poi-candidates"></div>
+      <div style="margin-top:6px;">
+        <div class="step-label">직접 입력</div>
+        <input type="text" class="form-input" id="visited-poi-custom" placeholder="예: 도로변 휴게소">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="_skipVisitedPoi()">스킵</button>
+      <button class="btn btn-primary" onclick="_confirmVisitedPoiCustom()">저장</button>
     </div>
   </div>
 </div>
@@ -1901,6 +1941,7 @@ function showPage(name,btn){
   if(name==='backup') renderBackupPage();
   if(name==='rideHistory') renderRideHistoryPage();
   if(name==='monthlyStats') openMonthlyStats();
+  if(name==='visitedPlaces') renderVisitedPlacesPage();
   if(name==='brandNews') renderBrandNewsPage();
   if(name==='warningLight') renderWarningLightPage();
   logAnalyticsEvent('app_screen_view', {screen_name:name});
@@ -3034,9 +3075,11 @@ function renderRideHistoryList(){
 }
 
 var _rideDetailMap = null;
+var _rideDetailCurrentRide = null;
 function openRideDetail(id){
   var r = (D.rides||[]).find(x=>x.id===id);
   if(!r) return;
+  _rideDetailCurrentRide = r;
   var h = Math.floor(r.durationMs/3600000);
   var m = Math.floor((r.durationMs%3600000)/60000);
   var sec = Math.floor((r.durationMs%60000)/1000);
@@ -3053,6 +3096,8 @@ function openRideDetail(id){
   accelEl.style.color = accelN > 0 ? 'var(--red)' : 'var(--text)';
   brakeEl.textContent = brakeN+'회';
   brakeEl.style.color = brakeN > 0 ? 'var(--red)' : 'var(--text)';
+  var poiBtn = document.getElementById('ride-detail-poi-btn');
+  if(poiBtn) poiBtn.style.display = (window._isDebugBuild && r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
   document.getElementById('ride-detail-modal').classList.remove('ride-detail-fs');
   openModal('m-ride-detail');
 
@@ -3160,6 +3205,361 @@ function mstatChangeMonth(delta){
   mstatRender();
 }
 
+// 다녀온 곳 (방문 지역 버블 맵)
+var _vnProvincesGeo = null;
+var _visitedPlacesMap = null;
+var VISITED_DWELL_MS = 30 * 60000; // 한 지점에 30분 이상 머물면 방문으로 카운트
+var VISITED_CLUSTER_RADIUS_KM = 0.3;
+
+function _loadVnProvinces(){
+  if(_vnProvincesGeo) return Promise.resolve(_vnProvincesGeo);
+  return fetch('./assets/data/vn-provinces.json').then(function(r){ return r.json(); }).then(function(geo){
+    _vnProvincesGeo = geo;
+    return geo;
+  });
+}
+
+function _rayCastInRing(lon, lat, ring){
+  var inside = false;
+  for(var i=0, j=ring.length-1; i<ring.length; j=i++){
+    var xi=ring[i][0], yi=ring[i][1], xj=ring[j][0], yj=ring[j][1];
+    var intersect = ((yi>lat)!==(yj>lat)) && (lon < (xj-xi)*(lat-yi)/(yj-yi)+xi);
+    if(intersect) inside = !inside;
+  }
+  return inside;
+}
+
+function _pointInGeometry(lon, lat, geometry){
+  var polys = geometry.type==='MultiPolygon' ? geometry.coordinates : [geometry.coordinates];
+  for(var p=0; p<polys.length; p++){
+    var rings = polys[p];
+    if(!_rayCastInRing(lon, lat, rings[0])) continue;
+    var inHole = false;
+    for(var h=1; h<rings.length; h++){ if(_rayCastInRing(lon, lat, rings[h])){ inHole = true; break; } }
+    if(!inHole) return true;
+  }
+  return false;
+}
+
+function _findProvinceForPoint(lat, lon, provincesGeo){
+  for(var i=0; i<provincesGeo.features.length; i++){
+    var f = provincesGeo.features[i];
+    if(_pointInGeometry(lon, lat, f.geometry)) return f.properties.name;
+  }
+  return null;
+}
+
+// 라이딩 경로에서 한 지점에 30분 이상 머문 지점들을 찾아냄 (신호대기/짧은 휴식 제외)
+function _findDwellPoints(path, pathT){
+  var dwells = [];
+  if(!path || !pathT || path.length < 2) return dwells;
+  var clusterStart = 0;
+  var counted = false;
+  for(var i=1; i<path.length; i++){
+    if(!pathT[clusterStart] || !pathT[i]) continue;
+    var d = _haversineKm(path[clusterStart][0], path[clusterStart][1], path[i][0], path[i][1]);
+    if(d > VISITED_CLUSTER_RADIUS_KM){
+      clusterStart = i;
+      counted = false;
+      continue;
+    }
+    if(!counted && (pathT[i] - pathT[clusterStart]) >= VISITED_DWELL_MS){
+      dwells.push({lat: path[clusterStart][0], lon: path[clusterStart][1], t: pathT[clusterStart]});
+      counted = true;
+    }
+  }
+  return dwells;
+}
+
+// 다녀온 곳 장소명 후보 확인 (디버그 빌드 전용 — 릴리즈 빌드에서는 window._isDebugBuild가 false라 아예 호출 안 됨)
+var VISITED_POI_ENDPOINT = 'https://us-central1-moto-garage-8da30.cloudfunctions.net/visitedPlacePoi';
+var _visitedPoiQueue = [];
+var _visitedPoiTotal = 0;
+var _visitedPoiCurrentRideId = null;
+
+// 정차/종료 지점 중 아직 장소명 확인 안 된 것만 골라냄 (라이딩 종료 직후 + 라이딩 상세에서 "다시 확인하기" 양쪽에서 재사용)
+function _findUnconfirmedVisitedPoints(ride){
+  var points = _findDwellPoints(ride.path, ride.pathT).slice();
+  if(ride.path && ride.path.length && ride.pathT && ride.pathT.length){
+    var lastPt = {lat: ride.path[ride.path.length-1][0], lon: ride.path[ride.path.length-1][1], t: ride.pathT[ride.pathT.length-1]};
+    var alreadyNear = points.some(function(p){ return _haversineKm(p.lat,p.lon,lastPt.lat,lastPt.lon) <= VISITED_CLUSTER_RADIUS_KM; });
+    if(!alreadyNear) points.push(lastPt);
+  }
+  var confirmed = ride.places || [];
+  return points.filter(function(pt){
+    return !confirmed.some(function(c){ return _haversineKm(c.lat, c.lon, pt.lat, pt.lon) <= VISITED_CLUSTER_RADIUS_KM; });
+  });
+}
+
+function _fmtVisitedPoiTime(t){
+  if(!t) return '';
+  var d = new Date(t);
+  return d.toLocaleDateString('ko-KR', {month:'long', day:'numeric'}) + ' ' + d.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+}
+
+function _startVisitedPoiFlow(ride){
+  var points = _findUnconfirmedVisitedPoints(ride);
+  if(!points.length) return;
+  _visitedPoiCurrentRideId = ride.id;
+  Promise.all(points.map(function(pt){
+    return fetch(VISITED_POI_ENDPOINT, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({lat: pt.lat, lon: pt.lon})
+    }).then(function(r){ return r.json(); }).then(function(data){
+      return {lat: pt.lat, lon: pt.lon, t: pt.t, candidates: (data.candidates||[]).slice(0,5)};
+    }).catch(function(e){ console.warn('[visitedPoi] 조회 실패', e); return {lat: pt.lat, lon: pt.lon, t: pt.t, candidates: []}; });
+  })).then(function(results){
+    _visitedPoiQueue = results.filter(function(r){ return r.candidates.length > 0; });
+    _visitedPoiTotal = _visitedPoiQueue.length;
+    if(_visitedPoiQueue.length) _showNextVisitedPoiPrompt();
+  });
+}
+
+function _showNextVisitedPoiPrompt(){
+  if(!_visitedPoiQueue.length) return;
+  var item = _visitedPoiQueue[0];
+  var idxLabel = (_visitedPoiTotal - _visitedPoiQueue.length + 1) + '/' + _visitedPoiTotal;
+  document.getElementById('visited-poi-title').textContent = _visitedPoiTotal > 1 ? `이 장소에 들렀나요? (${idxLabel})` : '이 장소에 들렀나요?';
+  document.getElementById('visited-poi-time').textContent = _fmtVisitedPoiTime(item.t);
+  document.getElementById('visited-poi-custom').value = '';
+  var listEl = document.getElementById('visited-poi-candidates');
+  listEl.innerHTML = item.candidates.map(function(c, i){
+    return `<button class="btn btn-full" style="margin-bottom:8px;text-align:left;justify-content:flex-start;" onclick="_confirmVisitedPoi(${i})">${c.name}</button>`;
+  }).join('');
+  openModal('m-visited-poi-confirm');
+}
+
+function _confirmVisitedPoi(idx){
+  var item = _visitedPoiQueue.shift();
+  var c = item && item.candidates[idx];
+  if(c){
+    var ride = (D.rides||[]).find(function(r){ return r.id === _visitedPoiCurrentRideId; });
+    if(ride){
+      if(!ride.places) ride.places = [];
+      ride.places.push({lat:item.lat, lon:item.lon, name:c.name});
+      save();
+    }
+  }
+  closeModal('m-visited-poi-confirm');
+  if(_visitedPoiQueue.length) setTimeout(_showNextVisitedPoiPrompt, 300);
+}
+
+function _confirmVisitedPoiCustom(){
+  var input = document.getElementById('visited-poi-custom');
+  var name = (input.value||'').trim();
+  if(!name) return;
+  var item = _visitedPoiQueue.shift();
+  if(item){
+    var ride = (D.rides||[]).find(function(r){ return r.id === _visitedPoiCurrentRideId; });
+    if(ride){
+      if(!ride.places) ride.places = [];
+      ride.places.push({lat:item.lat, lon:item.lon, name:name});
+      save();
+    }
+  }
+  closeModal('m-visited-poi-confirm');
+  if(_visitedPoiQueue.length) setTimeout(_showNextVisitedPoiPrompt, 300);
+}
+
+function _skipVisitedPoi(){
+  _visitedPoiQueue.shift();
+  closeModal('m-visited-poi-confirm');
+  if(_visitedPoiQueue.length) setTimeout(_showNextVisitedPoiPrompt, 300);
+}
+
+// 전체 라이딩 기록에서 방문 지역별 횟수 집계 (별도 저장 없이 매번 계산 — 기록 수정/삭제해도 항상 정확)
+// 라이딩 단위로 집계하며, 서로 다른 라이딩(=서로 다른 방문)은 같은 장소라도 절대 서로 중복 제거하지 않음
+// (예: handico tower를 두 번 따로 방문해 각각 확인했으면 2회로 카운트되어야 함 — 물리적 거리만으로 다른 라이딩의
+//  방문을 병합하면 안 됨. 2026-08 실제 버그: 지역 카운트가 하위 장소 목록 합계보다 적게 나온 원인이 바로 이 문제였음)
+function _computeVisitedPlaces(provincesGeo){
+  var counts = {};
+  var points = {}; // 지역별 대표 좌표(마커 위치용) — 지역 폴리곤 렌더링과 무관하게 마커를 찍을 수 있도록 실제 방문 좌표를 그대로 씀
+  function addVisit(pt){
+    var lat = pt.lat !== undefined ? pt.lat : pt[0];
+    var lon = pt.lon !== undefined ? pt.lon : pt[1];
+    var name = _findProvinceForPoint(lat, lon, provincesGeo);
+    if(!name) return;
+    counts[name] = (counts[name]||0) + 1;
+    if(!points[name]) points[name] = {lat:lat, lon:lon};
+  }
+
+  var byBike = {};
+  (D.rides||[]).forEach(function(r){
+    if(!r.pathT || !r.pathT.length || !r.path || !r.path.length) return;
+    if(!byBike[r.bikeId]) byBike[r.bikeId] = [];
+    byBike[r.bikeId].push(r);
+  });
+  Object.keys(byBike).forEach(function(bikeId){
+    byBike[bikeId].sort(function(a,b){ return a.pathT[0] - b.pathT[0]; });
+  });
+
+  (D.rides||[]).forEach(function(r){
+    if(!r.pathT || !r.pathT.length || !r.path || !r.path.length) return;
+    // 1) 라이딩 내부 정차 지점(30분 이상)은 항상 카운트
+    var dwells = _findDwellPoints(r.path, r.pathT);
+    dwells.forEach(addVisit);
+
+    // 2) 라이딩 종료 지점은 이 라이딩 자체에서 이미 정차로 잡혔거나 / 다음 라이딩까지 30분 이상
+    //    간격이 있거나 / 사용자가 직접 확인한 장소가 있을 때만, 이 라이딩당 최대 1회 카운트
+    var endPt = {lat: r.path[r.path.length-1][0], lon: r.path[r.path.length-1][1]};
+    var endInDwells = dwells.some(function(d){ return _haversineKm(d.lat, d.lon, endPt.lat, endPt.lon) <= VISITED_CLUSTER_RADIUS_KM; });
+    if(endInDwells) return;
+
+    var hasConfirmed = (r.places||[]).some(function(p){ return _haversineKm(p.lat, p.lon, endPt.lat, endPt.lon) <= VISITED_CLUSTER_RADIUS_KM; });
+    var hasGapDwell = false;
+    if(!hasConfirmed){
+      var bikeRides = byBike[r.bikeId] || [];
+      var idx = bikeRides.indexOf(r);
+      if(idx >= 0 && idx < bikeRides.length - 1){
+        var next = bikeRides[idx+1];
+        var endT = r.pathT[r.pathT.length-1];
+        var startT = next.pathT[0];
+        var startPt = next.path[0];
+        if(endT && startT && (startT - endT) >= VISITED_DWELL_MS &&
+           _haversineKm(endPt.lat, endPt.lon, startPt[0], startPt[1]) <= VISITED_CLUSTER_RADIUS_KM){
+          hasGapDwell = true;
+        }
+      }
+    }
+    if(hasConfirmed || hasGapDwell) addVisit(endPt);
+  });
+
+  return {counts: counts, points: points};
+}
+
+// 확인된 장소명(디버그 빌드에서 사용자가 탭으로 확인한 것)을 지역별로 묶음
+function _computeConfirmedPlaceNamesByProvince(provincesGeo){
+  var byProvince = {};
+  (D.rides||[]).forEach(function(r){
+    (r.places||[]).forEach(function(p){
+      var name = _findProvinceForPoint(p.lat, p.lon, provincesGeo);
+      if(!name) return;
+      if(!byProvince[name]) byProvince[name] = [];
+      byProvince[name].push(p.name);
+    });
+  });
+  return byProvince;
+}
+
+function _toggleVisitedPlaceSub(idx){
+  var el = document.getElementById('vp-sub-'+idx);
+  if(el) el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+}
+
+// 위도 기준 대략적인 북부/중부/남부 구간 (사용자 위치 중심으로 초기 줌 범위를 좁히는 용도)
+var VISITED_INITIAL_RADIUS_KM = 200;
+
+// 위도 1도 ≈ 111km, 경도 1도는 위도에 따라 압축되므로 cos(위도)로 보정
+function _boundsAroundPoint(lat, lon, radiusKm){
+  var deltaLat = radiusKm / 111;
+  var deltaLon = radiusKm / (111 * Math.cos(lat * Math.PI/180));
+  return [[lat-deltaLat, lon-deltaLon], [lat+deltaLat, lon+deltaLon]];
+}
+
+// 위치 권한이 이미 허용돼 있으면 내 위치 기준 반경으로 확대, 아니면(권한 없음/실패) 전국 지도 폴백 — 새로 권한을 요청하진 않음
+function _fitVisitedPlacesInitialView(map, wholeCountryBounds){
+  var Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+  if(!Geo || !Geo.checkPermissions){ map.fitBounds(wholeCountryBounds); return; }
+  Geo.checkPermissions().then(function(perm){
+    var granted = perm && (perm.location === 'granted' || perm.coarseLocation === 'granted');
+    if(!granted) throw new Error('no permission');
+    return Geo.getCurrentPosition({enableHighAccuracy:false, timeout:5000, maximumAge:600000});
+  }).then(function(pos){
+    if(!pos) throw new Error('no position');
+    map.fitBounds(_boundsAroundPoint(pos.coords.latitude, pos.coords.longitude, VISITED_INITIAL_RADIUS_KM));
+  }).catch(function(){
+    map.fitBounds(wholeCountryBounds);
+  });
+}
+
+function renderVisitedPlacesPage(){
+  var mapEl = document.getElementById('visited-places-map');
+  var listEl = document.getElementById('visited-places-list');
+  if(_visitedPlacesMap){ _visitedPlacesMap.remove(); _visitedPlacesMap = null; }
+  mapEl.innerHTML = '';
+  listEl.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:13px;padding:20px 0;">불러오는 중...</div>';
+
+  _loadVnProvinces().then(function(provincesGeo){
+    var result = _computeVisitedPlaces(provincesGeo);
+    var counts = result.counts;
+    var repPoints = result.points;
+    var names = Object.keys(counts);
+    var maxCount = names.length ? Math.max.apply(null, names.map(function(n){ return counts[n]; })) : 0;
+    var iconSize = function(n){ return Math.round(15 + Math.sqrt(n/maxCount) * 11); }; // 지름(px), 15~26
+
+    // 컨테이너가 화면에 완전히 자리잡기 전에 지도를 초기화하면 빈 화면으로 그려지는 문제가 있어 약간 지연 + invalidateSize()로 보정
+    setTimeout(function(){
+      try {
+        if(mapEl._leaflet_id) delete mapEl._leaflet_id; // 이전 지도 인스턴스 잔여 상태 방지
+        _visitedPlacesMap = L.map('visited-places-map', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:false});
+        _visitedPlacesMap.setView([16.0, 106.0], 5); // 지역 경계 렌더링 성패와 무관하게 기본 뷰부터 세팅
+
+        try {
+          var geoLayer = L.geoJSON(provincesGeo, {
+            style: {fillColor:'#dce8f5', fillOpacity:1, color:'#b8cfe8', weight:0.75}
+          }).addTo(_visitedPlacesMap);
+          _fitVisitedPlacesInitialView(_visitedPlacesMap, geoLayer.getBounds());
+        } catch(e2) {
+          console.error('[visitedPlaces] 지역 경계 렌더링 실패', e2);
+        }
+
+        _visitedPlacesMap.invalidateSize();
+        setTimeout(function(){ if(_visitedPlacesMap) _visitedPlacesMap.invalidateSize(); }, 300);
+
+        // 마커는 지역 폴리곤 렌더링 성공 여부와 무관하게, 실제 방문 좌표로 직접 찍음. 숫자를 원 안에 항상 표시.
+        names.forEach(function(name){
+          var n = counts[name];
+          var p = repPoints[name];
+          if(!p) return;
+          var size = iconSize(n);
+          var icon = L.divIcon({
+            className: 'vp-marker',
+            html: '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:#d85a30;border:1.5px solid #a32d2d;display:flex;align-items:center;justify-content:center;color:#fff;font-size:'+Math.max(9, Math.round(size*0.42))+'px;font-weight:700;line-height:1;">'+n+'</div>',
+            iconSize: [size, size],
+            iconAnchor: [size/2, size/2]
+          });
+          L.marker([p.lat, p.lon], {icon: icon})
+            .addTo(_visitedPlacesMap)
+            .bindTooltip(name + ' ' + n + '회', {permanent:false, direction:'top'});
+        });
+      } catch(e) {
+        console.error('[visitedPlaces] 지도 초기화 실패', e);
+        mapEl.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text-dim);">지도 초기화 실패: ' + (e && e.message ? e.message : e) + '</div>';
+      }
+    }, 80);
+
+    if(!names.length){
+      listEl.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:13px;padding:20px 0;">아직 30분 이상 머문 라이딩이 없어요<br>오늘 라이딩부터 하나씩 쌓여요</div>';
+      return;
+    }
+
+    var placeNamesByProvince = _computeConfirmedPlaceNamesByProvince(provincesGeo);
+    var sorted = names.slice().sort(function(a,b){ return counts[b]-counts[a]; });
+    listEl.innerHTML = sorted.map(function(name, idx){
+      var places = placeNamesByProvince[name] || [];
+      var placeCounts = {};
+      places.forEach(function(p){ placeCounts[p] = (placeCounts[p]||0) + 1; });
+      var placeNames = Object.keys(placeCounts);
+      var sub = placeNames.length ? (
+        `<div id="vp-sub-${idx}" style="display:none;padding:2px 0 8px 12px;">` +
+        placeNames.map(function(pn){ return `<div style="font-size:13px;color:var(--text-dim);padding:4px 0;">・ ${pn}${placeCounts[pn]>1 ? ' ×'+placeCounts[pn] : ''}</div>`; }).join('') +
+        `</div>`
+      ) : '';
+      return `<div style="border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;${placeNames.length ? 'cursor:pointer;' : ''}" ${placeNames.length ? `onclick="_toggleVisitedPlaceSub(${idx})"` : ''}>
+          <span style="font-size:14px;">${name}${placeNames.length ? ' <span style="color:var(--text-dim);font-size:11px;">▾</span>' : ''}</span>
+          <span style="font-size:14px;font-weight:700;color:var(--accent);">${counts[name]}회</span>
+        </div>
+        ${sub}
+      </div>`;
+    }).join('');
+  }).catch(function(e){
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:13px;padding:20px 0;">지도를 불러오지 못했어요</div>';
+    console.warn('[visitedPlaces] 오류', e);
+  });
+}
+
 function _mstatFmtDuration(ms){
   var h = Math.floor(ms/3600000);
   var m = Math.floor((ms%3600000)/60000);
@@ -3191,9 +3591,6 @@ function mstatRender(){
   var maxSpeed = rides.reduce(function(m,r){ return Math.max(m, r.maxKmh||0); }, 0);
   var avgSpeed = totalDuration > 0 ? totalDistance / (totalDuration/3600000) : 0;
 
-  var monthHistory = (D.history||[]).filter(function(h){ return h.bikeId===mstatState.bikeId && h.date && h.date.indexOf(prefix)===0; });
-  var totalCost = monthHistory.reduce(function(sum,h){ return sum + (parseInt(h.cost)||0); }, 0);
-
   document.getElementById('mstat-summary').innerHTML = `
     <div style="background:var(--surface2);border-radius:10px;padding:12px;">
       <div class="tp-label">이번 달 총거리</div>
@@ -3210,10 +3607,6 @@ function mstatRender(){
     <div style="background:var(--surface2);border-radius:10px;padding:12px;">
       <div class="tp-label">최고 속도</div>
       <div class="tp-stat-sm" style="color:var(--accent);margin-top:2px;">${Math.round(maxSpeed)} km/h</div>
-    </div>
-    <div style="grid-column:1/-1;background:var(--surface2);border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
-      <div class="tp-label">이번 달 정비비</div>
-      <div class="tp-stat-sm" style="color:var(--accent);">${totalCost>0?'₫'+totalCost.toLocaleString():'–'}</div>
     </div>
   `;
 
@@ -3361,16 +3754,43 @@ function updateOdometer(bikeId){
 // ═══════════════════════════════════════════
 //  정비이력
 // ═══════════════════════════════════════════
+var historyMonthState = { year: 0, month: 0 };
+
+function historyChangeMonth(delta){
+  if(!historyMonthState.year){
+    var now = new Date();
+    historyMonthState.year = now.getFullYear();
+    historyMonthState.month = now.getMonth()+1;
+  }
+  var d = new Date(historyMonthState.year, historyMonthState.month - 1 + delta, 1);
+  historyMonthState.year = d.getFullYear();
+  historyMonthState.month = d.getMonth() + 1;
+  renderHistory();
+}
+
 function renderHistory(){
+  if(!historyMonthState.year){
+    var now = new Date();
+    historyMonthState.year = now.getFullYear();
+    historyMonthState.month = now.getMonth()+1;
+  }
+  var prefix = historyMonthState.year + '-' + String(historyMonthState.month).padStart(2,'0');
+  document.getElementById('history-month-label').textContent = `${historyMonthState.year}년 ${historyMonthState.month}월`;
+
   const bf=document.getElementById('hfilt-bike');
   bf.innerHTML='<option value="">전체 차량</option>'+D.bikes.map(b=>`<option value="${b.id}">${b.brand} ${b.model}</option>`).join('');
   const bfv=bf.value, tfv=document.getElementById('hfilt-type').value;
-  let logs=[...D.history].sort((a,b)=>b.date.localeCompare(a.date));
+
+  const costLogs = D.history.filter(l=>l.date && l.date.indexOf(prefix)===0 && (!bfv || l.bikeId==bfv));
+  const totalCost = costLogs.reduce((sum,l)=>sum+(parseInt(l.cost)||0),0);
+  document.getElementById('history-month-cost').textContent = totalCost>0 ? '₫'+totalCost.toLocaleString() : '–';
+
+  let logs=[...D.history].filter(l=>l.date && l.date.indexOf(prefix)===0).sort((a,b)=>b.date.localeCompare(a.date));
   if(bfv) logs=logs.filter(l=>l.bikeId==bfv);
   if(tfv) logs=logs.filter(l=>l.type===tfv);
   const el=document.getElementById('history-table');
   const typeBadge={'소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
-  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">정비 기록이 없습니다</div></div>`; return; }
+  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">이 달의 정비 기록이 없습니다</div></div>`; return; }
   el.innerHTML=logs.map(l=>{
     const b=D.bikes.find(x=>x.id==l.bikeId);
     const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
@@ -4193,8 +4613,9 @@ function stopRiding(customMsg, skipSummary) {
   updateRidingBar();
   showToast(customMsg || '■ 라이딩 종료');
   if (summary) {
-    saveRideRecord(summary);
+    var savedRide = saveRideRecord(summary);
     if (!skipSummary) showRideSummary(summary);
+    if (savedRide && window._isDebugBuild) _startVisitedPoiFlow(savedRide);
   }
 }
 
@@ -4226,7 +4647,7 @@ function saveRideRecord(s){
   var rideBikeId = (D.bikes.find(b=>b.id===dashSelectedBikeId) ? dashSelectedBikeId : (D.bikes[0] ? D.bikes[0].id : null));
   var rideDistKm = Math.round(s.distanceKm*10)/10;
   var prevTotal = (D.rides||[]).filter(function(r){ return r.bikeId===rideBikeId; }).reduce(function(sum,r){ return sum+(r.distanceKm||0); }, 0);
-  D.rides.push({
+  var newRide = {
     id: Date.now(),
     bikeId: rideBikeId,
     date: startD.toISOString().split('T')[0],
@@ -4237,16 +4658,19 @@ function saveRideRecord(s){
     avgKmh: Math.round(s.avgKmh),
     maxKmh: Math.round(s.maxKmh),
     path: (_ride.path||[]).map(function(p){ return [p.lat, p.lon]; }),
+    pathT: (_ride.path||[]).map(function(p){ return p.t; }),
     maxSpeedLat: _ride.maxSpeedLat || null,
     maxSpeedLon: _ride.maxSpeedLon || null,
     harshAccelCount: _ride.harshAccelCount || 0,
     harshBrakeCount: _ride.harshBrakeCount || 0
-  });
+  };
+  D.rides.push(newRide);
   save();
   var newTier = Math.floor((prevTotal+rideDistKm)/500);
   if(newTier > Math.floor(prevTotal/500)){
     setTimeout(function(){ showToast('🏆 누적 '+(newTier*500).toLocaleString()+'km 달성했어요! 라이딩 이력에서 확인해보세요'); }, 1500);
   }
+  return newRide;
 }
 
 // 라이딩 요약 계산 (총 거리 / 평균속도 / 최고속도)
@@ -6570,6 +6994,7 @@ function renderMedicalCard(){
             <div id="ride-detail-brake" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
         </div>
+        <button id="ride-detail-poi-btn" class="btn btn-full" style="margin-top:12px;display:none;" onclick="_startVisitedPoiFlow(_rideDetailCurrentRide)">📍 장소 확인하기</button>
       </div>
     </div>
   </div>

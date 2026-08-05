@@ -613,6 +613,15 @@ option{background:var(--surface2);}
         <option>Thay phụ tùng</option><option>Kiểm tra định kỳ</option><option>Sửa chữa</option><option>Khác</option>
       </select>
     </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <button class="btn btn-sm" onclick="historyChangeMonth(-1)">◀</button>
+      <div id="history-month-label" class="tp-title"></div>
+      <button class="btn btn-sm" onclick="historyChangeMonth(1)">▶</button>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="tp-label">Chi phí bảo dưỡng tháng này</div>
+      <div class="tp-stat-sm" id="history-month-cost" style="color:var(--accent);"></div>
+    </div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">Thêm nhật ký tại tab <strong style="color:var(--accent);">🔧 Bảo dưỡng</strong></div>
     <div id="history-table"></div>
   </div>
@@ -629,7 +638,10 @@ option{background:var(--surface2);}
   <!-- Thống kê theo tháng -->
   <div class="page" id="page-monthlyStats">
     <div class="sec-header"><span class="sec-title">THỐNG KÊ THEO THÁNG</span><div class="sec-line"></div></div>
-    <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">Xem lịch sử chi tiết</button>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">Xem lịch sử chi tiết</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="showPage('visitedPlaces', document.getElementById('nav-ridehistory-btn'))">Xem bản đồ nơi đã đến</button>
+    </div>
 
     <div id="mstat-bike-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;"></div>
 
@@ -648,6 +660,15 @@ option{background:var(--surface2);}
 
     <div id="mstat-day-detail" style="display:none;margin-top:18px;background:var(--surface2);border-radius:10px;padding:14px;"></div>
     <div id="mstat-motivate" style="display:none;margin-top:16px;margin-bottom:20px;text-align:center;font-size:13px;color:var(--text-dim);line-height:1.6;"></div>
+  </div>
+
+  <!-- Nơi đã đến -->
+  <div class="page" id="page-visitedPlaces">
+    <div class="sec-header"><span class="sec-title">NƠI ĐÃ ĐẾN</span><div class="sec-line"></div></div>
+    <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats', document.getElementById('nav-ridehistory-btn'))">Quay lại Thống kê tháng</button>
+    <div id="visited-places-note" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Chỉ tính các chuyến đi dừng lại một chỗ từ 30 phút trở lên (áp dụng từ chuyến đi hôm nay trở đi)</div>
+    <div id="visited-places-map" style="width:100%;height:420px;border-radius:12px;overflow:hidden;background:#eef5fc;position:relative;z-index:0;"></div>
+    <div id="visited-places-list" style="margin-top:14px;"></div>
   </div>
 
   <div class="page" id="page-backup">
@@ -971,6 +992,25 @@ option{background:var(--surface2);}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('m-consumable-check')">Hủy</button>
       <button class="btn btn-primary" onclick="saveConsumCheck()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Xác nhận địa điểm đã đến (chỉ bản debug) -->
+<div class="modal-overlay" id="m-visited-poi-confirm" style="z-index:320;">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="visited-poi-title">Bạn có ghé đây không?</span><button class="modal-close" onclick="_skipVisitedPoi()">✕</button></div>
+    <div class="modal-body">
+      <div id="visited-poi-time" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;"></div>
+      <div id="visited-poi-candidates"></div>
+      <div style="margin-top:6px;">
+        <div class="step-label">Tự nhập</div>
+        <input type="text" class="form-input" id="visited-poi-custom" placeholder="VD: Trạm dừng chân ven đường">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="_skipVisitedPoi()">Bỏ qua</button>
+      <button class="btn btn-primary" onclick="_confirmVisitedPoiCustom()">Lưu</button>
     </div>
   </div>
 </div>
@@ -1618,6 +1658,7 @@ function showPage(name,btn){
   if(name==='backup') renderBackupPage();
   if(name==='rideHistory') renderRideHistoryPage();
   if(name==='monthlyStats') openMonthlyStats();
+  if(name==='visitedPlaces') renderVisitedPlacesPage();
   if(name==='brandNews') renderBrandNewsPage();
   if(name==='warningLight') renderWarningLightPage();
   logAnalyticsEvent('app_screen_view', {screen_name:name});
@@ -2669,9 +2710,11 @@ function renderRideHistoryList(){
 }
 
 var _rideDetailMap = null;
+var _rideDetailCurrentRide = null;
 function openRideDetail(id){
   var r = (D.rides||[]).find(x=>x.id===id);
   if(!r) return;
+  _rideDetailCurrentRide = r;
   var h = Math.floor(r.durationMs/3600000);
   var m = Math.floor((r.durationMs%3600000)/60000);
   var sec = Math.floor((r.durationMs%60000)/1000);
@@ -2688,6 +2731,8 @@ function openRideDetail(id){
   accelEl.style.color = accelN > 0 ? 'var(--red)' : 'var(--text)';
   brakeEl.textContent = brakeN+' lần';
   brakeEl.style.color = brakeN > 0 ? 'var(--red)' : 'var(--text)';
+  var poiBtn = document.getElementById('ride-detail-poi-btn');
+  if(poiBtn) poiBtn.style.display = (window._isDebugBuild && r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
   document.getElementById('ride-detail-modal').classList.remove('ride-detail-fs');
   openModal('m-ride-detail');
 
@@ -2795,6 +2840,361 @@ function mstatChangeMonth(delta){
   mstatRender();
 }
 
+// Nơi đã đến (bubble map)
+var _vnProvincesGeo = null;
+var _visitedPlacesMap = null;
+var VISITED_DWELL_MS = 30 * 60000; // chỉ tính là "đã đến" nếu dừng 30 phút trở lên tại một chỗ
+var VISITED_CLUSTER_RADIUS_KM = 0.3;
+
+function _loadVnProvinces(){
+  if(_vnProvincesGeo) return Promise.resolve(_vnProvincesGeo);
+  return fetch('./assets/data/vn-provinces.json').then(function(r){ return r.json(); }).then(function(geo){
+    _vnProvincesGeo = geo;
+    return geo;
+  });
+}
+
+function _rayCastInRing(lon, lat, ring){
+  var inside = false;
+  for(var i=0, j=ring.length-1; i<ring.length; j=i++){
+    var xi=ring[i][0], yi=ring[i][1], xj=ring[j][0], yj=ring[j][1];
+    var intersect = ((yi>lat)!==(yj>lat)) && (lon < (xj-xi)*(lat-yi)/(yj-yi)+xi);
+    if(intersect) inside = !inside;
+  }
+  return inside;
+}
+
+function _pointInGeometry(lon, lat, geometry){
+  var polys = geometry.type==='MultiPolygon' ? geometry.coordinates : [geometry.coordinates];
+  for(var p=0; p<polys.length; p++){
+    var rings = polys[p];
+    if(!_rayCastInRing(lon, lat, rings[0])) continue;
+    var inHole = false;
+    for(var h=1; h<rings.length; h++){ if(_rayCastInRing(lon, lat, rings[h])){ inHole = true; break; } }
+    if(!inHole) return true;
+  }
+  return false;
+}
+
+function _findProvinceForPoint(lat, lon, provincesGeo){
+  for(var i=0; i<provincesGeo.features.length; i++){
+    var f = provincesGeo.features[i];
+    if(_pointInGeometry(lon, lat, f.geometry)) return f.properties.name;
+  }
+  return null;
+}
+
+// Tìm các điểm trên đường đi mà người lái xe dừng lại 30 phút trở lên (loại trừ đèn đỏ/nghỉ ngắn)
+function _findDwellPoints(path, pathT){
+  var dwells = [];
+  if(!path || !pathT || path.length < 2) return dwells;
+  var clusterStart = 0;
+  var counted = false;
+  for(var i=1; i<path.length; i++){
+    if(!pathT[clusterStart] || !pathT[i]) continue;
+    var d = _haversineKm(path[clusterStart][0], path[clusterStart][1], path[i][0], path[i][1]);
+    if(d > VISITED_CLUSTER_RADIUS_KM){
+      clusterStart = i;
+      counted = false;
+      continue;
+    }
+    if(!counted && (pathT[i] - pathT[clusterStart]) >= VISITED_DWELL_MS){
+      dwells.push({lat: path[clusterStart][0], lon: path[clusterStart][1], t: pathT[clusterStart]});
+      counted = true;
+    }
+  }
+  return dwells;
+}
+
+// Xác nhận tên địa điểm đã đến (chỉ bản debug — window._isDebugBuild luôn false ở bản release nên không bao giờ chạy ở đó)
+var VISITED_POI_ENDPOINT = 'https://us-central1-moto-garage-8da30.cloudfunctions.net/visitedPlacePoi';
+var _visitedPoiQueue = [];
+var _visitedPoiTotal = 0;
+var _visitedPoiCurrentRideId = null;
+
+// Các điểm dừng/kết thúc chưa xác nhận địa điểm (dùng lại cả lúc kết thúc chuyến lẫn nút "xác nhận lại" ở chi tiết chuyến)
+function _findUnconfirmedVisitedPoints(ride){
+  var points = _findDwellPoints(ride.path, ride.pathT).slice();
+  if(ride.path && ride.path.length && ride.pathT && ride.pathT.length){
+    var lastPt = {lat: ride.path[ride.path.length-1][0], lon: ride.path[ride.path.length-1][1], t: ride.pathT[ride.pathT.length-1]};
+    var alreadyNear = points.some(function(p){ return _haversineKm(p.lat,p.lon,lastPt.lat,lastPt.lon) <= VISITED_CLUSTER_RADIUS_KM; });
+    if(!alreadyNear) points.push(lastPt);
+  }
+  var confirmed = ride.places || [];
+  return points.filter(function(pt){
+    return !confirmed.some(function(c){ return _haversineKm(c.lat, c.lon, pt.lat, pt.lon) <= VISITED_CLUSTER_RADIUS_KM; });
+  });
+}
+
+function _fmtVisitedPoiTime(t){
+  if(!t) return '';
+  var d = new Date(t);
+  return d.toLocaleDateString('vi-VN', {month:'long', day:'numeric'}) + ' ' + d.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+}
+
+function _startVisitedPoiFlow(ride){
+  var points = _findUnconfirmedVisitedPoints(ride);
+  if(!points.length) return;
+  _visitedPoiCurrentRideId = ride.id;
+  Promise.all(points.map(function(pt){
+    return fetch(VISITED_POI_ENDPOINT, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({lat: pt.lat, lon: pt.lon})
+    }).then(function(r){ return r.json(); }).then(function(data){
+      return {lat: pt.lat, lon: pt.lon, t: pt.t, candidates: (data.candidates||[]).slice(0,5)};
+    }).catch(function(e){ console.warn('[visitedPoi] lỗi tra cứu', e); return {lat: pt.lat, lon: pt.lon, t: pt.t, candidates: []}; });
+  })).then(function(results){
+    _visitedPoiQueue = results.filter(function(r){ return r.candidates.length > 0; });
+    _visitedPoiTotal = _visitedPoiQueue.length;
+    if(_visitedPoiQueue.length) _showNextVisitedPoiPrompt();
+  });
+}
+
+function _showNextVisitedPoiPrompt(){
+  if(!_visitedPoiQueue.length) return;
+  var item = _visitedPoiQueue[0];
+  var idxLabel = (_visitedPoiTotal - _visitedPoiQueue.length + 1) + '/' + _visitedPoiTotal;
+  document.getElementById('visited-poi-title').textContent = _visitedPoiTotal > 1 ? `Bạn có ghé đây không? (${idxLabel})` : 'Bạn có ghé đây không?';
+  document.getElementById('visited-poi-time').textContent = _fmtVisitedPoiTime(item.t);
+  document.getElementById('visited-poi-custom').value = '';
+  var listEl = document.getElementById('visited-poi-candidates');
+  listEl.innerHTML = item.candidates.map(function(c, i){
+    return `<button class="btn btn-full" style="margin-bottom:8px;text-align:left;justify-content:flex-start;" onclick="_confirmVisitedPoi(${i})">${c.name}</button>`;
+  }).join('');
+  openModal('m-visited-poi-confirm');
+}
+
+function _confirmVisitedPoi(idx){
+  var item = _visitedPoiQueue.shift();
+  var c = item && item.candidates[idx];
+  if(c){
+    var ride = (D.rides||[]).find(function(r){ return r.id === _visitedPoiCurrentRideId; });
+    if(ride){
+      if(!ride.places) ride.places = [];
+      ride.places.push({lat:item.lat, lon:item.lon, name:c.name});
+      save();
+    }
+  }
+  closeModal('m-visited-poi-confirm');
+  if(_visitedPoiQueue.length) setTimeout(_showNextVisitedPoiPrompt, 300);
+}
+
+function _confirmVisitedPoiCustom(){
+  var input = document.getElementById('visited-poi-custom');
+  var name = (input.value||'').trim();
+  if(!name) return;
+  var item = _visitedPoiQueue.shift();
+  if(item){
+    var ride = (D.rides||[]).find(function(r){ return r.id === _visitedPoiCurrentRideId; });
+    if(ride){
+      if(!ride.places) ride.places = [];
+      ride.places.push({lat:item.lat, lon:item.lon, name:name});
+      save();
+    }
+  }
+  closeModal('m-visited-poi-confirm');
+  if(_visitedPoiQueue.length) setTimeout(_showNextVisitedPoiPrompt, 300);
+}
+
+function _skipVisitedPoi(){
+  _visitedPoiQueue.shift();
+  closeModal('m-visited-poi-confirm');
+  if(_visitedPoiQueue.length) setTimeout(_showNextVisitedPoiPrompt, 300);
+}
+
+// Tổng hợp số lần đến mỗi tỉnh từ toàn bộ lịch sử chuyến đi (tính lại mỗi lần — không lưu riêng — nên sửa/xóa lịch sử vẫn luôn chính xác)
+// Tính theo từng chuyến đi; các chuyến đi khác nhau (= các lần ghé thăm khác nhau) không bao giờ bị gộp lại chỉ vì ở gần nhau về vị trí
+// (ví dụ: 2 lần ghé "handico tower" riêng biệt, mỗi lần đều đã xác nhận, phải tính là 2 lần — gộp theo khoảng cách đã gây ra lỗi thực tế
+// vào 2026-08, khi số đếm của tỉnh thấp hơn tổng số địa điểm liệt kê bên dưới)
+function _computeVisitedPlaces(provincesGeo){
+  var counts = {};
+  var points = {}; // tọa độ đại diện {lat,lon} cho mỗi tỉnh, để marker không phụ thuộc việc lớp ranh giới có render thành công hay không
+  function addVisit(pt){
+    var lat = pt.lat !== undefined ? pt.lat : pt[0];
+    var lon = pt.lon !== undefined ? pt.lon : pt[1];
+    var name = _findProvinceForPoint(lat, lon, provincesGeo);
+    if(!name) return;
+    counts[name] = (counts[name]||0) + 1;
+    if(!points[name]) points[name] = {lat:lat, lon:lon};
+  }
+
+  var byBike = {};
+  (D.rides||[]).forEach(function(r){
+    if(!r.pathT || !r.pathT.length || !r.path || !r.path.length) return;
+    if(!byBike[r.bikeId]) byBike[r.bikeId] = [];
+    byBike[r.bikeId].push(r);
+  });
+  Object.keys(byBike).forEach(function(bikeId){
+    byBike[bikeId].sort(function(a,b){ return a.pathT[0] - b.pathT[0]; });
+  });
+
+  (D.rides||[]).forEach(function(r){
+    if(!r.pathT || !r.pathT.length || !r.path || !r.path.length) return;
+    // 1) Các điểm dừng trong chuyến đi (30+ phút) luôn được tính
+    var dwells = _findDwellPoints(r.path, r.pathT);
+    dwells.forEach(addVisit);
+
+    // 2) Điểm kết thúc chuyến đi chỉ tính tối đa 1 lần cho mỗi chuyến, và chỉ khi đã được tính là điểm
+    //    dừng trong chuyến này / khoảng cách đến chuyến sau từ 30 phút trở lên / người dùng đã xác nhận địa điểm ở đó
+    var endPt = {lat: r.path[r.path.length-1][0], lon: r.path[r.path.length-1][1]};
+    var endInDwells = dwells.some(function(d){ return _haversineKm(d.lat, d.lon, endPt.lat, endPt.lon) <= VISITED_CLUSTER_RADIUS_KM; });
+    if(endInDwells) return;
+
+    var hasConfirmed = (r.places||[]).some(function(p){ return _haversineKm(p.lat, p.lon, endPt.lat, endPt.lon) <= VISITED_CLUSTER_RADIUS_KM; });
+    var hasGapDwell = false;
+    if(!hasConfirmed){
+      var bikeRides = byBike[r.bikeId] || [];
+      var idx = bikeRides.indexOf(r);
+      if(idx >= 0 && idx < bikeRides.length - 1){
+        var next = bikeRides[idx+1];
+        var endT = r.pathT[r.pathT.length-1];
+        var startT = next.pathT[0];
+        var startPt = next.path[0];
+        if(endT && startT && (startT - endT) >= VISITED_DWELL_MS &&
+           _haversineKm(endPt.lat, endPt.lon, startPt[0], startPt[1]) <= VISITED_CLUSTER_RADIUS_KM){
+          hasGapDwell = true;
+        }
+      }
+    }
+    if(hasConfirmed || hasGapDwell) addVisit(endPt);
+  });
+
+  return {counts: counts, points: points};
+}
+
+// Gom tên địa điểm đã xác nhận (từ bản debug) theo tỉnh
+function _computeConfirmedPlaceNamesByProvince(provincesGeo){
+  var byProvince = {};
+  (D.rides||[]).forEach(function(r){
+    (r.places||[]).forEach(function(p){
+      var name = _findProvinceForPoint(p.lat, p.lon, provincesGeo);
+      if(!name) return;
+      if(!byProvince[name]) byProvince[name] = [];
+      byProvince[name].push(p.name);
+    });
+  });
+  return byProvince;
+}
+
+function _toggleVisitedPlaceSub(idx){
+  var el = document.getElementById('vp-sub-'+idx);
+  if(el) el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+}
+
+// Ước lượng miền Bắc/Trung/Nam theo vĩ độ (thu hẹp khu vực zoom ban đầu quanh vị trí người dùng)
+var VISITED_INITIAL_RADIUS_KM = 200;
+
+// 1 độ vĩ độ ≈ 111km; độ kinh độ bị nén theo vĩ độ, hiệu chỉnh bằng cos(vĩ độ)
+function _boundsAroundPoint(lat, lon, radiusKm){
+  var deltaLat = radiusKm / 111;
+  var deltaLon = radiusKm / (111 * Math.cos(lat * Math.PI/180));
+  return [[lat-deltaLat, lon-deltaLon], [lat+deltaLat, lon+deltaLon]];
+}
+
+// Nếu quyền vị trí đã được cấp thì zoom vào bán kính quanh vị trí đó, ngược lại (chưa cấp quyền/thất bại) hiển thị toàn bộ đất nước — không tự yêu cầu quyền
+function _fitVisitedPlacesInitialView(map, wholeCountryBounds){
+  var Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+  if(!Geo || !Geo.checkPermissions){ map.fitBounds(wholeCountryBounds); return; }
+  Geo.checkPermissions().then(function(perm){
+    var granted = perm && (perm.location === 'granted' || perm.coarseLocation === 'granted');
+    if(!granted) throw new Error('no permission');
+    return Geo.getCurrentPosition({enableHighAccuracy:false, timeout:5000, maximumAge:600000});
+  }).then(function(pos){
+    if(!pos) throw new Error('no position');
+    map.fitBounds(_boundsAroundPoint(pos.coords.latitude, pos.coords.longitude, VISITED_INITIAL_RADIUS_KM));
+  }).catch(function(){
+    map.fitBounds(wholeCountryBounds);
+  });
+}
+
+function renderVisitedPlacesPage(){
+  var mapEl = document.getElementById('visited-places-map');
+  var listEl = document.getElementById('visited-places-list');
+  if(_visitedPlacesMap){ _visitedPlacesMap.remove(); _visitedPlacesMap = null; }
+  mapEl.innerHTML = '';
+  listEl.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:13px;padding:20px 0;">Đang tải...</div>';
+
+  _loadVnProvinces().then(function(provincesGeo){
+    var result = _computeVisitedPlaces(provincesGeo);
+    var counts = result.counts;
+    var repPoints = result.points;
+    var names = Object.keys(counts);
+    var maxCount = names.length ? Math.max.apply(null, names.map(function(n){ return counts[n]; })) : 0;
+    var iconSize = function(n){ return Math.round(15 + Math.sqrt(n/maxCount) * 11); }; // đường kính px, 15~26
+
+    // Khởi tạo bản đồ trước khi khung chứa có kích thước ổn định sẽ ra màn hình trắng — trì hoãn nhẹ + invalidateSize() để khắc phục
+    setTimeout(function(){
+      try {
+        if(mapEl._leaflet_id) delete mapEl._leaflet_id; // tránh trạng thái sót lại từ bản đồ trước đó
+        _visitedPlacesMap = L.map('visited-places-map', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:false});
+        _visitedPlacesMap.setView([16.0, 106.0], 5); // đặt khung nhìn cơ bản trước, không phụ thuộc việc lớp ranh giới render được hay không
+
+        try {
+          var geoLayer = L.geoJSON(provincesGeo, {
+            style: {fillColor:'#dce8f5', fillOpacity:1, color:'#b8cfe8', weight:0.75}
+          }).addTo(_visitedPlacesMap);
+          _fitVisitedPlacesInitialView(_visitedPlacesMap, geoLayer.getBounds());
+        } catch(e2) {
+          console.error('[visitedPlaces] lỗi render ranh giới', e2);
+        }
+
+        _visitedPlacesMap.invalidateSize();
+        setTimeout(function(){ if(_visitedPlacesMap) _visitedPlacesMap.invalidateSize(); }, 300);
+
+        // Marker dùng trực tiếp tọa độ đã ghé thăm, không phụ thuộc lớp ranh giới có render được hay không. Số lần luôn hiển thị trong vòng tròn.
+        names.forEach(function(name){
+          var n = counts[name];
+          var p = repPoints[name];
+          if(!p) return;
+          var size = iconSize(n);
+          var icon = L.divIcon({
+            className: 'vp-marker',
+            html: '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:#d85a30;border:1.5px solid #a32d2d;display:flex;align-items:center;justify-content:center;color:#fff;font-size:'+Math.max(9, Math.round(size*0.42))+'px;font-weight:700;line-height:1;">'+n+'</div>',
+            iconSize: [size, size],
+            iconAnchor: [size/2, size/2]
+          });
+          L.marker([p.lat, p.lon], {icon: icon})
+            .addTo(_visitedPlacesMap)
+            .bindTooltip(name + ' — ' + n + ' lần', {permanent:false, direction:'top'});
+        });
+      } catch(e) {
+        console.error('[visitedPlaces] lỗi khởi tạo bản đồ', e);
+        mapEl.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text-dim);">Lỗi khởi tạo bản đồ: ' + (e && e.message ? e.message : e) + '</div>';
+      }
+    }, 80);
+
+    if(!names.length){
+      listEl.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:13px;padding:20px 0;">Chưa có chuyến đi nào dừng lại 30 phút trở lên<br>Sẽ bắt đầu tính từ chuyến đi hôm nay</div>';
+      return;
+    }
+
+    var placeNamesByProvince = _computeConfirmedPlaceNamesByProvince(provincesGeo);
+    var sorted = names.slice().sort(function(a,b){ return counts[b]-counts[a]; });
+    listEl.innerHTML = sorted.map(function(name, idx){
+      var places = placeNamesByProvince[name] || [];
+      var placeCounts = {};
+      places.forEach(function(p){ placeCounts[p] = (placeCounts[p]||0) + 1; });
+      var placeNames = Object.keys(placeCounts);
+      var sub = placeNames.length ? (
+        `<div id="vp-sub-${idx}" style="display:none;padding:2px 0 8px 12px;">` +
+        placeNames.map(function(pn){ return `<div style="font-size:13px;color:var(--text-dim);padding:4px 0;">・ ${pn}${placeCounts[pn]>1 ? ' ×'+placeCounts[pn] : ''}</div>`; }).join('') +
+        `</div>`
+      ) : '';
+      return `<div style="border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;${placeNames.length ? 'cursor:pointer;' : ''}" ${placeNames.length ? `onclick="_toggleVisitedPlaceSub(${idx})"` : ''}>
+          <span style="font-size:14px;">${name}${placeNames.length ? ' <span style="color:var(--text-dim);font-size:11px;">▾</span>' : ''}</span>
+          <span style="font-size:14px;font-weight:700;color:var(--accent);">${counts[name]} lần</span>
+        </div>
+        ${sub}
+      </div>`;
+    }).join('');
+  }).catch(function(e){
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:13px;padding:20px 0;">Không tải được bản đồ</div>';
+    console.warn('[visitedPlaces] lỗi', e);
+  });
+}
+
 function _mstatFmtDuration(ms){
   var h = Math.floor(ms/3600000);
   var m = Math.floor((ms%3600000)/60000);
@@ -2853,9 +3253,6 @@ function mstatRender(){
   var maxSpeed = rides.reduce(function(m,r){ return Math.max(m, r.maxKmh||0); }, 0);
   var avgSpeed = totalDuration > 0 ? totalDistance / (totalDuration/3600000) : 0;
 
-  var monthHistory = (D.history||[]).filter(function(h){ return h.bikeId===mstatState.bikeId && h.date && h.date.indexOf(prefix)===0; });
-  var totalCost = monthHistory.reduce(function(sum,h){ return sum + (parseInt(h.cost)||0); }, 0);
-
   document.getElementById('mstat-summary').innerHTML = `
     <div style="background:var(--surface2);border-radius:10px;padding:12px;">
       <div class="tp-label">Tổng quãng đường</div>
@@ -2872,10 +3269,6 @@ function mstatRender(){
     <div style="background:var(--surface2);border-radius:10px;padding:12px;">
       <div class="tp-label">Tốc độ tối đa</div>
       <div class="tp-stat-sm" style="color:var(--accent);margin-top:2px;">${Math.round(maxSpeed)} km/h</div>
-    </div>
-    <div style="grid-column:1/-1;background:var(--surface2);border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
-      <div class="tp-label">Chi phí bảo dưỡng tháng này</div>
-      <div class="tp-stat-sm" style="color:var(--accent);">${totalCost>0?'₫'+totalCost.toLocaleString():'–'}</div>
     </div>
   `;
 
@@ -2990,17 +3383,44 @@ function updateOdometer(bikeId){
 // ═══════════════════════════════════════════
 //  정비이력
 // ═══════════════════════════════════════════
+var historyMonthState = { year: 0, month: 0 };
+
+function historyChangeMonth(delta){
+  if(!historyMonthState.year){
+    var now = new Date();
+    historyMonthState.year = now.getFullYear();
+    historyMonthState.month = now.getMonth()+1;
+  }
+  var d = new Date(historyMonthState.year, historyMonthState.month - 1 + delta, 1);
+  historyMonthState.year = d.getFullYear();
+  historyMonthState.month = d.getMonth() + 1;
+  renderHistory();
+}
+
 function renderHistory(){
+  if(!historyMonthState.year){
+    var now = new Date();
+    historyMonthState.year = now.getFullYear();
+    historyMonthState.month = now.getMonth()+1;
+  }
+  var prefix = historyMonthState.year + '-' + String(historyMonthState.month).padStart(2,'0');
+  document.getElementById('history-month-label').textContent = `Tháng ${historyMonthState.month}/${historyMonthState.year}`;
+
   const bf=document.getElementById('hfilt-bike');
   bf.innerHTML='<option value="">Tất cả xe</option>'+D.bikes.map(b=>`<option value="${b.id}">${b.brand} ${b.model}</option>`).join('');
   const bfv=bf.value, tfv=document.getElementById('hfilt-type').value;
-  let logs=[...D.history].sort((a,b)=>b.date.localeCompare(a.date));
+
+  const costLogs = D.history.filter(l=>l.date && l.date.indexOf(prefix)===0 && (!bfv || l.bikeId==bfv));
+  const totalCost = costLogs.reduce((sum,l)=>sum+(parseInt(l.cost)||0),0);
+  document.getElementById('history-month-cost').textContent = totalCost>0 ? '₫'+totalCost.toLocaleString() : '–';
+
+  let logs=[...D.history].filter(l=>l.date && l.date.indexOf(prefix)===0).sort((a,b)=>b.date.localeCompare(a.date));
   if(bfv) logs=logs.filter(l=>l.bikeId==bfv);
   if(tfv) logs=logs.filter(l=>l.type===tfv);
   const el=document.getElementById('history-table');
   const typeBadge={'Thay phụ tùng':'badge-cons','Kiểm tra định kỳ':'badge-maint','Sửa chữa':'badge-repair','Khác':'badge-other','소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
 
-  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Chưa có lịch sử bảo dưỡng</div></div>`; return; }
+  if(!logs.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Chưa có lịch sử bảo dưỡng tháng này</div></div>`; return; }
   el.innerHTML=logs.map(l=>{
     const b=D.bikes.find(x=>x.id==l.bikeId);
     const parts=[l.desc,l.km?l.km.toLocaleString()+' km':null,l.cost?'₫'+parseInt(l.cost).toLocaleString():null,l.shop].filter(Boolean);
@@ -4040,8 +4460,9 @@ function stopRiding(customMsg, skipSummary) {
   updateRidingBar();
   showToast(customMsg || '■ Kết thúc chuyến đi');
   if (summary) {
-    saveRideRecord(summary);
+    var savedRide = saveRideRecord(summary);
     if (!skipSummary) showRideSummary(summary);
+    if (savedRide && window._isDebugBuild) _startVisitedPoiFlow(savedRide);
   }
 }
 
@@ -4072,7 +4493,7 @@ function saveRideRecord(s){
   var rideBikeId = (D.bikes.find(b=>b.id===dashSelectedBikeId) ? dashSelectedBikeId : (D.bikes[0] ? D.bikes[0].id : null));
   var rideDistKm = Math.round(s.distanceKm*10)/10;
   var prevTotal = (D.rides||[]).filter(function(r){ return r.bikeId===rideBikeId; }).reduce(function(sum,r){ return sum+(r.distanceKm||0); }, 0);
-  D.rides.push({
+  var newRide = {
     id: Date.now(),
     bikeId: rideBikeId,
     date: startD.toISOString().split('T')[0],
@@ -4083,16 +4504,19 @@ function saveRideRecord(s){
     avgKmh: Math.round(s.avgKmh),
     maxKmh: Math.round(s.maxKmh),
     path: (_ride.path||[]).map(function(p){ return [p.lat, p.lon]; }),
+    pathT: (_ride.path||[]).map(function(p){ return p.t; }),
     maxSpeedLat: _ride.maxSpeedLat || null,
     maxSpeedLon: _ride.maxSpeedLon || null,
     harshAccelCount: _ride.harshAccelCount || 0,
     harshBrakeCount: _ride.harshBrakeCount || 0
-  });
+  };
+  D.rides.push(newRide);
   save();
   var newTier = Math.floor((prevTotal+rideDistKm)/500);
   if(newTier > Math.floor(prevTotal/500)){
     setTimeout(function(){ showToast('🏆 Bạn đã đạt tổng '+(newTier*500).toLocaleString()+'km! Xem trong lịch sử chuyến đi'); }, 1500);
   }
+  return newRide;
 }
 
 // Tính tóm tắt chuyến đi
@@ -6078,6 +6502,7 @@ function renderMedicalCard(){
             <div id="ride-detail-brake" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
         </div>
+        <button id="ride-detail-poi-btn" class="btn btn-full" style="margin-top:12px;display:none;" onclick="_startVisitedPoiFlow(_rideDetailCurrentRide)">📍 Xác nhận địa điểm</button>
       </div>
     </div>
   </div>
