@@ -2732,7 +2732,7 @@ function openRideDetail(id){
   brakeEl.textContent = brakeN+'x';
   brakeEl.style.color = brakeN > 0 ? 'var(--red)' : 'var(--text)';
   var poiBtn = document.getElementById('ride-detail-poi-btn');
-  if(poiBtn) poiBtn.style.display = (window._isDebugBuild && r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
+  if(poiBtn) poiBtn.style.display = (r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
   document.getElementById('ride-detail-modal').classList.remove('ride-detail-fs');
   openModal('m-ride-detail');
 
@@ -2906,7 +2906,7 @@ function _findDwellPoints(path, pathT){
   return dwells;
 }
 
-// Confirming visited place names (debug builds only — window._isDebugBuild is false in release builds, so this never runs there)
+// Confirming visited place names (rolled out to all users starting 2026-08-09 — test period over)
 var VISITED_POI_ENDPOINT = 'https://us-central1-moto-garage-8da30.cloudfunctions.net/visitedPlacePoi';
 var _visitedPoiQueue = [];
 var _visitedPoiTotal = 0;
@@ -3811,18 +3811,50 @@ function checkAppUpdate(){
       document.getElementById('app-update-banner').classList.add('show');
     }
   }).catch(function(){});
+  AU.addListener('updateDownloading', function(res){
+    var pct = res && res.percent;
+    document.getElementById('app-update-title').textContent = 'Downloading…';
+    document.getElementById('app-update-sub').textContent = (pct>0 ? pct+'% · ' : '') + 'Please wait a moment';
+    var btn = document.getElementById('app-update-btn');
+    btn.textContent = 'Downloading…';
+    btn.disabled = true;
+    btn.onclick = null;
+    document.getElementById('app-update-banner').classList.add('show');
+  });
   AU.addListener('updateDownloaded', function(){
     document.getElementById('app-update-title').textContent = 'Update ready';
     document.getElementById('app-update-sub').textContent = 'Restart to apply the new version';
     var btn = document.getElementById('app-update-btn');
+    btn.disabled = false;
     btn.textContent = 'Restart';
     btn.onclick = completeAppUpdate;
+    document.getElementById('app-update-banner').classList.add('show');
+  });
+  AU.addListener('updateFailed', function(){
+    document.getElementById('app-update-title').textContent = 'A new version is available';
+    document.getElementById('app-update-sub').textContent = 'Update to the latest version';
+    var btn = document.getElementById('app-update-btn');
+    btn.disabled = false;
+    btn.textContent = 'Update';
+    btn.onclick = startAppUpdate;
     document.getElementById('app-update-banner').classList.add('show');
   });
 }
 function startAppUpdate(){
   var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
-  if (AU) AU.startUpdate().catch(function(){});
+  if (!AU) return;
+  var btn = document.getElementById('app-update-btn');
+  document.getElementById('app-update-title').textContent = 'Requesting update…';
+  document.getElementById('app-update-sub').textContent = 'Please wait a moment';
+  btn.textContent = 'Requesting…';
+  btn.disabled = true;
+  AU.startUpdate().catch(function(){
+    document.getElementById('app-update-title').textContent = 'A new version is available';
+    document.getElementById('app-update-sub').textContent = 'Update to the latest version';
+    btn.disabled = false;
+    btn.textContent = 'Update';
+    btn.onclick = startAppUpdate;
+  });
 }
 function completeAppUpdate(){
   var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
@@ -4463,7 +4495,7 @@ function stopRiding(customMsg, skipSummary) {
   if (summary) {
     var savedRide = saveRideRecord(summary);
     if (!skipSummary) showRideSummary(summary);
-    if (savedRide && window._isDebugBuild) _startVisitedPoiFlow(savedRide);
+    if (savedRide) _startVisitedPoiFlow(savedRide);
   }
 }
 

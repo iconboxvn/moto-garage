@@ -2732,7 +2732,7 @@ function openRideDetail(id){
   brakeEl.textContent = brakeN+' lần';
   brakeEl.style.color = brakeN > 0 ? 'var(--red)' : 'var(--text)';
   var poiBtn = document.getElementById('ride-detail-poi-btn');
-  if(poiBtn) poiBtn.style.display = (window._isDebugBuild && r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
+  if(poiBtn) poiBtn.style.display = (r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
   document.getElementById('ride-detail-modal').classList.remove('ride-detail-fs');
   openModal('m-ride-detail');
 
@@ -2906,7 +2906,7 @@ function _findDwellPoints(path, pathT){
   return dwells;
 }
 
-// Xác nhận tên địa điểm đã đến (chỉ bản debug — window._isDebugBuild luôn false ở bản release nên không bao giờ chạy ở đó)
+// Xác nhận tên địa điểm đã đến (áp dụng cho tất cả người dùng từ 2026-08-09 — đã hết giai đoạn thử nghiệm)
 var VISITED_POI_ENDPOINT = 'https://us-central1-moto-garage-8da30.cloudfunctions.net/visitedPlacePoi';
 var _visitedPoiQueue = [];
 var _visitedPoiTotal = 0;
@@ -3810,18 +3810,50 @@ function checkAppUpdate(){
       document.getElementById('app-update-banner').classList.add('show');
     }
   }).catch(function(){});
+  AU.addListener('updateDownloading', function(res){
+    var pct = res && res.percent;
+    document.getElementById('app-update-title').textContent = 'Đang tải xuống…';
+    document.getElementById('app-update-sub').textContent = (pct>0 ? pct+'% · ' : '') + 'Vui lòng đợi trong giây lát';
+    var btn = document.getElementById('app-update-btn');
+    btn.textContent = 'Đang tải…';
+    btn.disabled = true;
+    btn.onclick = null;
+    document.getElementById('app-update-banner').classList.add('show');
+  });
   AU.addListener('updateDownloaded', function(){
     document.getElementById('app-update-title').textContent = 'Đã sẵn sàng cập nhật';
     document.getElementById('app-update-sub').textContent = 'Khởi động lại để áp dụng phiên bản mới';
     var btn = document.getElementById('app-update-btn');
+    btn.disabled = false;
     btn.textContent = 'Khởi động lại';
     btn.onclick = completeAppUpdate;
+    document.getElementById('app-update-banner').classList.add('show');
+  });
+  AU.addListener('updateFailed', function(){
+    document.getElementById('app-update-title').textContent = 'Có phiên bản mới';
+    document.getElementById('app-update-sub').textContent = 'Hãy cập nhật lên phiên bản mới nhất';
+    var btn = document.getElementById('app-update-btn');
+    btn.disabled = false;
+    btn.textContent = 'Cập nhật';
+    btn.onclick = startAppUpdate;
     document.getElementById('app-update-banner').classList.add('show');
   });
 }
 function startAppUpdate(){
   var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
-  if (AU) AU.startUpdate().catch(function(){});
+  if (!AU) return;
+  var btn = document.getElementById('app-update-btn');
+  document.getElementById('app-update-title').textContent = 'Đang yêu cầu cập nhật…';
+  document.getElementById('app-update-sub').textContent = 'Vui lòng đợi trong giây lát';
+  btn.textContent = 'Đang yêu cầu…';
+  btn.disabled = true;
+  AU.startUpdate().catch(function(){
+    document.getElementById('app-update-title').textContent = 'Có phiên bản mới';
+    document.getElementById('app-update-sub').textContent = 'Hãy cập nhật lên phiên bản mới nhất';
+    btn.disabled = false;
+    btn.textContent = 'Cập nhật';
+    btn.onclick = startAppUpdate;
+  });
 }
 function completeAppUpdate(){
   var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
@@ -4462,7 +4494,7 @@ function stopRiding(customMsg, skipSummary) {
   if (summary) {
     var savedRide = saveRideRecord(summary);
     if (!skipSummary) showRideSummary(summary);
-    if (savedRide && window._isDebugBuild) _startVisitedPoiFlow(savedRide);
+    if (savedRide) _startVisitedPoiFlow(savedRide);
   }
 }
 

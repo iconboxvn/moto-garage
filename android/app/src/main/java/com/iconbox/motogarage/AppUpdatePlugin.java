@@ -28,8 +28,19 @@ public class AppUpdatePlugin extends Plugin {
     public void load() {
         appUpdateManager = AppUpdateManagerFactory.create(getContext());
         installListener = state -> {
-            if (state.installStatus() == InstallStatus.DOWNLOADED) {
+            int status = state.installStatus();
+            if (status == InstallStatus.DOWNLOADING) {
+                JSObject r = new JSObject();
+                long total = state.totalBytesToDownload();
+                long done = state.bytesDownloaded();
+                r.put("bytesDownloaded", done);
+                r.put("totalBytesToDownload", total);
+                r.put("percent", total > 0 ? Math.round(done * 100.0 / total) : 0);
+                notifyListeners("updateDownloading", r);
+            } else if (status == InstallStatus.DOWNLOADED) {
                 notifyListeners("updateDownloaded", new JSObject());
+            } else if (status == InstallStatus.FAILED || status == InstallStatus.CANCELED) {
+                notifyListeners("updateFailed", new JSObject());
             }
         };
         appUpdateManager.registerListener(installListener);
@@ -86,7 +97,9 @@ public class AppUpdatePlugin extends Plugin {
     protected void handleOnActivityResult(int requestCode, int resultCode, Intent data) {
         super.handleOnActivityResult(requestCode, resultCode, data);
         if (requestCode == UPDATE_REQUEST_CODE && resultCode != Activity.RESULT_OK) {
-            // 사용자가 업데이트를 취소했거나 실패 — 별도 처리 없이 배너는 다음 실행 시 다시 뜸
+            // 사용자가 Play 동의창에서 업데이트를 취소함 — 다운로드가 시작되기 전이라 installListener가
+            // 못 잡는 케이스라 여기서 직접 실패 이벤트를 보내, JS가 낙관적으로 띄워둔 "다운로드 중" 배너를 되돌리게 함
+            notifyListeners("updateFailed", new JSObject());
         }
     }
 }

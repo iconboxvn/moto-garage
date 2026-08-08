@@ -3097,7 +3097,7 @@ function openRideDetail(id){
   brakeEl.textContent = brakeN+'회';
   brakeEl.style.color = brakeN > 0 ? 'var(--red)' : 'var(--text)';
   var poiBtn = document.getElementById('ride-detail-poi-btn');
-  if(poiBtn) poiBtn.style.display = (window._isDebugBuild && r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
+  if(poiBtn) poiBtn.style.display = (r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
   document.getElementById('ride-detail-modal').classList.remove('ride-detail-fs');
   openModal('m-ride-detail');
 
@@ -3271,7 +3271,7 @@ function _findDwellPoints(path, pathT){
   return dwells;
 }
 
-// 다녀온 곳 장소명 후보 확인 (디버그 빌드 전용 — 릴리즈 빌드에서는 window._isDebugBuild가 false라 아예 호출 안 됨)
+// 다녀온 곳 장소명 후보 확인 (2026-08-09부터 전체 사용자 대상 — 테스트 기간 종료)
 var VISITED_POI_ENDPOINT = 'https://us-central1-moto-garage-8da30.cloudfunctions.net/visitedPlacePoi';
 var _visitedPoiQueue = [];
 var _visitedPoiTotal = 0;
@@ -4209,18 +4209,51 @@ function checkAppUpdate(){
       document.getElementById('app-update-banner').classList.add('show');
     }
   }).catch(function(){});
+  AU.addListener('updateDownloading', function(res){
+    var pct = res && res.percent;
+    document.getElementById('app-update-title').textContent = '다운로드 중이에요';
+    document.getElementById('app-update-sub').textContent = (pct>0 ? pct+'% · ' : '') + '잠시만 기다려주세요';
+    var btn = document.getElementById('app-update-btn');
+    btn.textContent = '다운로드 중…';
+    btn.disabled = true;
+    btn.onclick = null;
+    document.getElementById('app-update-banner').classList.add('show');
+  });
   AU.addListener('updateDownloaded', function(){
     document.getElementById('app-update-title').textContent = '업데이트 준비 완료';
     document.getElementById('app-update-sub').textContent = '재시작하면 새 버전이 적용돼요';
     var btn = document.getElementById('app-update-btn');
+    btn.disabled = false;
     btn.textContent = '재시작';
     btn.onclick = completeAppUpdate;
+    document.getElementById('app-update-banner').classList.add('show');
+  });
+  AU.addListener('updateFailed', function(){
+    document.getElementById('app-update-title').textContent = '새 버전이 있어요';
+    document.getElementById('app-update-sub').textContent = '최신 버전으로 업데이트하세요';
+    var btn = document.getElementById('app-update-btn');
+    btn.disabled = false;
+    btn.textContent = '업데이트';
+    btn.onclick = startAppUpdate;
     document.getElementById('app-update-banner').classList.add('show');
   });
 }
 function startAppUpdate(){
   var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
-  if (AU) AU.startUpdate().catch(function(){});
+  if (!AU) return;
+  // Play 동의창을 띄우는 동안에도 눌렀다는 걸 바로 알 수 있게, 응답을 기다리지 않고 먼저 버튼을 비활성화
+  var btn = document.getElementById('app-update-btn');
+  document.getElementById('app-update-title').textContent = '업데이트 요청 중이에요';
+  document.getElementById('app-update-sub').textContent = '잠시만 기다려주세요';
+  btn.textContent = '요청 중…';
+  btn.disabled = true;
+  AU.startUpdate().catch(function(){
+    document.getElementById('app-update-title').textContent = '새 버전이 있어요';
+    document.getElementById('app-update-sub').textContent = '최신 버전으로 업데이트하세요';
+    btn.disabled = false;
+    btn.textContent = '업데이트';
+    btn.onclick = startAppUpdate;
+  });
 }
 function completeAppUpdate(){
   var AU = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdate;
@@ -4615,7 +4648,7 @@ function stopRiding(customMsg, skipSummary) {
   if (summary) {
     var savedRide = saveRideRecord(summary);
     if (!skipSummary) showRideSummary(summary);
-    if (savedRide && window._isDebugBuild) _startVisitedPoiFlow(savedRide);
+    if (savedRide) _startVisitedPoiFlow(savedRide);
   }
 }
 
