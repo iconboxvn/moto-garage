@@ -524,6 +524,7 @@ option{background:var(--surface2);}
 </style>
 <link rel="stylesheet" href="./lib/leaflet.css">
 <script src="./lib/html2canvas.min.js"></script>
+<script src="./lib/jspdf.umd.min.js"></script>
 <script src="./lib/leaflet.js"></script>
 </head>
 <body>
@@ -738,7 +739,7 @@ option{background:var(--surface2);}
         <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
       </div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:10px;">Lưu file ở nơi an toàn sau khi xuất</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">🔄 Ngoài ra, dữ liệu ứng dụng cũng được tự động sao lưu vào tài khoản Google đã đăng nhập trên thiết bị này (kiểm tra tại Cài đặt › Hệ thống › Sao lưu). Muốn sao lưu ngay, hãy dùng nút Xuất JSON ở trên.</div>
+      <div style="font-size:11px;color:var(--red);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">⚠️ Sao lưu tự động của Android có thể không khôi phục được dữ liệu khi bạn đổi máy. <strong>Hãy tự sao lưu định kỳ (khuyến nghị mỗi tháng) bằng nút "Xuất JSON" ở trên.</strong></div>
       <div id="backup-stats" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"></div>
       <div style="margin-top:14px;">
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 Xóa toàn bộ dữ liệu</button>
@@ -1159,6 +1160,19 @@ option{background:var(--surface2);}
     <div style="display:flex;gap:8px;">
       <button class="btn btn-sm" onclick="dismissAppUpdate()">Để sau</button>
       <button class="btn btn-primary btn-sm" id="app-update-btn" onclick="startAppUpdate()">Cập nhật</button>
+    </div>
+  </div>
+</div>
+<div class="pwa-banner" id="backup-reminder-banner">
+  <div class="pwa-banner-inner">
+    <div class="pwa-banner-icon">💾</div>
+    <div class="pwa-banner-text">
+      <div class="pwa-banner-title">Đã lâu bạn chưa sao lưu</div>
+      <div class="pwa-banner-sub">Đổi máy có thể làm mất dữ liệu. Sao lưu ngay bây giờ</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="dismissBackupReminder()">Để sau</button>
+      <button class="btn btn-primary btn-sm" onclick="goBackupNow()">Sao lưu</button>
     </div>
   </div>
 </div>
@@ -1892,6 +1906,7 @@ function renderBikes(){
         <div class="bstat-lbl">Cảnh báo</div>
       </div>
     </div>
+    <button class="btn btn-full" id="bike-history-btn-${b.id}" style="margin-top:10px;" onclick="shareBikeHistoryPdf(${b.id})">🧾 Chia sẻ lịch sử bảo dưỡng (để bán xe)</button>
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-top:10px;">
       <div style="font-size:13px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Cập nhật tổng số km</div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -3535,6 +3550,7 @@ async function exportJSON(){
         dialogTitle: 'Share Backup File'
       });
       localStorage.setItem('mg2-last-backup', new Date().toLocaleString('ko-KR'));
+      localStorage.setItem('mg2-last-backup-ts', String(Date.now()));
       showBackupToast('✓ File sao lưu đã sẵn sàng');
       renderBackupPage();
     } catch(e) {
@@ -3616,6 +3632,31 @@ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredP
 window.addEventListener('appinstalled',()=>{ document.getElementById('pwa-banner').classList.remove('show'); const t=document.getElementById('pwa-toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); });
 function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(r=>{ if(r.outcome==='accepted') document.getElementById('pwa-banner').classList.remove('show'); deferredPrompt=null; }); } else { alert('Safari에서 하단 공유 버튼 → "홈 화면에 추가"를 탭하세요.'); } }
 function dismissInstall(){ document.getElementById('pwa-banner').classList.remove('show'); sessionStorage.setItem('pwa-dismissed','1'); }
+
+// Nhắc sao lưu thủ công định kỳ -- đã xác nhận (2026-08-10) sao lưu tự động của Android đôi khi không khôi phục
+// được dữ liệu khi đổi máy, nên thay vì quảng bá sao lưu tự động là an toàn, ta nhắc người dùng tự xuất JSON
+var BACKUP_REMINDER_DAYS = 30; // nhắc nếu đã bao nhiêu ngày kể từ lần sao lưu cuối
+var BACKUP_SNOOZE_DAYS = 7;    // bấm "Để sau" thì không nhắc lại trong khoảng thời gian này
+function _daysSinceTs(tsStr){
+  var ts = parseInt(tsStr, 10);
+  if(!ts) return Infinity;
+  return (Date.now() - ts) / 86400000;
+}
+function checkBackupReminder(){
+  if(!D.bikes || !D.bikes.length) return; // chưa có xe thì chưa có gì để sao lưu
+  if(_daysSinceTs(localStorage.getItem('mg2-backup-reminder-snoozed')) < BACKUP_SNOOZE_DAYS) return;
+  if(_daysSinceTs(localStorage.getItem('mg2-last-backup-ts')) < BACKUP_REMINDER_DAYS) return;
+  var el = document.getElementById('backup-reminder-banner');
+  if(el) el.classList.add('show');
+}
+function dismissBackupReminder(){
+  document.getElementById('backup-reminder-banner').classList.remove('show');
+  localStorage.setItem('mg2-backup-reminder-snoozed', String(Date.now()));
+}
+function goBackupNow(){
+  document.getElementById('backup-reminder-banner').classList.remove('show');
+  showPage('backup', document.getElementById('nav-more-btn'));
+}
 
 
 // ─────────────────────────────────────────
@@ -5209,6 +5250,88 @@ async function shareRideCard(){
   }
 }
 
+// ArrayBuffer -> base64 (chia nhỏ theo khối để tránh lỗi tràn ngăn xếp với PDF lớn)
+function _arrayBufferToBase64(buffer){
+  var bytes = new Uint8Array(buffer);
+  var chunkSize = 0x8000;
+  var chunks = [];
+  for(var i=0; i<bytes.length; i+=chunkSize){
+    chunks.push(String.fromCharCode.apply(null, bytes.subarray(i, i+chunkSize)));
+  }
+  return btoa(chunks.join(''));
+}
+
+// Tín hiệu tin cậy khi bán xe cũ: chuyển lịch sử bảo dưỡng của xe thành PDF để chia sẻ (thêm 2026-08-10)
+async function shareBikeHistoryPdf(bikeId){
+  var bike = D.bikes.find(function(b){ return b.id === bikeId; });
+  if(!bike){ showToast('Không tìm thấy xe'); return; }
+  var logs = (D.history||[]).filter(function(h){ return h.bikeId === bikeId; }).sort(function(a,b){ return b.date.localeCompare(a.date); });
+  if(!logs.length){ showToast('Chưa có lịch sử bảo dưỡng'); return; }
+
+  var btn = document.getElementById('bike-history-btn-'+bikeId);
+  var origLabel = btn ? btn.textContent : '';
+  if(btn){ btn.textContent = 'Đang tạo PDF...'; btn.disabled = true; }
+  try{
+    if(typeof html2canvas !== 'function'){ showToast('Không tải được thư viện tạo thẻ'); return; }
+    if(!window.jspdf || !window.jspdf.jsPDF){ showToast('Không tải được thư viện PDF'); return; }
+
+    document.getElementById('bhp-issued').textContent = todayStr().replace(/-/g,'.');
+    document.getElementById('bhp-bike').textContent = bike.brand + ' ' + bike.model;
+    document.getElementById('bhp-plate').textContent = bike.plate || '-';
+    document.getElementById('bhp-year').textContent = bike.year || '-';
+    document.getElementById('bhp-odo').textContent = bike.odometer.toLocaleString() + ' km';
+
+    var typeColor = {'Thay phụ tùng':'#2b7de9','Kiểm tra định kỳ':'#0f9d58','Sửa chữa':'#e0733f','Khác':'#888','소모품교체':'#2b7de9','정기점검':'#0f9d58','수리':'#e0733f','기타':'#888'};
+    var totalCost = 0;
+    document.getElementById('bhp-rows').innerHTML = logs.map(function(l){
+      var cost = parseInt(l.cost)||0;
+      totalCost += cost;
+      return '<tr style="border-bottom:1px solid #eee;">'
+        + '<td style="padding:7px 6px;white-space:nowrap;">'+l.date+'</td>'
+        + '<td style="padding:7px 6px;"><span style="color:'+(typeColor[l.type]||'#888')+';font-weight:700;">'+l.type+'</span></td>'
+        + '<td style="padding:7px 6px;word-break:break-word;">'+(l.desc||'-')+'</td>'
+        + '<td style="padding:7px 6px;white-space:nowrap;">'+(l.km?l.km.toLocaleString()+' km':'-')+'</td>'
+        + '<td style="padding:7px 6px;text-align:right;white-space:nowrap;">'+(cost>0?'₫'+cost.toLocaleString():'-')+'</td>'
+        + '<td style="padding:7px 6px;word-break:break-word;">'+(l.shop||'-')+'</td>'
+        + '</tr>';
+    }).join('');
+    document.getElementById('bhp-total').textContent = totalCost>0 ? '₫'+totalCost.toLocaleString() : '-';
+
+    var cardEl = document.getElementById('bike-history-pdf');
+    cardEl.offsetHeight; // ép reflow đồng bộ trước khi chụp, để innerHTML vừa cập nhật đã lên layout đầy đủ
+    var scale = 2;
+    var rawCanvas = await html2canvas(cardEl, {backgroundColor:'#ffffff', scale:scale, width:800, windowWidth:800});
+    var imgData = rawCanvas.toDataURL('image/jpeg', 0.92);
+    var pxToMm = 25.4/96;
+    var pageWmm = (rawCanvas.width/scale) * pxToMm;
+    var pageHmm = (rawCanvas.height/scale) * pxToMm;
+    var jsPDF = window.jspdf.jsPDF;
+    // Nếu không chỉ định orientation, jsPDF sẽ ép mọi format tùy chỉnh về portrait, nên lịch sử ngắn
+    // (ảnh chụp có dạng landscape) bị cắt mất phần bên phải trang (2026-08-10)
+    var orientation = pageWmm >= pageHmm ? 'landscape' : 'portrait';
+    var doc = new jsPDF({ unit:'mm', format:[pageWmm, pageHmm], orientation: orientation });
+    doc.addImage(imgData, 'JPEG', 0, 0, pageWmm, pageHmm);
+    var base64 = _arrayBufferToBase64(doc.output('arraybuffer'));
+    var fileName = 'ridemate-history-' + (bike.brand+'-'+bike.model).replace(/\s+/g,'_') + '-' + Date.now() + '.pdf';
+
+    var Filesystem = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
+    var Share = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
+    if(Filesystem && Share){
+      await Filesystem.writeFile({ path: fileName, data: base64, directory: 'CACHE' });
+      var fileResult = await Filesystem.getUri({ path: fileName, directory: 'CACHE' });
+      await Share.share({ title: 'Lịch sử bảo dưỡng Ridemate', url: fileResult.uri, dialogTitle: 'Chia sẻ lịch sử bảo dưỡng' });
+    } else {
+      var a = document.createElement('a');
+      a.href = 'data:application/pdf;base64,'+base64; a.download = fileName; a.click();
+    }
+    logAnalyticsEvent('bike_history_pdf_shared', {bike_brand: bike.brand, entry_count: logs.length});
+  } catch(e){
+    if(!(e && e.message && e.message.includes('cancel'))) showToast('Tạo lịch sử bảo dưỡng thất bại: ' + (e.message||e));
+  } finally {
+    if(btn){ btn.textContent = origLabel; btn.disabled = false; }
+  }
+}
+
 // Lối vào tạo thẻ chỉ bằng nhân vật + câu nói, không liên quan đến dữ liệu chuyến đi (menu Thêm)
 function openCharacterCardModal(){
   renderCharacterPicker();
@@ -5624,6 +5747,7 @@ window.addEventListener('load', function(){
   safe(requestNotificationPermission, 'requestNotificationPermission');
   safe(registerPushNotifications, 'registerPushNotifications');
   safe(checkAppUpdate, 'checkAppUpdate');
+  safe(checkBackupReminder, 'checkBackupReminder');
   safe(initBackButton, 'initBackButton');
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
@@ -6694,6 +6818,57 @@ function renderMedicalCard(){
     <img id="csc-character" src="./assets/characters/char_01.png" crossorigin="anonymous" style="max-width:360px;max-height:320px;width:auto;height:auto;">
     <div id="csc-memo" style="margin-top:16px;font-size:26px;font-weight:800;color:#1f2a3a;text-align:center;line-height:1.35;word-break:keep-all;"></div>
   </div>
+</div>
+
+<!-- Mẫu PDF lịch sử bảo dưỡng -- đặt tại gốc tài liệu thực (0,0) trong một khung bao kích thước 0, overflow:hidden để luôn ẩn
+     (offset xa như -9999px khiến WebView của một số máy cắt bề rộng chụp theo viewport, 2026-08-10) -->
+<div style="position:fixed;top:0;left:0;width:0;height:0;overflow:hidden;z-index:-1;">
+<div id="bike-history-pdf" style="width:800px;background:#ffffff;color:#1a1a1a;font-family:'Inter',sans-serif;box-sizing:border-box;padding:40px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1a1a1a;padding-bottom:16px;margin-bottom:24px;">
+    <div>
+      <div style="font-size:26px;font-weight:800;">Lịch Sử Bảo Dưỡng</div>
+      <div style="font-size:13px;color:#777;margin-top:4px;">Vehicle Maintenance History</div>
+    </div>
+    <div style="text-align:right;font-size:12px;color:#888;">
+      <div>Ngày phát hành <span id="bhp-issued"></span></div>
+      <div style="margin-top:2px;font-weight:700;color:#e02020;">Được tạo bởi Ridemate</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px 24px;margin-bottom:28px;font-size:14px;">
+    <div><span style="color:#888;">Xe</span> <strong id="bhp-bike"></strong></div>
+    <div><span style="color:#888;">Biển số</span> <strong id="bhp-plate"></strong></div>
+    <div><span style="color:#888;">Năm sản xuất</span> <strong id="bhp-year"></strong></div>
+    <div><span style="color:#888;">Số km hiện tại</span> <strong id="bhp-odo"></strong></div>
+  </div>
+
+  <table style="width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;">
+    <colgroup>
+      <col style="width:12%;"><col style="width:12%;"><col style="width:28%;">
+      <col style="width:14%;"><col style="width:16%;"><col style="width:18%;">
+    </colgroup>
+    <thead>
+      <tr style="border-bottom:2px solid #1a1a1a;text-align:left;">
+        <th style="padding:8px 6px;">Ngày</th>
+        <th style="padding:8px 6px;">Loại</th>
+        <th style="padding:8px 6px;">Nội dung</th>
+        <th style="padding:8px 6px;">Số km</th>
+        <th style="padding:8px 6px;text-align:right;">Chi phí</th>
+        <th style="padding:8px 6px;">Nơi bảo dưỡng</th>
+      </tr>
+    </thead>
+    <tbody id="bhp-rows"></tbody>
+  </table>
+
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;padding-top:10px;border-top:2px solid #1a1a1a;font-size:15px;">
+    <span style="color:#666;">Tổng chi phí bảo dưỡng</span>
+    <strong id="bhp-total"></strong>
+  </div>
+
+  <div style="margin-top:24px;padding-top:14px;border-top:1px solid #ddd;font-size:11px;color:#999;text-align:center;">
+    Tài liệu này được tạo từ lịch sử bảo dưỡng do chủ xe tự nhập trong ứng dụng Ridemate.
+  </div>
+</div>
 </div>
 
 <div class="welcome-overlay" id="welcome-overlay">

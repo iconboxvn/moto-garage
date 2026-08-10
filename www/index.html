@@ -548,6 +548,7 @@ option{background:var(--surface2);}
 </style>
 <link rel="stylesheet" href="./lib/leaflet.css">
 <script src="./lib/html2canvas.min.js"></script>
+<script src="./lib/jspdf.umd.min.js"></script>
 <script src="./lib/leaflet.js"></script>
 </head>
 <body>
@@ -770,7 +771,7 @@ option{background:var(--surface2);}
         <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
       </div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:10px;">내보내기 후 카카오톡 나에게 보내기로 보관하세요</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">🔄 이 외에도 기기에 로그인된 Google 계정으로 앱 데이터가 주기적으로 자동 백업됩니다 (설정 › 시스템 › 백업에서 켜짐 여부 확인 가능). 지금 바로 백업하려면 위 내보내기를 이용하세요.</div>
+      <div style="font-size:11px;color:var(--red);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">⚠️ 안드로이드 자동 백업은 기기 변경 시 데이터를 못 살릴 수 있습니다. <strong>반드시 위 "JSON 내보내기"로 정기적으로(월 1회 권장) 직접 백업</strong>해두세요.</div>
       <div id="backup-stats" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"></div>
       <div style="margin-top:14px;">
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 전체 데이터 초기화</button>
@@ -1201,6 +1202,19 @@ option{background:var(--surface2);}
     <div style="display:flex;gap:8px;">
       <button class="btn btn-sm" onclick="dismissAppUpdate()">나중에</button>
       <button class="btn btn-primary btn-sm" id="app-update-btn" onclick="startAppUpdate()">업데이트</button>
+    </div>
+  </div>
+</div>
+<div class="pwa-banner" id="backup-reminder-banner">
+  <div class="pwa-banner-inner">
+    <div class="pwa-banner-icon">💾</div>
+    <div class="pwa-banner-text">
+      <div class="pwa-banner-title">백업한 지 오래됐어요</div>
+      <div class="pwa-banner-sub">기기를 바꾸면 데이터가 사라질 수 있어요. 지금 백업하세요</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="dismissBackupReminder()">나중에</button>
+      <button class="btn btn-primary btn-sm" onclick="goBackupNow()">백업하기</button>
     </div>
   </div>
 </div>
@@ -2176,6 +2190,7 @@ function renderBikes(){
         <div class="bstat-lbl">알림</div>
       </div>
     </div>
+    <button class="btn btn-full" id="bike-history-btn-${b.id}" style="margin-top:10px;" onclick="shareBikeHistoryPdf(${b.id})">🧾 판매용 정비 이력서 공유</button>
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-top:10px;">
       <div style="font-size:13px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">누적 주행거리 업데이트</div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -3920,6 +3935,7 @@ async function exportJSON(){
         dialogTitle: '백업 파일 공유'
       });
       localStorage.setItem('mg2-last-backup', new Date().toLocaleString('ko-KR'));
+      localStorage.setItem('mg2-last-backup-ts', String(Date.now()));
       showBackupToast('✓ 백업 파일이 준비됐습니다');
       renderBackupPage();
     } catch(e) {
@@ -4005,6 +4021,31 @@ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredP
 window.addEventListener('appinstalled',()=>{ document.getElementById('pwa-banner').classList.remove('show'); const t=document.getElementById('pwa-toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); });
 function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(r=>{ if(r.outcome==='accepted') document.getElementById('pwa-banner').classList.remove('show'); deferredPrompt=null; }); } else { alert('Safari에서 하단 공유 버튼 → "홈 화면에 추가"를 탭하세요.'); } }
 function dismissInstall(){ document.getElementById('pwa-banner').classList.remove('show'); sessionStorage.setItem('pwa-dismissed','1'); }
+
+// 정기 수동 백업 리마인드 — 안드로이드 자동 백업이 기기 변경 시 데이터를 못 살리는 사례가 실제로 확인돼(2026-08-10),
+// 자동 백업을 안전장치로 안내하는 대신 수동 내보내기를 주기적으로 상기시키는 쪽으로 전환
+var BACKUP_REMINDER_DAYS = 30; // 마지막 백업 후 이만큼 지나면 리마인드
+var BACKUP_SNOOZE_DAYS = 7;    // "나중에" 누르면 이만큼은 다시 안 띄움
+function _daysSinceTs(tsStr){
+  var ts = parseInt(tsStr, 10);
+  if(!ts) return Infinity;
+  return (Date.now() - ts) / 86400000;
+}
+function checkBackupReminder(){
+  if(!D.bikes || !D.bikes.length) return; // 등록 차량이 없으면 백업할 데이터도 없음
+  if(_daysSinceTs(localStorage.getItem('mg2-backup-reminder-snoozed')) < BACKUP_SNOOZE_DAYS) return;
+  if(_daysSinceTs(localStorage.getItem('mg2-last-backup-ts')) < BACKUP_REMINDER_DAYS) return;
+  var el = document.getElementById('backup-reminder-banner');
+  if(el) el.classList.add('show');
+}
+function dismissBackupReminder(){
+  document.getElementById('backup-reminder-banner').classList.remove('show');
+  localStorage.setItem('mg2-backup-reminder-snoozed', String(Date.now()));
+}
+function goBackupNow(){
+  document.getElementById('backup-reminder-banner').classList.remove('show');
+  showPage('backup', document.getElementById('nav-more-btn'));
+}
 
 
 // ─────────────────────────────────────────
@@ -5381,6 +5422,88 @@ async function shareRideCard(){
   }
 }
 
+// ArrayBuffer → base64 (btoa에 한 번에 큰 배열을 넘기면 콜스택 오류가 나서 청크 단위로 변환)
+function _arrayBufferToBase64(buffer){
+  var bytes = new Uint8Array(buffer);
+  var chunkSize = 0x8000;
+  var chunks = [];
+  for(var i=0; i<bytes.length; i+=chunkSize){
+    chunks.push(String.fromCharCode.apply(null, bytes.subarray(i, i+chunkSize)));
+  }
+  return btoa(chunks.join(''));
+}
+
+// 중고 판매 시 신뢰 신호로 쓸 수 있게, 차량의 정비 이력을 PDF 문서로 만들어 공유 (2026-08-10 추가)
+async function shareBikeHistoryPdf(bikeId){
+  var bike = D.bikes.find(function(b){ return b.id === bikeId; });
+  if(!bike){ showToast('차량 정보를 찾을 수 없어요'); return; }
+  var logs = (D.history||[]).filter(function(h){ return h.bikeId === bikeId; }).sort(function(a,b){ return b.date.localeCompare(a.date); });
+  if(!logs.length){ showToast('정비 이력이 없어요'); return; }
+
+  var btn = document.getElementById('bike-history-btn-'+bikeId);
+  var origLabel = btn ? btn.textContent : '';
+  if(btn){ btn.textContent = 'PDF 생성 중...'; btn.disabled = true; }
+  try{
+    if(typeof html2canvas !== 'function'){ showToast('카드 생성 라이브러리를 불러오지 못했어요'); return; }
+    if(!window.jspdf || !window.jspdf.jsPDF){ showToast('PDF 라이브러리를 불러오지 못했어요'); return; }
+
+    document.getElementById('bhp-issued').textContent = todayStr().replace(/-/g,'.');
+    document.getElementById('bhp-bike').textContent = bike.brand + ' ' + bike.model;
+    document.getElementById('bhp-plate').textContent = bike.plate || '-';
+    document.getElementById('bhp-year').textContent = bike.year || '-';
+    document.getElementById('bhp-odo').textContent = bike.odometer.toLocaleString() + ' km';
+
+    var typeColor = {'소모품교체':'#2b7de9','정기점검':'#0f9d58','수리':'#e0733f','기타':'#888'};
+    var totalCost = 0;
+    document.getElementById('bhp-rows').innerHTML = logs.map(function(l){
+      var cost = parseInt(l.cost)||0;
+      totalCost += cost;
+      return '<tr style="border-bottom:1px solid #eee;">'
+        + '<td style="padding:7px 6px;white-space:nowrap;">'+l.date+'</td>'
+        + '<td style="padding:7px 6px;"><span style="color:'+(typeColor[l.type]||'#888')+';font-weight:700;">'+l.type+'</span></td>'
+        + '<td style="padding:7px 6px;word-break:break-word;">'+(l.desc||'-')+'</td>'
+        + '<td style="padding:7px 6px;white-space:nowrap;">'+(l.km?l.km.toLocaleString()+' km':'-')+'</td>'
+        + '<td style="padding:7px 6px;text-align:right;white-space:nowrap;">'+(cost>0?'₫'+cost.toLocaleString():'-')+'</td>'
+        + '<td style="padding:7px 6px;word-break:break-word;">'+(l.shop||'-')+'</td>'
+        + '</tr>';
+    }).join('');
+    document.getElementById('bhp-total').textContent = totalCost>0 ? '₫'+totalCost.toLocaleString() : '-';
+
+    var cardEl = document.getElementById('bike-history-pdf');
+    cardEl.offsetHeight; // 방금 바꾼 innerHTML이 캡처 전에 실제로 레이아웃에 반영되도록 강제 리플로우
+    var scale = 2;
+    var rawCanvas = await html2canvas(cardEl, {backgroundColor:'#ffffff', scale:scale, width:800, windowWidth:800});
+    var imgData = rawCanvas.toDataURL('image/jpeg', 0.92);
+    var pxToMm = 25.4/96;
+    var pageWmm = (rawCanvas.width/scale) * pxToMm;
+    var pageHmm = (rawCanvas.height/scale) * pxToMm;
+    var jsPDF = window.jspdf.jsPDF;
+    // orientation을 명시하지 않으면 jsPDF가 커스텀 포맷도 항상 세로(portrait)로 강제 스왑해버려서,
+    // 이력이 적어 가로가 더 넓게 캡처된 경우 이미지가 페이지 밖으로 잘려나가는 버그가 있었음 (2026-08-10)
+    var orientation = pageWmm >= pageHmm ? 'landscape' : 'portrait';
+    var doc = new jsPDF({ unit:'mm', format:[pageWmm, pageHmm], orientation: orientation });
+    doc.addImage(imgData, 'JPEG', 0, 0, pageWmm, pageHmm);
+    var base64 = _arrayBufferToBase64(doc.output('arraybuffer'));
+    var fileName = 'ridemate-history-' + (bike.brand+'-'+bike.model).replace(/\s+/g,'_') + '-' + Date.now() + '.pdf';
+
+    var Filesystem = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
+    var Share = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
+    if(Filesystem && Share){
+      await Filesystem.writeFile({ path: fileName, data: base64, directory: 'CACHE' });
+      var fileResult = await Filesystem.getUri({ path: fileName, directory: 'CACHE' });
+      await Share.share({ title: 'Ridemate 정비 이력서', url: fileResult.uri, dialogTitle: '정비 이력서 공유' });
+    } else {
+      var a = document.createElement('a');
+      a.href = 'data:application/pdf;base64,'+base64; a.download = fileName; a.click();
+    }
+    logAnalyticsEvent('bike_history_pdf_shared', {bike_brand: bike.brand, entry_count: logs.length});
+  } catch(e){
+    if(!(e && e.message && e.message.includes('cancel'))) showToast('이력서 생성에 실패했어요: ' + (e.message||e));
+  } finally {
+    if(btn){ btn.textContent = origLabel; btn.disabled = false; }
+  }
+}
+
 // 라이딩 기록과 무관하게 캐릭터+문구만으로 카드를 만드는 진입점 (더보기 메뉴)
 function openCharacterCardModal(){
   renderCharacterPicker();
@@ -6074,6 +6197,7 @@ window.addEventListener('load', function(){
   safe(requestNotificationPermission, 'requestNotificationPermission');
   safe(registerPushNotifications, 'registerPushNotifications');
   safe(checkAppUpdate, 'checkAppUpdate');
+  safe(checkBackupReminder, 'checkBackupReminder');
   safe(initBackButton, 'initBackButton');
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
@@ -7188,6 +7312,57 @@ function renderMedicalCard(){
     <img id="csc-character" src="./assets/characters/char_01.png" crossorigin="anonymous" style="max-width:360px;max-height:320px;width:auto;height:auto;">
     <div id="csc-memo" style="margin-top:16px;font-size:26px;font-weight:800;color:#1f2a3a;text-align:center;line-height:1.35;word-break:keep-all;"></div>
   </div>
+</div>
+
+<!-- 판매용 정비 이력서 PDF 템플릿 — 실제 문서 좌표 (0,0)에 두되 크기가 0인 부모로 감싸 안 보이게 함
+     (-9999px처럼 먼 오프셋을 쓰면 일부 기기의 WebView가 캡처 폭을 뷰포트 기준으로 잘못 잡는 문제가 있어 이 방식으로 변경, 2026-08-10) -->
+<div style="position:fixed;top:0;left:0;width:0;height:0;overflow:hidden;z-index:-1;">
+<div id="bike-history-pdf" style="width:800px;background:#ffffff;color:#1a1a1a;font-family:'Inter',sans-serif;box-sizing:border-box;padding:40px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1a1a1a;padding-bottom:16px;margin-bottom:24px;">
+    <div>
+      <div style="font-size:26px;font-weight:800;">정비 이력서</div>
+      <div style="font-size:13px;color:#777;margin-top:4px;">Vehicle Maintenance History</div>
+    </div>
+    <div style="text-align:right;font-size:12px;color:#888;">
+      <div>발급일 <span id="bhp-issued"></span></div>
+      <div style="margin-top:2px;font-weight:700;color:#e02020;">Ridemate 앱으로 생성됨</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px 24px;margin-bottom:28px;font-size:14px;">
+    <div><span style="color:#888;">차량</span> <strong id="bhp-bike"></strong></div>
+    <div><span style="color:#888;">번호판</span> <strong id="bhp-plate"></strong></div>
+    <div><span style="color:#888;">연식</span> <strong id="bhp-year"></strong></div>
+    <div><span style="color:#888;">현재 주행거리</span> <strong id="bhp-odo"></strong></div>
+  </div>
+
+  <table style="width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;">
+    <colgroup>
+      <col style="width:12%;"><col style="width:12%;"><col style="width:28%;">
+      <col style="width:14%;"><col style="width:16%;"><col style="width:18%;">
+    </colgroup>
+    <thead>
+      <tr style="border-bottom:2px solid #1a1a1a;text-align:left;">
+        <th style="padding:8px 6px;">날짜</th>
+        <th style="padding:8px 6px;">유형</th>
+        <th style="padding:8px 6px;">내용</th>
+        <th style="padding:8px 6px;">주행거리</th>
+        <th style="padding:8px 6px;text-align:right;">비용</th>
+        <th style="padding:8px 6px;">정비소</th>
+      </tr>
+    </thead>
+    <tbody id="bhp-rows"></tbody>
+  </table>
+
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;padding-top:10px;border-top:2px solid #1a1a1a;font-size:15px;">
+    <span style="color:#666;">총 누적 정비비</span>
+    <strong id="bhp-total"></strong>
+  </div>
+
+  <div style="margin-top:24px;padding-top:14px;border-top:1px solid #ddd;font-size:11px;color:#999;text-align:center;">
+    이 문서는 Ridemate 앱에 차주가 직접 입력한 정비 기록을 바탕으로 생성되었습니다.
+  </div>
+</div>
 </div>
 
 <!-- SOS 모달 -->

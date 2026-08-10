@@ -524,6 +524,7 @@ option{background:var(--surface2);}
 </style>
 <link rel="stylesheet" href="./lib/leaflet.css">
 <script src="./lib/html2canvas.min.js"></script>
+<script src="./lib/jspdf.umd.min.js"></script>
 <script src="./lib/leaflet.js"></script>
 </head>
 <body>
@@ -738,7 +739,7 @@ option{background:var(--surface2);}
         <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
       </div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:10px;">Save the exported file somewhere safe</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">🔄 Your app data is also backed up automatically to the Google account signed in on this device (check Settings › System › Backup). To back up right now, use Export above.</div>
+      <div style="font-size:11px;color:var(--red);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">⚠️ Android's automatic backup may not restore your data when you switch devices. <strong>Please back up regularly (monthly recommended) using "Export JSON" above.</strong></div>
       <div id="backup-stats" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"></div>
       <div style="margin-top:14px;">
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 Reset All Data</button>
@@ -1159,6 +1160,19 @@ option{background:var(--surface2);}
     <div style="display:flex;gap:8px;">
       <button class="btn btn-sm" onclick="dismissAppUpdate()">Later</button>
       <button class="btn btn-primary btn-sm" id="app-update-btn" onclick="startAppUpdate()">Update</button>
+    </div>
+  </div>
+</div>
+<div class="pwa-banner" id="backup-reminder-banner">
+  <div class="pwa-banner-inner">
+    <div class="pwa-banner-icon">💾</div>
+    <div class="pwa-banner-text">
+      <div class="pwa-banner-title">It's been a while since your last backup</div>
+      <div class="pwa-banner-sub">Switching devices can lose your data. Back up now</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="dismissBackupReminder()">Later</button>
+      <button class="btn btn-primary btn-sm" onclick="goBackupNow()">Back up</button>
     </div>
   </div>
 </div>
@@ -1892,6 +1906,7 @@ function renderBikes(){
         <div class="bstat-lbl">Alerts</div>
       </div>
     </div>
+    <button class="btn btn-full" id="bike-history-btn-${b.id}" style="margin-top:10px;" onclick="shareBikeHistoryPdf(${b.id})">🧾 Share Maintenance History (for sale)</button>
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-top:10px;">
       <div style="font-size:13px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">Update total mileage</div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -3536,6 +3551,7 @@ async function exportJSON(){
         dialogTitle: 'Share Backup File'
       });
       localStorage.setItem('mg2-last-backup', new Date().toLocaleString('ko-KR'));
+      localStorage.setItem('mg2-last-backup-ts', String(Date.now()));
       showBackupToast('✓ Backup file ready');
       renderBackupPage();
     } catch(e) {
@@ -3617,6 +3633,31 @@ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredP
 window.addEventListener('appinstalled',()=>{ document.getElementById('pwa-banner').classList.remove('show'); const t=document.getElementById('pwa-toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); });
 function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(r=>{ if(r.outcome==='accepted') document.getElementById('pwa-banner').classList.remove('show'); deferredPrompt=null; }); } else { alert('Safari에서 하단 공유 버튼 → "홈 화면에 추가"를 탭하세요.'); } }
 function dismissInstall(){ document.getElementById('pwa-banner').classList.remove('show'); sessionStorage.setItem('pwa-dismissed','1'); }
+
+// Periodic manual-backup reminder -- Android's auto backup has been confirmed (2026-08-10) to sometimes fail to
+// restore data on a device switch, so instead of advertising auto backup as a safety net we nudge manual export
+var BACKUP_REMINDER_DAYS = 30; // remind if it's been this many days since the last backup
+var BACKUP_SNOOZE_DAYS = 7;    // don't show again for this many days after "Later"
+function _daysSinceTs(tsStr){
+  var ts = parseInt(tsStr, 10);
+  if(!ts) return Infinity;
+  return (Date.now() - ts) / 86400000;
+}
+function checkBackupReminder(){
+  if(!D.bikes || !D.bikes.length) return; // nothing worth backing up yet
+  if(_daysSinceTs(localStorage.getItem('mg2-backup-reminder-snoozed')) < BACKUP_SNOOZE_DAYS) return;
+  if(_daysSinceTs(localStorage.getItem('mg2-last-backup-ts')) < BACKUP_REMINDER_DAYS) return;
+  var el = document.getElementById('backup-reminder-banner');
+  if(el) el.classList.add('show');
+}
+function dismissBackupReminder(){
+  document.getElementById('backup-reminder-banner').classList.remove('show');
+  localStorage.setItem('mg2-backup-reminder-snoozed', String(Date.now()));
+}
+function goBackupNow(){
+  document.getElementById('backup-reminder-banner').classList.remove('show');
+  showPage('backup', document.getElementById('nav-more-btn'));
+}
 
 
 // ─────────────────────────────────────────
@@ -5211,6 +5252,88 @@ async function shareRideCard(){
   }
 }
 
+// ArrayBuffer -> base64 (chunked to avoid call-stack overflow on large PDFs)
+function _arrayBufferToBase64(buffer){
+  var bytes = new Uint8Array(buffer);
+  var chunkSize = 0x8000;
+  var chunks = [];
+  for(var i=0; i<bytes.length; i+=chunkSize){
+    chunks.push(String.fromCharCode.apply(null, bytes.subarray(i, i+chunkSize)));
+  }
+  return btoa(chunks.join(''));
+}
+
+// Trust signal for used-bike sales: turn a vehicle's maintenance history into a shareable PDF (added 2026-08-10)
+async function shareBikeHistoryPdf(bikeId){
+  var bike = D.bikes.find(function(b){ return b.id === bikeId; });
+  if(!bike){ showToast('Vehicle not found'); return; }
+  var logs = (D.history||[]).filter(function(h){ return h.bikeId === bikeId; }).sort(function(a,b){ return b.date.localeCompare(a.date); });
+  if(!logs.length){ showToast('No maintenance records'); return; }
+
+  var btn = document.getElementById('bike-history-btn-'+bikeId);
+  var origLabel = btn ? btn.textContent : '';
+  if(btn){ btn.textContent = 'Generating PDF...'; btn.disabled = true; }
+  try{
+    if(typeof html2canvas !== 'function'){ showToast('Could not load the card library'); return; }
+    if(!window.jspdf || !window.jspdf.jsPDF){ showToast('Could not load the PDF library'); return; }
+
+    document.getElementById('bhp-issued').textContent = todayStr().replace(/-/g,'.');
+    document.getElementById('bhp-bike').textContent = bike.brand + ' ' + bike.model;
+    document.getElementById('bhp-plate').textContent = bike.plate || '-';
+    document.getElementById('bhp-year').textContent = bike.year || '-';
+    document.getElementById('bhp-odo').textContent = bike.odometer.toLocaleString() + ' km';
+
+    var typeColor = {'Parts Replacement':'#2b7de9','Inspection':'#0f9d58','Repair':'#e0733f','Other':'#888','소모품교체':'#2b7de9','정기점검':'#0f9d58','수리':'#e0733f','기타':'#888'};
+    var totalCost = 0;
+    document.getElementById('bhp-rows').innerHTML = logs.map(function(l){
+      var cost = parseInt(l.cost)||0;
+      totalCost += cost;
+      return '<tr style="border-bottom:1px solid #eee;">'
+        + '<td style="padding:7px 6px;white-space:nowrap;">'+l.date+'</td>'
+        + '<td style="padding:7px 6px;"><span style="color:'+(typeColor[l.type]||'#888')+';font-weight:700;">'+l.type+'</span></td>'
+        + '<td style="padding:7px 6px;word-break:break-word;">'+(l.desc||'-')+'</td>'
+        + '<td style="padding:7px 6px;white-space:nowrap;">'+(l.km?l.km.toLocaleString()+' km':'-')+'</td>'
+        + '<td style="padding:7px 6px;text-align:right;white-space:nowrap;">'+(cost>0?'₫'+cost.toLocaleString():'-')+'</td>'
+        + '<td style="padding:7px 6px;word-break:break-word;">'+(l.shop||'-')+'</td>'
+        + '</tr>';
+    }).join('');
+    document.getElementById('bhp-total').textContent = totalCost>0 ? '₫'+totalCost.toLocaleString() : '-';
+
+    var cardEl = document.getElementById('bike-history-pdf');
+    cardEl.offsetHeight; // force a synchronous reflow before capture, so the innerHTML update above is fully laid out
+    var scale = 2;
+    var rawCanvas = await html2canvas(cardEl, {backgroundColor:'#ffffff', scale:scale, width:800, windowWidth:800});
+    var imgData = rawCanvas.toDataURL('image/jpeg', 0.92);
+    var pxToMm = 25.4/96;
+    var pageWmm = (rawCanvas.width/scale) * pxToMm;
+    var pageHmm = (rawCanvas.height/scale) * pxToMm;
+    var jsPDF = window.jspdf.jsPDF;
+    // Without an explicit orientation, jsPDF force-swaps any custom format back to portrait, so a short
+    // history (landscape-shaped capture) had its image clipped off the right edge of the page (2026-08-10)
+    var orientation = pageWmm >= pageHmm ? 'landscape' : 'portrait';
+    var doc = new jsPDF({ unit:'mm', format:[pageWmm, pageHmm], orientation: orientation });
+    doc.addImage(imgData, 'JPEG', 0, 0, pageWmm, pageHmm);
+    var base64 = _arrayBufferToBase64(doc.output('arraybuffer'));
+    var fileName = 'ridemate-history-' + (bike.brand+'-'+bike.model).replace(/\s+/g,'_') + '-' + Date.now() + '.pdf';
+
+    var Filesystem = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
+    var Share = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
+    if(Filesystem && Share){
+      await Filesystem.writeFile({ path: fileName, data: base64, directory: 'CACHE' });
+      var fileResult = await Filesystem.getUri({ path: fileName, directory: 'CACHE' });
+      await Share.share({ title: 'Ridemate Maintenance History', url: fileResult.uri, dialogTitle: 'Share maintenance history' });
+    } else {
+      var a = document.createElement('a');
+      a.href = 'data:application/pdf;base64,'+base64; a.download = fileName; a.click();
+    }
+    logAnalyticsEvent('bike_history_pdf_shared', {bike_brand: bike.brand, entry_count: logs.length});
+  } catch(e){
+    if(!(e && e.message && e.message.includes('cancel'))) showToast('Failed to generate the history document: ' + (e.message||e));
+  } finally {
+    if(btn){ btn.textContent = origLabel; btn.disabled = false; }
+  }
+}
+
 // Entry point for making a card from just the character + a phrase, unrelated to ride data (More menu)
 function openCharacterCardModal(){
   renderCharacterPicker();
@@ -5628,6 +5751,7 @@ window.addEventListener('load', function(){
   safe(requestNotificationPermission, 'requestNotificationPermission');
   safe(registerPushNotifications, 'registerPushNotifications');
   safe(checkAppUpdate, 'checkAppUpdate');
+  safe(checkBackupReminder, 'checkBackupReminder');
   safe(initBackButton, 'initBackButton');
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
@@ -6698,6 +6822,57 @@ function renderMedicalCard(){
     <img id="csc-character" src="./assets/characters/char_01.png" crossorigin="anonymous" style="max-width:360px;max-height:320px;width:auto;height:auto;">
     <div id="csc-memo" style="margin-top:16px;font-size:26px;font-weight:800;color:#1f2a3a;text-align:center;line-height:1.35;word-break:keep-all;"></div>
   </div>
+</div>
+
+<!-- Sale history PDF template -- placed at true document origin (0,0) inside a zero-size overflow:hidden wrapper to stay invisible
+     (a far offset like -9999px caused some devices' WebView to clip the capture width to the viewport, 2026-08-10) -->
+<div style="position:fixed;top:0;left:0;width:0;height:0;overflow:hidden;z-index:-1;">
+<div id="bike-history-pdf" style="width:800px;background:#ffffff;color:#1a1a1a;font-family:'Inter',sans-serif;box-sizing:border-box;padding:40px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1a1a1a;padding-bottom:16px;margin-bottom:24px;">
+    <div>
+      <div style="font-size:26px;font-weight:800;">Maintenance History</div>
+      <div style="font-size:13px;color:#777;margin-top:4px;">Vehicle Service Record</div>
+    </div>
+    <div style="text-align:right;font-size:12px;color:#888;">
+      <div>Issued <span id="bhp-issued"></span></div>
+      <div style="margin-top:2px;font-weight:700;color:#e02020;">Generated by Ridemate</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px 24px;margin-bottom:28px;font-size:14px;">
+    <div><span style="color:#888;">Vehicle</span> <strong id="bhp-bike"></strong></div>
+    <div><span style="color:#888;">Plate</span> <strong id="bhp-plate"></strong></div>
+    <div><span style="color:#888;">Year</span> <strong id="bhp-year"></strong></div>
+    <div><span style="color:#888;">Current Mileage</span> <strong id="bhp-odo"></strong></div>
+  </div>
+
+  <table style="width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;">
+    <colgroup>
+      <col style="width:12%;"><col style="width:12%;"><col style="width:28%;">
+      <col style="width:14%;"><col style="width:16%;"><col style="width:18%;">
+    </colgroup>
+    <thead>
+      <tr style="border-bottom:2px solid #1a1a1a;text-align:left;">
+        <th style="padding:8px 6px;">Date</th>
+        <th style="padding:8px 6px;">Type</th>
+        <th style="padding:8px 6px;">Details</th>
+        <th style="padding:8px 6px;">Mileage</th>
+        <th style="padding:8px 6px;text-align:right;">Cost</th>
+        <th style="padding:8px 6px;">Shop</th>
+      </tr>
+    </thead>
+    <tbody id="bhp-rows"></tbody>
+  </table>
+
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;padding-top:10px;border-top:2px solid #1a1a1a;font-size:15px;">
+    <span style="color:#666;">Total Maintenance Cost</span>
+    <strong id="bhp-total"></strong>
+  </div>
+
+  <div style="margin-top:24px;padding-top:14px;border-top:1px solid #ddd;font-size:11px;color:#999;text-align:center;">
+    This document was generated from maintenance records entered by the vehicle owner in the Ridemate app.
+  </div>
+</div>
 </div>
 
 <div class="welcome-overlay" id="welcome-overlay">
