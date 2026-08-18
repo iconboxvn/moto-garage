@@ -641,7 +641,7 @@ option{background:var(--surface2);}
     <div class="sec-header"><span class="sec-title">MONTHLY STATS</span><div class="sec-line"></div></div>
     <div style="display:flex;gap:8px;margin-bottom:14px;">
       <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">View Detailed History</button>
-      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="showPage('visitedPlaces', document.getElementById('nav-ridehistory-btn'))">View Places Map</button>
+      <button class="btn btn-primary" id="visited-places-entry-btn" style="flex:1;justify-content:center;" onclick="showPage('visitedPlaces', document.getElementById('nav-ridehistory-btn'))">View Places Map</button>
     </div>
 
     <div id="mstat-bike-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;"></div>
@@ -790,7 +790,7 @@ option{background:var(--surface2);}
       ⚠ This analysis is for reference only and not an exact diagnosis. If it's unclear or could be dangerous, please visit a repair shop.
     </div>
   </div>
-  <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a></div>
+  <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a><span id="app-version-label"></span></div>
 </div>
 
 <!-- MODAL: 차량 등록 -->
@@ -2747,7 +2747,7 @@ function openRideDetail(id){
   brakeEl.textContent = brakeN+'x';
   brakeEl.style.color = brakeN > 0 ? 'var(--red)' : 'var(--text)';
   var poiBtn = document.getElementById('ride-detail-poi-btn');
-  if(poiBtn) poiBtn.style.display = (r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
+  if(poiBtn) poiBtn.style.display = (VISITED_PLACES_ENABLED && r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
   document.getElementById('ride-detail-modal').classList.remove('ride-detail-fs');
   openModal('m-ride-detail');
 
@@ -2858,6 +2858,14 @@ function mstatChangeMonth(delta){
 // Places visited (bubble map)
 var _vnProvincesGeo = null;
 var _visitedPlacesMap = null;
+// "Visited Places" feature (entry button + POI-confirm flow) hidden until it's more polished (2026-08-13, ahead of production launch)
+// Flip this to true to re-enable -- the rest of the code/data stays intact
+var VISITED_PLACES_ENABLED = false;
+function _applyVisitedPlacesVisibility(){
+  if(VISITED_PLACES_ENABLED) return;
+  var btn = document.getElementById('visited-places-entry-btn');
+  if(btn) btn.style.display = 'none';
+}
 var VISITED_DWELL_MS = 30 * 60000; // count as "visited" only if stayed 30+ min in one spot
 var VISITED_CLUSTER_RADIUS_KM = 0.3;
 
@@ -4191,6 +4199,16 @@ function resetFirstLaunch(){
   document.getElementById('welcome-overlay').classList.add('open');
 }
 var _devTaps=0,_devTapTimer=null;
+// Show the app version at the bottom of settings (queried live from the Capacitor App plugin)
+function _loadAppVersionLabel(){
+  var CapApp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  var el = document.getElementById('app-version-label');
+  if(!CapApp || !CapApp.getInfo || !el) return;
+  CapApp.getInfo().then(function(info){
+    if(info && info.version) el.textContent = ' · v' + info.version;
+  }).catch(function(){});
+}
+
 function devTap(){
   _devTaps++;
   clearTimeout(_devTapTimer);
@@ -4536,7 +4554,7 @@ function stopRiding(customMsg, skipSummary) {
   if (summary) {
     var savedRide = saveRideRecord(summary);
     if (!skipSummary) showRideSummary(summary);
-    if (savedRide) _startVisitedPoiFlow(savedRide);
+    if (savedRide && VISITED_PLACES_ENABLED) _startVisitedPoiFlow(savedRide);
   }
 }
 
@@ -5752,6 +5770,8 @@ window.addEventListener('load', function(){
   safe(registerPushNotifications, 'registerPushNotifications');
   safe(checkAppUpdate, 'checkAppUpdate');
   safe(checkBackupReminder, 'checkBackupReminder');
+  safe(_loadAppVersionLabel, '_loadAppVersionLabel');
+  safe(_applyVisitedPlacesVisibility, '_applyVisitedPlacesVisibility');
   safe(initBackButton, 'initBackButton');
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');

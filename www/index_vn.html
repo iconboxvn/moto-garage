@@ -641,7 +641,7 @@ option{background:var(--surface2);}
     <div class="sec-header"><span class="sec-title">THỐNG KÊ THEO THÁNG</span><div class="sec-line"></div></div>
     <div style="display:flex;gap:8px;margin-bottom:14px;">
       <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">Xem lịch sử chi tiết</button>
-      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="showPage('visitedPlaces', document.getElementById('nav-ridehistory-btn'))">Xem bản đồ nơi đã đến</button>
+      <button class="btn btn-primary" id="visited-places-entry-btn" style="flex:1;justify-content:center;" onclick="showPage('visitedPlaces', document.getElementById('nav-ridehistory-btn'))">Xem bản đồ nơi đã đến</button>
     </div>
 
     <div id="mstat-bike-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;"></div>
@@ -790,7 +790,7 @@ option{background:var(--surface2);}
       ⚠ Kết quả này chỉ mang tính tham khảo, không phải chẩn đoán chính xác. Nếu không chắc chắn hoặc có thể nguy hiểm, hãy đến tiệm sửa xe.
     </div>
   </div>
-  <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a></div>
+  <div class="created-by" onclick="devTap()" style="cursor:default;user-select:none;">Created by <a href="mailto:iconbox.vn@gmail.com" onclick="event.stopPropagation()">@iconbox.lee</a><span id="app-version-label"></span></div>
 </div>
 
 <!-- MODAL: 차량 등록 -->
@@ -2747,7 +2747,7 @@ function openRideDetail(id){
   brakeEl.textContent = brakeN+' lần';
   brakeEl.style.color = brakeN > 0 ? 'var(--red)' : 'var(--text)';
   var poiBtn = document.getElementById('ride-detail-poi-btn');
-  if(poiBtn) poiBtn.style.display = (r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
+  if(poiBtn) poiBtn.style.display = (VISITED_PLACES_ENABLED && r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
   document.getElementById('ride-detail-modal').classList.remove('ride-detail-fs');
   openModal('m-ride-detail');
 
@@ -2858,6 +2858,14 @@ function mstatChangeMonth(delta){
 // Nơi đã đến (bubble map)
 var _vnProvincesGeo = null;
 var _visitedPlacesMap = null;
+// Ẩn tính năng "Nơi đã đến" (nút truy cập + luồng xác nhận POI) cho đến khi hoàn thiện hơn (2026-08-13, trước khi phát hành chính thức)
+// Đổi lại thành true để mở lại -- phần code/dữ liệu còn lại vẫn giữ nguyên
+var VISITED_PLACES_ENABLED = false;
+function _applyVisitedPlacesVisibility(){
+  if(VISITED_PLACES_ENABLED) return;
+  var btn = document.getElementById('visited-places-entry-btn');
+  if(btn) btn.style.display = 'none';
+}
 var VISITED_DWELL_MS = 30 * 60000; // chỉ tính là "đã đến" nếu dừng 30 phút trở lên tại một chỗ
 var VISITED_CLUSTER_RADIUS_KM = 0.3;
 
@@ -4190,6 +4198,16 @@ function resetFirstLaunch(){
   document.getElementById('welcome-overlay').classList.add('open');
 }
 var _devTaps=0,_devTapTimer=null;
+// Hiển thị phiên bản ứng dụng ở cuối trang cài đặt (lấy trực tiếp từ plugin App của Capacitor)
+function _loadAppVersionLabel(){
+  var CapApp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  var el = document.getElementById('app-version-label');
+  if(!CapApp || !CapApp.getInfo || !el) return;
+  CapApp.getInfo().then(function(info){
+    if(info && info.version) el.textContent = ' · v' + info.version;
+  }).catch(function(){});
+}
+
 function devTap(){
   _devTaps++;
   clearTimeout(_devTapTimer);
@@ -4535,7 +4553,7 @@ function stopRiding(customMsg, skipSummary) {
   if (summary) {
     var savedRide = saveRideRecord(summary);
     if (!skipSummary) showRideSummary(summary);
-    if (savedRide) _startVisitedPoiFlow(savedRide);
+    if (savedRide && VISITED_PLACES_ENABLED) _startVisitedPoiFlow(savedRide);
   }
 }
 
@@ -5748,6 +5766,8 @@ window.addEventListener('load', function(){
   safe(registerPushNotifications, 'registerPushNotifications');
   safe(checkAppUpdate, 'checkAppUpdate');
   safe(checkBackupReminder, 'checkBackupReminder');
+  safe(_loadAppVersionLabel, '_loadAppVersionLabel');
+  safe(_applyVisitedPlacesVisibility, '_applyVisitedPlacesVisibility');
   safe(initBackButton, 'initBackButton');
   safe(scheduleConsumableAlerts, 'scheduleConsumableAlerts');
   safe(scheduleInsuranceAlerts, 'scheduleInsuranceAlerts');
