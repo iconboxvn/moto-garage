@@ -4364,6 +4364,13 @@ function _persistRideProgress(force){
 }
 var RIDING_MAX_SPEED_ACCURACY_MPS = 3;    // discard samples whose native speed accuracy (m/s) is worse than this (urban GPS spike guard)
 var RIDING_MAX_POS_ACCURACY_M = 30;       // discard samples whose GPS position accuracy (m) is worse than this (tunnel/underpass multipath guard)
+// If the previous GPS sample is older than this (seconds), don't add the distance covered in that gap to the total.
+// The instantaneous-speed filter alone can't catch this -- over a multi-hour gap, even a jump of hundreds of km divides
+// down to a low computed speed and slips past the 300km/h cap.
+// (Found 2026-08-19 in real use: during a long car trip, the app sat backgrounded for hours; on resume, three
+// 245-248km jumps got added straight to distance, producing a nonsensical 1260km/46min = 1640km/h "ride" -- those
+// 3 jumps alone accounted for 98% of the recorded distance)
+var RIDING_MAX_GAP_SEC_FOR_DELTA = 60;
 var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;  // harsh acceleration threshold (km/h gained per second)
 var RIDING_HARSH_BRAKE_KMH_PER_SEC = 15;  // harsh braking threshold (km/h lost per second)
 var RIDING_HARSH_EVENT_COOLDOWN_MS = 3000; // minimum gap between counted events to avoid double-counting
@@ -5426,13 +5433,19 @@ function _sosGPSStart() {
       var lat = loc.lat, lon = loc.lon;
       if (posOk && _ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
-        var dtH = (now - _ride.lastT) / 3600000;
+        var dtSecGap = (now - _ride.lastT) / 1000;
+        var dtH = dtSecGap / 3600;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
-        if (speedMs === null && instKmh > 0 && instKmh < 300) {
+        // dtSecGap<=0 (reversed/duplicate timestamps) is excluded too -- when queued background GPS fixes
+        // arrive out of order, a negative gap makes instKmh compute to 0, which used to slip right past the <300 filter
+        var gapTooLong = dtSecGap <= 0 || dtSecGap > RIDING_MAX_GAP_SEC_FOR_DELTA;
+        if (speedMs === null && instKmh > 0 && instKmh < 300 && !gapTooLong) {
           _sos.speedOk = instKmh >= _MIN_SPD;
           _rideTrackSpeed(instKmh, now, lat, lon);
         }
-        if (instKmh < 300) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
+        // If the gap was long (e.g. backgrounded), we don't know the actual path taken, so don't add that distance -- just re-anchor
+        if (instKmh < 300 && !gapTooLong) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
+        else if (gapTooLong) { _ride.path.push({lat:lat, lon:lon, t:now}); }
       } else if (posOk) {
         _ride.path.push({lat:lat, lon:lon, t:now});
       }
@@ -5463,13 +5476,16 @@ function _sosGPSStart() {
       var lat = p.coords.latitude, lon = p.coords.longitude;
       if (posOk && _ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
-        var dtH = (now - _ride.lastT) / 3600000;
+        var dtSecGap = (now - _ride.lastT) / 1000;
+        var dtH = dtSecGap / 3600;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
-        if (spd === null && instKmh > 0 && instKmh < 300) {
+        var gapTooLong = dtSecGap <= 0 || dtSecGap > RIDING_MAX_GAP_SEC_FOR_DELTA;
+        if (spd === null && instKmh > 0 && instKmh < 300 && !gapTooLong) {
           _sos.speedOk = instKmh >= _MIN_SPD;
           _rideTrackSpeed(instKmh, now, lat, lon);
         }
-        if (instKmh < 300) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
+        if (instKmh < 300 && !gapTooLong) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
+        else if (gapTooLong) { _ride.path.push({lat:lat, lon:lon, t:now}); }
       } else if (posOk) {
         _ride.path.push({lat:lat, lon:lon, t:now});
       }

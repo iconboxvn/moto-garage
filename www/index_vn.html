@@ -4363,6 +4363,13 @@ function _persistRideProgress(force){
 }
 var RIDING_MAX_SPEED_ACCURACY_MPS = 3;    // 네이티브가 넘겨준 속도 정확도(m/s)가 이보다 나쁘면 그 샘플은 신뢰 안 함 (도심 GPS 튐 방지)
 var RIDING_MAX_POS_ACCURACY_M = 30;       // Độ chính xác vị trí GPS (m) tệ hơn mức này thì loại khỏi lộ trình/quãng đường (chống nhiễu đa đường trong hầm/gầm cầu)
+// Nếu mẫu GPS trước đó cách quá lâu (giây), không cộng quãng đường đi được trong khoảng trống đó vào tổng.
+// Chỉ lọc theo tốc độ tức thời thôi không đủ -- khoảng trống vài giờ thì dù nhảy vài trăm km, chia ra vẫn
+// ra tốc độ thấp nên lọt qua mức trần 300km/h.
+// (Phát hiện 2026-08-19 khi dùng thực tế: đi ô tô đường dài, ứng dụng chạy nền nhiều giờ, khi quay lại 3 lần
+// nhảy 245-248km bị cộng thẳng vào quãng đường, ra kết quả vô lý 1260km/46 phút = 1640km/h -- 3 lần nhảy đó
+// chiếm 98% quãng đường ghi nhận)
+var RIDING_MAX_GAP_SEC_FOR_DELTA = 60;
 var RIDING_HARSH_ACCEL_KMH_PER_SEC = 12;
 var RIDING_HARSH_BRAKE_KMH_PER_SEC = 15;
 var RIDING_HARSH_EVENT_COOLDOWN_MS = 3000;
@@ -5424,13 +5431,19 @@ function _sosGPSStart() {
       var lat = loc.lat, lon = loc.lon;
       if (posOk && _ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
-        var dtH = (now - _ride.lastT) / 3600000;
+        var dtSecGap = (now - _ride.lastT) / 1000;
+        var dtH = dtSecGap / 3600;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
-        if (speedMs === null && instKmh > 0 && instKmh < 300) {
+        // dtSecGap<=0 (dấu thời gian đảo ngược/trùng lặp) cũng bị loại -- khi các điểm GPS chạy nền bị dồn
+        // đến không theo thứ tự, khoảng cách âm khiến instKmh tính ra 0, trước đây lọt qua bộ lọc <300 luôn
+        var gapTooLong = dtSecGap <= 0 || dtSecGap > RIDING_MAX_GAP_SEC_FOR_DELTA;
+        if (speedMs === null && instKmh > 0 && instKmh < 300 && !gapTooLong) {
           _sos.speedOk = instKmh >= _MIN_SPD;
           _rideTrackSpeed(instKmh, now, lat, lon);
         }
-        if (instKmh < 300) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
+        // Nếu khoảng trống dài (chạy nền...), không biết lộ trình thực tế nên không cộng quãng đường đó -- chỉ cập nhật lại mốc
+        if (instKmh < 300 && !gapTooLong) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
+        else if (gapTooLong) { _ride.path.push({lat:lat, lon:lon, t:now}); }
       } else if (posOk) {
         _ride.path.push({lat:lat, lon:lon, t:now});
       }
@@ -5460,13 +5473,16 @@ function _sosGPSStart() {
       var lat = p.coords.latitude, lon = p.coords.longitude;
       if (posOk && _ride.lastLat !== null) {
         var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
-        var dtH = (now - _ride.lastT) / 3600000;
+        var dtSecGap = (now - _ride.lastT) / 1000;
+        var dtH = dtSecGap / 3600;
         var instKmh = dtH > 0 ? dKm / dtH : 0;
-        if (spd === null && instKmh > 0 && instKmh < 300) {
+        var gapTooLong = dtSecGap <= 0 || dtSecGap > RIDING_MAX_GAP_SEC_FOR_DELTA;
+        if (spd === null && instKmh > 0 && instKmh < 300 && !gapTooLong) {
           _sos.speedOk = instKmh >= _MIN_SPD;
           _rideTrackSpeed(instKmh, now, lat, lon);
         }
-        if (instKmh < 300) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
+        if (instKmh < 300 && !gapTooLong) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
+        else if (gapTooLong) { _ride.path.push({lat:lat, lon:lon, t:now}); }
       } else if (posOk) {
         _ride.path.push({lat:lat, lon:lon, t:now});
       }
