@@ -4,3 +4,8 @@ android/.gradle/
 android/build/
 *.keystore
 .firebase/
+
+# GCP 서비스 계정 키(JSON) — 실수로라도 커밋되면 안 되는 자격증명. 이 저장소 밖(예: C:\Users\iconb\secrets\)에 보관할 것
+moto-garage-*-*.json
+*-service-account*.json
+*serviceaccount*.json
