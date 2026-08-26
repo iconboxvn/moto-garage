@@ -1842,6 +1842,7 @@ function _renderDashInner(){
       })()}
     </div>
     <div id="fuel-price-card"></div>
+    <div id="brand-news-home-card"></div>
     <div class="sec-header"><span class="sec-title">BẢO DƯỠNG GẦN ĐÂY</span><div class="sec-line"></div></div>
     ${recentHistory.length
       ?`<div class="card" style="padding:0;overflow:hidden;"><table class="log-table"><tbody>
@@ -1873,6 +1874,7 @@ function _renderDashInner(){
       </div>
     </div>`;
   try{ renderFuelPriceCard(); }catch(e){}
+  try{ renderBrandNewsHomeCard(); }catch(e){}
 }
 
 function selectDashBike(id){ dashSelectedBikeId=id; renderDash(); }
@@ -4892,6 +4894,62 @@ function renderFuelPriceCard(){
     + '</div>';
 }
 
+// Thẻ xem trước "Tin tức xe máy" trên màn hình chính (chỉ ngày+tiêu đề, ngay dưới thẻ giá xăng).
+// Danh sách đầy đủ/bộ lọc vẫn nằm ở trang Tin tức xe máy (renderBrandNewsPage) trong menu
+// thêm — thẻ này chỉ xem trước vài mục mới nhất và bấm vào để chuyển sang trang đó.
+const BRAND_NEWS_HOME_CACHE_KEY = 'mg2-brandnews-home-cache';
+var _brandNewsHomeItems = [];
+
+function loadBrandNewsHomeFromCache(){
+  var raw = localStorage.getItem(BRAND_NEWS_HOME_CACHE_KEY);
+  if(!raw) return;
+  try{
+    var cached = JSON.parse(raw);
+    if(cached && cached.items) _brandNewsHomeItems = cached.items;
+  }catch(e){}
+}
+
+function loadBrandNewsHomeFromFirestore(){
+  try{
+    var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseFirestore;
+    if(!FS){ console.log('[brandNewsHome] Không có plugin Firestore, dùng cache'); return; }
+    FS.getCollection({
+      reference: 'brand_news',
+      queryConstraints: [
+        {type:'orderBy', fieldPath:'publishedAt', directionStr:'desc'},
+        {type:'limit', limit:3}
+      ]
+    }).then(function(result){
+      var snapshots = (result && result.snapshots) || [];
+      var docs = snapshots.map(function(s){ return s.data || {}; });
+      if(!docs.length) return;
+      _brandNewsHomeItems = docs;
+      localStorage.setItem(BRAND_NEWS_HOME_CACHE_KEY, JSON.stringify({items:_brandNewsHomeItems}));
+      try{ renderBrandNewsHomeCard(); }catch(e){}
+    }).catch(function(e){ console.warn('[brandNewsHome] Truy vấn Firestore thất bại, giữ cache', e); });
+  }catch(e){ console.warn('[brandNewsHome] lỗi', e); }
+}
+
+function renderBrandNewsHomeCard(){
+  var el = document.getElementById('brand-news-home-card');
+  if(!el) return;
+  if(!_brandNewsHomeItems.length){ el.innerHTML=''; return; }
+  var rows = _brandNewsHomeItems.map(function(d){
+    var title = (d.title && d.title.vn) || '(Không có tiêu đề)';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;">'
+      + '<span style="font-size:14px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+title+'</span>'
+      + '<span style="font-size:12px;color:var(--text-dim);flex-shrink:0;">'+_brandNewsFmtDate(d.publishedAt)+'</span>'
+      + '</div>';
+  }).join('');
+  el.innerHTML = '<div class="card" style="padding:14px 16px;margin-bottom:14px;cursor:pointer;" onclick="showPage(\'brandNews\',document.getElementById(\'nav-more-btn\'))">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">'
+    + '<span style="font-size:17px;color:var(--text-dim);">🗞 Tin tức xe máy</span>'
+    + '<span style="font-size:12px;color:var(--accent);">Xem thêm →</span>'
+    + '</div>'
+    + rows
+    + '</div>';
+}
+
 // Trang Tin tức xe máy (xem thiết kế tính năng brand news trong CLAUDE.md)
 var BRAND_NEWS_CATEGORY_LABEL = {
   safety: '🚨 An toàn/Triệu hồi', product: '🆕 Sản phẩm mới', tech: '🔧 Công nghệ',
@@ -5791,6 +5849,8 @@ window.addEventListener('load', function(){
   safe(loadCharactersFromFirestore, 'loadCharactersFromFirestore');
   safe(loadFuelPriceFromCache, 'loadFuelPriceFromCache');
   safe(loadFuelPriceFromFirestore, 'loadFuelPriceFromFirestore');
+  safe(loadBrandNewsHomeFromCache, 'loadBrandNewsHomeFromCache');
+  safe(loadBrandNewsHomeFromFirestore, 'loadBrandNewsHomeFromFirestore');
   // Mọi bước bên dưới đây ảnh hưởng trực tiếp đến màn hình hiển thị, nên nếu bước phía trên
   // ném lỗi mà không có safe() thì renderDash() cũng bị kéo theo không chạy (lỗi thực tế đã
   // xảy ra: màn hình chính trống trơn). Bọc từng bước còn lại độc lập để một lỗi không kéo theo cả chuỗi.

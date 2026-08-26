@@ -1842,6 +1842,7 @@ function _renderDashInner(){
       })()}
     </div>
     <div id="fuel-price-card"></div>
+    <div id="brand-news-home-card"></div>
     <div class="sec-header"><span class="sec-title">RECENT SERVICE</span><div class="sec-line"></div></div>
     ${recentHistory.length
       ?`<div class="card" style="padding:0;overflow:hidden;"><table class="log-table"><tbody>
@@ -1873,6 +1874,7 @@ function _renderDashInner(){
       </div>
     </div>`;
   try{ renderFuelPriceCard(); }catch(e){}
+  try{ renderBrandNewsHomeCard(); }catch(e){}
 }
 
 function selectDashBike(id){ dashSelectedBikeId=id; renderDash(); }
@@ -4894,6 +4896,62 @@ function renderFuelPriceCard(){
     + '</div>';
 }
 
+// Home screen "Bike News" preview card (date+title only, right below the fuel price card).
+// The full list/filters still live on the Bike News page (renderBrandNewsPage) via the more
+// menu — this card just previews the latest few items and taps through to that page.
+const BRAND_NEWS_HOME_CACHE_KEY = 'mg2-brandnews-home-cache';
+var _brandNewsHomeItems = [];
+
+function loadBrandNewsHomeFromCache(){
+  var raw = localStorage.getItem(BRAND_NEWS_HOME_CACHE_KEY);
+  if(!raw) return;
+  try{
+    var cached = JSON.parse(raw);
+    if(cached && cached.items) _brandNewsHomeItems = cached.items;
+  }catch(e){}
+}
+
+function loadBrandNewsHomeFromFirestore(){
+  try{
+    var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseFirestore;
+    if(!FS){ console.log('[brandNewsHome] No Firestore plugin, using cache'); return; }
+    FS.getCollection({
+      reference: 'brand_news',
+      queryConstraints: [
+        {type:'orderBy', fieldPath:'publishedAt', directionStr:'desc'},
+        {type:'limit', limit:3}
+      ]
+    }).then(function(result){
+      var snapshots = (result && result.snapshots) || [];
+      var docs = snapshots.map(function(s){ return s.data || {}; });
+      if(!docs.length) return;
+      _brandNewsHomeItems = docs;
+      localStorage.setItem(BRAND_NEWS_HOME_CACHE_KEY, JSON.stringify({items:_brandNewsHomeItems}));
+      try{ renderBrandNewsHomeCard(); }catch(e){}
+    }).catch(function(e){ console.warn('[brandNewsHome] Firestore query failed, keeping cache', e); });
+  }catch(e){ console.warn('[brandNewsHome] error', e); }
+}
+
+function renderBrandNewsHomeCard(){
+  var el = document.getElementById('brand-news-home-card');
+  if(!el) return;
+  if(!_brandNewsHomeItems.length){ el.innerHTML=''; return; }
+  var rows = _brandNewsHomeItems.map(function(d){
+    var title = (d.title && d.title.en) || '(No title)';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;">'
+      + '<span style="font-size:14px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+title+'</span>'
+      + '<span style="font-size:12px;color:var(--text-dim);flex-shrink:0;">'+_brandNewsFmtDate(d.publishedAt)+'</span>'
+      + '</div>';
+  }).join('');
+  el.innerHTML = '<div class="card" style="padding:14px 16px;margin-bottom:14px;cursor:pointer;" onclick="showPage(\'brandNews\',document.getElementById(\'nav-more-btn\'))">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">'
+    + '<span style="font-size:17px;color:var(--text-dim);">🗞 Bike News</span>'
+    + '<span style="font-size:12px;color:var(--accent);">More →</span>'
+    + '</div>'
+    + rows
+    + '</div>';
+}
+
 // Bike News page (see CLAUDE.md brand news feature design)
 var BRAND_NEWS_CATEGORY_LABEL = {
   safety: '🚨 Safety/Recall', product: '🆕 New Product', tech: '🔧 Tech',
@@ -5795,6 +5853,8 @@ window.addEventListener('load', function(){
   safe(loadCharactersFromFirestore, 'loadCharactersFromFirestore');
   safe(loadFuelPriceFromCache, 'loadFuelPriceFromCache');
   safe(loadFuelPriceFromFirestore, 'loadFuelPriceFromFirestore');
+  safe(loadBrandNewsHomeFromCache, 'loadBrandNewsHomeFromCache');
+  safe(loadBrandNewsHomeFromFirestore, 'loadBrandNewsHomeFromFirestore');
   // Everything below this point is directly tied to what's shown on screen, so if a step above
   // threw without safe() it could take down renderDash() with it (real bug: home screen stayed
   // completely blank). Wrap every remaining step independently so one failure can't cascade.
