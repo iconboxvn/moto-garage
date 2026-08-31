@@ -6282,9 +6282,9 @@ function openSOS() {
   var med=getMedical();
   var insBtn=document.getElementById('sos-insurance-btn');
   if(med.insurance){
-    insBtn.innerHTML='<a href="tel:'+med.insurance.replace(/[^0-9+]/g,'')+ '" class="sos-call-btn korea"><div><div class="sos-call-name">📋 내 여행자보험</div><div class="sos-call-sub">'+med.insurance+'</div></div><div style="font-size:20px;">📞</div></a>';
+    insBtn.innerHTML='<a href="tel:'+med.insurance.replace(/[^0-9+]/g,'')+ '" class="sos-call-btn korea"><div><div class="sos-call-name">📋 My Travel Insurance</div><div class="sos-call-sub">'+med.insurance+'</div></div><div style="font-size:20px;">📞</div></a>';
   } else {
-    insBtn.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:8px;text-align:center;">보험사 연락처를 의료 정보 카드에 등록해두세요</div>';
+    insBtn.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:8px;text-align:center;">Add your insurance contact in the medical info card</div>';
   }
   loadSOSLocation();
   // 국가 판별 전에는 안전하게 "의료 정보 카드"만 보여주고, 동료 사고는 판별되면 노출
@@ -6343,7 +6343,7 @@ function selectSOS(type,el){
 }
 
 function speakVietnamese(text){
-  if(!('speechSynthesis' in window)){alert('이 브라우저는 음성을 지원하지 않습니다');return;}
+  if(!('speechSynthesis' in window)){alert('This browser does not support speech');return;}
   window.speechSynthesis.cancel();
   var utt=new SpeechSynthesisUtterance(text);
   utt.lang='vi-VN'; utt.rate=0.85; utt.volume=1;
@@ -6353,22 +6353,22 @@ function speakVietnamese(text){
 var sosLocationData=null;
 function loadSOSLocation(){
   var els=document.querySelectorAll('.sos-location-box');
-  if(!els.length||!navigator.geolocation){els.forEach(function(el){el.textContent='위치 서비스 불가';});return;}
+  if(!els.length||!navigator.geolocation){els.forEach(function(el){el.textContent='Location service unavailable';});return;}
   navigator.geolocation.getCurrentPosition(
     function(pos){
       var lat=pos.coords.latitude.toFixed(6);
       var lng=pos.coords.longitude.toFixed(6);
       sosLocationData=lat+', '+lng;
-      var html='📍 <strong style="color:var(--accent);">'+lat+', '+lng+'</strong><br><span style="font-size:11px;">탭하면 복사 · Google Maps 열기</span>';
+      var html='📍 <strong style="color:var(--accent);">'+lat+', '+lng+'</strong><br><span style="font-size:11px;">Tap to copy · Open Google Maps</span>';
       els.forEach(function(el){el.innerHTML=html;});
     },
-    function(){ els.forEach(function(el){el.textContent='📍 위치를 불러올 수 없습니다';}); }
+    function(){ els.forEach(function(el){el.textContent='📍 Could not get location';}); }
   );
 }
 
 function copySOSLocation(){
   if(!sosLocationData) return;
-  if(navigator.clipboard) navigator.clipboard.writeText(sosLocationData).then(function(){showToast('✓ 위치가 복사됐습니다');});
+  if(navigator.clipboard) navigator.clipboard.writeText(sosLocationData).then(function(){showToast('✓ Location copied');});
   window.open('https://maps.google.com/?q='+sosLocationData,'_blank');
 }
 
@@ -6406,7 +6406,7 @@ function saveMedical(){
   };
   localStorage.setItem('mg2-medical',JSON.stringify(data));
   closeModal('m-medical');
-  showToast('✓ 의료 정보가 저장됐습니다');
+  showToast('✓ Medical info saved');
   renderMedicalCard();
 }
 
@@ -6428,26 +6428,26 @@ function renderMedicalCard(){
   var d=getMedical();
   var el=document.getElementById('medical-card-display');
   if(!d.name&&!d.blood){
-    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-dim);"><div style="font-size:32px;margin-bottom:10px;">🏥</div><div style="font-size:14px;">의료 정보를 입력해두면</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px;">사고 시 병원에 바로 보여줄 수 있어요</div></div>';
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-dim);"><div style="font-size:32px;margin-bottom:10px;">🏥</div><div style="font-size:14px;">Enter your medical info</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px;">so you can show it to hospital staff right away</div></div>';
     return;
   }
   el.innerHTML='<div class="medical-card">'
     +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #1a3040;">'
     +'<span style="font-size:24px;">🏥</span>'
-    +'<div><div style="font-size:14px;font-weight:700;color:#6ab0f5;">MEDICAL INFORMATION · 의료 정보</div>'
-    +'<div style="font-size:10px;color:#4a7a9a;">Thông tin y tế</div></div></div>'
-    +(d.name?'<div class="medical-row"><span class="medical-label">이름 / Name / Tên</span><span class="medical-value">'+d.name+'</span></div>':'')
-    +(d.blood?'<div class="medical-row"><span class="medical-label">혈액형 / Blood Type / Nhóm máu</span><span class="medical-value" style="color:var(--red);font-size:18px;font-weight:800;">'+d.blood+'</span></div>':'')
-    +(d.nationality?'<div class="medical-row"><span class="medical-label">국적 / Nationality</span><span class="medical-value">'+d.nationality+'</span></div>':'')
-    +'<div class="medical-row"><span class="medical-label">⚠️ 알레르기 / Allergy / Dị ứng</span><span class="medical-value" style="color:var(--accent);">'+(d.allergy||'없음 / None')+'</span></div>'
-    +'<div class="medical-row"><span class="medical-label">💊 복용약 / Medication / Thuốc</span><span class="medical-value">'+(d.medicine||'없음 / None')+'</span></div>'
-    +(d.history?'<div class="medical-row"><span class="medical-label">🩺 지병 / History</span><span class="medical-value">'+d.history+'</span></div>':'')
-    +(d.emergency?'<div class="medical-row"><span class="medical-label">📞 비상연락처 / Emergency</span><span class="medical-value" style="font-size:13px;">'+d.emergency+'</span></div>':'')
-    +(d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📱 비상연락처 전화 / Phone</span><span class="medical-value" style="font-size:13px;">'+d.emergencyPhone+'</span></div>':(!d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📞 비상연락처</span><span class="medical-value" style="font-size:12px;color:var(--accent);">설정 → SOS 긴급연락처에서 등록하세요</span></div>':''))
-    +(d.insurance?'<div class="medical-row"><span class="medical-label">📋 보험사 / Insurance</span><span class="medical-value" style="font-size:13px;">'+d.insurance+'</span></div>':'')
-    +(d.passport?'<div class="medical-row"><span class="medical-label">🛂 여권번호 / Passport</span><span class="medical-value" style="font-size:13px;">'+d.passport+'</span></div>':'')
+    +'<div><div style="font-size:14px;font-weight:700;color:#6ab0f5;">MEDICAL INFORMATION</div>'
+    +'<div style="font-size:10px;color:#4a7a9a;">Thông tin y tế · 의료 정보</div></div></div>'
+    +(d.name?'<div class="medical-row"><span class="medical-label">Name / Tên / 이름</span><span class="medical-value">'+d.name+'</span></div>':'')
+    +(d.blood?'<div class="medical-row"><span class="medical-label">Blood Type / Nhóm máu / 혈액형</span><span class="medical-value" style="color:var(--red);font-size:18px;font-weight:800;">'+d.blood+'</span></div>':'')
+    +(d.nationality?'<div class="medical-row"><span class="medical-label">Nationality / Quốc tịch / 국적</span><span class="medical-value">'+d.nationality+'</span></div>':'')
+    +'<div class="medical-row"><span class="medical-label">⚠️ Allergy / Dị ứng / 알레르기</span><span class="medical-value" style="color:var(--accent);">'+(d.allergy||'None')+'</span></div>'
+    +'<div class="medical-row"><span class="medical-label">💊 Medication / Thuốc / 복용약</span><span class="medical-value">'+(d.medicine||'None')+'</span></div>'
+    +(d.history?'<div class="medical-row"><span class="medical-label">🩺 History / Bệnh nền / 지병</span><span class="medical-value">'+d.history+'</span></div>':'')
+    +(d.emergency?'<div class="medical-row"><span class="medical-label">📞 Emergency / Liên hệ khẩn cấp / 비상연락처</span><span class="medical-value" style="font-size:13px;">'+d.emergency+'</span></div>':'')
+    +(d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📱 Phone / SĐT khẩn cấp / 비상연락처</span><span class="medical-value" style="font-size:13px;">'+d.emergencyPhone+'</span></div>':(!d.emergencyPhone?'<div class="medical-row"><span class="medical-label">📞 Emergency contact</span><span class="medical-value" style="font-size:12px;color:var(--accent);">Register in Settings → SOS Emergency Contact</span></div>':''))
+    +(d.insurance?'<div class="medical-row"><span class="medical-label">📋 Insurance / Bảo hiểm / 보험사</span><span class="medical-value" style="font-size:13px;">'+d.insurance+'</span></div>':'')
+    +(d.passport?'<div class="medical-row"><span class="medical-label">🛂 Passport / Hộ chiếu / 여권</span><span class="medical-value" style="font-size:13px;">'+d.passport+'</span></div>':'')
     +'</div>'
-    +'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;">🇰🇷 한국인 라이더 · Korean Motorcycle Rider</div>';
+    +'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;">🏍 Ridemate · Medical Info Card</div>';
 }
 
 
@@ -6994,7 +6994,7 @@ function renderMedicalCard(){
     <div class="sos-header">
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:24px;">🚨</span>
-        <div><div class="sos-title">긴급 SOS</div><div style="font-size:11px;color:rgba(255,255,255,0.7);">누가 사고났나요?</div></div>
+        <div><div class="sos-title">Emergency SOS</div><div style="font-size:11px;color:rgba(255,255,255,0.7);">Who had the accident?</div></div>
       </div>
       <button class="modal-close" style="color:#fff;" onclick="closeModal('m-sos')">✕</button>
     </div>
@@ -7002,86 +7002,86 @@ function renderMedicalCard(){
       <div class="sos-choice">
         <div class="sos-choice-btn" onclick="selectSOS('colleague',this)">
           <div class="sos-choice-icon">👤</div>
-          <div class="sos-choice-label">동료 사고</div>
-          <div class="sos-choice-sub">내가 도와야 해요</div>
+          <div class="sos-choice-label">Someone else</div>
+          <div class="sos-choice-sub">I need to help them</div>
         </div>
         <div class="sos-choice-btn" onclick="selectSOS('medical',this)">
           <div class="sos-choice-icon">🏥</div>
-          <div class="sos-choice-label">의료 정보 카드</div>
-          <div class="sos-choice-sub">병원에 보여주세요</div>
+          <div class="sos-choice-label">Medical info card</div>
+          <div class="sos-choice-sub">Show to hospital staff</div>
         </div>
       </div>
-      <!-- 동료 사고 -->
+      <!-- Someone else (Vietnam) -->
       <div id="sos-colleague" style="display:none;">
         <div class="sos-section">
-          <div class="sos-section-title"><span class="sos-step">1</span>즉시 신고</div>
-          <a href="tel:115" class="sos-call-btn emergency"><div><div class="sos-call-name">🚑 구급차</div><div class="sos-call-sub">Xe cấp cứu</div></div><div class="sos-call-num">115</div></a>
-          <a href="tel:113" class="sos-call-btn emergency"><div><div class="sos-call-name">🚔 경찰</div><div class="sos-call-sub">Cảnh sát</div></div><div class="sos-call-num">113</div></a>
-          <a href="tel:18001567" class="sos-call-btn"><div><div class="sos-call-name">🌐 관광경찰</div><div class="sos-call-sub">영어 가능 · Tourist Police</div></div><div class="sos-call-num" style="font-size:14px;">1800-1567</div></a>
+          <div class="sos-section-title"><span class="sos-step">1</span>Call for help now</div>
+          <a href="tel:115" class="sos-call-btn emergency"><div><div class="sos-call-name">🚑 Ambulance</div><div class="sos-call-sub">Xe cấp cứu</div></div><div class="sos-call-num">115</div></a>
+          <a href="tel:113" class="sos-call-btn emergency"><div><div class="sos-call-name">🚔 Police</div><div class="sos-call-sub">Cảnh sát</div></div><div class="sos-call-num">113</div></a>
+          <a href="tel:18001567" class="sos-call-btn"><div><div class="sos-call-name">🌐 Tourist Police</div><div class="sos-call-sub">English support · Cảnh sát du lịch</div></div><div class="sos-call-num" style="font-size:14px;">1800-1567</div></a>
         </div>
         <div class="sos-section">
-          <div class="sos-section-title"><span class="sos-step">2</span>베트남어로 도움 요청</div>
+          <div class="sos-section-title"><span class="sos-step">2</span>Ask for help in Vietnamese</div>
           <button class="sos-tts-btn" onclick="speakVietnamese('Có người bị tai nạn! Gọi xe cấp cứu ngay! Xin hãy giúp đỡ!')">
             <span style="font-size:24px;">🔊</span>
-            <div><div class="sos-tts-vi">Có người bị tai nạn!</div><div class="sos-tts-ko">사람이 사고났어요! 구급차 불러주세요!</div></div>
+            <div><div class="sos-tts-vi">Có người bị tai nạn!</div><div class="sos-tts-ko">There's an injured person! Please call an ambulance!</div></div>
           </button>
           <button class="sos-tts-btn" onclick="speakVietnamese('Vui lòng gọi 115 ngay bây giờ!')">
             <span style="font-size:24px;">🔊</span>
-            <div><div class="sos-tts-vi">Gọi 115 ngay!</div><div class="sos-tts-ko">지금 바로 115에 전화해주세요!</div></div>
+            <div><div class="sos-tts-vi">Gọi 115 ngay!</div><div class="sos-tts-ko">Please call 115 right now!</div></div>
           </button>
-          <div class="sos-location-box" id="sos-location" onclick="copySOSLocation()">📍 위치 불러오는 중... (탭하면 복사)</div>
+          <div class="sos-location-box" id="sos-location" onclick="copySOSLocation()">📍 Getting location... (tap to copy)</div>
         </div>
         <div class="sos-section">
-          <div class="sos-section-title"><span class="sos-step">3</span>한국어 통역 연결</div>
-          <a href="tel:+8223210404" class="sos-call-btn korea"><div><div class="sos-call-name">🇰🇷 영사콜센터</div><div class="sos-call-sub">24시간 · 한국어 · 무료 · 통역 연결</div></div><div class="sos-call-num" style="font-size:12px;">+82-2-3210-0404</div></a>
-          <a href="tel:+842438315111" class="sos-call-btn korea"><div><div class="sos-call-name">🇰🇷 주하노이 한국대사관</div><div class="sos-call-sub">긴급 영사 서비스</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3831-5111</div></a>
+          <div class="sos-section-title"><span class="sos-step">3</span>Korean interpreter line</div>
+          <a href="tel:+8223210404" class="sos-call-btn korea"><div><div class="sos-call-name">🇰🇷 Korean Consular Call Center</div><div class="sos-call-sub">24/7 · Korean · Free · Interpreter</div></div><div class="sos-call-num" style="font-size:12px;">+82-2-3210-0404</div></a>
+          <a href="tel:+842438315111" class="sos-call-btn korea"><div><div class="sos-call-name">🇰🇷 Korean Embassy in Hanoi</div><div class="sos-call-sub">Emergency consular service</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3831-5111</div></a>
           <div id="sos-insurance-btn"></div>
         </div>
         <div class="sos-section">
-          <div class="sos-section-title"><span class="sos-step">4</span>하노이 국제병원 (한국어·영어)</div>
-          <a href="tel:+842439743556" class="sos-call-btn"><div><div class="sos-call-name">🏥 Vinmec International</div><div class="sos-call-sub">한국어 통역 가능</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3974-3556</div></a>
-          <a href="tel:+842439275568" class="sos-call-btn"><div><div class="sos-call-name">🏥 Hong Ngoc Hospital</div><div class="sos-call-sub">한국어 통역 가능</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3927-5568</div></a>
-          <a href="tel:+842438430748" class="sos-call-btn"><div><div class="sos-call-name">🏥 Family Medical Practice</div><div class="sos-call-sub">영어 전용</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3843-0748</div></a>
-          <div style="font-size:11px;color:var(--text-dim);padding:6px 0;">⚠️ 하노이 밖: 가까운 병원 응급처치 → 안정 후 하노이 이송</div>
+          <div class="sos-section-title"><span class="sos-step">4</span>International hospitals in Hanoi (KR·EN)</div>
+          <a href="tel:+842439743556" class="sos-call-btn"><div><div class="sos-call-name">🏥 Vinmec International</div><div class="sos-call-sub">Korean interpreter available</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3974-3556</div></a>
+          <a href="tel:+842439275568" class="sos-call-btn"><div><div class="sos-call-name">🏥 Hong Ngoc Hospital</div><div class="sos-call-sub">Korean interpreter available</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3927-5568</div></a>
+          <a href="tel:+842438430748" class="sos-call-btn"><div><div class="sos-call-name">🏥 Family Medical Practice</div><div class="sos-call-sub">English only</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3843-0748</div></a>
+          <div style="font-size:11px;color:var(--text-dim);padding:6px 0;">⚠️ Outside Hanoi: first aid at nearest hospital → transfer to Hanoi once stable</div>
         </div>
         <div class="sos-section">
-          <div class="sos-section-title"><span class="sos-step">5</span>사고 기록 (보험 처리용)</div>
+          <div class="sos-section-title"><span class="sos-step">5</span>Document the scene (for insurance)</div>
           <div id="sos-checklist">
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 상대 차량 번호판 사진</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 차량 전체 사진</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 부상 부위 사진</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 도로 상황 사진</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 신호등/표지판 사진</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 목격자 연락처 확보</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 사고 일시/장소 메모</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of other vehicle's plate</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of whole vehicle</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of injuries</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of road conditions</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of traffic lights/signs</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 Get witness contact info</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 Note accident time/location</div></div>
           </div>
         </div>
       </div>
-      <!-- 동료 사고 (한국) -->
+      <!-- Someone else (Korea) -->
       <div id="sos-colleague-kr" style="display:none;">
         <div class="sos-section">
-          <div class="sos-section-title"><span class="sos-step">1</span>즉시 신고</div>
-          <a href="tel:112" class="sos-call-btn emergency"><div><div class="sos-call-name">🚔 경찰</div><div class="sos-call-sub">교통사고 · 범죄 신고</div></div><div class="sos-call-num">112</div></a>
-          <a href="tel:119" class="sos-call-btn emergency"><div><div class="sos-call-name">🚑 소방·구급</div><div class="sos-call-sub">응급 구조 요청</div></div><div class="sos-call-num">119</div></a>
-          <div class="sos-location-box" onclick="copySOSLocation()">📍 위치 불러오는 중... (탭하면 복사)</div>
+          <div class="sos-section-title"><span class="sos-step">1</span>Call for help now</div>
+          <a href="tel:112" class="sos-call-btn emergency"><div><div class="sos-call-name">🚔 Police</div><div class="sos-call-sub">Traffic accidents · crime</div></div><div class="sos-call-num">112</div></a>
+          <a href="tel:119" class="sos-call-btn emergency"><div><div class="sos-call-name">🚑 Fire · Ambulance</div><div class="sos-call-sub">Emergency rescue</div></div><div class="sos-call-num">119</div></a>
+          <div class="sos-location-box" onclick="copySOSLocation()">📍 Getting location... (tap to copy)</div>
         </div>
         <div class="sos-section">
-          <div class="sos-section-title"><span class="sos-step">2</span>사고 기록 (보험 처리용)</div>
+          <div class="sos-section-title"><span class="sos-step">2</span>Document the scene (for insurance)</div>
           <div id="sos-checklist-kr">
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 상대 차량 번호판 사진</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 차량 전체 사진</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 부상 부위 사진</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 도로 상황 사진</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 신호등/표지판 사진</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 목격자 연락처 확보</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 사고 일시/장소 메모</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of other vehicle's plate</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of whole vehicle</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of injuries</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of road conditions</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of traffic lights/signs</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 Get witness contact info</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 Note accident time/location</div></div>
           </div>
         </div>
       </div>
-      <!-- 의료 정보 카드 -->
+      <!-- Medical info card -->
       <div id="sos-medical" style="display:none;">
         <div id="medical-card-display"></div>
-        <button class="btn btn-primary btn-full" onclick="openMedicalEdit()" style="margin-top:8px;">✏ 의료 정보 입력/수정</button>
+        <button class="btn btn-primary btn-full" onclick="openMedicalEdit()" style="margin-top:8px;">✏ Enter / Edit medical info</button>
       </div>
     </div>
   </div>
@@ -7090,7 +7090,7 @@ function renderMedicalCard(){
 <!-- 의료 정보 입력 모달 -->
 <div class="modal-overlay" id="m-medical">
   <div class="modal">
-    <div class="modal-header"><span class="modal-title">🏥 나의 의료 정보</span><button class="modal-close" onclick="closeModal('m-medical')">✕</button></div>
+    <div class="modal-header"><span class="modal-title">🏥 My Medical Info</span><button class="modal-close" onclick="closeModal('m-medical')">✕</button></div>
     <div class="modal-body">
       <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text-dim);margin-bottom:20px;padding:12px;background:var(--surface2);border-radius:8px;">
         <span style="font-size:18px;flex-shrink:0;">💡</span>
@@ -7099,35 +7099,35 @@ function renderMedicalCard(){
 
       <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">Basic Info</div>
       <div class="form-grid" style="margin-bottom:22px;">
-        <div class="form-group full"><label class="form-label">이름 / Name</label><input type="text" class="form-input" id="med-name" placeholder="홍길동 / Hong Gil-dong"></div>
-        <div class="form-group"><label class="form-label">혈액형 / Blood Type</label>
-          <select class="form-select" id="med-blood"><option value="">모름</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
+        <div class="form-group full"><label class="form-label">Name</label><input type="text" class="form-input" id="med-name" placeholder="Full name"></div>
+        <div class="form-group"><label class="form-label">Blood Type</label>
+          <select class="form-select" id="med-blood"><option value="">Unknown</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
         </div>
-        <div class="form-group"><label class="form-label">국적 / Nationality</label>
-          <select class="form-select" id="med-nationality"><option value="한국 / Korean">한국 / Korean</option><option value="베트남 / Vietnamese">베트남 / Vietnamese</option><option value="기타 / Other">기타 / Other</option></select>
+        <div class="form-group"><label class="form-label">Nationality</label>
+          <select class="form-select" id="med-nationality"><option value="한국 / Korean">Korean</option><option value="베트남 / Vietnamese">Vietnamese</option><option value="기타 / Other">Other</option></select>
         </div>
       </div>
 
       <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--red);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:5px;"><span>⚠</span><span>Emergency Info</span></div>
       <div style="background:var(--red-dim);border:1px solid rgba(208,64,64,0.3);border-radius:8px;padding:14px;margin-bottom:22px;">
         <div class="form-grid">
-          <div class="form-group full"><label class="form-label">⚠️ 알레르기 / Allergy</label><input type="text" class="form-input" id="med-allergy" placeholder="페니실린 / Penicillin (없으면 공백)"></div>
-          <div class="form-group full"><label class="form-label">💊 복용 중인 약 / Medication</label><input type="text" class="form-input" id="med-medicine" placeholder="없음 / None"></div>
-          <div class="form-group full"><label class="form-label">🩺 지병 / Medical History</label><input type="text" class="form-input" id="med-history" placeholder="없음 / None"></div>
+          <div class="form-group full"><label class="form-label">⚠️ Allergy</label><input type="text" class="form-input" id="med-allergy" placeholder="Penicillin... (leave blank if none)"></div>
+          <div class="form-group full"><label class="form-label">💊 Current Medication</label><input type="text" class="form-input" id="med-medicine" placeholder="None"></div>
+          <div class="form-group full"><label class="form-label">🩺 Medical History</label><input type="text" class="form-input" id="med-history" placeholder="None"></div>
         </div>
       </div>
 
       <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">Insurance & ID</div>
       <div class="form-grid">
-        <div class="form-group full"><label class="form-label">🏥 여행자보험사 연락처</label><input type="text" class="form-input" id="med-insurance" placeholder="삼성화재 1588-xxxx"></div>
-        <div class="form-group full"><label class="form-label">🛂 여권번호 / Passport No.</label><input type="text" class="form-input" id="med-passport" placeholder="M12345678 (선택)"></div>
+        <div class="form-group full"><label class="form-label">🏥 Travel Insurance Contact</label><input type="text" class="form-input" id="med-insurance" placeholder="Company name + phone"></div>
+        <div class="form-group full"><label class="form-label">🛂 Passport No.</label><input type="text" class="form-input" id="med-passport" placeholder="M12345678 (optional)"></div>
       </div>
 
       <div style="margin-top:16px;padding:10px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text-muted);">📞 Register emergency contact in <strong style="color:var(--accent);text-decoration:underline;cursor:pointer;" onclick="goToSosSettings()">More → Settings → SOS Emergency Contact</strong></div>
     </div>
     <div class="modal-footer">
-      <button class="btn" onclick="closeModal('m-medical')">취소</button>
-      <button class="btn btn-primary" onclick="saveMedical()">저장</button>
+      <button class="btn" onclick="closeModal('m-medical')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMedical()">Save</button>
     </div>
   </div>
 </div>
