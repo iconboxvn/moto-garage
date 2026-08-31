@@ -164,12 +164,58 @@ async function main() {
   const byBrand = new Map(brandsPresent.map((b) => [b, []]));
   for (const d of news) if (d.brand && byBrand.has(d.brand)) byBrand.get(d.brand).push(d);
 
-  // 2) 페이지 생성
+  // 2) 정적 자산 먼저 복사 (페이지 렌더링이 어떤 이미지가 있는지 알아야 하므로)
+  console.log('[build] 정적 자산 복사...');
+  await copyDir(STATIC, path.join(DIST, 'assets')).catch((e) => {
+    if (e.code !== 'ENOENT') throw e;
+    console.warn('  (static/ 없음)');
+  });
+  await fs.writeFile(path.join(DIST, 'assets', 'favicon.svg'), FAVICON_SVG, 'utf8');
+
+  // 앱 스크린샷 기본값 (한국어 앱 화면). site/static/shot-*-<lang>.png 가 있으면
+  // 그 언어에서는 그걸 우선 사용 (static/ 통째 복사로 이미 dist/assets 에 들어와 있음).
+  const shotMap = [
+    ['www/assets/onboarding/slide2_start.png', 'shot-home.png'],
+    ['www/assets/onboarding/slide1_consumables.png', 'shot-consumables.png'],
+    ['www/assets/onboarding/slide3_sos.png', 'shot-sos.png'],
+  ];
+  for (const [src, name] of shotMap) {
+    // static/ 에 같은 이름(shot-home.png 등)을 넣어 기본값 자체를 덮어쓸 수도 있음
+    const dest = path.join(DIST, 'assets', name);
+    try { await fs.access(dest); } catch { await copyIfExists(path.join(REPO, src), dest); }
+  }
+  await copyIfExists(path.join(REPO, 'landing/icon.png'), path.join(DIST, 'assets', 'icon.png'));
+  await copyIfExists(path.join(REPO, 'landing/icon.png'), path.join(DIST, 'icon.png'));
+  if (!(await copyIfExists(path.join(STATIC, 'og-default.png'), path.join(DIST, 'assets', 'og-default.png')))) {
+    await copyIfExists(path.join(REPO, 'landing/helmet.png'), path.join(DIST, 'assets', 'og-default.png'));
+  }
+  await QRCode.toFile(path.join(DIST, 'assets', 'qr-play.png'), PLAY_URL, {
+    margin: 1, width: 264, color: { dark: '#0c0c0d', light: '#ffffff' },
+  });
+  await copyIfExists(path.join(REPO, 'landing/privacy_policy.html'), path.join(DIST, 'privacy_policy.html'));
+  await copyIfExists(path.join(REPO, 'landing/terms_of_service.html'), path.join(DIST, 'terms_of_service.html'));
+
+  // dist/assets 파일 목록 → 언어별 스크린샷 해석
+  const assetFiles = new Set(await fs.readdir(path.join(DIST, 'assets')));
+  // 언어별 스크린샷 구성. VN은 SOS 화면 번역이 아직 안 돼서 3번째를 뉴스로 대체.
+  // 새 언어 이미지를 넣으려면 site/static/shot-<key>-<lang>.png 추가 후 여기 배열만 조정.
+  const SHOT_LAYOUT = { ko: ['home', 'consumables', 'sos'], en: ['home', 'consumables', 'sos'], vn: ['home', 'consumables', 'news'] };
+  const resolveShots = (lang) => {
+    const t = STRINGS[lang];
+    return (SHOT_LAYOUT[lang] || SHOT_LAYOUT.ko).map((key) => {
+      const localized = `shot-${key}-${lang}.png`;
+      const base = `shot-${key}.png`;
+      const file = assetFiles.has(localized) ? localized : assetFiles.has(base) ? base : null;
+      return file ? { src: `/assets/${file}`, alt: t.shotCaptions[key] } : null;
+    }).filter(Boolean);
+  };
+
+  // 3) 페이지 생성
   const sitemapUrls = [];
   for (const lang of BUILD_LANGS) {
     const t = STRINGS[lang];
 
-    await writePage(localizedPath('/', lang), renderHome({ lang, t, latestNews: news }));
+    await writePage(localizedPath('/', lang), renderHome({ lang, t, latestNews: news, shots: resolveShots(lang) }));
     sitemapUrls.push({ loc: absUrl('/', lang), changefreq: 'daily' });
 
     await writePage(localizedPath('/news', lang), renderNewsIndex({ lang, t, news, brandsPresent }));
@@ -218,45 +264,12 @@ async function main() {
     await fs.writeFile(rssPath, rssXml(news, lang), 'utf8');
   }
 
-  // 3) 정적 자산
-  console.log('[build] 정적 자산 복사...');
-  await copyDir(STATIC, path.join(DIST, 'assets')).catch((e) => {
-    if (e.code !== 'ENOENT') throw e;
-    console.warn('  (static/ 없음)');
-  });
-  await fs.writeFile(path.join(DIST, 'assets', 'favicon.svg'), FAVICON_SVG, 'utf8');
-
-  // 앱 스크린샷 (없으면 스킵)
-  const shotMap = [
-    ['www/assets/onboarding/slide2_start.png', 'shot-home.png'],
-    ['www/assets/onboarding/slide1_consumables.png', 'shot-consumables.png'],
-    ['www/assets/onboarding/slide3_sos.png', 'shot-sos.png'],
-  ];
-  for (const [src, name] of shotMap) {
-    await copyIfExists(path.join(REPO, src), path.join(DIST, 'assets', name));
-  }
-  // OG 이미지 폴백 / 앱 아이콘
-  await copyIfExists(path.join(REPO, 'landing/icon.png'), path.join(DIST, 'assets', 'icon.png'));
-  await copyIfExists(path.join(REPO, 'landing/icon.png'), path.join(DIST, 'icon.png'));
-  if (!(await copyIfExists(path.join(STATIC, 'og-default.png'), path.join(DIST, 'assets', 'og-default.png')))) {
-    await copyIfExists(path.join(REPO, 'landing/helmet.png'), path.join(DIST, 'assets', 'og-default.png'));
-  }
-
-  // 4) QR
-  await QRCode.toFile(path.join(DIST, 'assets', 'qr-play.png'), PLAY_URL, {
-    margin: 1, width: 264, color: { dark: '#0c0c0d', light: '#ffffff' },
-  });
-
-  // 5) 법적 페이지 (landing/ 원본 그대로 복사 — 출시 앱 링크와 별개로 이 도메인에서도 접근 가능하게)
-  await copyIfExists(path.join(REPO, 'landing/privacy_policy.html'), path.join(DIST, 'privacy_policy.html'));
-  await copyIfExists(path.join(REPO, 'landing/terms_of_service.html'), path.join(DIST, 'terms_of_service.html'));
-
-  // 6) sitemap / robots
+  // 4) sitemap / robots
   await fs.writeFile(path.join(DIST, 'sitemap.xml'), sitemapXml(sitemapUrls), 'utf8');
   await fs.writeFile(path.join(DIST, 'robots.txt'),
     `User-agent: *\nAllow: /\n\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`, 'utf8');
 
-  // 7) 404
+  // 5) 404
   await fs.writeFile(path.join(DIST, '404.html'),
     `<!DOCTYPE html><meta charset=utf-8><title>404 — Ridemate</title>` +
     `<meta http-equiv=refresh content="3;url=/"><body style="font-family:sans-serif;background:#0c0c0d;color:#e8ecf0;text-align:center;padding:80px 20px"><h1>404</h1><p><a style="color:#e8a020" href="/">Ridemate</a></p>`, 'utf8');

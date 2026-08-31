@@ -51,6 +51,12 @@ const S = {
     heroCtaNews: '바이크 소식 보기',
     qrCaption: '휴대폰 카메라로 스캔하세요',
     featuresTitle: '무엇을 할 수 있나요',
+    shotCaptions: {
+      home: '홈 화면 — 소모품 상태·유가·최근 정비',
+      consumables: '소모품별 교체 주기와 잔여 거리',
+      sos: '긴급 SOS — 베트남 긴급번호와 통역 연결',
+      news: '바이크 소식 — 리콜·정비 팁 자동 수집',
+    },
     features: [
       { t: '소모품 관리', d: '엔진오일·타이어·체인 등 부품별 교체 주기를 주행거리에 맞춰 자동 계산하고, 교체 시점이 되면 오전 8시에 한 번 알려줍니다.' },
       { t: '경고등 AI 확인', d: '계기판에 경고등이 뜨면 사진을 찍어 물어보세요. 무슨 경고인지, 지금 타도 되는지 알려줍니다.' },
@@ -109,6 +115,12 @@ const S = {
     heroCtaNews: 'Read bike news',
     qrCaption: 'Scan with your phone camera',
     featuresTitle: 'What it does',
+    shotCaptions: {
+      home: 'Home — service status, fuel price, recent maintenance',
+      consumables: 'Replacement interval and remaining distance per part',
+      sos: 'Emergency SOS — Vietnam hotlines and interpreter',
+      news: 'Bike news — recalls and maintenance tips, collected automatically',
+    },
     features: [
       { t: 'Service tracking', d: 'Calculates replacement intervals for engine oil, tires, chain and more against your odometer, and reminds you once at 8 AM when something is due.' },
       { t: 'Warning-light AI check', d: 'See a warning light on your dash? Take a photo and ask. It tells you what it means and whether it is safe to ride.' },
@@ -166,6 +178,12 @@ const S = {
     heroCtaNews: 'Xem tin xe máy',
     qrCaption: 'Quét bằng camera điện thoại',
     featuresTitle: 'Ứng dụng làm được gì',
+    shotCaptions: {
+      home: 'Trang chủ — trạng thái bảo dưỡng, giá xăng',
+      consumables: 'Chu kỳ thay thế và số km còn lại của từng bộ phận',
+      sos: 'SOS khẩn cấp — số nóng Việt Nam và phiên dịch',
+      news: 'Tin xe máy — triệu hồi và mẹo bảo dưỡng, tự động tổng hợp',
+    },
     features: [
       { t: 'Quản lý bảo dưỡng', d: 'Tự tính chu kỳ thay nhớt, lốp, xích... theo số km và nhắc bạn một lần lúc 8 giờ sáng khi đến hạn.' },
       { t: 'Kiểm tra đèn báo bằng AI', d: 'Thấy đèn cảnh báo trên đồng hồ? Chụp ảnh và hỏi. Ứng dụng cho biết đó là gì và có nên chạy tiếp không.' },

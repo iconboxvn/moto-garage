@@ -1,14 +1,12 @@
 import { layout, esc, localizedPath, absUrl, SITE_ORIGIN, PLAY_URL } from '../lib/render.mjs';
 import { articleCard, downloadCta } from '../lib/components.mjs';
 
-const SHOTS = [
-  { src: '/assets/shot-home.png', ko: '홈 화면 — 소모품 상태·유가·최근 정비', en: 'Home — service status, fuel price, recent maintenance', vn: 'Trang chủ — trạng thái bảo dưỡng, giá xăng' },
-  { src: '/assets/shot-consumables.png', ko: '소모품별 교체 주기와 잔여 거리', en: 'Replacement interval and remaining distance per part', vn: 'Chu kỳ thay thế và số km còn lại' },
-  { src: '/assets/shot-sos.png', ko: '긴급 SOS — 베트남 긴급번호와 통역 연결', en: 'Emergency SOS — Vietnam hotlines and interpreter', vn: 'SOS khẩn cấp — số nóng Việt Nam và phiên dịch' },
-];
-
-export function renderHome({ lang, t, latestNews }) {
-  const shotAlt = (s) => s[lang] || s.en;
+/**
+ * @param {Array<{src: string, alt: string}>} o.shots  build.mjs가 언어별로 해석해 넘김
+ *   (첫 번째 항목이 히어로 이미지로도 쓰임)
+ */
+export function renderHome({ lang, t, latestNews, shots: shotList }) {
+  const heroShot = shotList[0];
 
   const features = t.features.map(
     (f) => `<li class="feature">
@@ -17,10 +15,10 @@ export function renderHome({ lang, t, latestNews }) {
   </li>`
   ).join('\n');
 
-  const shots = SHOTS.map(
+  const shots = shotList.map(
     (s, i) => `<figure class="shot">
-    <img src="${esc(s.src)}" alt="${esc(shotAlt(s))}" loading="${i === 0 ? 'eager' : 'lazy'}" width="300" height="650">
-    <figcaption>${esc(shotAlt(s))}</figcaption>
+    <img src="${esc(s.src)}" alt="${esc(s.alt)}" loading="${i === 0 ? 'eager' : 'lazy'}" width="300" height="650">
+    <figcaption>${esc(s.alt)}</figcaption>
   </figure>`
   ).join('\n');
 
@@ -49,7 +47,7 @@ export function renderHome({ lang, t, latestNews }) {
       <a class="link-arrow" href="${esc(localizedPath('/news', lang))}">${esc(t.heroCtaNews)} →</a>
     </div>
     <div class="hero-shot">
-      <img src="/assets/shot-home.png" alt="${esc(shotAlt(SHOTS[0]))}" width="320" height="693" fetchpriority="high">
+      <img src="${esc(heroShot.src)}" alt="${esc(heroShot.alt)}" width="320" height="693" fetchpriority="high">
     </div>
   </div>
 </section>
