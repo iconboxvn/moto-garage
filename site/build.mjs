@@ -197,9 +197,9 @@ async function main() {
 
   // dist/assets 파일 목록 → 언어별 스크린샷 해석
   const assetFiles = new Set(await fs.readdir(path.join(DIST, 'assets')));
-  // 언어별 스크린샷 구성. VN은 SOS 화면 번역이 아직 안 돼서 3번째를 뉴스로 대체.
-  // 새 언어 이미지를 넣으려면 site/static/shot-<key>-<lang>.png 추가 후 여기 배열만 조정.
-  const SHOT_LAYOUT = { ko: ['home', 'consumables', 'sos'], en: ['home', 'consumables', 'sos'], vn: ['home', 'consumables', 'news'] };
+  // 언어별 스크린샷 구성. 새 언어 이미지를 넣으려면
+  // site/static/shot-<key>-<lang>.png 추가 후 여기 배열만 조정.
+  const SHOT_LAYOUT = { ko: ['home', 'consumables', 'sos'], en: ['home', 'consumables', 'sos'], vn: ['home', 'consumables', 'sos'] };
   const resolveShots = (lang) => {
     const t = STRINGS[lang];
     return (SHOT_LAYOUT[lang] || SHOT_LAYOUT.ko).map((key) => {
