@@ -1,0 +1,54 @@
+name: Deploy marketing site
+
+# ridemate.iconbox.com (Firebase Hosting) 정적 사이트를 빌드/배포한다.
+#  - 매일 04:10 (Asia/Ho_Chi_Minh) — brandNews 수집(03:00) 이후 최신 소식 반영
+#  - site/ 또는 이 워크플로 변경을 main에 push할 때
+#  - 수동 실행(workflow_dispatch)
+#
+# 빌드는 Firestore를 공개 REST로 읽으므로 자격증명 불필요.
+# 배포에만 서비스 계정 JSON 시크릿이 필요: FIREBASE_SERVICE_ACCOUNT_MOTO_GARAGE
+
+on:
+  schedule:
+    - cron: '10 21 * * *'   # 21:10 UTC = 04:10 Asia/Ho_Chi_Minh
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/deploy-site.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Build site
+        working-directory: site
+        env:
+          SITE_LANGS: ko,en,vn
+        run: |
+          npm ci
+          node build.mjs
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MOTO_GARAGE }}
+          projectId: moto-garage-8da30
+          channelId: live

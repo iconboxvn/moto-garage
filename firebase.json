@@ -3,11 +3,21 @@
     "rules": "firestore.rules"
   },
   "hosting": {
-    "public": "landing",
+    "public": "site/dist",
+    "cleanUrls": true,
+    "trailingSlash": true,
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "/assets/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=604800" }
+        ]
+      }
     ]
   },
   "functions": [

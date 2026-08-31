@@ -1,0 +1,13 @@
+{
+  "name": "ridemate-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ridemate 홍보 웹사이트 정적 생성기 (ridemate.iconbox.com)",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}

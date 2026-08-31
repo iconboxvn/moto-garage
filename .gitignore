@@ -1,4 +1,5 @@
 node_modules/
+site/dist/
 android/app/build/
 android/.gradle/
 android/build/
