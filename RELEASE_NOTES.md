@@ -10,6 +10,28 @@
 - 🐛 라이딩 거리 오기록 수정 — 장거리 이동 중 앱이 오랜 시간 백그라운드에 있다가
   재개될 때, GPS 신호 공백 구간이 실제보다 훨씬 큰 거리(수백 km)로 잘못 더해지던
   문제 수정. 60초 넘는 GPS 공백 구간과 시간이 역전된 GPS 포인트는 거리 누적에서 제외
+- 📝 스토어 등록정보: 앱 이름을 "Ridemate: 오토바이 관리 도우미"(KO) / "Ridemate:
+  Bike Maintenance"(EN) / "Ridemate: Bảo dưỡng xe máy"(VN)로 변경, 베트남어 스크린샷 교체
+
+### Play 스토어 출시 노트 (사용자용, 언어별)
+
+**ko-KR**
+```
+• 홈 화면에서 최신 바이크 소식(리콜·정비 팁)을 바로 확인할 수 있어요
+• 라이딩 거리 기록 정확도 개선 — 장거리 이동 중 앱이 오랫동안 백그라운드에 있다가 재개될 때 거리가 실제보다 크게 부풀려지던 문제를 수정했습니다
+```
+**en-US**
+```
+• The emergency SOS screen is now fully translated into English
+• See the latest bike news (recalls, maintenance tips) right on the home screen
+• Improved ride distance accuracy — fixed distances being inflated when the app stayed in the background for a long time during a long trip
+```
+**vi-VN**
+```
+• Màn hình SOS khẩn cấp nay đã có đầy đủ tiếng Việt
+• Xem tin xe máy mới nhất (triệu hồi, mẹo bảo dưỡng) ngay trên màn hình chính
+• Cải thiện độ chính xác quãng đường — sửa lỗi quãng đường bị tính phồng lên khi ứng dụng ở chế độ nền lâu trong chuyến đi dài
+```
 
 ## v3.0.7 (versionCode 31) — 2026-08-13
 
