@@ -70,3 +70,16 @@ cd android
 - [ ] `android/app/build.gradle`의 `versionCode` 증가, `versionName` 갱신했는지
 - [ ] 디버그 전용 코드(`console.log('MG2_DBGLOG...')` 등)는 `BuildConfig.DEBUG` 체크로 release에서 자동 비활성화되니 별도 제거 불필요 — 단, 새로 추가한 디버그용 코드가 있다면 이 가드를 거치는지 확인
 - [ ] Play Console 업로드 전 실제 release AAB로 한 번 더 설치 테스트 (`bundletool`로 APK 뽑아서 설치, 또는 내부 테스트 트랙 업로드)
+
+### 다음 버전(v3.0.9~)에서 반영할 것 — 2026-09-02 v3.0.8 업로드 시 Play Console 경고로 확인
+
+- [ ] **네이티브 디버그 기호 자동 포함** — v3.0.8 AAB 업로드 시 "네이티브 디버그 기호 미업로드" 경고가 떴음.
+  `android/app/build.gradle`의 `buildTypes.release`에 아래 추가하면 다음 AAB부터 심볼이 자동 포함돼
+  Play Console 네이티브 크래시 스택 트레이스가 읽기 쉬워짐 (출시 자체를 막는 건 아니라 v3.0.8은 그냥 진행함):
+  ```gradle
+  release {
+      // ...기존 설정...
+      ndk { debugSymbolLevel 'FULL' }
+  }
+  ```
+- (참고) "가독화 파일 없음" 경고는 `minifyEnabled false`라 정상 — 무시. minify 켜는 건 별도 검토 사항(Capacitor 플러그인 keep 규칙 필요, 기한 2027-02)
