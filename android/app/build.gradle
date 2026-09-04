@@ -12,8 +12,8 @@ android {
         applicationId "com.iconbox.motogarage"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 33
-        versionName "3.0.8"
+        versionCode 34
+        versionName "3.0.9"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -34,6 +34,11 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // 네이티브 디버그 기호를 AAB에 포함 — Play Console 네이티브 크래시 스택 트레이스 심볼라이즈용
+            // (v3.0.8 업로드 시 "네이티브 디버그 기호 미업로드" 경고로 확인됨)
+            ndk {
+                debugSymbolLevel 'FULL'
+            }
         }
     }
     buildFeatures {

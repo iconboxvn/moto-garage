@@ -73,13 +73,9 @@ cd android
 
 ### 다음 버전(v3.0.9~)에서 반영할 것 — 2026-09-02 v3.0.8 업로드 시 Play Console 경고로 확인
 
-- [ ] **네이티브 디버그 기호 자동 포함** — v3.0.8 AAB 업로드 시 "네이티브 디버그 기호 미업로드" 경고가 떴음.
-  `android/app/build.gradle`의 `buildTypes.release`에 아래 추가하면 다음 AAB부터 심볼이 자동 포함돼
-  Play Console 네이티브 크래시 스택 트레이스가 읽기 쉬워짐 (출시 자체를 막는 건 아니라 v3.0.8은 그냥 진행함):
-  ```gradle
-  release {
-      // ...기존 설정...
-      ndk { debugSymbolLevel 'FULL' }
-  }
-  ```
+- [x] **네이티브 디버그 기호 자동 포함** — v3.0.9(versionCode 34)에 반영 완료.
+  `android/app/build.gradle`의 `buildTypes.release`에 `ndk { debugSymbolLevel 'FULL' }` 추가.
+  단, 이 앱은 자체 네이티브 코드가 없고 `.so`가 전부 프리빌트(스트립됨)라 실제 AAB에 포함되는
+  심볼은 없음 — 설정만 켜둔 상태(향후 네이티브 코드 생기면 자동 적용). Play Console 경고가
+  다음 업로드에도 그대로 뜨면 이 앱 특성상 무시 가능.
 - (참고) "가독화 파일 없음" 경고는 `minifyEnabled false`라 정상 — 무시. minify 켜는 건 별도 검토 사항(Capacitor 플러그인 keep 규칙 필요, 기한 2027-02)
