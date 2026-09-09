@@ -1255,6 +1255,65 @@ function todayStr(){ return new Date().toISOString().split('T')[0]; }
 function yesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
 
 // ═══════════════════════════════════════════
+//  앱 평가 요청 (Google Play In-App Review)
+// ═══════════════════════════════════════════
+// 구글이 다이얼로그 노출을 세게 조인다(사용자당 수개월에 1회 수준). 호출해도
+// 조용히 안 뜰 수 있고, 노출/평가 여부는 API가 알려주지 않으므로 후속 처리 없음.
+// 좋은 순간(정비 이력 2건째 저장, 라이딩 요약 닫기)에만 호출 + 자체 90일 쿨다운.
+var _REVIEW_ASKED_KEY  = 'mg2-review-asked';       // 마지막 요청 시각(ms)
+var _REVIEW_FIRST_KEY  = 'mg2-review-first-seen';  // 최초 실행 시각(ms)
+var _REVIEW_OPENS_KEY  = 'mg2-review-opens';       // 앱 실행 횟수
+var _REVIEW_MIN_DAYS   = 5;
+var _REVIEW_MIN_OPENS  = 3;
+var _REVIEW_COOLDOWN_MS = 90 * 86400000;
+var _reviewPendingAfterSummary = false;
+
+(function _reviewTrackOpen(){
+  try{
+    if(!localStorage.getItem(_REVIEW_FIRST_KEY)) localStorage.setItem(_REVIEW_FIRST_KEY, String(Date.now()));
+    var n = (parseInt(localStorage.getItem(_REVIEW_OPENS_KEY), 10) || 0) + 1;
+    localStorage.setItem(_REVIEW_OPENS_KEY, String(n));
+  }catch(e){}
+})();
+
+function _reviewEngaged(){
+  try{
+    var first = parseInt(localStorage.getItem(_REVIEW_FIRST_KEY), 10) || Date.now();
+    var opens = parseInt(localStorage.getItem(_REVIEW_OPENS_KEY), 10) || 0;
+    return (Date.now() - first >= _REVIEW_MIN_DAYS * 86400000) && (opens >= _REVIEW_MIN_OPENS);
+  }catch(e){ return false; }
+}
+
+function _maybeAskReview(reason){
+  var IAR = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppReview;
+  if(!IAR) return;                                   // 브라우저 / 플러그인 없음
+  if(!_reviewEngaged()) return;                      // 최소 사용량 미달
+  try{
+    var last = parseInt(localStorage.getItem(_REVIEW_ASKED_KEY), 10) || 0;
+    if(last && Date.now() - last < _REVIEW_COOLDOWN_MS) return;  // 90일 쿨다운
+  }catch(e){}
+  if(document.querySelector('.modal-overlay.open')) return;      // 다른 UI 방해 금지
+  IAR.requestReview().then(function(){
+    try{ localStorage.setItem(_REVIEW_ASKED_KEY, String(Date.now())); }catch(e){}
+    logAnalyticsEvent('review_prompt_shown', { reason: reason || '' });
+  }).catch(function(err){ console.warn('[review] requestReview 실패', err); });
+}
+
+function _reviewAfterMaint(){
+  if((D.history || []).length < 2) return;
+  setTimeout(function(){ _maybeAskReview('maint'); }, 900);
+}
+function _reviewAfterRide(){
+  setTimeout(function(){ _maybeAskReview('ride'); }, 600);
+}
+
+// 더보기 → 앱 평가하기 (수동, 항상 동작)
+function openPlayStoreListing(){
+  try{ closeModal('m-more'); }catch(e){}
+  window.open('https://play.google.com/store/apps/details?id=com.iconbox.motogarage', '_system');
+}
+
+// ═══════════════════════════════════════════
 //  소모품 기본 데이터
 // ═══════════════════════════════════════════
 // ─────────────────────────────────────────
@@ -1968,9 +2027,12 @@ function openModal(id){
   document.getElementById(id).classList.add('open');
   if(id==='m-bike') resetBikeModal();
 }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='m-ride-summary' && _reviewPendingAfterSummary){ _reviewPendingAfterSummary=false; _reviewAfterRide(); }
+}
 document.querySelectorAll('.modal-overlay').forEach(m=>{
-  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+  m.addEventListener('click',e=>{ if(e.target===m) closeModal(m.id); });
 });
 
 // ═══════════════════════════════════════════
@@ -2919,6 +2981,7 @@ function saveConsumable(){
   scheduleConsumableAlerts();
   showToast(`✓ ${c.name} 교체 기록이 저장됐습니다`);
   logAnalyticsEvent('consumable_updated', {consumable_name:c.name});
+  _reviewAfterMaint();
 }
 
 // 점검했지만 교체는 안 한 경우 — lastKm을 현재 주행거리로 완전히 리셋하는 대신
@@ -2962,6 +3025,7 @@ function saveConsumCheck(){
   scheduleConsumableAlerts();
   showToast(`✓ ${c.name} 점검 기록이 저장됐습니다`);
   logAnalyticsEvent('consumable_checked', {consumable_name:c.name});
+  _reviewAfterMaint();
 }
 
 // 소모품 수정
@@ -3048,6 +3112,7 @@ function saveExtra(){
   } else { D.history.push({id:Date.now(),...record}); }
   save(); closeModal('m-extra'); renderExtraSection(); renderDash();
   showToast('✓ 정비 기록이 저장됐습니다');
+  _reviewAfterMaint();
 }
 
 // ═══════════════════════════════════════════
@@ -4703,7 +4768,10 @@ function stopRiding(customMsg, skipSummary) {
   showToast(customMsg || '■ 라이딩 종료');
   if (summary) {
     var savedRide = saveRideRecord(summary);
-    if (!skipSummary) showRideSummary(summary);
+    if (!skipSummary) {
+      _reviewPendingAfterSummary = !!(savedRide && savedRide.distanceKm >= 3);  // 요약 닫을 때 평가 요청
+      showRideSummary(summary);
+    }
     if (savedRide && VISITED_PLACES_ENABLED) _startVisitedPoiFlow(savedRide);
   }
 }
@@ -7177,6 +7245,9 @@ function renderMedicalCard(){
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');openCharacterCardModal();">
         <img src="./assets/status/status_1_happy.png" class="more-tile-icon" style="width:28px;height:28px;margin:0 auto 8px;" alt=""><span class="more-tile-label">캐릭터 카드</span>
+      </div>
+      <div class="more-sheet-tile" onclick="openPlayStoreListing();">
+        <span class="more-tile-icon">⭐</span><span class="more-tile-label">앱 평가하기</span>
       </div>
     </div>
   </div>

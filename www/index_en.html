@@ -1213,6 +1213,66 @@ function todayStr(){ return new Date().toISOString().split('T')[0]; }
 function yesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
 
 // ═══════════════════════════════════════════
+//  In-app review request (Google Play In-App Review)
+// ═══════════════════════════════════════════
+// Google throttles the dialog hard (roughly once per user every few months).
+// A call may silently show nothing, and the API never reports whether it was
+// shown or reviewed — so no follow-up. Only fire at good moments (2nd
+// maintenance record saved, ride summary closed) plus a 90-day local cooldown.
+var _REVIEW_ASKED_KEY  = 'mg2-review-asked';       // last request time (ms)
+var _REVIEW_FIRST_KEY  = 'mg2-review-first-seen';  // first launch time (ms)
+var _REVIEW_OPENS_KEY  = 'mg2-review-opens';       // app open count
+var _REVIEW_MIN_DAYS   = 5;
+var _REVIEW_MIN_OPENS  = 3;
+var _REVIEW_COOLDOWN_MS = 90 * 86400000;
+var _reviewPendingAfterSummary = false;
+
+(function _reviewTrackOpen(){
+  try{
+    if(!localStorage.getItem(_REVIEW_FIRST_KEY)) localStorage.setItem(_REVIEW_FIRST_KEY, String(Date.now()));
+    var n = (parseInt(localStorage.getItem(_REVIEW_OPENS_KEY), 10) || 0) + 1;
+    localStorage.setItem(_REVIEW_OPENS_KEY, String(n));
+  }catch(e){}
+})();
+
+function _reviewEngaged(){
+  try{
+    var first = parseInt(localStorage.getItem(_REVIEW_FIRST_KEY), 10) || Date.now();
+    var opens = parseInt(localStorage.getItem(_REVIEW_OPENS_KEY), 10) || 0;
+    return (Date.now() - first >= _REVIEW_MIN_DAYS * 86400000) && (opens >= _REVIEW_MIN_OPENS);
+  }catch(e){ return false; }
+}
+
+function _maybeAskReview(reason){
+  var IAR = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppReview;
+  if(!IAR) return;                                   // browser / plugin missing
+  if(!_reviewEngaged()) return;                      // not enough usage yet
+  try{
+    var last = parseInt(localStorage.getItem(_REVIEW_ASKED_KEY), 10) || 0;
+    if(last && Date.now() - last < _REVIEW_COOLDOWN_MS) return;  // 90-day cooldown
+  }catch(e){}
+  if(document.querySelector('.modal-overlay.open')) return;      // don't interrupt other UI
+  IAR.requestReview().then(function(){
+    try{ localStorage.setItem(_REVIEW_ASKED_KEY, String(Date.now())); }catch(e){}
+    logAnalyticsEvent('review_prompt_shown', { reason: reason || '' });
+  }).catch(function(err){ console.warn('[review] requestReview failed', err); });
+}
+
+function _reviewAfterMaint(){
+  if((D.history || []).length < 2) return;
+  setTimeout(function(){ _maybeAskReview('maint'); }, 900);
+}
+function _reviewAfterRide(){
+  setTimeout(function(){ _maybeAskReview('ride'); }, 600);
+}
+
+// More menu -> Rate the app (manual, always works)
+function openPlayStoreListing(){
+  try{ closeModal('m-more'); }catch(e){}
+  window.open('https://play.google.com/store/apps/details?id=com.iconbox.motogarage', '_system');
+}
+
+// ═══════════════════════════════════════════
 //  소모품 기본 데이터
 // ═══════════════════════════════════════════
 // ─────────────────────────────────────────
@@ -1685,9 +1745,12 @@ function openModal(id){
   document.getElementById(id).classList.add('open');
   if(id==='m-bike') resetBikeModal();
 }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='m-ride-summary' && _reviewPendingAfterSummary){ _reviewPendingAfterSummary=false; _reviewAfterRide(); }
+}
 document.querySelectorAll('.modal-overlay').forEach(m=>{
-  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+  m.addEventListener('click',e=>{ if(e.target===m) closeModal(m.id); });
 });
 
 // ═══════════════════════════════════════════
@@ -2551,6 +2614,7 @@ function saveConsumable(){
   scheduleConsumableAlerts();
   showToast(`✓ ${c.name} replacement recorded`);
   logAnalyticsEvent('consumable_updated', {consumable_name:c.name});
+  _reviewAfterMaint();
 }
 
 // Checked but not replaced — instead of resetting lastKm all the way to the current
@@ -2595,6 +2659,7 @@ function saveConsumCheck(){
   scheduleConsumableAlerts();
   showToast(`✓ ${c.name} check recorded`);
   logAnalyticsEvent('consumable_checked', {consumable_name:c.name});
+  _reviewAfterMaint();
 }
 
 // 소모품 수정
@@ -2683,6 +2748,7 @@ function saveExtra(){
   } else { D.history.push({id:Date.now(),...record}); }
   save(); closeModal('m-extra'); renderExtraSection(); renderDash();
   showToast('✓ Maintenance record saved');
+  _reviewAfterMaint();
 }
 
 // ═══════════════════════════════════════════
@@ -4562,7 +4628,10 @@ function stopRiding(customMsg, skipSummary) {
   showToast(customMsg || '■ Riding stopped');
   if (summary) {
     var savedRide = saveRideRecord(summary);
-    if (!skipSummary) showRideSummary(summary);
+    if (!skipSummary) {
+      _reviewPendingAfterSummary = !!(savedRide && savedRide.distanceKm >= 3);  // ask for review when summary is closed
+      showRideSummary(summary);
+    }
     if (savedRide && VISITED_PLACES_ENABLED) _startVisitedPoiFlow(savedRide);
   }
 }
@@ -6688,6 +6757,9 @@ function renderMedicalCard(){
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');openCharacterCardModal();">
         <img src="./assets/status/status_1_happy.png" class="more-tile-icon" style="width:28px;height:28px;margin:0 auto 8px;" alt=""><span class="more-tile-label">Character Card</span>
+      </div>
+      <div class="more-sheet-tile" onclick="openPlayStoreListing();">
+        <span class="more-tile-icon">⭐</span><span class="more-tile-label">Rate the app</span>
       </div>
     </div>
   </div>

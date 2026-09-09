@@ -1213,6 +1213,66 @@ function todayStr(){ return new Date().toISOString().split('T')[0]; }
 function yesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
 
 // ═══════════════════════════════════════════
+//  Yêu cầu đánh giá ứng dụng (Google Play In-App Review)
+// ═══════════════════════════════════════════
+// Google giới hạn hộp thoại rất chặt (khoảng vài tháng một lần cho mỗi người dùng).
+// Gọi hàm có thể không hiển thị gì, và API không cho biết đã hiển thị hay đã đánh giá
+// hay chưa — nên không có xử lý tiếp theo. Chỉ kích hoạt vào thời điểm tốt (lưu bản
+// ghi bảo dưỡng thứ 2, đóng tóm tắt chuyến đi) kèm thời gian chờ 90 ngày.
+var _REVIEW_ASKED_KEY  = 'mg2-review-asked';       // thời điểm yêu cầu gần nhất (ms)
+var _REVIEW_FIRST_KEY  = 'mg2-review-first-seen';  // thời điểm mở app lần đầu (ms)
+var _REVIEW_OPENS_KEY  = 'mg2-review-opens';       // số lần mở app
+var _REVIEW_MIN_DAYS   = 5;
+var _REVIEW_MIN_OPENS  = 3;
+var _REVIEW_COOLDOWN_MS = 90 * 86400000;
+var _reviewPendingAfterSummary = false;
+
+(function _reviewTrackOpen(){
+  try{
+    if(!localStorage.getItem(_REVIEW_FIRST_KEY)) localStorage.setItem(_REVIEW_FIRST_KEY, String(Date.now()));
+    var n = (parseInt(localStorage.getItem(_REVIEW_OPENS_KEY), 10) || 0) + 1;
+    localStorage.setItem(_REVIEW_OPENS_KEY, String(n));
+  }catch(e){}
+})();
+
+function _reviewEngaged(){
+  try{
+    var first = parseInt(localStorage.getItem(_REVIEW_FIRST_KEY), 10) || Date.now();
+    var opens = parseInt(localStorage.getItem(_REVIEW_OPENS_KEY), 10) || 0;
+    return (Date.now() - first >= _REVIEW_MIN_DAYS * 86400000) && (opens >= _REVIEW_MIN_OPENS);
+  }catch(e){ return false; }
+}
+
+function _maybeAskReview(reason){
+  var IAR = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppReview;
+  if(!IAR) return;                                   // trình duyệt / không có plugin
+  if(!_reviewEngaged()) return;                      // chưa dùng đủ nhiều
+  try{
+    var last = parseInt(localStorage.getItem(_REVIEW_ASKED_KEY), 10) || 0;
+    if(last && Date.now() - last < _REVIEW_COOLDOWN_MS) return;  // chờ 90 ngày
+  }catch(e){}
+  if(document.querySelector('.modal-overlay.open')) return;      // không làm gián đoạn UI khác
+  IAR.requestReview().then(function(){
+    try{ localStorage.setItem(_REVIEW_ASKED_KEY, String(Date.now())); }catch(e){}
+    logAnalyticsEvent('review_prompt_shown', { reason: reason || '' });
+  }).catch(function(err){ console.warn('[review] requestReview lỗi', err); });
+}
+
+function _reviewAfterMaint(){
+  if((D.history || []).length < 2) return;
+  setTimeout(function(){ _maybeAskReview('maint'); }, 900);
+}
+function _reviewAfterRide(){
+  setTimeout(function(){ _maybeAskReview('ride'); }, 600);
+}
+
+// Menu Thêm -> Đánh giá ứng dụng (thủ công, luôn hoạt động)
+function openPlayStoreListing(){
+  try{ closeModal('m-more'); }catch(e){}
+  window.open('https://play.google.com/store/apps/details?id=com.iconbox.motogarage', '_system');
+}
+
+// ═══════════════════════════════════════════
 //  소모품 기본 데이터
 // ═══════════════════════════════════════════
 // ─────────────────────────────────────────
@@ -1685,9 +1745,12 @@ function openModal(id){
   document.getElementById(id).classList.add('open');
   if(id==='m-bike') resetBikeModal();
 }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='m-ride-summary' && _reviewPendingAfterSummary){ _reviewPendingAfterSummary=false; _reviewAfterRide(); }
+}
 document.querySelectorAll('.modal-overlay').forEach(m=>{
-  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+  m.addEventListener('click',e=>{ if(e.target===m) closeModal(m.id); });
 });
 
 // ═══════════════════════════════════════════
@@ -2551,6 +2614,7 @@ function saveConsumable(){
   scheduleConsumableAlerts();
   showToast(`✓ Đã lưu nhật ký thay ${c.name}`);
   logAnalyticsEvent('consumable_updated', {consumable_name:c.name});
+  _reviewAfterMaint();
 }
 
 // Đã kiểm tra nhưng chưa thay — thay vì đặt lại lastKm về đúng số km hiện tại, chỉ đẩy
@@ -2594,6 +2658,7 @@ function saveConsumCheck(){
   scheduleConsumableAlerts();
   showToast(`✓ Đã lưu kết quả kiểm tra ${c.name}`);
   logAnalyticsEvent('consumable_checked', {consumable_name:c.name});
+  _reviewAfterMaint();
 }
 
 // 소모품 수정
@@ -2682,6 +2747,7 @@ function saveExtra(){
   } else { D.history.push({id:Date.now(),...record}); }
   save(); closeModal('m-extra'); renderExtraSection(); renderDash();
   showToast('✓ Đã lưu nhật ký bảo dưỡng');
+  _reviewAfterMaint();
 }
 
 // ═══════════════════════════════════════════
@@ -4561,7 +4627,10 @@ function stopRiding(customMsg, skipSummary) {
   showToast(customMsg || '■ Kết thúc chuyến đi');
   if (summary) {
     var savedRide = saveRideRecord(summary);
-    if (!skipSummary) showRideSummary(summary);
+    if (!skipSummary) {
+      _reviewPendingAfterSummary = !!(savedRide && savedRide.distanceKm >= 3);  // xin đánh giá khi đóng tóm tắt
+      showRideSummary(summary);
+    }
     if (savedRide && VISITED_PLACES_ENABLED) _startVisitedPoiFlow(savedRide);
   }
 }
@@ -6684,6 +6753,9 @@ function renderMedicalCard(){
       </div>
       <div class="more-sheet-tile" onclick="closeModal('m-more');openCharacterCardModal();">
         <img src="./assets/status/status_1_happy.png" class="more-tile-icon" style="width:28px;height:28px;margin:0 auto 8px;" alt=""><span class="more-tile-label">Thẻ nhân vật</span>
+      </div>
+      <div class="more-sheet-tile" onclick="openPlayStoreListing();">
+        <span class="more-tile-icon">⭐</span><span class="more-tile-label">Đánh giá ứng dụng</span>
       </div>
     </div>
   </div>
