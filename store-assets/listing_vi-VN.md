@@ -104,8 +104,13 @@ Tải Ridemate và bắt đầu quản lý chiếc xe máy của bạn ngay hôm
 
 ## 5. 반영 시 체크리스트
 
-- [ ] vi-VN 스토어 등록정보에 위 3개 필드 입력 (Play Console가 글자 수 실시간 표시 — 초과 시 짧은 설명부터 조정)
+- [x] vi-VN 스토어 등록정보에 위 3개 필드 입력 (2026-09-10 반영 요청 완료)
 - [ ] KO/EN 등록정보도 같은 구조로 키워드 보강 여부 검토
 - [ ] "데이터 보안" 섹션과 설명이 일치하는지 확인 (SMS/위치 = 기기 내 저장, 광고 수집 없음)
-- [ ] 베트남어 스크린샷 5장 교체 (`store-assets/screenshots/vi_*.png`)
+- [x] 베트남어 스크린샷 5장 (`store-assets/screenshots/vi_01~05.png`, commit d7f51f0) — Play Console 업로드 대기
 - [ ] 변경 후 `RELEASE_NOTES.md`에 등록정보 변경 기록 (기존 관행)
+
+### 스크린샷 캡처 방법 (재현용)
+`adb exec-out screencap -p > raw.png` → 상단 185px(상태바) + 하단(y=2600 아래, 안드로이드 네비바)
+크롭 → 1080폭 리사이즈. 기기: 1268×2756. 앱 언어 Tiếng Việt + 샘플 차량.
+정비이력은 다른 폰 데이터 import 시 설명/시각이 한국어로 저장돼 있으니 주의(옵션1: 보이는 항목만 desc 수정).
