@@ -2261,8 +2261,9 @@ function renderBikes(){
         <input type="number" class="num-input-styled" id="odo-input-${b.id}" value="${b.odometer}" style="width:150px;">
         <span style="font-size:14px;color:var(--text-dim);">km</span>
         <button class="btn btn-primary" onclick="updateOdometer(${b.id})">업데이트</button>
+        <button class="btn btn-sm" onclick="scanOdometerPhoto(${b.id})">📷 사진으로 읽기</button>
       </div>
-      <div style="font-size:13px;color:var(--text-muted);margin-top:7px;">계기판의 현재 누적 주행거리를 입력하세요</div>
+      <div id="odo-scan-status-${b.id}" style="font-size:13px;color:var(--text-muted);margin-top:7px;">계기판의 현재 누적 주행거리를 입력하세요</div>
     </div>
     <div class="ins-section">
       <div class="ins-header" onclick="toggleInsSection(${b.id})">
@@ -3839,6 +3840,62 @@ function updateOdometer(bikeId){
   bike.odometer=newKm; save(); renderBikes(); renderDash();
   scheduleConsumableAlerts();
   showToast(`✓ ${bike.brand} ${bike.model} · ${newKm.toLocaleString()} km 업데이트됐습니다`);
+}
+
+// 계기판 사진으로 누적 주행거리(오도미터) 자동 인식. 절대 바로 저장하지 않고 입력창에
+// 채워넣기만 함 — 오독 한 번이 이후 모든 소모품 계산을 틀리게 만들 수 있어서 사용자가
+// 직접 확인 후 "업데이트"를 눌러야 반영됨(updateOdometer()의 하락값 확인도 그대로 적용).
+async function scanOdometerPhoto(bikeId){
+  const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  const statusEl=document.getElementById('odo-scan-status-'+bikeId);
+  try{
+    const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
+    if(!Camera){ showToast('카메라를 사용할 수 없습니다'); return; }
+    const photo=await Camera.getPhoto({quality:85, allowEditing:false, resultType:'base64', source:'PROMPT'});
+    if(statusEl) statusEl.textContent='📷 사진 분석 중...';
+    logAnalyticsEvent('odometer_scan_used', {});
+    const prompt=`이 사진은 오토바이 계기판(대시보드) 사진입니다. 누적 주행거리(오도미터, ODO — 트립미터/TRIP 아님)를 읽어주세요.
+
+아래 JSON 형식으로만 답하세요. 다른 텍스트 없이 JSON만:
+{"odometer": 숫자 또는 null, "confidence": "high"|"low", "note": "짧은 설명(읽기 어려웠던 이유 등, 없으면 빈 문자열)"}
+
+주의:
+- 트립미터(TRIP A/B, 짧은 구간 거리)가 아니라 반드시 누적 총주행거리(ODO)를 읽으세요. 화면에 숫자가 여러 개면 자릿수가 더 많고 트립 버튼으로 리셋되지 않는 쪽입니다.
+- 숫자가 불명확하거나 흐릿하거나 계기판이 잘 안 보이면 odometer를 null로, confidence를 "low"로 하고 note에 이유를 적으세요.
+- mile 단위로 보이면 note에 그렇게 적어주세요(km 변환은 하지 마세요).`;
+    const res=await fetch(ANTHROPIC_PROXY, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:300,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image', source:{type:'base64', media_type:'image/jpeg', data:photo.base64String}},
+            {type:'text', text:prompt}
+          ]
+        }]
+      })
+    });
+    const data=await res.json();
+    const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
+    let parsed=null;
+    try{ parsed=JSON.parse(text.replace(/```json|```/g,'').trim()); }catch(e){ console.warn('[OdoScan] JSON 파싱 실패, 텍스트:', text); }
+    if(parsed && typeof parsed.odometer==='number' && parsed.confidence==='high'){
+      document.getElementById('odo-input-'+bikeId).value=Math.round(parsed.odometer);
+      if(statusEl) statusEl.textContent='✓ '+Math.round(parsed.odometer).toLocaleString()+' km 인식됐어요 — 확인 후 업데이트를 눌러주세요';
+    }else if(parsed && typeof parsed.odometer==='number'){
+      // 자신 없는 값은 입력창에 채우지 않고 참고용으로만 보여줌(오독이 그대로 저장되는 사고 방지)
+      if(statusEl) statusEl.textContent='🤔 '+Math.round(parsed.odometer).toLocaleString()+' km 정도로 보이는데 확실하지 않아요 — 맞으면 직접 입력해주세요';
+    }else{
+      if(statusEl) statusEl.textContent='😕 숫자를 읽지 못했어요'+(parsed&&parsed.note?' ('+parsed.note+')':'')+' — 직접 입력해주세요';
+    }
+  }catch(err){
+    if(err && err.message==='User cancelled photos app'){ if(statusEl) statusEl.textContent='계기판의 현재 누적 주행거리를 입력하세요'; return; }
+    console.warn('[OdoScan] 오류', err);
+    if(statusEl) statusEl.textContent='😕 지금은 인식할 수 없어요 — 직접 입력해주세요';
+  }
 }
 
 // ═══════════════════════════════════════════

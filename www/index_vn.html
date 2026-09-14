@@ -1978,8 +1978,9 @@ function renderBikes(){
         <input type="number" class="num-input-styled" id="odo-input-${b.id}" value="${b.odometer}" style="width:150px;">
         <span style="font-size:14px;color:var(--text-dim);">km</span>
         <button class="btn btn-primary" onclick="updateOdometer(${b.id})">Cập nhật</button>
+        <button class="btn btn-sm" onclick="scanOdometerPhoto(${b.id})">📷 Đọc từ ảnh</button>
       </div>
-      <div style="font-size:13px;color:var(--text-muted);margin-top:7px;">Nhập số km hiện tại trên đồng hồ công tơ mét</div>
+      <div id="odo-scan-status-${b.id}" style="font-size:13px;color:var(--text-muted);margin-top:7px;">Nhập số km hiện tại trên đồng hồ công tơ mét</div>
     </div>
     <div class="ins-section">
       <div class="ins-header" onclick="toggleInsSection(${b.id})">
@@ -3469,6 +3470,62 @@ function updateOdometer(bikeId){
   bike.odometer=newKm; save(); renderBikes(); renderDash();
   scheduleConsumableAlerts();
   showToast(`✓ ${bike.brand} ${bike.model} · ${newKm.toLocaleString()} km đã cập nhật`);
+}
+
+// Đọc số công tơ mét từ ảnh đồng hồ. Không lưu trực tiếp — chỉ điền vào ô nhập, vì
+// đọc sai một lần sẽ làm sai toàn bộ tính toán chu kỳ bảo dưỡng sau đó. Người dùng
+// vẫn phải xem lại và bấm "Cập nhật" (vẫn giữ nguyên xác nhận khi số thấp hơn hiện tại).
+async function scanOdometerPhoto(bikeId){
+  const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  const statusEl=document.getElementById('odo-scan-status-'+bikeId);
+  try{
+    const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
+    if(!Camera){ showToast('Không thể sử dụng camera'); return; }
+    const photo=await Camera.getPhoto({quality:85, allowEditing:false, resultType:'base64', source:'PROMPT'});
+    if(statusEl) statusEl.textContent='📷 Đang phân tích ảnh...';
+    logAnalyticsEvent('odometer_scan_used', {});
+    const prompt=`Đây là ảnh chụp đồng hồ táp lô (bảng đồng hồ) xe máy. Hãy đọc tổng số km đã đi (công tơ mét, ODO — không phải TRIP).
+
+Chỉ trả lời theo định dạng JSON sau, không thêm văn bản khác:
+{"odometer": số hoặc null, "confidence": "high"|"low", "note": "giải thích ngắn (lý do khó đọc..., để trống nếu không có)"}
+
+Lưu ý:
+- Đọc tổng số km lũy kế (ODO), không phải quãng đường chặng ngắn (TRIP A/B). Nếu có nhiều số trên màn hình, ODO là số có nhiều chữ số hơn và không bị reset bằng nút trip.
+- Nếu số không rõ, mờ, hoặc không nhìn rõ đồng hồ, hãy đặt odometer là null, confidence là "low", và giải thích lý do trong note.
+- Nếu có vẻ là đơn vị dặm (mile), ghi chú điều đó trong note (đừng tự quy đổi sang km).`;
+    const res=await fetch(ANTHROPIC_PROXY, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:300,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image', source:{type:'base64', media_type:'image/jpeg', data:photo.base64String}},
+            {type:'text', text:prompt}
+          ]
+        }]
+      })
+    });
+    const data=await res.json();
+    const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
+    let parsed=null;
+    try{ parsed=JSON.parse(text.replace(/```json|```/g,'').trim()); }catch(e){ console.warn('[OdoScan] Lỗi parse JSON, text:', text); }
+    if(parsed && typeof parsed.odometer==='number' && parsed.confidence==='high'){
+      document.getElementById('odo-input-'+bikeId).value=Math.round(parsed.odometer);
+      if(statusEl) statusEl.textContent='✓ Đã đọc được '+Math.round(parsed.odometer).toLocaleString()+' km — hãy kiểm tra rồi bấm Cập nhật';
+    }else if(parsed && typeof parsed.odometer==='number'){
+      // Độ tin cậy thấp: không điền vào ô nhập, chỉ hiển thị số đoán được (tránh lưu nhầm số đọc sai)
+      if(statusEl) statusEl.textContent='🤔 Có vẻ khoảng '+Math.round(parsed.odometer).toLocaleString()+' km nhưng không chắc chắn — nếu đúng thì hãy tự nhập';
+    }else{
+      if(statusEl) statusEl.textContent='😕 Không đọc được số'+(parsed&&parsed.note?' ('+parsed.note+')':'')+' — vui lòng nhập thủ công';
+    }
+  }catch(err){
+    if(err && err.message==='User cancelled photos app'){ if(statusEl) statusEl.textContent='Nhập số km hiện tại trên đồng hồ công tơ mét'; return; }
+    console.warn('[OdoScan] lỗi', err);
+    if(statusEl) statusEl.textContent='😕 Hiện chưa đọc được — vui lòng nhập thủ công';
+  }
 }
 
 // ═══════════════════════════════════════════

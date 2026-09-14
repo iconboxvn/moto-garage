@@ -1978,8 +1978,9 @@ function renderBikes(){
         <input type="number" class="num-input-styled" id="odo-input-${b.id}" value="${b.odometer}" style="width:150px;">
         <span style="font-size:14px;color:var(--text-dim);">km</span>
         <button class="btn btn-primary" onclick="updateOdometer(${b.id})">Update</button>
+        <button class="btn btn-sm" onclick="scanOdometerPhoto(${b.id})">📷 Read from photo</button>
       </div>
-      <div style="font-size:13px;color:var(--text-muted);margin-top:7px;">Enter the current odometer reading</div>
+      <div id="odo-scan-status-${b.id}" style="font-size:13px;color:var(--text-muted);margin-top:7px;">Enter the current odometer reading</div>
     </div>
     <div class="ins-section">
       <div class="ins-header" onclick="toggleInsSection(${b.id})">
@@ -3470,6 +3471,63 @@ function updateOdometer(bikeId){
   bike.odometer=newKm; save(); renderBikes(); renderDash();
   scheduleConsumableAlerts();
   showToast(`✓ ${bike.brand} ${bike.model} · ${newKm.toLocaleString()} km updated`);
+}
+
+// Read the odometer off a dashboard photo. Never saves directly — only fills the
+// input field, since one misread would throw off every service-interval calculation
+// after it. The user must still review and tap "Update" (which keeps its own
+// lower-than-current confirmation guard).
+async function scanOdometerPhoto(bikeId){
+  const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  const statusEl=document.getElementById('odo-scan-status-'+bikeId);
+  try{
+    const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
+    if(!Camera){ showToast('Camera is not available'); return; }
+    const photo=await Camera.getPhoto({quality:85, allowEditing:false, resultType:'base64', source:'PROMPT'});
+    if(statusEl) statusEl.textContent='📷 Analyzing photo...';
+    logAnalyticsEvent('odometer_scan_used', {});
+    const prompt=`This is a photo of a motorcycle dashboard/instrument cluster. Read the total accumulated mileage (odometer, ODO — not the trip meter/TRIP).
+
+Reply with ONLY this JSON format, no other text:
+{"odometer": number or null, "confidence": "high"|"low", "note": "short explanation (why it was hard to read, etc; empty string if none)"}
+
+Notes:
+- Read the total odometer (ODO), not the trip meter (TRIP A/B, a short-segment distance). If there are multiple numbers on screen, the odometer is the one with more digits that isn't reset by a trip button.
+- If the number is unclear, blurry, or the dashboard isn't clearly visible, set odometer to null and confidence to "low", and explain why in note.
+- If it looks like it's in miles, mention that in note (do not convert to km).`;
+    const res=await fetch(ANTHROPIC_PROXY, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:300,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image', source:{type:'base64', media_type:'image/jpeg', data:photo.base64String}},
+            {type:'text', text:prompt}
+          ]
+        }]
+      })
+    });
+    const data=await res.json();
+    const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
+    let parsed=null;
+    try{ parsed=JSON.parse(text.replace(/```json|```/g,'').trim()); }catch(e){ console.warn('[OdoScan] JSON parse failed, text:', text); }
+    if(parsed && typeof parsed.odometer==='number' && parsed.confidence==='high'){
+      document.getElementById('odo-input-'+bikeId).value=Math.round(parsed.odometer);
+      if(statusEl) statusEl.textContent='✓ Read '+Math.round(parsed.odometer).toLocaleString()+' km — please confirm and tap Update';
+    }else if(parsed && typeof parsed.odometer==='number'){
+      // Low confidence: don't fill the field, just show the guess (prevents a misread from being saved silently)
+      if(statusEl) statusEl.textContent='🤔 Looks like about '+Math.round(parsed.odometer).toLocaleString()+' km, but not sure — enter it yourself if that\'s right';
+    }else{
+      if(statusEl) statusEl.textContent='😕 Couldn\'t read the number'+(parsed&&parsed.note?' ('+parsed.note+')':'')+' — please enter it manually';
+    }
+  }catch(err){
+    if(err && err.message==='User cancelled photos app'){ if(statusEl) statusEl.textContent='Enter the current odometer reading'; return; }
+    console.warn('[OdoScan] error', err);
+    if(statusEl) statusEl.textContent='😕 Can\'t read it right now — please enter it manually';
+  }
 }
 
 // ═══════════════════════════════════════════
