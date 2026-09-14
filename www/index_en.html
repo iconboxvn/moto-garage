@@ -1727,6 +1727,7 @@ const ELECTRIC_BRAND_MODELS = {
 //  NAV
 // ═══════════════════════════════════════════
 function showPage(name,btn){
+  window.scrollTo(0,0); // fix: the previous page's scroll position used to carry over
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
