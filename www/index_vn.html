@@ -6437,6 +6437,17 @@ function copySOSLocation(){
   window.open('https://maps.google.com/?q='+sosLocationData,'_blank');
 }
 
+// 위치 기반 "가까운 병원" 검색 — 좌표가 있으면 그 지점 중심으로, 없으면 Maps 앱
+// 자체 GPS에 맡겨서(폰에서 열리므로) 검색. 하드코딩된 병원 목록보다 항상 최신+실제
+// 가까운 결과를 보여주고, 하노이 밖에서도 그대로 동작한다.
+function openNearbyHospitals(){
+  var q = encodeURIComponent('bệnh viện');
+  var url = sosLocationData
+    ? 'https://www.google.com/maps/search/' + q + '/@' + sosLocationData.replace(/\s+/g, '') + ',15z'
+    : 'https://www.google.com/maps/search/' + q;
+  window.open(url, '_system');
+}
+
 function toggleCheck(item){
   var check=item.querySelector('.sos-check');
   var checked=check.classList.toggle('checked');
@@ -7090,11 +7101,11 @@ function renderMedicalCard(){
           <div id="sos-insurance-btn"></div>
         </div>
         <div class="sos-section">
-          <div class="sos-section-title"><span class="sos-step">2</span>Bệnh viện quốc tế tại Hà Nội (Hàn·Anh)</div>
-          <a href="tel:+842439743556" class="sos-call-btn"><div><div class="sos-call-name">🏥 Vinmec International</div><div class="sos-call-sub">Có phiên dịch tiếng Hàn</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3974-3556</div></a>
-          <a href="tel:+842439275568" class="sos-call-btn"><div><div class="sos-call-name">🏥 Hong Ngoc Hospital</div><div class="sos-call-sub">Có phiên dịch tiếng Hàn</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3927-5568</div></a>
-          <a href="tel:+842438430748" class="sos-call-btn"><div><div class="sos-call-name">🏥 Family Medical Practice</div><div class="sos-call-sub">Chỉ tiếng Anh</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3843-0748</div></a>
-          <div style="font-size:11px;color:var(--text-dim);padding:6px 0;">⚠️ Ngoài Hà Nội: Sơ cứu tại bệnh viện gần nhất → chuyển về Hà Nội sau khi ổn định</div>
+          <div class="sos-section-title"><span class="sos-step">2</span>Bệnh viện gần đây</div>
+          <button class="sos-call-btn" style="border:none;font:inherit;color:inherit;text-align:left;" onclick="openNearbyHospitals()">
+            <div><div class="sos-call-name">🗺️ Tìm bệnh viện gần vị trí của tôi</div><div class="sos-call-sub">Mở Google Maps, dựa trên vị trí hiện tại</div></div>
+            <div style="font-size:20px;">→</div>
+          </button>
         </div>
         <div class="sos-section">
           <div class="sos-section-title"><span class="sos-step">3</span>Ghi lại hiện trường (để làm bảo hiểm)</div>
