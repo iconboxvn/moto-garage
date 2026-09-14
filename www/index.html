@@ -6878,11 +6878,15 @@ function openSOS() {
     insBtn.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:8px;text-align:center;">보험사 연락처를 의료 정보 카드에 등록해두세요</div>';
   }
   loadSOSLocation();
-  // 국가 판별 전에는 안전하게 "의료 정보 카드"만 보여주고, 동료 사고는 판별되면 노출
+  _sosUserPicked = null; // 매번 열 때 사용자가 직접 고른 탭 기록 초기화
+  // 홈 화면에서 이미 국가 판별이 끝났으면(_homeCountry) 그 값을 바로 시드로 써서
+  // 지연 없이 맞는 패널을 보여준다. 아직 모르면 베트남 패널을 기본값으로 우선
+  // 보여주고(주 사용자층 기준 통계적으로 맞는 기본값), 백그라운드 GPS 판별이
+  // 끝나면 필요 시 자동 보정한다. "긴급 번호가 아예 안 보이는" 상황을 없애는 게 목적
+  // — 예전엔 국가 판별 전엔 "동료 사고" 버튼 자체를 숨겼었음(2026-09-01 발견된 문제).
+  if (_sosCountry === null && typeof _homeCountry !== 'undefined' && _homeCountry) _sosCountry = _homeCountry;
   var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
-  var medicalBtn = document.querySelector('.sos-choice-btn[onclick*="medical"]');
-  if (colleagueBtn) colleagueBtn.style.display = 'none';
-  if (medicalBtn) selectSOS('medical', medicalBtn);
+  if (colleagueBtn) selectSOS('colleague', colleagueBtn, true);
   openModal('m-sos');
   _sosResolveCountry();
   logAnalyticsEvent('sos_triggered', {type:'manual'});
@@ -6897,18 +6901,23 @@ function _sosDetectCountry(lat, lon){
 }
 
 var _sosCountry = null;
+var _sosUserPicked = null; // 'colleague'|'medical' — 사용자가 직접 탭을 고르면 GPS 자동보정이 그 선택을 덮어쓰지 않게 함
 function _sosResolveCountry(){
-  if (!navigator.geolocation) return; // 의료 정보 카드 폴백 유지
+  if (!navigator.geolocation) return; // 이미 보여준 기본값(베트남 패널) 유지
   navigator.geolocation.getCurrentPosition(
     function(pos){
       _sosCountry = _sosDetectCountry(pos.coords.latitude, pos.coords.longitude);
-      if (_sosCountry === 'vn' || _sosCountry === 'kr') {
-        var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
-        if (colleagueBtn) { colleagueBtn.style.display = ''; selectSOS('colleague', colleagueBtn); }
+      if (_sosUserPicked === 'medical') return; // 사용자가 이미 직접 "의료 정보 카드"를 골랐으면 화면을 자동으로 바꾸지 않음
+      var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
+      var medicalBtn = document.querySelector('.sos-choice-btn[onclick*="medical"]');
+      if (_sosCountry === 'etc') {
+        // 제3국 — 베트남/한국 번호 둘 다 안 맞으므로 의료 정보 카드로 안전하게 전환
+        if (medicalBtn) selectSOS('medical', medicalBtn, true);
+      } else if (colleagueBtn) {
+        selectSOS('colleague', colleagueBtn, true); // vn/kr 중 맞는 패널로 다시 렌더(초기엔 베트남으로 보여줬을 수 있음)
       }
-      // 'etc'(제3국)는 현지 정보가 없으므로 의료 정보 카드 폴백을 그대로 유지
     },
-    function(){ /* 위치 실패 시에도 의료 정보 카드 폴백 유지 */ },
+    function(){ /* 위치 실패 시 이미 보여준 기본값(베트남 패널) 유지 */ },
     {timeout: 8000, maximumAge: 60000}
   );
 }
@@ -6923,7 +6932,8 @@ function goToSosSettings(){
   },150);
 }
 
-function selectSOS(type,el){
+function selectSOS(type,el,_auto){
+  if(!_auto) _sosUserPicked=type; // 사용자가 직접 누른 경우만 기록(코드가 자동으로 전환한 건 제외)
   document.querySelectorAll('.sos-choice-btn').forEach(function(b){b.classList.remove('selected');});
   el.classList.add('selected');
   var showColleague = type==='colleague';

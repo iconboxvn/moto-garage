@@ -6409,11 +6409,16 @@ function openSOS() {
     insBtn.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:8px;text-align:center;">Đăng ký liên hệ bảo hiểm trong thẻ thông tin y tế</div>';
   }
   loadSOSLocation();
-  // 국가 판별 전에는 안전하게 "의료 정보 카드"만 보여주고, 동료 사고는 판별되면 노출
+  _sosUserPicked = null; // mỗi lần mở lại, xóa tab mà người dùng đã tự chọn trước đó
+  // Nếu màn hình chính đã xác định được quốc gia rồi (_homeCountry), dùng luôn giá trị
+  // đó để hiện đúng bảng ngay lập tức. Nếu chưa biết, mặc định hiện bảng Việt Nam trước
+  // (đúng về mặt thống kê với nhóm người dùng chính của app), rồi tự động sửa lại ở nền
+  // khi GPS xác định xong. Trước đây nút "Người khác gặp nạn" bị ẩn cho đến khi xác định
+  // được quốc gia, nghĩa là không có số khẩn cấp nào hiện ra trong lúc chờ (phát hiện
+  // 2026-09-01).
+  if (_sosCountry === null && typeof _homeCountry !== 'undefined' && _homeCountry) _sosCountry = _homeCountry;
   var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
-  var medicalBtn = document.querySelector('.sos-choice-btn[onclick*="medical"]');
-  if (colleagueBtn) colleagueBtn.style.display = 'none';
-  if (medicalBtn) selectSOS('medical', medicalBtn);
+  if (colleagueBtn) selectSOS('colleague', colleagueBtn, true);
   openModal('m-sos');
   _sosResolveCountry();
   logAnalyticsEvent('sos_triggered', {type:'manual'});
@@ -6428,18 +6433,23 @@ function _sosDetectCountry(lat, lon){
 }
 
 var _sosCountry = null;
+var _sosUserPicked = null; // 'colleague'|'medical' — một khi người dùng tự chọn tab, việc tự động sửa theo GPS sẽ không ghi đè lên lựa chọn đó
 function _sosResolveCountry(){
-  if (!navigator.geolocation) return; // 의료 정보 카드 폴백 유지
+  if (!navigator.geolocation) return; // giữ nguyên bảng mặc định (Việt Nam) đang hiện
   navigator.geolocation.getCurrentPosition(
     function(pos){
       _sosCountry = _sosDetectCountry(pos.coords.latitude, pos.coords.longitude);
-      if (_sosCountry === 'vn' || _sosCountry === 'kr') {
-        var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
-        if (colleagueBtn) { colleagueBtn.style.display = ''; selectSOS('colleague', colleagueBtn); }
+      if (_sosUserPicked === 'medical') return; // người dùng đã tự chọn "Thẻ thông tin y tế" rồi — không tự động đổi màn hình nữa
+      var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
+      var medicalBtn = document.querySelector('.sos-choice-btn[onclick*="medical"]');
+      if (_sosCountry === 'etc') {
+        // Nước thứ ba — số điện thoại Việt Nam lẫn Hàn Quốc đều không đúng, chuyển an toàn sang thẻ thông tin y tế
+        if (medicalBtn) selectSOS('medical', medicalBtn, true);
+      } else if (colleagueBtn) {
+        selectSOS('colleague', colleagueBtn, true); // hiện lại đúng bảng vn/kr (lúc đầu có thể đã hiện Việt Nam theo mặc định)
       }
-      // 'etc'(제3국)는 현지 정보가 없으므로 의료 정보 카드 폴백을 그대로 유지
     },
-    function(){ /* 위치 실패 시에도 의료 정보 카드 폴백 유지 */ },
+    function(){ /* lấy vị trí thất bại — giữ nguyên bảng mặc định đang hiện */ },
     {timeout: 8000, maximumAge: 60000}
   );
 }
@@ -6454,7 +6464,8 @@ function goToSosSettings(){
   },150);
 }
 
-function selectSOS(type,el){
+function selectSOS(type,el,_auto){
+  if(!_auto) _sosUserPicked=type; // chỉ ghi nhận khi người dùng thực sự bấm (không tính lúc code tự động chuyển)
   document.querySelectorAll('.sos-choice-btn').forEach(function(b){b.classList.remove('selected');});
   el.classList.add('selected');
   var showColleague = type==='colleague';

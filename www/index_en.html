@@ -6414,11 +6414,17 @@ function openSOS() {
     insBtn.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:8px;text-align:center;">Add your insurance contact in the medical info card</div>';
   }
   loadSOSLocation();
-  // 국가 판별 전에는 안전하게 "의료 정보 카드"만 보여주고, 동료 사고는 판별되면 노출
+  _sosUserPicked = null; // reset which tab the user has explicitly picked, every time this opens
+  // If the home screen already resolved the country (_homeCountry), seed with that
+  // for an instant, correct panel with no delay. If not known yet, default to the
+  // Vietnam panel (statistically correct for this app's user base) instead of
+  // showing nothing, then auto-correct in the background once GPS resolves.
+  // Previously the "someone else is hurt" button itself was hidden until the
+  // country was confirmed, which meant no emergency numbers at all in the meantime
+  // (found 2026-09-01).
+  if (_sosCountry === null && typeof _homeCountry !== 'undefined' && _homeCountry) _sosCountry = _homeCountry;
   var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
-  var medicalBtn = document.querySelector('.sos-choice-btn[onclick*="medical"]');
-  if (colleagueBtn) colleagueBtn.style.display = 'none';
-  if (medicalBtn) selectSOS('medical', medicalBtn);
+  if (colleagueBtn) selectSOS('colleague', colleagueBtn, true);
   openModal('m-sos');
   _sosResolveCountry();
   logAnalyticsEvent('sos_triggered', {type:'manual'});
@@ -6433,18 +6439,23 @@ function _sosDetectCountry(lat, lon){
 }
 
 var _sosCountry = null;
+var _sosUserPicked = null; // 'colleague'|'medical' — once the user explicitly picks a tab, GPS auto-correction won't override it
 function _sosResolveCountry(){
-  if (!navigator.geolocation) return; // 의료 정보 카드 폴백 유지
+  if (!navigator.geolocation) return; // keep whatever default (Vietnam panel) is already showing
   navigator.geolocation.getCurrentPosition(
     function(pos){
       _sosCountry = _sosDetectCountry(pos.coords.latitude, pos.coords.longitude);
-      if (_sosCountry === 'vn' || _sosCountry === 'kr') {
-        var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
-        if (colleagueBtn) { colleagueBtn.style.display = ''; selectSOS('colleague', colleagueBtn); }
+      if (_sosUserPicked === 'medical') return; // the user already chose "Medical info card" themselves — don't switch the screen on them
+      var colleagueBtn = document.querySelector('.sos-choice-btn[onclick*="colleague"]');
+      var medicalBtn = document.querySelector('.sos-choice-btn[onclick*="medical"]');
+      if (_sosCountry === 'etc') {
+        // Third country — neither Vietnam nor Korea numbers are correct, fall back safely to the medical info card
+        if (medicalBtn) selectSOS('medical', medicalBtn, true);
+      } else if (colleagueBtn) {
+        selectSOS('colleague', colleagueBtn, true); // re-render with the right vn/kr panel (may have shown Vietnam by default at first)
       }
-      // 'etc'(제3국)는 현지 정보가 없으므로 의료 정보 카드 폴백을 그대로 유지
     },
-    function(){ /* 위치 실패 시에도 의료 정보 카드 폴백 유지 */ },
+    function(){ /* location failed — keep whatever default is already showing */ },
     {timeout: 8000, maximumAge: 60000}
   );
 }
@@ -6459,7 +6470,8 @@ function goToSosSettings(){
   },150);
 }
 
-function selectSOS(type,el){
+function selectSOS(type,el,_auto){
+  if(!_auto) _sosUserPicked=type; // only record it when the user actually tapped it (not when the code auto-switches)
   document.querySelectorAll('.sos-choice-btn').forEach(function(b){b.classList.remove('selected');});
   el.classList.add('selected');
   var showColleague = type==='colleague';
