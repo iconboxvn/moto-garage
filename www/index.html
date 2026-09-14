@@ -1229,6 +1229,11 @@ option{background:var(--surface2);}
 var D = JSON.parse(localStorage.getItem('mg2') || 'null') || {bikes:[],rides:[],history:[]};
 var dashSelectedBikeId = null;
 var cState = {bikeIdx:0, cId:''};
+
+// 마지막으로 선택한 바이크 기억 — 홈 화면(dashSelectedBikeId)과 소모품 탭(cState.bikeIdx)이
+// 항상 같은 바이크를 가리키도록 동기화하고, 앱을 재시작해도 유지되게 localStorage에 저장.
+function _saveLastBikeId(id){ try{ if(id!=null) localStorage.setItem('mg2-last-bike-id', String(id)); }catch(e){} }
+function _loadLastBikeId(){ try{ var v=localStorage.getItem('mg2-last-bike-id'); return v?parseInt(v,10):null; }catch(e){ return null; } }
 var mcDateVal = todayStr();
 var extraDateVal = todayStr();
 var editingBikeId = null;
@@ -2124,7 +2129,12 @@ function _renderDashInner(){
     el.innerHTML=`<div class="no-bikes-box"><div style="font-size:43px;margin-bottom:14px;">🏍</div><div class="tp-title" style="margin-bottom:6px;">차량을 등록하면 관리가 시작됩니다</div><div class="tp-sub" style="margin-bottom:20px;">소모품 알림 · 주행거리 · 정비 이력</div><button class="btn btn-primary" onclick="openModal('m-bike')">첫 차량 등록하기</button></div>`;
     return;
   }
-  if(!dashSelectedBikeId||!D.bikes.find(b=>b.id===dashSelectedBikeId)) dashSelectedBikeId=D.bikes[0].id;
+  if(!dashSelectedBikeId||!D.bikes.find(b=>b.id===dashSelectedBikeId)){
+    const lastId=_loadLastBikeId();
+    dashSelectedBikeId=(lastId!=null && D.bikes.find(b=>b.id===lastId)) ? lastId : D.bikes[0].id;
+    const idx=D.bikes.findIndex(b=>b.id===dashSelectedBikeId);
+    if(idx>=0) cState.bikeIdx=idx; // 소모품 탭도 같은 바이크로 동기화
+  }
   const sb=D.bikes.find(b=>b.id===dashSelectedBikeId);
   const consumableRows=sb.consumables.map(c=>{
     const used=sb.odometer-c.lastKm;
@@ -2223,7 +2233,12 @@ function _renderDashInner(){
   try{ renderBrandNewsHomeCard(); }catch(e){}
 }
 
-function selectDashBike(id){ dashSelectedBikeId=id; renderDash(); }
+function selectDashBike(id){
+  dashSelectedBikeId=id;
+  const idx=D.bikes.findIndex(b=>b.id===id); if(idx>=0) cState.bikeIdx=idx;
+  _saveLastBikeId(id);
+  renderDash();
+}
 
 // ═══════════════════════════════════════════
 //  내 차량
@@ -2933,7 +2948,11 @@ function consumableCard(c,km){
     </div>
   </div>`;
 }
-function switchCBike(idx){ cState.bikeIdx=idx; renderConsumables(); }
+function switchCBike(idx){
+  cState.bikeIdx=idx;
+  const bike=D.bikes[idx]; if(bike){ dashSelectedBikeId=bike.id; _saveLastBikeId(bike.id); }
+  renderConsumables();
+}
 
 function openConsumModal(cId){
   if(!D.bikes.length) return;

@@ -1189,6 +1189,12 @@ var dashSelectedBikeId = null;
 const TYPE_NAMES = {'소모품교체':'Parts Replacement','정기점검':'Inspection','수리':'Repair','세차':'Wash','튜닝':'Tuning','기타':'Other'};
 function localizeType(type) { return TYPE_NAMES[type] || type; }
 var cState = {bikeIdx:0, cId:''};
+
+// Remember the last-selected bike — keep the home screen (dashSelectedBikeId) and the
+// Service tab (cState.bikeIdx) pointing at the same bike, and persist it to localStorage
+// so it survives an app restart.
+function _saveLastBikeId(id){ try{ if(id!=null) localStorage.setItem('mg2-last-bike-id', String(id)); }catch(e){} }
+function _loadLastBikeId(){ try{ var v=localStorage.getItem('mg2-last-bike-id'); return v?parseInt(v,10):null; }catch(e){ return null; } }
 var mcDateVal = todayStr();
 var extraDateVal = todayStr();
 var editingBikeId = null;
@@ -1841,7 +1847,12 @@ function _renderDashInner(){
     el.innerHTML=`<div class="no-bikes-box"><div style="font-size:43px;margin-bottom:14px;">🏍</div><div class="tp-title" style="margin-bottom:6px;">Register a vehicle to get started</div><div class="tp-sub" style="margin-bottom:20px;">Service alerts · Mileage · History</div><button class="btn btn-primary" onclick="openModal('m-bike')">Register First Vehicle</button></div>`;
     return;
   }
-  if(!dashSelectedBikeId||!D.bikes.find(b=>b.id===dashSelectedBikeId)) dashSelectedBikeId=D.bikes[0].id;
+  if(!dashSelectedBikeId||!D.bikes.find(b=>b.id===dashSelectedBikeId)){
+    const lastId=_loadLastBikeId();
+    dashSelectedBikeId=(lastId!=null && D.bikes.find(b=>b.id===lastId)) ? lastId : D.bikes[0].id;
+    const idx=D.bikes.findIndex(b=>b.id===dashSelectedBikeId);
+    if(idx>=0) cState.bikeIdx=idx; // keep the Service tab in sync with the same bike
+  }
   const sb=D.bikes.find(b=>b.id===dashSelectedBikeId);
   const consumableRows=sb.consumables.map(c=>{
     const used=sb.odometer-c.lastKm;
@@ -1940,7 +1951,12 @@ function _renderDashInner(){
   try{ renderBrandNewsHomeCard(); }catch(e){}
 }
 
-function selectDashBike(id){ dashSelectedBikeId=id; renderDash(); }
+function selectDashBike(id){
+  dashSelectedBikeId=id;
+  const idx=D.bikes.findIndex(b=>b.id===id); if(idx>=0) cState.bikeIdx=idx;
+  _saveLastBikeId(id);
+  renderDash();
+}
 
 // ═══════════════════════════════════════════
 //  내 차량
@@ -2566,7 +2582,11 @@ function consumableCard(c,km){
     </div>
   </div>`;
 }
-function switchCBike(idx){ cState.bikeIdx=idx; renderConsumables(); }
+function switchCBike(idx){
+  cState.bikeIdx=idx;
+  const bike=D.bikes[idx]; if(bike){ dashSelectedBikeId=bike.id; _saveLastBikeId(bike.id); }
+  renderConsumables();
+}
 
 function openConsumModal(cId){
   if(!D.bikes.length) return;
