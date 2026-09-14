@@ -3465,7 +3465,7 @@ function deleteRide(id){
 function updateOdometer(bikeId){
   const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
   const newKm=parseInt(document.getElementById('odo-input-'+bikeId).value)||0;
-  if(newKm<bike.odometer){ if(!confirm(`현재(${bike.odometer.toLocaleString()} km).\nBạn có muốn tiếp tục không?`)) return; }
+  if(newKm<bike.odometer){ if(!confirm(`Giá trị thấp hơn số km hiện tại (${bike.odometer.toLocaleString()} km).\nBạn vẫn muốn cập nhật chứ?`)) return; }
   const oldKm = bike.odometer;
   bike.odometer=newKm; save(); renderBikes(); renderDash();
   scheduleConsumableAlerts();
@@ -3708,7 +3708,7 @@ function importJSON(event){
     try{
       const imported=JSON.parse(e.target.result);
       if(!imported.bikes||!imported.history) throw new Error('Định dạng không hợp lệ');
-      if(!confirm(`백업을 불러오면 현재 데이터가 교체됩니다.\n차량 ${imported.bikes.length} xe, bảo dưỡng: ${imported.history.length}\n\nBạn có muốn tiếp tục không?`)) return;
+      if(!confirm(`Khôi phục bản sao lưu sẽ thay thế dữ liệu hiện tại.\nXe: ${imported.bikes.length}, bảo dưỡng: ${imported.history.length}\n\nBạn có muốn tiếp tục không?`)) return;
       D=imported; save();
       showBackupToast('✓ Dữ liệu đã được khôi phục');
       renderBackupPage(); renderDash();
