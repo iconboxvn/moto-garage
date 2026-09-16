@@ -179,7 +179,12 @@ public class RidingService extends Service {
     }
 
     // 프로세스킬로 앱이 재시작됐을 때, JS가 localStorage(mg2-ride-progress)에서 복원한 값을
-    // 이 Service의 누적 상태에 다시 심어준다(Service도 새로 떠서 0부터 시작했을 것이므로).
+    // 이 Service의 누적 상태에 다시 심어준다. **항상 "더 큰 값"을 채택** — Service는
+    // onStartCommand()가 START_STICKY라, 프로세스가 죽어도 앱 UI(JS/WebView)보다 먼저
+    // 안드로이드가 재시작시켜주는 경우가 있다. 그 사이(앱은 안 열려 있어도) 이 Service는
+    // 이미 GPS를 계속 받아 혼자 정확히 누적하고 있었을 수 있는데, 여기서 무조건 덮어쓰면
+    // JS의 더 오래된 체크포인트로 그 정확한 값을 잃어버리게 된다. Service가 진짜로 이번에
+    // 막 새로 떴다면(0부터 시작) 어차피 이 시드값이 더 크므로 자연히 채택된다.
     // lastLat/lastLon/lastT는 일부러 안 심음 — 다음 GPS fix가 새 기준점이 되고, 시드 시점과의
     // 공백은 RIDING_MAX_GAP_SEC_FOR_DELTA로 자연히 걸러져서(gapTooLong) 그 사이 거리를
     // 더하지 않는다. 오래된 좌표를 기준점으로 남겨두면 첫 fix에서 거리가 엉뚱하게 튈 수 있음.
@@ -187,16 +192,18 @@ public class RidingService extends Service {
             double maxSpeedLat, double maxSpeedLon, boolean hasMaxSpeedLoc,
             int harshAccelCount, int harshBrakeCount, int gpsGapCount, double maxGpsGapSec) {
         if (instance == null) return;
-        instance.rideDistanceKm = distanceKm;
-        instance.rideMaxSpeedKmh = maxSpeedKmh;
-        if (hasMaxSpeedLoc) {
-            instance.rideMaxSpeedLat = maxSpeedLat;
-            instance.rideMaxSpeedLon = maxSpeedLon;
+        if (distanceKm > instance.rideDistanceKm) instance.rideDistanceKm = distanceKm;
+        if (maxSpeedKmh > instance.rideMaxSpeedKmh) {
+            instance.rideMaxSpeedKmh = maxSpeedKmh;
+            if (hasMaxSpeedLoc) {
+                instance.rideMaxSpeedLat = maxSpeedLat;
+                instance.rideMaxSpeedLon = maxSpeedLon;
+            }
         }
-        instance.rideHarshAccelCount = harshAccelCount;
-        instance.rideHarshBrakeCount = harshBrakeCount;
-        instance.rideGpsGapCount = gpsGapCount;
-        instance.rideMaxGpsGapSec = maxGpsGapSec;
+        if (harshAccelCount > instance.rideHarshAccelCount) instance.rideHarshAccelCount = harshAccelCount;
+        if (harshBrakeCount > instance.rideHarshBrakeCount) instance.rideHarshBrakeCount = harshBrakeCount;
+        if (gpsGapCount > instance.rideGpsGapCount) instance.rideGpsGapCount = gpsGapCount;
+        if (maxGpsGapSec > instance.rideMaxGpsGapSec) instance.rideMaxGpsGapSec = maxGpsGapSec;
     }
 
     // GPS 위치 하나를 라이딩 거리/속도 누적에 반영. www/index*.html의 _sosGPSStart() 안
