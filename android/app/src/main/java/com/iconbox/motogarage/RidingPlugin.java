@@ -42,6 +42,17 @@ public class RidingPlugin extends Plugin {
                 data.put("accuracy", intent.getFloatExtra("accuracy", 0f));
                 data.put("speedAccuracy", intent.getFloatExtra("speedAccuracy", -1f));
                 data.put("time",     intent.getLongExtra("time", 0L));
+                // 라이딩 거리/속도 누적 결과 (v3.1.0, RidingService에서 계산됨)
+                data.put("rideDistance",         intent.getDoubleExtra("rideDistance", 0));
+                data.put("rideMaxSpeed",         intent.getFloatExtra("rideMaxSpeed", 0f));
+                data.put("rideMaxSpeedLat",      intent.getDoubleExtra("rideMaxSpeedLat", 0));
+                data.put("rideMaxSpeedLon",      intent.getDoubleExtra("rideMaxSpeedLon", 0));
+                data.put("rideHasMaxSpeedLoc",   intent.getBooleanExtra("rideHasMaxSpeedLoc", false));
+                data.put("rideHarshAccelCount",  intent.getIntExtra("rideHarshAccelCount", 0));
+                data.put("rideHarshBrakeCount",  intent.getIntExtra("rideHarshBrakeCount", 0));
+                data.put("rideGpsGapCount",      intent.getIntExtra("rideGpsGapCount", 0));
+                data.put("rideMaxGpsGapSec",     intent.getDoubleExtra("rideMaxGpsGapSec", 0));
+                data.put("rideIsMoving",         intent.getBooleanExtra("rideIsMoving", false));
                 notifyListeners("locationUpdate", data);
             }
         };
@@ -132,6 +143,24 @@ public class RidingPlugin extends Plugin {
     @PluginMethod
     public void resumeMonitoring(PluginCall call) {
         RidingService.resumeMonitoring();
+        call.resolve();
+    }
+
+    // 프로세스킬 복구 시, JS가 localStorage(mg2-ride-progress)에서 복원한 라이딩 누적값을
+    // RidingService에 다시 심어준다 (Service도 새로 떠서 0부터 시작했을 것이므로).
+    @PluginMethod
+    public void seedRideTracking(PluginCall call) {
+        RidingService.seedRideTracking(
+            call.getDouble("distanceKm", 0.0),
+            call.getFloat("maxSpeedKmh", 0f),
+            call.getDouble("maxSpeedLat", 0.0),
+            call.getDouble("maxSpeedLon", 0.0),
+            Boolean.TRUE.equals(call.getBoolean("hasMaxSpeedLoc", false)),
+            call.getInt("harshAccelCount", 0),
+            call.getInt("harshBrakeCount", 0),
+            call.getInt("gpsGapCount", 0),
+            call.getDouble("maxGpsGapSec", 0.0)
+        );
         call.resolve();
     }
 

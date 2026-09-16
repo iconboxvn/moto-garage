@@ -5628,34 +5628,34 @@ function _sosGPSStart() {
       // Discard samples with poor position accuracy (tunnel/underpass multipath guard)
       var posAcc = (loc.accuracy !== undefined && loc.accuracy >= 0) ? loc.accuracy : null;
       var posOk = (posAcc === null || posAcc <= RIDING_MAX_POS_ACCURACY_M);
-      var speedMs = (loc.speed !== undefined && loc.speed >= 0) ? loc.speed : null;
-      if (speedMs !== null && posOk) {
-        var kmh = speedMs * 3.6;
-        _sos.speedOk = kmh >= _MIN_SPD;
-        // Discard samples with poor native speed accuracy (urban GPS spike guard)
-        var speedAcc = (loc.speedAccuracy !== undefined && loc.speedAccuracy >= 0) ? loc.speedAccuracy : null;
-        if (kmh < 300 && (speedAcc === null || speedAcc <= RIDING_MAX_SPEED_ACCURACY_MPS)) _rideTrackSpeed(kmh, now, loc.lat, loc.lon);
-      }
-      var lat = loc.lat, lon = loc.lon;
-      if (posOk && _ride.lastLat !== null) {
-        var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
-        var dtSecGap = (now - _ride.lastT) / 1000;
-        var dtH = dtSecGap / 3600;
-        var instKmh = dtH > 0 ? dKm / dtH : 0;
-        // dtSecGap<=0 (reversed/duplicate timestamps) is excluded too -- when queued background GPS fixes
-        // arrive out of order, a negative gap makes instKmh compute to 0, which used to slip right past the <300 filter
-        var gapTooLong = dtSecGap <= 0 || dtSecGap > RIDING_MAX_GAP_SEC_FOR_DELTA;
-        if (speedMs === null && instKmh > 0 && instKmh < 300 && !gapTooLong) {
-          _sos.speedOk = instKmh >= _MIN_SPD;
-          _rideTrackSpeed(instKmh, now, lat, lon);
+
+      // Distance accumulation (haversine), max speed (outlier filter), harsh accel/brake,
+      // and GPS-gap detection are now all computed by RidingService.java (native), and this
+      // event just carries the results (v3.1.0, 2026-09-16). The WebView JS engine can still
+      // suspend in the background, but the native side keeps running, so distance no longer
+      // gets lost or inflated by catching up on a batch of stale JS math. Only path (the
+      // route coordinates, used for the map) is still accumulated here in JS.
+      if (posOk) {
+        if (typeof loc.rideDistance === 'number') _ride.distance = loc.rideDistance;
+        if (typeof loc.rideMaxSpeed === 'number') _ride.maxSpeed = loc.rideMaxSpeed;
+        if (loc.rideHasMaxSpeedLoc) { _ride.maxSpeedLat = loc.rideMaxSpeedLat; _ride.maxSpeedLon = loc.rideMaxSpeedLon; }
+        if (typeof loc.rideHarshAccelCount === 'number') _ride.harshAccelCount = loc.rideHarshAccelCount;
+        if (typeof loc.rideHarshBrakeCount === 'number') _ride.harshBrakeCount = loc.rideHarshBrakeCount;
+        if (typeof loc.rideGpsGapCount === 'number') _ride.gpsGapCount = loc.rideGpsGapCount;
+        if (typeof loc.rideMaxGpsGapSec === 'number') _ride.maxGpsGapSec = loc.rideMaxGpsGapSec;
+        if (loc.rideIsMoving === true) {
+          _ride.lastMovingT = now;
+          _ride.distanceAtLastMoving = _ride.distance;
+          if (ridingState.paused) _resumeRiding(now);
         }
-        // If the gap was long (e.g. backgrounded), we don't know the actual path taken, so don't add that distance -- just re-anchor
-        if (instKmh < 300 && !gapTooLong) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
-        else if (gapTooLong) { _ride.path.push({lat:lat, lon:lon, t:now}); }
-      } else if (posOk) {
-        _ride.path.push({lat:lat, lon:lon, t:now});
       }
-      if (posOk) { _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now; }
+
+      // _sos.speedOk is only used for a UI label (the riding control bar's "crash detection active" text) --
+      // the real crash-detection gate is decided separately by native updateSpeedGate(), so this is just cosmetic.
+      if (loc.speed !== undefined && loc.speed >= 0 && posOk) { _sos.speedOk = (loc.speed * 3.6) >= _MIN_SPD; }
+
+      var lat = loc.lat, lon = loc.lon;
+      if (posOk) { _ride.path.push({lat:lat, lon:lon, t:now}); _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now; }
       _updateRidingSpeedUI();
       // Pause/force-start safety net: also check reactively on each GPS event in case the setInterval got throttled in the background
       // (pass this event's own measured time, in case a delayed batch is being caught up on)
@@ -5958,6 +5958,26 @@ function _sosDoSend(phone, body, mapsUrl) {
         _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null, pauseCount:_savedProgress.pauseCount||0, gpsGapCount:_savedProgress.gpsGapCount||0, maxGpsGapSec:_savedProgress.maxGpsGapSec||0, autoEnded:false};
       } else {
         _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
+      }
+      // If the process was killed and restarted, RidingService starts fresh too (accumulator at
+      // zero), so hand the just-restored _ride values back to native (distance/maxSpeed/etc only --
+      // lastLat/lastLon deliberately not seeded, see RidingService.seedRideTracking()'s comment).
+      var _ridingR = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+      if (_ridingR) {
+        _ridingR.startForeground().catch(function() {});
+        if (_savedProgress && _savedProgress.startTime) {
+          _ridingR.seedRideTracking({
+            distanceKm: _ride.distance || 0,
+            maxSpeedKmh: _ride.maxSpeed || 0,
+            maxSpeedLat: _ride.maxSpeedLat || 0,
+            maxSpeedLon: _ride.maxSpeedLon || 0,
+            hasMaxSpeedLoc: _ride.maxSpeedLat != null,
+            harshAccelCount: _ride.harshAccelCount || 0,
+            harshBrakeCount: _ride.harshBrakeCount || 0,
+            gpsGapCount: _ride.gpsGapCount || 0,
+            maxGpsGapSec: _ride.maxGpsGapSec || 0
+          }).catch(function() {});
+        }
       }
     }
     _sos.phase = 'MONITORING';

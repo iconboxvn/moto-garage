@@ -5625,34 +5625,35 @@ function _sosGPSStart() {
       // Độ chính xác vị trí kém (nhiễu đa đường trong hầm/gầm cầu) thì loại khỏi lộ trình/quãng đường/tốc độ
       var posAcc = (loc.accuracy !== undefined && loc.accuracy >= 0) ? loc.accuracy : null;
       var posOk = (posAcc === null || posAcc <= RIDING_MAX_POS_ACCURACY_M);
-      var speedMs = (loc.speed !== undefined && loc.speed >= 0) ? loc.speed : null;
-      if (speedMs !== null && posOk) {
-        var kmh = speedMs * 3.6;
-        _sos.speedOk = kmh >= _MIN_SPD;
-        // 속도 정확도가 나쁜 샘플(도심 GPS 튐 등)은 최고속도/거리 추적에서 제외
-        var speedAcc = (loc.speedAccuracy !== undefined && loc.speedAccuracy >= 0) ? loc.speedAccuracy : null;
-        if (kmh < 300 && (speedAcc === null || speedAcc <= RIDING_MAX_SPEED_ACCURACY_MPS)) _rideTrackSpeed(kmh, now, loc.lat, loc.lon);
-      }
-      var lat = loc.lat, lon = loc.lon;
-      if (posOk && _ride.lastLat !== null) {
-        var dKm = _haversineKm(_ride.lastLat, _ride.lastLon, lat, lon);
-        var dtSecGap = (now - _ride.lastT) / 1000;
-        var dtH = dtSecGap / 3600;
-        var instKmh = dtH > 0 ? dKm / dtH : 0;
-        // dtSecGap<=0 (dấu thời gian đảo ngược/trùng lặp) cũng bị loại -- khi các điểm GPS chạy nền bị dồn
-        // đến không theo thứ tự, khoảng cách âm khiến instKmh tính ra 0, trước đây lọt qua bộ lọc <300 luôn
-        var gapTooLong = dtSecGap <= 0 || dtSecGap > RIDING_MAX_GAP_SEC_FOR_DELTA;
-        if (speedMs === null && instKmh > 0 && instKmh < 300 && !gapTooLong) {
-          _sos.speedOk = instKmh >= _MIN_SPD;
-          _rideTrackSpeed(instKmh, now, lat, lon);
+
+      // Việc cộng dồn quãng đường (haversine), tốc độ tối đa (bộ lọc nhiễu), tăng/giảm tốc
+      // đột ngột, và phát hiện khoảng trống GPS giờ đều do RidingService.java (native) tính,
+      // sự kiện này chỉ mang kết quả về (v3.1.0, 2026-09-16). WebView vẫn có thể bị treo ở
+      // nền, nhưng phía native vẫn chạy tiếp, nên quãng đường không còn bị mất hoặc tính
+      // vống lên do xử lý dồn một lô dữ liệu cũ. Chỉ path (tọa độ lộ trình, dùng để vẽ bản
+      // đồ) vẫn do JS cộng dồn như cũ.
+      if (posOk) {
+        if (typeof loc.rideDistance === 'number') _ride.distance = loc.rideDistance;
+        if (typeof loc.rideMaxSpeed === 'number') _ride.maxSpeed = loc.rideMaxSpeed;
+        if (loc.rideHasMaxSpeedLoc) { _ride.maxSpeedLat = loc.rideMaxSpeedLat; _ride.maxSpeedLon = loc.rideMaxSpeedLon; }
+        if (typeof loc.rideHarshAccelCount === 'number') _ride.harshAccelCount = loc.rideHarshAccelCount;
+        if (typeof loc.rideHarshBrakeCount === 'number') _ride.harshBrakeCount = loc.rideHarshBrakeCount;
+        if (typeof loc.rideGpsGapCount === 'number') _ride.gpsGapCount = loc.rideGpsGapCount;
+        if (typeof loc.rideMaxGpsGapSec === 'number') _ride.maxGpsGapSec = loc.rideMaxGpsGapSec;
+        if (loc.rideIsMoving === true) {
+          _ride.lastMovingT = now;
+          _ride.distanceAtLastMoving = _ride.distance;
+          if (ridingState.paused) _resumeRiding(now);
         }
-        // Nếu khoảng trống dài (chạy nền...), không biết lộ trình thực tế nên không cộng quãng đường đó -- chỉ cập nhật lại mốc
-        if (instKmh < 300 && !gapTooLong) { _ride.distance += dKm; _ride.path.push({lat:lat, lon:lon, t:now}); }
-        else if (gapTooLong) { _ride.path.push({lat:lat, lon:lon, t:now}); }
-      } else if (posOk) {
-        _ride.path.push({lat:lat, lon:lon, t:now});
       }
-      if (posOk) { _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now; }
+
+      // _sos.speedOk chỉ dùng để hiển thị UI (dòng chữ "đang kích hoạt cảnh báo va chạm" trên
+      // thanh điều khiển raiding) -- cổng phát hiện va chạm thực sự do updateSpeedGate() native
+      // quyết định riêng, nên ở đây chỉ để hiển thị cho khớp.
+      if (loc.speed !== undefined && loc.speed >= 0 && posOk) { _sos.speedOk = (loc.speed * 3.6) >= _MIN_SPD; }
+
+      var lat = loc.lat, lon = loc.lon;
+      if (posOk) { _ride.path.push({lat:lat, lon:lon, t:now}); _ride.lastLat = lat; _ride.lastLon = lon; _ride.lastT = now; }
       _updateRidingSpeedUI();
       // Lưới an toàn tạm dừng/bắt buộc khởi động: cũng kiểm tra ngay khi có sự kiện GPS, phòng khi setInterval bị treo ở nền
       // (truyền thời điểm thực đo của sự kiện GPS này, phòng trường hợp đang xử lý dồn theo lô)
@@ -5953,6 +5954,27 @@ function _sosDoSend(phone, body, mapsUrl) {
         _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null, pauseCount:_savedProgress.pauseCount||0, gpsGapCount:_savedProgress.gpsGapCount||0, maxGpsGapSec:_savedProgress.maxGpsGapSec||0, autoEnded:false};
       } else {
         _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, autoEnded:false};
+      }
+      // Nếu tiến trình bị hệ điều hành kill rồi khởi động lại, RidingService cũng khởi động
+      // lại từ đầu (bộ đếm về 0), nên phải gửi lại giá trị _ride vừa khôi phục cho native
+      // (chỉ distance/maxSpeed/... -- lastLat/lastLon cố ý không gửi, xem chú thích ở
+      // RidingService.seedRideTracking()).
+      var _ridingR = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+      if (_ridingR) {
+        _ridingR.startForeground().catch(function() {});
+        if (_savedProgress && _savedProgress.startTime) {
+          _ridingR.seedRideTracking({
+            distanceKm: _ride.distance || 0,
+            maxSpeedKmh: _ride.maxSpeed || 0,
+            maxSpeedLat: _ride.maxSpeedLat || 0,
+            maxSpeedLon: _ride.maxSpeedLon || 0,
+            hasMaxSpeedLoc: _ride.maxSpeedLat != null,
+            harshAccelCount: _ride.harshAccelCount || 0,
+            harshBrakeCount: _ride.harshBrakeCount || 0,
+            gpsGapCount: _ride.gpsGapCount || 0,
+            maxGpsGapSec: _ride.maxGpsGapSec || 0
+          }).catch(function() {});
+        }
       }
     }
     _sos.phase = 'MONITORING';

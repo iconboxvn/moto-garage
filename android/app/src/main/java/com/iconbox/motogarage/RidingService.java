@@ -45,6 +45,20 @@ public class RidingService extends Service {
     private static final float MIN_SPD_KMH = 20f;    // 감지 활성화 최소 속도 (km/h) ← 변경 금지
     private static final float MAX_POS_ACCURACY_M = 30f; // GPS 위치 정확도(m) 이보다 나쁘면 속도게이트 판단에서 제외
 
+    // ── 라이딩 거리/속도 누적 (v3.1.0, 2026-09-16 www/index*.html에서 이전) ──
+    // 값은 www/index*.html의 RIDING_MOVING_SPD 등 동명 상수와 반드시 동일하게 유지할 것.
+    // WebView가 백그라운드에서 suspend돼도 이 Service는 계속 GPS를 받으므로, 거리/최고속도
+    // 계산을 여기서 하면 suspend 중 배치처리로 인한 거리 유실/폭증 버그가 구조적으로 없어진다.
+    // path(경로 좌표 배열)는 지도 표시용이라 그대로 JS가 담당한다(숫자 데이터가 아니라
+    // 정확도가 덜 critical하고, 옮기면 페이로드 설계가 복잡해짐).
+    private static final float  RIDING_MOVING_SPD_KMH            = 8f;
+    private static final float  RIDING_MAX_SPEED_ACCURACY_MPS    = 3f;
+    private static final float  RIDING_MAX_POS_ACCURACY_M        = 30f;
+    private static final double RIDING_MAX_GAP_SEC_FOR_DELTA     = 60;
+    private static final float  RIDING_HARSH_ACCEL_KMH_PER_SEC   = 12f;
+    private static final float  RIDING_HARSH_BRAKE_KMH_PER_SEC   = 15f;
+    private static final long   RIDING_HARSH_EVENT_COOLDOWN_MS   = 3000L;
+
     private static final int PHASE_MONITORING = 0;
     private static final int PHASE_FREEFALL   = 1;
     private static final int PHASE_IMPACT     = 2;
@@ -64,6 +78,24 @@ public class RidingService extends Service {
     private Long stillStart = null;
     private final ArrayDeque<float[]> magBuffer = new ArrayDeque<>(); // [mag, t] - 최근 1초 유지
 
+    // ── 라이딩 거리/속도 누적 상태 (crashPhase 등과 별개, 라이딩 세션 단위) ──
+    // Service가 onCreate될 때(=라이딩 시작할 때만 startForeground() 호출됨) 기본값(0/null)으로
+    // 시작하는 게 JS의 "_ride = {...}" 리셋과 동일한 효과. 별도 reset 메서드 불필요.
+    private double rideDistanceKm = 0;
+    private float  rideMaxSpeedKmh = 0;
+    private Double rideMaxSpeedLat = null;
+    private Double rideMaxSpeedLon = null;
+    private Double rideLastLat = null;
+    private Double rideLastLon = null;
+    private Long   rideLastT = null;
+    private Float  rideLastAcceptedKmh = null;
+    private Long   rideLastAcceptedT = null;
+    private Long   rideLastHarshEventT = null;
+    private int    rideHarshAccelCount = 0;
+    private int    rideHarshBrakeCount = 0;
+    private int    rideGpsGapCount = 0;
+    private double rideMaxGpsGapSec = 0;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -76,6 +108,8 @@ public class RidingService extends Service {
                 android.location.Location loc = result.getLastLocation();
                 if (loc == null) return;
                 updateSpeedGate(loc);
+                long now = loc.getTime() > 0 ? loc.getTime() : System.currentTimeMillis();
+                boolean rideIsMoving = updateRideTracking(loc, now);
                 Intent broadcast = new Intent(ACTION_LOCATION);
                 broadcast.putExtra("lat", loc.getLatitude());
                 broadcast.putExtra("lon", loc.getLongitude());
@@ -89,6 +123,18 @@ public class RidingService extends Service {
                 }
                 broadcast.putExtra("speedAccuracy", speedAccuracy);
                 broadcast.putExtra("time", loc.getTime());
+                // 라이딩 거리/속도 누적 결과 (v3.1.0). JS _ride의 distance/maxSpeed/
+                // harshAccelCount/harshBrakeCount/gpsGapCount/maxGpsGapSec과 1:1 대응.
+                broadcast.putExtra("rideDistance", rideDistanceKm);
+                broadcast.putExtra("rideMaxSpeed", rideMaxSpeedKmh);
+                broadcast.putExtra("rideMaxSpeedLat", rideMaxSpeedLat != null ? rideMaxSpeedLat : 0d);
+                broadcast.putExtra("rideMaxSpeedLon", rideMaxSpeedLon != null ? rideMaxSpeedLon : 0d);
+                broadcast.putExtra("rideHasMaxSpeedLoc", rideMaxSpeedLat != null);
+                broadcast.putExtra("rideHarshAccelCount", rideHarshAccelCount);
+                broadcast.putExtra("rideHarshBrakeCount", rideHarshBrakeCount);
+                broadcast.putExtra("rideGpsGapCount", rideGpsGapCount);
+                broadcast.putExtra("rideMaxGpsGapSec", rideMaxGpsGapSec);
+                broadcast.putExtra("rideIsMoving", rideIsMoving);
                 // LocalBroadcastManager 사용 (앱 내부 통신, 보안 정책 우회)
                 LocalBroadcastManager.getInstance(RidingService.this).sendBroadcast(broadcast);
             }
@@ -130,6 +176,110 @@ public class RidingService extends Service {
     // JS가 카운트다운 취소/발송 완료 후 호출 — 상태머신을 다시 감시 상태로 되돌린다.
     public static void resumeMonitoring() {
         if (instance != null) instance.resetCrashPhase();
+    }
+
+    // 프로세스킬로 앱이 재시작됐을 때, JS가 localStorage(mg2-ride-progress)에서 복원한 값을
+    // 이 Service의 누적 상태에 다시 심어준다(Service도 새로 떠서 0부터 시작했을 것이므로).
+    // lastLat/lastLon/lastT는 일부러 안 심음 — 다음 GPS fix가 새 기준점이 되고, 시드 시점과의
+    // 공백은 RIDING_MAX_GAP_SEC_FOR_DELTA로 자연히 걸러져서(gapTooLong) 그 사이 거리를
+    // 더하지 않는다. 오래된 좌표를 기준점으로 남겨두면 첫 fix에서 거리가 엉뚱하게 튈 수 있음.
+    public static void seedRideTracking(double distanceKm, float maxSpeedKmh,
+            double maxSpeedLat, double maxSpeedLon, boolean hasMaxSpeedLoc,
+            int harshAccelCount, int harshBrakeCount, int gpsGapCount, double maxGpsGapSec) {
+        if (instance == null) return;
+        instance.rideDistanceKm = distanceKm;
+        instance.rideMaxSpeedKmh = maxSpeedKmh;
+        if (hasMaxSpeedLoc) {
+            instance.rideMaxSpeedLat = maxSpeedLat;
+            instance.rideMaxSpeedLon = maxSpeedLon;
+        }
+        instance.rideHarshAccelCount = harshAccelCount;
+        instance.rideHarshBrakeCount = harshBrakeCount;
+        instance.rideGpsGapCount = gpsGapCount;
+        instance.rideMaxGpsGapSec = maxGpsGapSec;
+    }
+
+    // GPS 위치 하나를 라이딩 거리/속도 누적에 반영. www/index*.html의 _sosGPSStart() 안
+    // locationUpdate 리스너에 있던 haversine 거리누적 로직을 그대로 이식한 것 — 필터 순서/
+    // 조건을 바꾸면 두 코드가 어긋나니 JS 쪽을 고칠 땐 반드시 같이 확인할 것.
+    // 반환값: 이번 fix가 "이동 중"(RIDING_MOVING_SPD_KMH 이상)으로 판정됐는지.
+    private boolean updateRideTracking(android.location.Location loc, long now) {
+        float posAcc = loc.getAccuracy();
+        boolean posOk = posAcc <= RIDING_MAX_POS_ACCURACY_M;
+        double lat = loc.getLatitude();
+        double lon = loc.getLongitude();
+        boolean isMoving = false;
+
+        if (loc.hasSpeed() && posOk) {
+            float kmh = loc.getSpeed() * 3.6f;
+            float speedAcc = -1f;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && loc.hasSpeedAccuracy()) {
+                speedAcc = loc.getSpeedAccuracyMetersPerSecond();
+            }
+            if (kmh < 300 && (speedAcc < 0 || speedAcc <= RIDING_MAX_SPEED_ACCURACY_MPS)) {
+                isMoving = trackRideSpeed(kmh, now, lat, lon);
+            }
+        }
+
+        if (posOk && rideLastLat != null) {
+            double dKm = haversineKm(rideLastLat, rideLastLon, lat, lon);
+            double dtSecGap = (now - rideLastT) / 1000.0;
+            double dtH = dtSecGap / 3600.0;
+            double instKmh = dtH > 0 ? dKm / dtH : 0;
+            // dtSecGap<=0(시간 역전/중복 타임스탬프)도 같이 걸러냄 — JS 쪽과 동일한 이유
+            boolean gapTooLong = dtSecGap <= 0 || dtSecGap > RIDING_MAX_GAP_SEC_FOR_DELTA;
+            // speed가 없으면 좌표 기반으로 속도 계산해서 추적
+            if (!loc.hasSpeed() && instKmh > 0 && instKmh < 300 && !gapTooLong) {
+                isMoving = trackRideSpeed((float) instKmh, now, lat, lon);
+            }
+            // 공백이 길었으면(백그라운드 등) 그 사이 거리는 실제 이동경로를 모르므로 더하지 않음
+            if (instKmh < 300 && !gapTooLong) rideDistanceKm += dKm;
+        }
+        if (posOk) { rideLastLat = lat; rideLastLon = lon; rideLastT = now; }
+        return isMoving;
+    }
+
+    // 최고속도 판정 — ① 이상치 필터: 직전 채택값 대비 급격한 변화는 GPS 튐으로 간주해 버림
+    //              ② RIDING_MOVING_SPD_KMH 이상이면 "이동 중"으로 반환(호출부에서 방송)
+    private boolean trackRideSpeed(float kmh, long now, double lat, double lon) {
+        if (rideLastAcceptedKmh != null) {
+            double dtSec = (now - rideLastAcceptedT) / 1000.0;
+            if (dtSec > 30) {
+                rideGpsGapCount++;
+                if (dtSec > rideMaxGpsGapSec) rideMaxGpsGapSec = dtSec;
+            }
+            double deltaPerSec = dtSec > 0 ? Math.abs(kmh - rideLastAcceptedKmh) / dtSec : 0;
+            if (deltaPerSec > 40) return false; // 초당 40km/h 넘게 튀는 값은 노이즈로 판단하고 버림 (lastAccepted 갱신 안 함)
+
+            double signedDeltaPerSec = dtSec > 0 ? (kmh - rideLastAcceptedKmh) / dtSec : 0;
+            long sinceLastEvent = rideLastHarshEventT != null ? (now - rideLastHarshEventT) : Long.MAX_VALUE;
+            if (sinceLastEvent >= RIDING_HARSH_EVENT_COOLDOWN_MS) {
+                if (signedDeltaPerSec >= RIDING_HARSH_ACCEL_KMH_PER_SEC) {
+                    rideHarshAccelCount++; rideLastHarshEventT = now;
+                } else if (signedDeltaPerSec <= -RIDING_HARSH_BRAKE_KMH_PER_SEC) {
+                    rideHarshBrakeCount++; rideLastHarshEventT = now;
+                }
+            }
+        }
+        rideLastAcceptedKmh = kmh;
+        rideLastAcceptedT = now;
+
+        if (kmh > rideMaxSpeedKmh) {
+            rideMaxSpeedKmh = kmh;
+            rideMaxSpeedLat = lat;
+            rideMaxSpeedLon = lon;
+        }
+        return kmh >= RIDING_MOVING_SPD_KMH;
+    }
+
+    private static double haversineKm(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+            + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     // 디버그 빌드 전용 테스트 훅 - 실제 가속도계 없이 crashDetected 브로드캐스트 경로를 검증하기 위함.
