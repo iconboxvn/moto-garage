@@ -4760,7 +4760,16 @@ function saveRideRecord(s){
     harshBrakeCount: _ride.harshBrakeCount || 0
   };
   D.rides.push(newRide);
+  var rideBike = D.bikes.find(function(b){ return b.id===rideBikeId; });
+  if(rideBike && rideDistKm > 0){
+    rideBike.odometer = Math.round((rideBike.odometer||0) + rideDistKm);
+    s.updatedOdometer = rideBike.odometer;
+  }
   save();
+  if(rideBike && rideDistKm > 0){
+    renderBikes(); renderDash();
+    scheduleConsumableAlerts();
+  }
   var newTier = Math.floor((prevTotal+rideDistKm)/500);
   if(newTier > Math.floor(prevTotal/500)){
     setTimeout(function(){ showToast('🏆 You\'ve reached '+(newTier*500).toLocaleString()+'km total! Check your ride history'); }, 1500);
@@ -5314,6 +5323,16 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
   document.getElementById('ride-summary-distance').textContent = s.distanceKm > 0 ? s.distanceKm.toFixed(1)+' km' : '-';
   document.getElementById('ride-summary-avg').textContent = s.avgKmh > 0 ? Math.round(s.avgKmh)+' km/h' : '-';
   document.getElementById('ride-summary-max').textContent = s.maxKmh > 0 ? Math.round(s.maxKmh)+' km/h' : '-';
+  var odoEl = document.getElementById('ride-summary-odo');
+  if(odoEl){
+    if(typeof s.updatedOdometer === 'number'){
+      var odoValEl = document.getElementById('ride-summary-odo-val');
+      if(odoValEl) odoValEl.textContent = s.updatedOdometer.toLocaleString()+' km';
+      odoEl.style.display = 'block';
+    } else {
+      odoEl.style.display = 'none';
+    }
+  }
   var note = document.getElementById('ride-summary-note');
   var tooShort = s.durationMs < 60000 && s.distanceKm < 0.05;
   var noGps = s.distanceKm === 0 && s.maxKmh === 0;
@@ -5358,6 +5377,8 @@ function showAchievementSummary(bikeId, milestoneKm, dateStr){
   headline.textContent = (bike ? `${bike.brand} ${bike.model} · ` : '') + `${milestoneKm.toLocaleString()}km total reached!`;
   headline.style.display = 'block';
   document.getElementById('ride-summary-stat-grid').style.display = 'none';
+  var odoEl2 = document.getElementById('ride-summary-odo');
+  if(odoEl2) odoEl2.style.display = 'none';
   var note = document.getElementById('ride-summary-note');
   if(note) note.style.display = 'none';
   var insightEl = document.getElementById('ride-summary-insight');
@@ -6955,6 +6976,7 @@ function renderMedicalCard(){
       <div id="ride-summary-title" style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;">Ride Summary</div>
       <div id="ride-summary-ach-headline" style="display:none;font-size:15px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:10px;padding:10px 14px;margin-bottom:16px;"></div>
       <div id="ride-summary-insight" style="display:none;font-size:15px;font-weight:700;color:var(--accent);background:rgba(232,160,32,0.12);border:1px solid rgba(232,160,32,0.3);border-radius:10px;padding:10px 14px;margin-bottom:16px;"></div>
+      <div id="ride-summary-odo" style="display:none;font-size:14px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:10px;padding:10px 14px;margin-bottom:16px;">🛣 Odometer updated to <span id="ride-summary-odo-val"></span></div>
       <div id="ride-summary-stat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;">
         <div>
           <div style="font-size:11px;color:var(--text-dim);">Duration</div>
