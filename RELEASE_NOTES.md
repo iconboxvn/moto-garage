@@ -1,5 +1,56 @@
 # Release Notes
 
+## v3.1.0 (versionCode 35) — 2026-09-24
+
+v3.0.9(versionCode 34, ACCESS_BACKGROUND_LOCATION 제거) 이후 누적분.
+
+- 🛣 **라이딩 종료 후 오도미터 자동 반영** — 라이딩 거리를 해당 바이크 누적 주행거리에
+  자동으로 더함(0.1km 미만 제외). 라이딩 요약 모달 상단에 "현재 주행거리 X km으로
+  업데이트됐어요" 강조 표시, 홈 화면 수치도 즉시 갱신. 수동 입력/계기판 사진 인식과 공존
+- 📷 계기판 사진으로 누적 주행거리(ODO) 자동 인식 (KO/EN/VN)
+- 📍 **라이딩 거리/속도 누적을 네이티브(RidingService)로 이전 (1단계)** — 백그라운드에서
+  WebView가 suspend되며 거리가 유실/폭증하던 근본 원인 해결. 프로세스 킬 후 복구 시에도
+  서비스가 누적한 값을 잃지 않도록 "더 큰 값 채택" 방식으로 시드
+- 🏍 마지막에 선택한 바이크 기억 — 홈/소모품 탭 선택 동기화, 재시작해도 유지
+- 🚨 SOS "동료 사고" 긴급번호를 GPS 판별 전에도 항상 노출(기본 베트남, 이후 자동 보정)
+- 🏥 VN 앱 SOS 병원 섹션을 위치 기반 "가까운 병원 찾기"로 교체, 언어 미스매치 섹션 제거
+- 🌐 온보딩 슬라이드 이미지 EN/VN 로컬라이즈, VN 오타/한글 잔존 수정
+- ⭐ 앱 내 평가 요청(Google Play In-App Review) — 정비 2건째/라이딩 3km 이상 요약 닫을 때,
+  90일 쿨다운
+- 🐛 페이지 전환 시 이전 스크롤 위치가 남던 문제 수정
+
+### Play 스토어 출시 노트 (사용자용, 언어별)
+
+`release-notes/whatsnew-{ko-KR,en-US,vi-VN}.txt` 참고 (각 500자 이내).
+
+**ko-KR**
+```
+• 라이딩이 끝나면 주행거리가 자동으로 누적돼요 (계기판과 완전히 같지 않아도 대략적인 거리를 계속 최신으로 유지)
+• 계기판 사진을 찍으면 누적 주행거리를 자동으로 인식해요
+• 라이딩 거리·속도 기록 안정성 개선 — 앱이 백그라운드에 있거나 재시작돼도 기록이 끊기지 않아요
+• 마지막에 선택한 바이크를 앱을 다시 켜도 기억해요
+• 긴급 SOS: '동료 사고' 응급번호가 GPS 확인 전에도 항상 보이고, 베트남 앱에서는 가까운 병원을 찾을 수 있어요
+• 영어·베트남어 온보딩 화면 번역 및 화면 이동 시 스크롤 위치 오류 수정
+```
+**en-US**
+```
+• Odometer now updates automatically after each ride
+• Read your odometer from a dashboard photo
+• More reliable ride distance and speed tracking, even in the background
+• Remembers the bike you selected last
+• Emergency SOS numbers always visible; Vietnam app finds nearby hospitals
+• Translated onboarding and fixed a scroll glitch
+```
+**vi-VN**
+```
+• Số km tự động cập nhật sau mỗi chuyến đi, luôn gần đúng mà không cần nhập tay
+• Chụp ảnh đồng hồ để tự nhận số km tổng
+• Ghi quãng đường và tốc độ ổn định hơn, kể cả khi ứng dụng chạy nền hoặc khởi động lại
+• Ứng dụng nhớ chiếc xe bạn chọn lần trước
+• SOS khẩn cấp: số khẩn cấp khi có tai nạn luôn hiển thị, có thể tìm bệnh viện gần nhất
+• Dịch màn hình giới thiệu và sửa lỗi vị trí cuộn khi chuyển màn hình
+```
+
 ## v3.0.8 (versionCode 33) — 2026-09-02
 
 - 🌐 긴급 SOS 화면 영어·베트남어 번역 — 그동안 영어/베트남어 앱에서도 한국어로만

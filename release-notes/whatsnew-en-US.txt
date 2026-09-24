@@ -1,6 +1,6 @@
-🐛 Important bug fixes
-- Fixed the screen freezing when switching languages during a ride
-- Fixed the riding status display sometimes showing incorrect info
-
-🛠 Improvements
-- Fonts are now bundled with the app so screens always load quickly, even with weak signal
+• Odometer now updates automatically after each ride
+• Read your odometer from a dashboard photo
+• More reliable ride distance and speed tracking, even in the background
+• Remembers the bike you selected last
+• Emergency SOS numbers always visible; Vietnam app finds nearby hospitals
+• Translated onboarding and fixed a scroll glitch

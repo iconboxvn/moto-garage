@@ -1,6 +1,6 @@
-🐛 Sửa lỗi quan trọng
-- Sửa lỗi màn hình bị treo khi đổi ngôn ngữ trong lúc đang đi
-- Sửa lỗi trạng thái chuyến đi hiển thị không đúng thực tế
-
-🛠 Cải thiện
-- Đóng gói sẵn font trong ứng dụng để màn hình luôn tải nhanh, kể cả khi sóng yếu
+• Số km tự động cập nhật sau mỗi chuyến đi, luôn gần đúng mà không cần nhập tay
+• Chụp ảnh đồng hồ để tự nhận số km tổng
+• Ghi quãng đường và tốc độ ổn định hơn, kể cả khi ứng dụng chạy nền hoặc khởi động lại
+• Ứng dụng nhớ chiếc xe bạn chọn lần trước
+• SOS khẩn cấp: số khẩn cấp khi có tai nạn luôn hiển thị, có thể tìm bệnh viện gần nhất
+• Dịch màn hình giới thiệu và sửa lỗi vị trí cuộn khi chuyển màn hình
