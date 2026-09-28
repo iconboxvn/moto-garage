@@ -19,10 +19,10 @@
 
 - **프레임워크**: Capacitor 6 (Android WebView 앱)
 - **웹 소스**: `www/` → cap sync → `android/app/src/main/assets/public/`
-- **HTML 파일**: 3개 언어 × 2 위치 = 6개 파일 항상 동시 수정
-  - `www/index.html` + `index.html` (한국어)
-  - `www/index_en.html` + `index_en.html` (영어)
-  - `www/index_vn.html` + `index_vn.html` (베트남어)
+- **HTML 파일**: 3개 언어 파일 항상 동시 수정 (예전에 있던 루트 사본 `index*.html`은 삭제됨 — `www/`만 수정)
+  - `www/index.html` (한국어)
+  - `www/index_en.html` (영어)
+  - `www/index_vn.html` (베트남어)
 - **네이티브**: `android/app/src/main/java/com/iconbox/motogarage/`
   - `MainActivity.java` — SmsPlugin, RidingPlugin 등록
   - `RidingPlugin.java` / `RidingService.java` — 포그라운드 서비스
@@ -36,6 +36,11 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 cd android && .\gradlew assembleRelease
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
+
+> 테스트 폰(59OR6TJ7TGRWSC5X)에는 **디버그 빌드**가 설치돼 있어 release APK는 서명 불일치
+> (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`)로 설치 실패함. 이 경우 `gradlew assembleDebug` 후
+> `app/build/outputs/apk/debug/app-debug.apk`로 설치할 것 — 앱 삭제 후 재설치는 로컬 데이터가
+> 전부 날아가므로 사용자 확인 없이 하지 말 것. (2026-09-28 확인)
 
 ## 알림 ID 범위
 
@@ -81,6 +86,29 @@ private static final float MIN_SPD_KMH = 20f;    // 감지 활성화 최소 속�
 
 **미이전 상태 (B안, 향후 검토)**: 카운트다운 UI/SMS 발송까지 전부 네이티브(알림+액션 버튼)로 옮겨서
 WebView가 완전히 죽어있어도 안전기능이 살아있게 하는 안. 지금은 A안(상태머신만 이전)까지만 완료.
+
+## 주행 조건 지표 수집 (가혹 조건 판정 1단계, RidingService.java) — 2026-09-28
+
+> 도심 가다 서다·짧은 주행 등 "가혹 조건"을 GPS로 판정해 정비 주기(오일/브레이크패드)에
+> 반영하려는 기능의 1단계. **지금은 수집만, UI/판정 없음.** 임계값은 `riding_completed`
+> 이벤트 분포를 보고 2단계에서 확정.
+
+```java
+private static final float  RIDING_STOP_ARM_KMH       = 15f;   // 이 속도 이상 달린 뒤에만 다음 정지를 셈 (재무장)
+private static final float  RIDING_STOP_KMH           = 3f;    // 정지 판정 속도
+private static final long   RIDING_STOP_MIN_MS        = 3000L; // 정지 지속 시간
+private static final float  RIDING_LOW_SPD_KMH        = 15f;   // 저속 구간 상한 (STOP~LOW 사이 이동시간 누적)
+private static final double RIDING_LOW_SPD_MAX_DT_SEC = 30;    // 샘플 간격이 이보다 길면 저속시간에 안 더함
+```
+
+- 결과 필드: `stopCount`, `lowSpeedMs` — `D.rides[]` 레코드, `riding_completed` 이벤트
+  (`stop_count`, `low_speed_sec`), `mg2-ride-progress`/`seedRideTracking()` 복원 경로에 모두 포함.
+  급가속/급제동 카운트와 같은 경로라, 새 누적 지표를 추가할 때도 이 4곳(`_ride` 초기화 4곳 포함)을
+  빠짐없이 같이 수정할 것.
+- 계산은 `trackRideSpeed()`의 이상치 필터를 통과한 샘플만 사용. 네이티브 전용 — JS 폴백 경로
+  (`_rideTrackSpeed`)에는 구현 안 함(안드로이드에선 항상 네이티브가 동작).
+- 2단계 이후 계획(판정 규칙, `getEffectiveKm()` 헬퍼로 `c.km`은 건드리지 않고 계수 적용,
+  옵트인 방식)은 아직 미확정 — 착수 전 사용자 확인.
 
 ---
 
