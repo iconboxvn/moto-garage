@@ -52,6 +52,8 @@ public class RidingPlugin extends Plugin {
                 data.put("rideHarshBrakeCount",  intent.getIntExtra("rideHarshBrakeCount", 0));
                 data.put("rideGpsGapCount",      intent.getIntExtra("rideGpsGapCount", 0));
                 data.put("rideMaxGpsGapSec",     intent.getDoubleExtra("rideMaxGpsGapSec", 0));
+                data.put("rideStopCount",        intent.getIntExtra("rideStopCount", 0));
+                data.put("rideLowSpeedMs",       intent.getLongExtra("rideLowSpeedMs", 0L));
                 data.put("rideIsMoving",         intent.getBooleanExtra("rideIsMoving", false));
                 notifyListeners("locationUpdate", data);
             }
@@ -159,7 +161,9 @@ public class RidingPlugin extends Plugin {
             call.getInt("harshAccelCount", 0),
             call.getInt("harshBrakeCount", 0),
             call.getInt("gpsGapCount", 0),
-            call.getDouble("maxGpsGapSec", 0.0)
+            call.getDouble("maxGpsGapSec", 0.0),
+            call.getInt("stopCount", 0),
+            call.getLong("lowSpeedMs", 0L)
         );
         call.resolve();
     }
