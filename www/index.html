@@ -604,6 +604,7 @@ option{background:var(--surface2);}
           <div id="riding-ctrl-title" style="font-size:15px;font-weight:700;color:var(--accent);">라이딩 대기중</div>
         </div>
         <div id="riding-ctrl-sub" style="font-size:12px;color:var(--text);line-height:1.7;margin-top:4px;"></div>
+        <div id="riding-ctrl-bike" style="display:none;font-size:12px;color:var(--text-dim);margin-top:4px;"></div>
       </div>
       <div id="riding-ctrl-btn" style="width:100%;">
         <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:11px 14px;" onclick="startRiding()">▶ 기록시작</button>
@@ -2232,6 +2233,7 @@ function _renderDashInner(){
     </div>`;
   try{ renderFuelPriceCard(); }catch(e){}
   try{ renderBrandNewsHomeCard(); }catch(e){}
+  try{ updateRidingBar(); }catch(e){} // 라이딩 바의 "기록될 바이크" 표시 갱신
 }
 
 function selectDashBike(id){
@@ -4609,7 +4611,7 @@ function _ensureWidgetActionListener(){
   if(_widgetActionListenerHandle){ try{ _widgetActionListenerHandle.remove(); }catch(e){} }
   _widgetActionListenerHandle = RidingW.addListener('widgetAction', function(data){ _handleWidgetAction(data && data.action); });
 }
-var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, stopCount:0, lowSpeedMs:0, stoppedMs:0, autoEnded:false};
+var _ride = {startTime:null, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:null, pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, stopCount:0, lowSpeedMs:0, stoppedMs:0, bikeId:null, autoEnded:false};
 var _ridingPauseTimer = null;
 var RIDING_MOVING_SPD   = 8;              // km/h 이상 샘플 1개만 봐도 즉시 "이동 확정" (GPS 노이즈로 20초 연속 조건이 실주행 중 깨지는 문제 방지 — 2026-07)
 var RIDING_MAX_SPEED_ACCURACY_MPS = 3;    // 네이티브가 넘겨준 속도 정확도(m/s)가 이보다 나쁘면 그 샘플은 신뢰 안 함 (도심 GPS 튐 방지)
@@ -4655,6 +4657,7 @@ function _persistRideProgress(force){
       stopCount: _ride.stopCount,
       lowSpeedMs: _ride.lowSpeedMs,
       stoppedMs: _ride.stoppedMs,
+      bikeId: _ride.bikeId,
       lastLat: _ride.lastLat,
       lastLon: _ride.lastLon
     }));
@@ -4710,6 +4713,7 @@ function updateRidingBar() {
       sub.textContent = _sos.speedOk ? '⚡ 충격 감지 활성 (20 km/h+)' : '⏳ 속도 대기 중 (20 km/h 미만)';
     }
     btn.innerHTML = '<button class="riding-stop-btn" style="width:100%;justify-content:center;" onclick="stopRiding()">■ 종료</button>';
+    _renderRidingBikeLine(_ride.bikeId, '{b} 기록 중');
   } else {
     bar.className = 'riding-ctrl';
     dot.className = 'riding-dot';
@@ -4717,7 +4721,87 @@ function updateRidingBar() {
     title.textContent = '라이딩 대기중';
     sub.textContent = '';
     btn.innerHTML = '<button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:11px 14px;" onclick="startRiding()">▶ 기록시작</button>';
+    _renderRidingBikeLine(dashSelectedBikeId, '{b}(으)로 기록돼요');
   }
+}
+
+// ── 라이딩 기록 바이크 확인/변경 (바이크 2대 이상일 때만 노출) ──
+function _rbEsc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _rideBikeName(id){
+  var b = D.bikes.find(function(x){ return x.id===id; });
+  return b ? (b.brand+' '+b.model) : '';
+}
+function _renderRidingBikeLine(bikeId, tpl){
+  var el = document.getElementById('riding-ctrl-bike');
+  if (!el) return;
+  if (!D.bikes || D.bikes.length < 2 || !_rideBikeName(bikeId)) { el.style.display = 'none'; return; }
+  var mode = ridingState.active ? 'riding' : 'idle';
+  el.innerHTML = '🏍 ' + tpl.replace('{b}', _rbEsc(_rideBikeName(bikeId)))
+    + ' · <span onclick="openRideBikePicker(&quot;' + mode + '&quot;)" style="color:var(--accent);text-decoration:underline;cursor:pointer;">바꾸기</span>';
+  el.style.display = 'block';
+}
+var _rideBikePickMode = null;
+function openRideBikePicker(mode){
+  _rideBikePickMode = mode;
+  var cur = mode==='riding' ? _ride.bikeId
+    : mode==='summary' ? ((D.rides||[]).find(function(r){ return r.id===window._lastSavedRideId; })||{}).bikeId
+    : dashSelectedBikeId;
+  var list = document.getElementById('ride-bike-pick-list');
+  list.innerHTML = D.bikes.map(function(b){
+    var on = b.id===cur;
+    return '<div onclick="pickRideBike('+b.id+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid '+(on?'var(--accent)':'var(--border)')+';border-radius:10px;margin-bottom:8px;cursor:pointer;">'
+      + '<span style="font-size:14px;font-weight:600;color:var(--text);">🏍 '+_rbEsc(b.brand+' '+b.model)+'</span>'
+      + (on ? '<span style="color:var(--accent);font-size:13px;">✓</span>' : '') + '</div>';
+  }).join('');
+  openModal('m-ride-bike-pick');
+}
+function pickRideBike(id){
+  closeModal('m-ride-bike-pick');
+  if (_rideBikePickMode==='riding') {
+    if (!ridingState.active) return;
+    _ride.bikeId = id;
+    _persistRideProgress(true);
+    updateRidingBar();
+    showToast('🏍 '+_rideBikeName(id)+'(으)로 기록해요');
+  } else if (_rideBikePickMode==='summary') {
+    reassignRideBike(window._lastSavedRideId, id);
+  } else {
+    selectDashBike(id);
+    updateRidingBar();
+  }
+}
+// 방금 저장된 라이딩을 다른 바이크로 옮김 — 주행거리계에 자동으로 더했던 만큼(odoAdded)을
+// 원래 바이크에서 빼고 새 바이크에 더한다. odoAdded가 있는 기록(이 기능 이후 저장분)만 정확히 되돌려짐.
+function reassignRideBike(rideId, newId){
+  var ride = (D.rides||[]).find(function(r){ return r.id===rideId; });
+  var nb = D.bikes.find(function(b){ return b.id===newId; });
+  if (!ride || !nb || ride.bikeId===newId) return;
+  var old = D.bikes.find(function(b){ return b.id===ride.bikeId; });
+  if (old && ride.odoAdded) old.odometer = Math.max(0, (old.odometer||0) - ride.odoAdded);
+  ride.bikeId = newId;
+  ride.odoAdded = 0;
+  if (ride.distanceKm > 0) {
+    var before = nb.odometer||0;
+    nb.odometer = Math.round(before + ride.distanceKm);
+    ride.odoAdded = nb.odometer - before;
+  }
+  save();
+  selectDashBike(newId);
+  renderBikes();
+  scheduleConsumableAlerts();
+  if (window._lastRideSummary) window._lastRideSummary.updatedOdometer = nb.odometer;
+  _renderRideSummaryBike();
+  var odoValEl = document.getElementById('ride-summary-odo-val');
+  if (odoValEl && ride.distanceKm > 0) odoValEl.textContent = nb.odometer.toLocaleString()+' km';
+  showToast('🏍 '+_rideBikeName(newId)+' 기록으로 옮겼어요');
+}
+function _renderRideSummaryBike(){
+  var el = document.getElementById('ride-summary-bike');
+  if (!el) return;
+  var ride = window._lastSavedRideId ? (D.rides||[]).find(function(r){ return r.id===window._lastSavedRideId; }) : null;
+  if (!ride || !D.bikes || D.bikes.length < 2) { el.style.display = 'none'; return; }
+  document.getElementById('ride-summary-bike-name').textContent = _rideBikeName(ride.bikeId);
+  el.style.display = 'block';
 }
 
 function toggleRiding() { ridingState.active ? stopRiding() : startRiding(); }
@@ -4811,7 +4895,10 @@ function _doStartRiding() {
   if(_widgetPendingBackground){ _widgetPendingBackground = false; _widgetReturnToBackground(); }
   localStorage.setItem('mg2-riding', '1');
   var _now0 = Date.now();
-  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, stopCount:0, lowSpeedMs:0, stoppedMs:0, autoEnded:false};
+  _ride = {startTime:_now0, lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:_now0, pausedMs:0, pauseStartedAt:_now0, distanceAtLastMoving:0, hasStartedMoving:false, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, stopCount:0, lowSpeedMs:0, stoppedMs:0, bikeId:null, autoEnded:false};
+  // 기록할 바이크는 시작 시점에 고정 (라이딩 중/요약 화면에서 변경 가능) — 예전엔 종료 시점의
+  // 홈 화면 선택 바이크로 저장돼서, 타는 도중 홈에서 다른 바이크를 보면 기록이 그쪽으로 갔음
+  _ride.bikeId = dashSelectedBikeId;
   _persistRideProgress(true);
   _sos.phase = 'MONITORING';
   _sos.speedOk = false;
@@ -4847,6 +4934,7 @@ function stopRiding(customMsg, skipSummary) {
   updateRidingBar();
   showToast(customMsg || '■ 라이딩 종료');
   if (summary) {
+    window._lastSavedRideId = null;
     var savedRide = saveRideRecord(summary);
     if (!skipSummary) {
       _reviewPendingAfterSummary = !!(savedRide && savedRide.distanceKm >= 3);  // 요약 닫을 때 평가 요청
@@ -4884,7 +4972,8 @@ function saveRideRecord(s){
   var startD = new Date(_ride.startTime);
   var endD = new Date();
   var fmtTime = d => d.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
-  var rideBikeId = (D.bikes.find(b=>b.id===dashSelectedBikeId) ? dashSelectedBikeId : (D.bikes[0] ? D.bikes[0].id : null));
+  var rideBikeId = (_ride.bikeId!=null && D.bikes.find(b=>b.id===_ride.bikeId)) ? _ride.bikeId
+    : (D.bikes.find(b=>b.id===dashSelectedBikeId) ? dashSelectedBikeId : (D.bikes[0] ? D.bikes[0].id : null));
   var rideDistKm = Math.round(s.distanceKm*10)/10;
   var prevTotal = (D.rides||[]).filter(function(r){ return r.bikeId===rideBikeId; }).reduce(function(sum,r){ return sum+(r.distanceKm||0); }, 0);
   var newRide = {
@@ -4911,9 +5000,12 @@ function saveRideRecord(s){
   D.rides.push(newRide);
   var rideBike = D.bikes.find(function(b){ return b.id===rideBikeId; });
   if(rideBike && rideDistKm > 0){
-    rideBike.odometer = Math.round((rideBike.odometer||0) + rideDistKm);
+    var odoBefore = rideBike.odometer||0;
+    rideBike.odometer = Math.round(odoBefore + rideDistKm);
+    newRide.odoAdded = rideBike.odometer - odoBefore; // 요약 화면에서 바이크를 바꿀 때 되돌릴 양
     s.updatedOdometer = rideBike.odometer;
   }
+  window._lastSavedRideId = newRide.id;
   save();
   if(rideBike && rideDistKm > 0){
     renderBikes(); renderDash();
@@ -5481,6 +5573,9 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
   document.getElementById('ride-summary-distance').textContent = s.distanceKm > 0 ? s.distanceKm.toFixed(1)+' km' : '-';
   document.getElementById('ride-summary-avg').textContent = s.avgKmh > 0 ? Math.round(s.avgKmh)+' km/h' : '-';
   document.getElementById('ride-summary-max').textContent = s.maxKmh > 0 ? Math.round(s.maxKmh)+' km/h' : '-';
+  // 방금 끝낸 라이딩일 때만 바이크 변경 허용 (이력에서 다시 연 요약은 dateOverride가 있음)
+  if (dateOverride) { var _rsb = document.getElementById('ride-summary-bike'); if (_rsb) _rsb.style.display = 'none'; }
+  else _renderRideSummaryBike();
   var odoEl = document.getElementById('ride-summary-odo');
   if(odoEl){
     if(typeof s.updatedOdometer === 'number'){
@@ -6158,9 +6253,9 @@ function _sosDoSend(phone, body, mapsUrl) {
       var _savedProgress = null;
       try { _savedProgress = JSON.parse(localStorage.getItem('mg2-ride-progress') || 'null'); } catch(e){}
       if (_savedProgress && _savedProgress.startTime) {
-        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null, pauseCount:_savedProgress.pauseCount||0, gpsGapCount:_savedProgress.gpsGapCount||0, maxGpsGapSec:_savedProgress.maxGpsGapSec||0, stopCount:_savedProgress.stopCount||0, lowSpeedMs:_savedProgress.lowSpeedMs||0, stoppedMs:_savedProgress.stoppedMs||0, autoEnded:false};
+        _ride = {startTime:_savedProgress.startTime, lastLat:_savedProgress.lastLat||null, lastLon:_savedProgress.lastLon||null, lastT:null, distance:_savedProgress.distance||0, maxSpeed:_savedProgress.maxSpeed||0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:_savedProgress.maxSpeedLat||null, maxSpeedLon:_savedProgress.maxSpeedLon||null, lastMovingT:_savedProgress.lastMovingT||Date.now(), pausedMs:_savedProgress.pausedMs||0, pauseStartedAt:null, distanceAtLastMoving:_savedProgress.distanceAtLastMoving||0, hasStartedMoving:_savedProgress.hasStartedMoving!==undefined?_savedProgress.hasStartedMoving:true, harshAccelCount:_savedProgress.harshAccelCount||0, harshBrakeCount:_savedProgress.harshBrakeCount||0, lastHarshEventT:null, pauseCount:_savedProgress.pauseCount||0, gpsGapCount:_savedProgress.gpsGapCount||0, maxGpsGapSec:_savedProgress.maxGpsGapSec||0, stopCount:_savedProgress.stopCount||0, lowSpeedMs:_savedProgress.lowSpeedMs||0, stoppedMs:_savedProgress.stoppedMs||0, bikeId:_savedProgress.bikeId||null, autoEnded:false};
       } else {
-        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, stopCount:0, lowSpeedMs:0, stoppedMs:0, autoEnded:false};
+        _ride = {startTime:Date.now(), lastLat:null, lastLon:null, lastT:null, distance:0, maxSpeed:0, lastAcceptedKmh:null, lastAcceptedT:null, speedBuf:[], path:[], maxSpeedLat:null, maxSpeedLon:null, lastMovingT:Date.now(), pausedMs:0, pauseStartedAt:null, distanceAtLastMoving:0, hasStartedMoving:true, harshAccelCount:0, harshBrakeCount:0, lastHarshEventT:null, pauseCount:0, gpsGapCount:0, maxGpsGapSec:0, stopCount:0, lowSpeedMs:0, stoppedMs:0, bikeId:null, autoEnded:false};
       }
       // 프로세스킬로 재시작된 경우 RidingService도 새로 떠서 누적값이 0부터일 것이므로,
       // 방금 복원한 _ride 값을 네이티브에 다시 심어준다(distance/maxSpeed 등만 — lastLat/lastLon은
@@ -7343,6 +7438,13 @@ function renderMedicalCard(){
 </div>
 
 <!-- SMS 권한 모달 -->
+<div class="modal-overlay" id="m-ride-bike-pick">
+  <div class="modal" style="max-width:320px;">
+    <div class="modal-header"><span class="modal-title">🏍 어떤 바이크로 기록할까요?</span><button class="modal-close" onclick="closeModal('m-ride-bike-pick')">✕</button></div>
+    <div class="modal-body" id="ride-bike-pick-list" style="padding:16px;"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="m-sms-perm">
   <div class="modal" style="max-width:300px;">
     <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
@@ -7472,6 +7574,7 @@ function renderMedicalCard(){
       <div id="ride-summary-title" style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;">라이딩 요약</div>
       <div id="ride-summary-ach-headline" style="display:none;font-size:15px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:10px;padding:10px 14px;margin-bottom:16px;"></div>
       <div id="ride-summary-insight" style="display:none;font-size:15px;font-weight:700;color:#4ade80;background:rgba(74,222,128,0.14);border:1px solid rgba(74,222,128,0.4);border-radius:10px;padding:10px 14px;margin-bottom:16px;"></div>
+      <div id="ride-summary-bike" style="display:none;font-size:13px;color:var(--text-dim);margin-bottom:12px;">🏍 <span id="ride-summary-bike-name" style="color:var(--text);font-weight:600;"></span> 기록으로 저장됐어요 · <span onclick="openRideBikePicker('summary')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">바꾸기</span></div>
       <div id="ride-summary-odo" style="display:none;font-size:14px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:10px;padding:10px 14px;margin-bottom:16px;">🛣 현재 주행거리 <span id="ride-summary-odo-val"></span>으로 업데이트됐어요</div>
       <div id="ride-summary-stat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;">
         <div>
