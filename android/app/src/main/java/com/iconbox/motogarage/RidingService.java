@@ -334,8 +334,11 @@ public class RidingService extends Service {
             }
         } else {
             rideBelowStopSinceT = null;
-            rideStopEpisodeMs = 0;
         }
+        // 정차 1회당 상한(STOPPED_CAP_MS)의 "1회"는 MOVING_SPD 이상으로 실제로 움직여야 끝난다.
+        // STOP(3km/h) 기준으로 끊으면 정차 중 GPS 오차(3~8km/h 튐)마다 상한이 새로 시작돼서,
+        // 주차장 출구 대기처럼 긴 정차가 사실상 상한 없이 누적됐음 (2026-09-29 퇴근 실주행에서 확인).
+        if (kmh >= RIDING_MOVING_SPD_KMH) rideStopEpisodeMs = 0;
     }
 
     private static double haversineKm(double lat1, double lon1, double lat2, double lon2) {
