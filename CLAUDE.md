@@ -98,13 +98,17 @@ private static final float  RIDING_STOP_ARM_KMH       = 15f;   // 이 속도 이
 private static final float  RIDING_STOP_KMH           = 3f;    // 정지 판정 속도
 private static final long   RIDING_STOP_MIN_MS        = 3000L; // 정지 지속 시간
 private static final float  RIDING_LOW_SPD_KMH        = 15f;   // 저속 구간 상한 (STOP~LOW 사이 이동시간 누적)
-private static final double RIDING_LOW_SPD_MAX_DT_SEC = 30;    // 샘플 간격이 이보다 길면 저속시간에 안 더함
+private static final double RIDING_LOW_SPD_MAX_DT_SEC = 30;    // 샘플 간격이 이보다 길면 저속/정차 시간에 안 더함
+private static final long   RIDING_STOPPED_CAP_MS     = 180000L; // 정차 1회당 정차시간 상한 (주차/휴식 배제)
 ```
 
-- 결과 필드: `stopCount`, `lowSpeedMs` — `D.rides[]` 레코드, `riding_completed` 이벤트
-  (`stop_count`, `low_speed_sec`), `mg2-ride-progress`/`seedRideTracking()` 복원 경로에 모두 포함.
+- 결과 필드: `stopCount`, `lowSpeedMs`, `stoppedMs` — `D.rides[]` 레코드, `riding_completed` 이벤트
+  (`stop_count`, `low_speed_sec`, `stopped_sec`), `mg2-ride-progress`/`seedRideTracking()` 복원 경로에 모두 포함.
   급가속/급제동 카운트와 같은 경로라, 새 누적 지표를 추가할 때도 이 4곳(`_ride` 초기화 4곳 포함)을
   빠짐없이 같이 수정할 것.
+- `stoppedMs`(2026-09-29 추가): 3km/h 미만 시간. 첫 이동(8km/h) 전 출발 대기는 제외, 정차 1회당 3분 상한.
+  저속 시간이 정차를 제외하다 보니 심한 정체일수록 저속 비율이 오히려 낮게 나와서(첫 실주행: 평균 10km/h인데
+  저속 30%) 정차 시간을 별도로 수집하기로 함.
 - 계산은 `trackRideSpeed()`의 이상치 필터를 통과한 샘플만 사용. 네이티브 전용 — JS 폴백 경로
   (`_rideTrackSpeed`)에는 구현 안 함(안드로이드에선 항상 네이티브가 동작).
 - 2단계 이후 계획(판정 규칙, `getEffectiveKm()` 헬퍼로 `c.km`은 건드리지 않고 계수 적용,

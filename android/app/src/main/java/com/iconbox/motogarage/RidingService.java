@@ -61,13 +61,17 @@ public class RidingService extends Service {
     // ── 주행 조건 분석용 (가혹 조건 판정 1단계 — 수집만, 2026-09-28) ──
     // 정지: STOP_ARM 이상으로 달린 뒤 STOP 미만이 STOP_MIN_MS 이상 지속되면 1회 (신호대기 등).
     //       한 번 세면 다시 STOP_ARM 이상 달려야 재무장 — 정차 중 GPS 흔들림으로 중복 카운트 방지.
-    // 저속: STOP 이상 LOW 미만으로 움직인 시간 누적 (정차 시간은 제외 — 10분 일시정지 전 주차가 섞이지 않게).
+    // 저속: STOP 이상 LOW 미만으로 움직인 시간 누적 (정차 시간은 제외 — 아래 정차 시간으로 따로 셈).
+    // 정차: STOP 미만인 시간 누적. 한 번 정차당 STOPPED_CAP_MS까지만 — 10분 자동 일시정지 전의
+    //       주차/휴식이 섞이지 않게. 첫 이동(MOVING_SPD) 전 출발 대기 시간도 제외.
+    //       (2026-09-29 추가: 정체가 심할수록 정차 시간이 늘어 저속 비율만으론 오히려 낮게 나오는 문제)
     // 임계값은 수집 데이터(riding_completed 이벤트) 분포를 보고 2단계에서 재검토.
     private static final float  RIDING_STOP_ARM_KMH              = 15f;
     private static final float  RIDING_STOP_KMH                  = 3f;
     private static final long   RIDING_STOP_MIN_MS               = 3000L;
     private static final float  RIDING_LOW_SPD_KMH               = 15f;
     private static final double RIDING_LOW_SPD_MAX_DT_SEC        = 30;
+    private static final long   RIDING_STOPPED_CAP_MS            = 180000L;
 
     private static final int PHASE_MONITORING = 0;
     private static final int PHASE_FREEFALL   = 1;
@@ -109,6 +113,9 @@ public class RidingService extends Service {
     private long   rideLowSpeedMs = 0;
     private boolean rideStopArmed = false;
     private Long   rideBelowStopSinceT = null;
+    private long   rideStoppedMs = 0;
+    private long   rideStopEpisodeMs = 0;
+    private boolean rideHasMoved = false;
 
     @Override
     public void onCreate() {
@@ -150,6 +157,7 @@ public class RidingService extends Service {
                 broadcast.putExtra("rideMaxGpsGapSec", rideMaxGpsGapSec);
                 broadcast.putExtra("rideStopCount", rideStopCount);
                 broadcast.putExtra("rideLowSpeedMs", rideLowSpeedMs);
+                broadcast.putExtra("rideStoppedMs", rideStoppedMs);
                 broadcast.putExtra("rideIsMoving", rideIsMoving);
                 // LocalBroadcastManager 사용 (앱 내부 통신, 보안 정책 우회)
                 LocalBroadcastManager.getInstance(RidingService.this).sendBroadcast(broadcast);
@@ -207,7 +215,7 @@ public class RidingService extends Service {
     public static void seedRideTracking(double distanceKm, float maxSpeedKmh,
             double maxSpeedLat, double maxSpeedLon, boolean hasMaxSpeedLoc,
             int harshAccelCount, int harshBrakeCount, int gpsGapCount, double maxGpsGapSec,
-            int stopCount, long lowSpeedMs) {
+            int stopCount, long lowSpeedMs, long stoppedMs) {
         if (instance == null) return;
         if (distanceKm > instance.rideDistanceKm) instance.rideDistanceKm = distanceKm;
         if (maxSpeedKmh > instance.rideMaxSpeedKmh) {
@@ -223,6 +231,9 @@ public class RidingService extends Service {
         if (maxGpsGapSec > instance.rideMaxGpsGapSec) instance.rideMaxGpsGapSec = maxGpsGapSec;
         if (stopCount > instance.rideStopCount) instance.rideStopCount = stopCount;
         if (lowSpeedMs > instance.rideLowSpeedMs) instance.rideLowSpeedMs = lowSpeedMs;
+        if (stoppedMs > instance.rideStoppedMs) instance.rideStoppedMs = stoppedMs;
+        // 복원된 라이딩은 이미 출발한 상태 — 첫 이동 전 대기로 오인해 정차 시간을 버리지 않게
+        if (distanceKm > 0) instance.rideHasMoved = true;
     }
 
     // GPS 위치 하나를 라이딩 거리/속도 누적에 반영. www/index*.html의 _sosGPSStart() 안
@@ -291,6 +302,13 @@ public class RidingService extends Service {
                     && rideLastAcceptedKmh >= RIDING_STOP_KMH && rideLastAcceptedKmh < RIDING_LOW_SPD_KMH) {
                 rideLowSpeedMs += (long) (dtSec * 1000);
             }
+            // 정차 시간: 직전 채택 샘플이 STOP 미만이었으면 그 사이 시간을 더함 (정차 1회당 상한)
+            if (rideHasMoved && dtSec > 0 && dtSec <= RIDING_LOW_SPD_MAX_DT_SEC
+                    && rideLastAcceptedKmh < RIDING_STOP_KMH && rideStopEpisodeMs < RIDING_STOPPED_CAP_MS) {
+                long add = Math.min((long) (dtSec * 1000), RIDING_STOPPED_CAP_MS - rideStopEpisodeMs);
+                rideStopEpisodeMs += add;
+                rideStoppedMs += add;
+            }
         }
         trackStops(kmh, now);
         rideLastAcceptedKmh = kmh;
@@ -306,6 +324,7 @@ public class RidingService extends Service {
 
     // 정지 횟수 카운트 — 상수 주석 참고. trackRideSpeed()의 이상치 필터를 통과한 샘플만 들어온다.
     private void trackStops(float kmh, long now) {
+        if (kmh >= RIDING_MOVING_SPD_KMH) rideHasMoved = true;
         if (kmh >= RIDING_STOP_ARM_KMH) rideStopArmed = true;
         if (kmh < RIDING_STOP_KMH) {
             if (rideBelowStopSinceT == null) rideBelowStopSinceT = now;
@@ -315,6 +334,7 @@ public class RidingService extends Service {
             }
         } else {
             rideBelowStopSinceT = null;
+            rideStopEpisodeMs = 0;
         }
     }
 
