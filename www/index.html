@@ -4009,7 +4009,8 @@ function renderBackupPage(){
 function renderSettingsPage(){
   // 데이터 통계
   const el=document.getElementById('backup-stats');
-  const lastBackup=localStorage.getItem('mg2-last-backup');
+  const _lbTs=Number(localStorage.getItem('mg2-last-backup-ts'));
+  const lastBackup=_lbTs?new Date(_lbTs).toLocaleString('ko-KR'):localStorage.getItem('mg2-last-backup');
   if(el) el.innerHTML=`
     <div class="backup-stat-row"><span>등록 차량</span><span class="backup-stat-val">${D.bikes.length}대</span></div>
     <div class="backup-stat-row"><span>정비 이력</span><span class="backup-stat-val">${D.history.length}건</span></div>

@@ -3643,7 +3643,8 @@ function renderBackupPage(){
 
 function renderSettingsPage(){
   const el=document.getElementById('backup-stats');
-  const lastBackup=localStorage.getItem('mg2-last-backup');
+  const _lbTs=Number(localStorage.getItem('mg2-last-backup-ts'));
+  const lastBackup=_lbTs?new Date(_lbTs).toLocaleString('en-US'):localStorage.getItem('mg2-last-backup');
   if(el) el.innerHTML=`
     <div class="backup-stat-row"><span>Vehicles</span><span class="backup-stat-val">${D.bikes.length}</span></div>
     <div class="backup-stat-row"><span>History</span><span class="backup-stat-val">${D.history.length}</span></div>
@@ -3716,7 +3717,7 @@ async function exportJSON(){
         url: fileResult.uri,
         dialogTitle: 'Share Backup File'
       });
-      localStorage.setItem('mg2-last-backup', new Date().toLocaleString('ko-KR'));
+      localStorage.setItem('mg2-last-backup', new Date().toLocaleString('en-US'));
       localStorage.setItem('mg2-last-backup-ts', String(Date.now()));
       showBackupToast('✓ Backup file ready');
       renderBackupPage();
@@ -3730,7 +3731,7 @@ async function exportJSON(){
     const a = document.createElement('a');
     a.href = url; a.download = fileName;
     a.click(); URL.revokeObjectURL(url);
-    localStorage.setItem('mg2-last-backup', new Date().toLocaleString('ko-KR'));
+    localStorage.setItem('mg2-last-backup', new Date().toLocaleString('en-US'));
     showBackupToast('✓ Backup downloaded');
     renderBackupPage();
   }
@@ -6470,7 +6471,7 @@ function renderWeather(data, aqiData, fcData) {
   const city = data.name;
   const humidity = data.main.humidity;
   const windSpeed = Math.round((data.wind?.speed || 0) * 3.6);
-  const now = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'});
+  const now = new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
   const aqi = aqiData ? getAqiInfo(aqiData) : null;
 
   // AQI 박스 HTML
