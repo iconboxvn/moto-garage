@@ -116,6 +116,13 @@ public class RidingService extends Service {
     private long   rideStoppedMs = 0;
     private long   rideStopEpisodeMs = 0;
     private boolean rideHasMoved = false;
+    // 위 3개 지표의 "확정값" — 8km/h(MOVING_SPD) 이상으로 다시 달릴 때마다 현재 누적값으로 갱신하고,
+    // JS로는 이 확정값만 보낸다. 신호 대기/정체는 결국 다시 출발하니 전부 반영되고, 도착 후
+    // 시동 끄고 걸어가며 종료를 누르는 꼬리 구간(실측 ~3분, 도보 3~5km/h가 저속으로도 잡혔음)은
+    // 다시 달리지 않으니 자연히 빠진다. 출발 전 헬멧 착용 시간이 rideHasMoved로 빠지는 것과 대칭.
+    private int    rideStopCountCommitted = 0;
+    private long   rideLowSpeedMsCommitted = 0;
+    private long   rideStoppedMsCommitted = 0;
 
     @Override
     public void onCreate() {
@@ -155,9 +162,9 @@ public class RidingService extends Service {
                 broadcast.putExtra("rideHarshBrakeCount", rideHarshBrakeCount);
                 broadcast.putExtra("rideGpsGapCount", rideGpsGapCount);
                 broadcast.putExtra("rideMaxGpsGapSec", rideMaxGpsGapSec);
-                broadcast.putExtra("rideStopCount", rideStopCount);
-                broadcast.putExtra("rideLowSpeedMs", rideLowSpeedMs);
-                broadcast.putExtra("rideStoppedMs", rideStoppedMs);
+                broadcast.putExtra("rideStopCount", rideStopCountCommitted);
+                broadcast.putExtra("rideLowSpeedMs", rideLowSpeedMsCommitted);
+                broadcast.putExtra("rideStoppedMs", rideStoppedMsCommitted);
                 broadcast.putExtra("rideIsMoving", rideIsMoving);
                 // LocalBroadcastManager 사용 (앱 내부 통신, 보안 정책 우회)
                 LocalBroadcastManager.getInstance(RidingService.this).sendBroadcast(broadcast);
@@ -229,9 +236,13 @@ public class RidingService extends Service {
         if (harshBrakeCount > instance.rideHarshBrakeCount) instance.rideHarshBrakeCount = harshBrakeCount;
         if (gpsGapCount > instance.rideGpsGapCount) instance.rideGpsGapCount = gpsGapCount;
         if (maxGpsGapSec > instance.rideMaxGpsGapSec) instance.rideMaxGpsGapSec = maxGpsGapSec;
+        // 시드값은 JS가 받았던 확정값이므로 누적값·확정값 둘 다에 반영
         if (stopCount > instance.rideStopCount) instance.rideStopCount = stopCount;
         if (lowSpeedMs > instance.rideLowSpeedMs) instance.rideLowSpeedMs = lowSpeedMs;
         if (stoppedMs > instance.rideStoppedMs) instance.rideStoppedMs = stoppedMs;
+        if (stopCount > instance.rideStopCountCommitted) instance.rideStopCountCommitted = stopCount;
+        if (lowSpeedMs > instance.rideLowSpeedMsCommitted) instance.rideLowSpeedMsCommitted = lowSpeedMs;
+        if (stoppedMs > instance.rideStoppedMsCommitted) instance.rideStoppedMsCommitted = stoppedMs;
         // 복원된 라이딩은 이미 출발한 상태 — 첫 이동 전 대기로 오인해 정차 시간을 버리지 않게
         if (distanceKm > 0) instance.rideHasMoved = true;
     }
@@ -324,7 +335,13 @@ public class RidingService extends Service {
 
     // 정지 횟수 카운트 — 상수 주석 참고. trackRideSpeed()의 이상치 필터를 통과한 샘플만 들어온다.
     private void trackStops(float kmh, long now) {
-        if (kmh >= RIDING_MOVING_SPD_KMH) rideHasMoved = true;
+        if (kmh >= RIDING_MOVING_SPD_KMH) {
+            rideHasMoved = true;
+            // 직전 구간(정차/저속)은 trackRideSpeed()에서 이미 누적됐으므로 여기서 확정
+            rideStopCountCommitted = rideStopCount;
+            rideLowSpeedMsCommitted = rideLowSpeedMs;
+            rideStoppedMsCommitted = rideStoppedMs;
+        }
         if (kmh >= RIDING_STOP_ARM_KMH) rideStopArmed = true;
         if (kmh < RIDING_STOP_KMH) {
             if (rideBelowStopSinceT == null) rideBelowStopSinceT = now;
