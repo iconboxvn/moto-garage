@@ -1183,6 +1183,36 @@ option{background:var(--surface2);}
 
 <script>
 // ═══════════════════════════════════════════
+//  iOS geolocation bridge
+// ═══════════════════════════════════════════
+// On iOS, WKWebView navigator.geolocation shows a second "localhost" web permission prompt on top of the app permission.
+// Route it through the Capacitor Geolocation plugin on iOS only so one app permission covers it (Android unchanged).
+(function _iosGeolocationShim(){
+  var C = window.Capacitor;
+  if(!C || !C.getPlatform || C.getPlatform() !== 'ios') return;
+  var Geo = C.Plugins && C.Plugins.Geolocation;
+  if(!Geo || !navigator.geolocation) return;
+  function toErr(e){ return { code: 2, message: (e && e.message) || String(e) }; }
+  var watches = {}, nextId = 1;
+  navigator.geolocation.getCurrentPosition = function(ok, fail, opts){
+    Geo.getCurrentPosition(opts || {}).then(ok, function(e){ if(fail) fail(toErr(e)); });
+  };
+  navigator.geolocation.watchPosition = function(ok, fail, opts){
+    var id = nextId++;
+    watches[id] = Geo.watchPosition(opts || {}, function(pos, err){
+      if(err){ if(fail) fail(toErr(err)); return; }
+      if(pos) ok(pos);
+    });
+    return id;
+  };
+  navigator.geolocation.clearWatch = function(id){
+    var p = watches[id];
+    delete watches[id];
+    if(p) p.then(function(cbId){ Geo.clearWatch({ id: cbId }); });
+  };
+})();
+
+// ═══════════════════════════════════════════
 //  DATA
 // ═══════════════════════════════════════════
 var D = JSON.parse(localStorage.getItem('mg2') || 'null') || {bikes:[],rides:[],history:[]};
