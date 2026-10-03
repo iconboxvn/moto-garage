@@ -32,10 +32,17 @@
 
 ```
 npx cap sync android
-$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
-cd android && .\gradlew assembleRelease
+cd android && bash ./gradlew assembleRelease
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
+
+> **개발 환경: macOS (2026-10-03 윈도우에서 이관)**. `JAVA_HOME`은 `~/.zprofile`에서
+> Homebrew `openjdk@21`로 설정됨 — Android Studio 내장 jbr은 Java 25라 Gradle 8.14.3과 안 맞을 수 있어 쓰지 않음.
+> 비대화형 셸에서는 `zsh -lc '...'`로 실행해야 PATH/JAVA_HOME이 잡힘.
+> `gradlew`는 윈도우에서 커밋돼 실행 비트가 없으므로 `bash ./gradlew`로 실행(chmod하면 git에 모드 변경 diff가 생김).
+> 릴리즈 서명: `android/keystore.properties` + `android/ridemate.keystore`(gitignore, 원본은 Google Drive
+> `AI Project Data/Moto_manager/Ridemate_Key/`). 디버그 서명: `~/.android/debug.keystore`는 윈도우에서 쓰던
+> 키를 그대로 옮겨온 것 — 바꾸면 테스트폰 디버그 빌드에 덮어쓰기 설치가 안 됨.
 
 > 테스트 폰(59OR6TJ7TGRWSC5X)에는 **디버그 빌드**가 설치돼 있어 release APK는 서명 불일치
 > (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`)로 설치 실패함. 이 경우 `gradlew assembleDebug` 후
