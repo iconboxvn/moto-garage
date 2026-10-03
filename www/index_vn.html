@@ -5030,11 +5030,13 @@ function loadCharactersFromFirestore(){
       var list = snapshots
         .filter(function(s){ return s.data && s.data.active !== false && s.data.imageUrl && s.data.thumbUrl; })
         .map(function(s){
+          // Firestore label은 한국어뿐 — label_vn > 폴백 목록의 번역 이름 > label 순
+          var fb = RIDE_CHARACTERS_FALLBACK.find(function(c){ return c.id === s.id; });
           return {
             id: s.id,
             file: s.data.imageUrl,
             thumb: s.data.thumbUrl,
-            label: s.data.label || '',
+            label: s.data.label_vn || (fb && fb.label) || s.data.label || '',
             unlockKm: s.data.unlockKm || 0,
             group: s.data.group || 'riding'
           };
