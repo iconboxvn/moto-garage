@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chính sách quyền riêng tư Ridemate</title>
+<style>
+  body { font-family: -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.7; color: #333; }
+  h1 { color: #1a1a2e; border-bottom: 2px solid #e8a020; padding-bottom: 10px; }
+  h2 { color: #1a1a2e; margin-top: 30px; }
+  .date { color: #888; font-size: 14px; }
+  .highlight { background: #fff8e8; padding: 12px; border-left: 4px solid #e8a020; border-radius: 4px; margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<h1><img src="icon.png" alt="" style="width:32px;height:32px;vertical-align:middle;border-radius:8px;margin-right:8px;"> Chính sách quyền riêng tư Ridemate</h1>
+<p class="date">Cập nhật lần cuối: ngày 4 tháng 10 năm 2026</p>
+<p class="date"><a href="privacy_policy.html">한국어</a> · <a href="privacy_policy_en.html">English</a> · Tiếng Việt</p>
+
+<div class="highlight">
+Ridemate coi trọng quyền riêng tư của bạn. Chính sách này giải thích những thông tin ứng dụng thu thập và cách sử dụng. Ridemate không yêu cầu đăng ký hay tài khoản, và phần lớn thông tin chỉ được lưu trên thiết bị của bạn.
+</div>
+
+<h2>1. Thông tin được thu thập</h2>
+
+<h3>1-1. Thông tin chỉ lưu trên thiết bị</h3>
+<ul>
+  <li>Thông tin xe (hãng, mẫu xe, năm sản xuất, số km)</li>
+  <li>Lịch sử thay phụ tùng và bảo dưỡng</li>
+  <li>Lịch sử chuyến đi (lộ trình, quãng đường, thời gian, tốc độ, v.v.)</li>
+  <li>Thông tin y tế (nhóm máu, dị ứng, liên hệ khẩn cấp)</li>
+  <li>Thông tin bảo hiểm (ngày hết hạn, v.v.)</li>
+  <li>Cài đặt ứng dụng</li>
+</ul>
+<p>Các thông tin trên được lưu trong bộ nhớ cục bộ của thiết bị và không được gửi ra ngoài, trừ các trường hợp nêu ở mục 1-2 đến 1-6 bên dưới. Tệp sao lưu chỉ rời khỏi thiết bị khi bạn tự chọn nơi lưu hoặc chia sẻ.</p>
+
+<h3>1-2. Thông tin vị trí</h3>
+<ul>
+  <li><strong>Ghi chuyến đi</strong>: Vị trí được dùng để ghi quãng đường, tốc độ và lộ trình khi đi xe. Dữ liệu chuyến đi chỉ lưu trên thiết bị</li>
+  <li><strong>Thời tiết và chất lượng không khí</strong>: Vị trí hiện tại được gửi đến nhà cung cấp thời tiết (OpenWeatherMap) để lấy thông tin</li>
+  <li><strong>Thông tin nhận thông báo</strong>: Vị trí xác định gần nhất được lưu trên máy chủ (Firebase) để gửi thông báo thời tiết và bảo dưỡng theo vị trí (xem mục 1-3)</li>
+  <li><strong>Nơi đã đến</strong>: Để tìm tên địa điểm nơi bạn dừng lại trong chuyến đi, tọa độ của các điểm đó được gửi qua máy chủ đến dịch vụ tìm kiếm địa điểm của Google (Google Places). Tọa độ không được lưu trên máy chủ</li>
+  <li><strong>Khẩn cấp</strong>: Khi SOS phát hiện tai nạn được kích hoạt (Android) hoặc khi bạn tự chia sẻ vị trí, vị trí hiện tại sẽ được đưa vào tin nhắn/nội dung chia sẻ và gửi đến người nhận do bạn chọn</li>
+</ul>
+
+<h3>1-3. Thông báo đẩy và thông tin nhận thông báo</h3>
+<ul>
+  <li>Firebase Cloud Messaging được dùng để gửi thông báo bảo dưỡng và thời tiết</li>
+  <li>Để gửi thông báo từ máy chủ, các thông tin sau được lưu trên máy chủ (Firebase Firestore): mã định danh ngẫu nhiên do ứng dụng tạo, mã thông báo (token), vị trí xác định gần nhất (vĩ độ/kinh độ), ngôn ngữ, và tóm tắt các phụ tùng cần thay (số lượng và một số tên phụ tùng)</li>
+  <li>Không bao gồm thông tin nhận dạng cá nhân như họ tên, số điện thoại hay biển số xe</li>
+</ul>
+
+<h3>1-4. Phân tích ảnh bằng AI</h3>
+<ul>
+  <li>Khi bạn dùng tính năng tự động đọc ngày hết hạn bảo hiểm, kiểm tra đèn cảnh báo trên đồng hồ xe, hoặc đọc số km từ ảnh đồng hồ, ảnh (hoặc PDF) bạn chụp hay chọn sẽ được gửi đến <strong>Anthropic (Claude AI)</strong> để phân tích</li>
+  <li>Lần đầu dùng các tính năng này, ứng dụng sẽ hiển thị thông báo và xin sự đồng ý của bạn. Nếu bạn không đồng ý, ảnh sẽ không được gửi đi</li>
+  <li>Ridemate chỉ nhận lại kết quả phân tích và không lưu ảnh trên máy chủ của Ridemate. Việc xử lý dữ liệu của Anthropic tuân theo <a href="https://www.anthropic.com/legal/privacy">Chính sách quyền riêng tư của Anthropic</a></li>
+  <li>Với giấy tờ có thông tin cá nhân như giấy chứng nhận bảo hiểm, bạn nên chỉ chụp phần cần thiết</li>
+</ul>
+
+<h3>1-5. Phân tích sử dụng</h3>
+<ul>
+  <li>Để cải thiện dịch vụ, <strong>Firebase Analytics</strong> thu thập dữ liệu hoạt động trong ứng dụng dưới dạng không định danh (lượt xem màn hình, đăng ký xe, bắt đầu/kết thúc chuyến đi và thống kê chuyến đi, sử dụng quét bảo hiểm, sử dụng nút SOS, ghi nhận thay phụ tùng, chia sẻ thẻ, và mức độ sử dụng các tính năng khác)</li>
+  <li>Dữ liệu Analytics không bao gồm thông tin nhận dạng cá nhân như họ tên hay liên hệ, nhưng có thể bao gồm mã định danh thiết bị và khu vực gần đúng (quốc gia)</li>
+</ul>
+
+<h3>1-6. Lịch sử đồng ý</h3>
+<ul>
+  <li>Lịch sử đồng ý với Điều khoản dịch vụ, Chính sách quyền riêng tư và phân tích ảnh bằng AI được lưu trên máy chủ (Firebase Firestore)</li>
+  <li>Thông tin lưu: mã định danh ngẫu nhiên do ứng dụng tạo (không phải mã thiết bị thật, mà là giá trị ngẫu nhiên chỉ dành cho ứng dụng này), loại đồng ý, thời điểm đồng ý, phiên bản chính sách đã đồng ý, phiên bản ứng dụng, ngôn ngữ</li>
+  <li>Không bao gồm thông tin nhận dạng cá nhân như họ tên hay liên hệ; mục đích là làm bằng chứng pháp lý về việc đồng ý</li>
+</ul>
+
+<h2>2. Mục đích sử dụng thông tin</h2>
+<ul>
+  <li>Quản lý chu kỳ thay phụ tùng và nhắc nhở</li>
+  <li>Ghi chuyến đi và hiển thị nơi đã đến</li>
+  <li>Cung cấp thông tin thời tiết và chất lượng không khí</li>
+  <li>Phân tích ảnh bằng AI (hạn bảo hiểm, đèn cảnh báo, số km)</li>
+  <li>Gửi cảnh báo khẩn cấp khi phát hiện va chạm/ngã xe (Android)</li>
+  <li>Cung cấp và cải thiện tính năng ứng dụng</li>
+  <li>Phân tích tình hình sử dụng qua Analytics để ưu tiên cải tiến</li>
+  <li>Bằng chứng pháp lý về việc đồng ý Điều khoản dịch vụ và Chính sách quyền riêng tư</li>
+</ul>
+
+<h2>3. Dịch vụ bên thứ ba</h2>
+<ul>
+  <li><strong>OpenWeatherMap</strong>: Thông tin thời tiết và chất lượng không khí (gửi vị trí)</li>
+  <li><strong>Firebase (Google)</strong>: Thông báo đẩy, lưu thông tin nhận thông báo, lưu lịch sử đồng ý, phân tích sử dụng (Analytics)</li>
+  <li><strong>Google Places (Google)</strong>: Tìm tên địa điểm cho nơi đã đến (gửi tọa độ điểm dừng)</li>
+  <li><strong>Anthropic (Claude AI)</strong>: Phân tích ảnh bằng AI (gửi ảnh/PDF bạn chọn sau khi đồng ý)</li>
+</ul>
+
+<h2>4. Gửi SMS (Android)</h2>
+<p>Trên ứng dụng Android, khi dùng tính năng phát hiện va chạm/ngã xe, một tin nhắn SMS kèm vị trí sẽ được gửi đến liên hệ khẩn cấp bạn đã đăng ký. Cần quyền SEND_SMS, và quyền này chỉ được bật sau khi bạn đồng ý rõ ràng. Ứng dụng iOS không có tính năng này.</p>
+
+<h2>5. Bảo mật dữ liệu</h2>
+<p>Dữ liệu lưu trên thiết bị sẽ bị xóa khi bạn gỡ ứng dụng. Thông tin gửi đến máy chủ được truyền qua kết nối mã hóa (HTTPS), và máy chủ chỉ lưu lượng thông tin tối thiểu nêu ở mục 1-3 và 1-6.</p>
+
+<h2>6. Quyền riêng tư của trẻ em</h2>
+<p>Ridemate không dành cho trẻ em dưới 13 tuổi và không cố ý thu thập thông tin cá nhân của trẻ em.</p>
+
+<h2>7. Thay đổi chính sách</h2>
+<p>Nếu chính sách này thay đổi, chúng tôi sẽ thông báo qua bản cập nhật ứng dụng.</p>
+
+<h2>8. Yêu cầu xóa dữ liệu</h2>
+<p><strong>Ridemate không yêu cầu đăng ký hay tài khoản.</strong> Dữ liệu được xóa như sau.</p>
+<ul>
+  <li><strong>Dữ liệu lưu trên thiết bị</strong> (thông tin xe, lịch sử bảo dưỡng, thông tin y tế, cài đặt, v.v.): Bị xóa ngay khi bạn gỡ ứng dụng, không cần yêu cầu. Các thông tin này không bao giờ được lưu trên máy chủ.</li>
+  <li><strong>Thông tin nhận thông báo</strong> (mã định danh ngẫu nhiên, mã thông báo, vị trí gần nhất, v.v.): Sẽ được xóa khi bạn gửi yêu cầu đến email bên dưới.</li>
+  <li><strong>Dữ liệu sử dụng không định danh do Firebase Analytics thu thập</strong> (không có thông tin nhận dạng cá nhân): Tự động xóa sau một thời gian theo chính sách lưu trữ dữ liệu của Google. Nếu muốn xóa sớm hơn, vui lòng liên hệ email bên dưới.</li>
+  <li><strong>Lịch sử đồng ý</strong> (mã định danh ngẫu nhiên, thời điểm đồng ý, v.v.): Sẽ được xóa khi bạn gửi yêu cầu đến email bên dưới.</li>
+</ul>
+<p>Yêu cầu xóa dữ liệu: <a href="mailto:iconbox.vn@gmail.com">iconbox.vn@gmail.com</a></p>
+
+<h2>9. Liên hệ</h2>
+<p>Thắc mắc về quyền riêng tư: <a href="mailto:iconbox.vn@gmail.com">iconbox.vn@gmail.com</a></p>
+
+<hr>
+<p style="color:#888;font-size:13px;">© 2026 iconbox. All rights reserved.</p>
+
+</body>
+</html>

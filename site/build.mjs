@@ -193,6 +193,8 @@ async function main() {
     margin: 1, width: 264, color: { dark: '#0c0c0d', light: '#ffffff' },
   });
   await copyIfExists(path.join(REPO, 'landing/privacy_policy.html'), path.join(DIST, 'privacy_policy.html'));
+  await copyIfExists(path.join(REPO, 'landing/privacy_policy_en.html'), path.join(DIST, 'privacy_policy_en.html'));
+  await copyIfExists(path.join(REPO, 'landing/privacy_policy_vn.html'), path.join(DIST, 'privacy_policy_vn.html'));
   await copyIfExists(path.join(REPO, 'landing/terms_of_service.html'), path.join(DIST, 'terms_of_service.html'));
 
   // dist/assets 파일 목록 → 언어별 스크린샷 해석

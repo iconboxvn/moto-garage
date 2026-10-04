@@ -138,7 +138,7 @@ ${body}
     <nav class="footer-links" aria-label="${esc(t.footerNavLabel)}">
       <a href="${navUrl('/')}">${esc(t.navHome)}</a>
       <a href="${navUrl('/news')}">${esc(t.navNews)}</a>
-      <a href="/privacy_policy">${esc(t.privacy)}</a>
+      <a href="/privacy_policy${lang === 'ko' ? '' : '_' + lang}">${esc(t.privacy)}</a>
       <a href="/terms_of_service">${esc(t.terms)}</a>
       <a href="${esc(PLAY_URL)}" target="_blank" rel="noopener">Google Play</a>
     </nav>
