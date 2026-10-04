@@ -694,7 +694,7 @@ option{background:var(--surface2);}
     <!-- SOS Contact -->
     <div class="card" style="margin-bottom:12px;" id="settings-sos-card">
       <div class="setting-section-title">🆘 SOS Emergency Contact</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">An automatic text will be sent to this number if an accident is detected</div>
+      <div id="settings-sos-auto-desc" style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">An automatic text will be sent to this number if an accident is detected</div>
       <div style="margin-bottom:10px;">
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">Name</div>
         <input type="text" class="form-input" id="sos-contact-name" placeholder="Emergency contact name" style="width:100%;">
@@ -1187,6 +1187,10 @@ option{background:var(--surface2);}
 // ═══════════════════════════════════════════
 // On iOS, WKWebView navigator.geolocation shows a second "localhost" web permission prompt on top of the app permission.
 // Route it through the Capacitor Geolocation plugin on iOS only so one app permission covers it (Android unchanged).
+// iOS v1 has no impact detection or automatic SOS text — used to hide/reword those notices on iOS only
+var _IS_IOS = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios');
+if (_IS_IOS) { var _sosAutoDesc = document.getElementById('settings-sos-auto-desc'); if (_sosAutoDesc) _sosAutoDesc.style.display = 'none'; }
+
 (function _iosGeolocationShim(){
   var C = window.Capacitor;
   if(!C || !C.getPlatform || C.getPlatform() !== 'ios') return;
@@ -4184,6 +4188,7 @@ const ONBOARDING_SLIDES = [
     desc:'Just tap "Start" — distance, time, and speed are recorded automatically.'
   },
   {
+    sosOnly:true,
     images:[{src:'./assets/onboarding/slide3_sos_en.png', highlight:{top:'59.4%', left:'83.1%', width:'13.1%', height:'6.1%', radius:'50%'}}],
     title:'Automatic emergency alerts',
     desc:'If a crash is detected, a text is automatically sent to your emergency contact.'
@@ -4195,7 +4200,7 @@ const ONBOARDING_SLIDES = [
     title:'Turn memories into cards',
     desc:'After every ride, create a beautiful card with your own character and share it on social media.'
   }
-];
+].filter(function(s){ return !(_IS_IOS && s.sosOnly); });
 let onboardingIdx = 0;
 
 const RIDEMATE_TOS_URL = 'https://iconboxvn.github.io/moto-garage/landing/terms_of_service.html';
@@ -4608,8 +4613,8 @@ function updateRidingBar() {
       title.textContent = '⏸ Paused · resumes automatically once moving';
       sub.textContent = 'Recording resumes automatically when movement is detected';
     } else {
-      title.textContent = 'Riding · Impact detection active';
-      sub.textContent = _sos.speedOk ? '⚡ Impact detection active (20 km/h+)' : '⏳ Waiting for speed (below 20 km/h)';
+      title.textContent = _IS_IOS ? 'Riding' : 'Riding · Impact detection active';
+      sub.textContent = _IS_IOS ? '' : (_sos.speedOk ? '⚡ Impact detection active (20 km/h+)' : '⏳ Waiting for speed (below 20 km/h)');
     }
     btn.innerHTML = '<button class="riding-stop-btn" style="width:100%;justify-content:center;" onclick="stopRiding()">■ Stop</button>';
     _renderRidingBikeLine(_ride.bikeId, 'Recording to {b}');
@@ -4735,7 +4740,7 @@ function logConsentToServer(kind){
 }
 
 function startRiding() {
-  if (localStorage.getItem('mg2-sos-consent') !== '1') {
+  if (!_IS_IOS && localStorage.getItem('mg2-sos-consent') !== '1') {
     var tosBlock = document.getElementById('sos-consent-tos-block');
     var needsTos = localStorage.getItem('mg2-tos-consent') !== '1';
     if(tosBlock){
@@ -4807,7 +4812,7 @@ function _doStartRiding() {
   if (_ridingPauseTimer) clearInterval(_ridingPauseTimer);
   _ridingPauseTimer = setInterval(_checkRidingPauseTimer, RIDING_PAUSE_CHECK_MS);
   updateRidingBar();
-  showToast('🏍 Riding started! Impact detection active');
+  showToast(_IS_IOS ? '🏍 Riding started!' : '🏍 Riding started! Impact detection active');
   logAnalyticsEvent('riding_started', {});
 }
 

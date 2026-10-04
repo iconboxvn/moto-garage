@@ -694,7 +694,7 @@ option{background:var(--surface2);}
     <!-- SOS Contact -->
     <div class="card" style="margin-bottom:12px;" id="settings-sos-card">
       <div class="setting-section-title">🆘 Liên hệ khẩn cấp SOS</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Tin nhắn tự động sẽ được gửi đến số này khi phát hiện tai nạn</div>
+      <div id="settings-sos-auto-desc" style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Tin nhắn tự động sẽ được gửi đến số này khi phát hiện tai nạn</div>
       <div style="margin-bottom:10px;">
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">Tên</div>
         <input type="text" class="form-input" id="sos-contact-name" placeholder="Tên người liên hệ khẩn cấp" style="width:100%;">
@@ -1187,6 +1187,10 @@ option{background:var(--surface2);}
 // ═══════════════════════════════════════════
 // Trên iOS, navigator.geolocation của WKWebView hiện thêm hộp xin quyền web "localhost" ngoài quyền của ứng dụng.
 // Chỉ trên iOS: chuyển sang plugin Capacitor Geolocation để dùng chung một quyền ứng dụng (Android giữ nguyên).
+// iOS v1 không có cảm biến va chạm và tin nhắn SOS tự động — dùng để ẩn/đổi các thông báo đó chỉ trên iOS
+var _IS_IOS = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios');
+if (_IS_IOS) { var _sosAutoDesc = document.getElementById('settings-sos-auto-desc'); if (_sosAutoDesc) _sosAutoDesc.style.display = 'none'; }
+
 (function _iosGeolocationShim(){
   var C = window.Capacitor;
   if(!C || !C.getPlatform || C.getPlatform() !== 'ios') return;
@@ -4182,6 +4186,7 @@ const ONBOARDING_SLIDES = [
     desc:'Chỉ cần nhấn "Bắt đầu" — quãng đường, thời gian, tốc độ được ghi tự động.'
   },
   {
+    sosOnly:true,
     images:[{src:'./assets/onboarding/slide3_sos_vn.png', highlight:{top:'59.4%', left:'83.1%', width:'13.1%', height:'6.1%', radius:'50%'}}],
     title:'Cảnh báo khẩn cấp tự động',
     desc:'Nếu phát hiện tai nạn, tin nhắn sẽ tự động gửi đến liên hệ khẩn cấp của bạn.'
@@ -4193,7 +4198,7 @@ const ONBOARDING_SLIDES = [
     title:'Biến kỷ niệm thành thẻ hình',
     desc:'Sau mỗi chuyến đi, tạo một thẻ đẹp với nhân vật riêng của bạn và chia sẻ lên mạng xã hội.'
   }
-];
+].filter(function(s){ return !(_IS_IOS && s.sosOnly); });
 let onboardingIdx = 0;
 
 const RIDEMATE_TOS_URL = 'https://iconboxvn.github.io/moto-garage/landing/terms_of_service.html';
@@ -4606,8 +4611,8 @@ function updateRidingBar() {
       title.textContent = '⏸ Đang tạm dừng · tự động tiếp tục khi di chuyển';
       sub.textContent = 'Sẽ tự động tiếp tục khi phát hiện chuyển động';
     } else {
-      title.textContent = 'Đang đi · Cảm biến va chạm hoạt động';
-      sub.textContent = _sos.speedOk ? '⚡ Cảm biến va chạm hoạt động (20 km/h+)' : '⏳ Đang chờ tốc độ (dưới 20 km/h)';
+      title.textContent = _IS_IOS ? 'Đang đi' : 'Đang đi · Cảm biến va chạm hoạt động';
+      sub.textContent = _IS_IOS ? '' : (_sos.speedOk ? '⚡ Cảm biến va chạm hoạt động (20 km/h+)' : '⏳ Đang chờ tốc độ (dưới 20 km/h)');
     }
     btn.innerHTML = '<button class="riding-stop-btn" style="width:100%;justify-content:center;" onclick="stopRiding()">■ Dừng</button>';
     _renderRidingBikeLine(_ride.bikeId, 'Đang ghi cho xe {b}');
@@ -4733,7 +4738,7 @@ function logConsentToServer(kind){
 }
 
 function startRiding() {
-  if (localStorage.getItem('mg2-sos-consent') !== '1') {
+  if (!_IS_IOS && localStorage.getItem('mg2-sos-consent') !== '1') {
     var tosBlock = document.getElementById('sos-consent-tos-block');
     var needsTos = localStorage.getItem('mg2-tos-consent') !== '1';
     if(tosBlock){
@@ -4805,7 +4810,7 @@ function _doStartRiding() {
   if (_ridingPauseTimer) clearInterval(_ridingPauseTimer);
   _ridingPauseTimer = setInterval(_checkRidingPauseTimer, RIDING_PAUSE_CHECK_MS);
   updateRidingBar();
-  showToast('🏍 Bắt đầu đi! Cảm biến va chạm hoạt động');
+  showToast(_IS_IOS ? '🏍 Bắt đầu đi!' : '🏍 Bắt đầu đi! Cảm biến va chạm hoạt động');
   logAnalyticsEvent('riding_started', {});
 }
 

@@ -720,7 +720,7 @@ option{background:var(--surface2);}
     <!-- SOS 긴급연락처 설정 -->
     <div class="card" style="margin-bottom:12px;" id="settings-sos-card">
       <div class="setting-section-title">🆘 SOS 긴급연락처</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">사고 감지 시 아래 번호로 자동 문자가 발송됩니다</div>
+      <div id="settings-sos-auto-desc" style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">사고 감지 시 아래 번호로 자동 문자가 발송됩니다</div>
       <div style="margin-bottom:10px;">
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">이름</div>
         <input type="text" class="form-input" id="sos-contact-name" placeholder="홍길순 (배우자)" style="width:100%;">
@@ -1229,6 +1229,10 @@ option{background:var(--surface2);}
 // ═══════════════════════════════════════════
 // iOS WKWebView의 navigator.geolocation은 앱 권한과 별개로 "localhost" 웹 권한창을 한 번 더 띄운다.
 // iOS에서만 Capacitor Geolocation 플러그인으로 대체해서 앱 권한 하나로 통일 (Android는 기존 동작 유지).
+// iOS v1은 충격/낙차 감지·SOS 자동 문자가 없음 — 관련 안내/문구를 iOS에서만 숨기거나 바꿀 때 사용
+var _IS_IOS = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios');
+if (_IS_IOS) { var _sosAutoDesc = document.getElementById('settings-sos-auto-desc'); if (_sosAutoDesc) _sosAutoDesc.style.display = 'none'; }
+
 (function _iosGeolocationShim(){
   var C = window.Capacitor;
   if(!C || !C.getPlatform || C.getPlatform() !== 'ios') return;
@@ -4744,8 +4748,8 @@ function updateRidingBar() {
       title.textContent = '⏸ 일시정지 중 · 이동하면 자동 재개';
       sub.textContent = '움직임이 감지되면 자동으로 다시 시작해요';
     } else {
-      title.textContent = '라이딩 중 · 충격 감지 활성';
-      sub.textContent = _sos.speedOk ? '⚡ 충격 감지 활성 (20 km/h+)' : '⏳ 속도 대기 중 (20 km/h 미만)';
+      title.textContent = _IS_IOS ? '라이딩 중' : '라이딩 중 · 충격 감지 활성';
+      sub.textContent = _IS_IOS ? '' : (_sos.speedOk ? '⚡ 충격 감지 활성 (20 km/h+)' : '⏳ 속도 대기 중 (20 km/h 미만)');
     }
     btn.innerHTML = '<button class="riding-stop-btn" style="width:100%;justify-content:center;" onclick="stopRiding()">■ 종료</button>';
     _renderRidingBikeLine(_ride.bikeId, '{b} 기록 중');
@@ -4870,7 +4874,7 @@ function logConsentToServer(kind){
 }
 
 function startRiding() {
-  if (localStorage.getItem('mg2-sos-consent') !== '1') {
+  if (!_IS_IOS && localStorage.getItem('mg2-sos-consent') !== '1') {
     var tosBlock = document.getElementById('sos-consent-tos-block');
     var needsTos = localStorage.getItem('mg2-tos-consent') !== '1';
     if(tosBlock){
@@ -4944,7 +4948,7 @@ function _doStartRiding() {
   if (_ridingPauseTimer) clearInterval(_ridingPauseTimer);
   _ridingPauseTimer = setInterval(_checkRidingPauseTimer, RIDING_PAUSE_CHECK_MS);
   updateRidingBar();
-  showToast('🏍 라이딩 시작! 충격 감지 활성');
+  showToast(_IS_IOS ? '🏍 라이딩 시작!' : '🏍 라이딩 시작! 충격 감지 활성');
   logAnalyticsEvent('riding_started', {});
 }
 
@@ -6307,6 +6311,7 @@ const ONBOARDING_SLIDES = [
     desc:'"시작" 버튼 하나면 거리·시간·속도가 자동으로 기록돼요.'
   },
   {
+    sosOnly:true,
     images:[{src:'./assets/onboarding/slide3_sos.png', highlight:{top:'59.4%', left:'83.1%', width:'13.1%', height:'6.1%', radius:'50%'}}],
     title:'긴급 상황 자동 알림',
     desc:'사고가 감지되면 등록해둔 긴급연락처로 자동으로 문자가 발송돼요.'
@@ -6318,7 +6323,7 @@ const ONBOARDING_SLIDES = [
     title:'추억을 카드로',
     desc:'라이딩할 때마다 나만의 캐릭터로 예쁜 카드를 만들어 SNS에 공유해보세요.'
   }
-];
+].filter(function(s){ return !(_IS_IOS && s.sosOnly); });
 let onboardingIdx = 0;
 
 const RIDEMATE_TOS_URL = 'https://iconboxvn.github.io/moto-garage/landing/terms_of_service.html';
