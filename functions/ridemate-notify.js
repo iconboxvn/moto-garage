@@ -28,13 +28,61 @@ const ANTHROPIC_KEY = defineSecret('ANTHROPIC_KEY');
 
 // ─────────────────────────────────────────
 //  0) Anthropic API 프록시
-//     (앱 WebView의 CORS 제한 우회 — 보험증 만료일 자동 추출용)
+//     (앱 WebView의 CORS 제한 우회 — 보험증 만료일 추출 / 경고등 확인 / 주행거리 인식)
+//
+//  인증이 없는 공개 엔드포인트라, 앱이 실제로 보내는 형태(사진/PDF 1개 + 텍스트 1개,
+//  지정 모델, 작은 max_tokens)만 통과시키고 요청을 다시 조립해서 보낸다. 그 외 필드
+//  (system, tools, stream 등)는 버림 — 주소를 알아낸 제3자가 API 키로 임의 호출하는 것 방지.
+//  앱에서 모델/형태를 바꾸면 여기 허용 목록도 같이 고칠 것 (옛 버전 앱이 계속 보내는 값은 남겨둘 것).
 // ─────────────────────────────────────────
+const PROXY_ALLOWED_MODELS = ['claude-sonnet-4-6'];
+const PROXY_MAX_TOKENS = 1500;             // 앱 최대 사용값 1200
+const PROXY_MAX_TEXT_CHARS = 6000;         // 앱 프롬프트는 2천 자 안팎
+const PROXY_MAX_BASE64_CHARS = 15000000;   // 약 11MB 파일 (보험증 PDF 여유분)
+const PROXY_MEDIA_TYPES = {
+  image: ['image/jpeg', 'image/png', 'image/webp'],
+  document: ['application/pdf'],
+};
+
+// 허용 형태면 Anthropic에 보낼 본문을, 아니면 null을 반환
+function buildProxyBody(body) {
+  if (!body || typeof body !== 'object') return null;
+  const { model, max_tokens: maxTokens, messages } = body;
+  if (!PROXY_ALLOWED_MODELS.includes(model)) return null;
+  if (!Number.isInteger(maxTokens) || maxTokens < 1 || maxTokens > PROXY_MAX_TOKENS) return null;
+  if (!Array.isArray(messages) || messages.length !== 1) return null;
+  const msg = messages[0];
+  if (!msg || msg.role !== 'user' || !Array.isArray(msg.content) || msg.content.length !== 2) return null;
+  const [media, text] = msg.content;
+  if (!media || !PROXY_MEDIA_TYPES[media.type]) return null;
+  const src = media.source;
+  if (!src || src.type !== 'base64' || !PROXY_MEDIA_TYPES[media.type].includes(src.media_type)) return null;
+  if (typeof src.data !== 'string' || !src.data || src.data.length > PROXY_MAX_BASE64_CHARS) return null;
+  if (!text || text.type !== 'text' || typeof text.text !== 'string' || !text.text || text.text.length > PROXY_MAX_TEXT_CHARS) return null;
+  return {
+    model,
+    max_tokens: maxTokens,
+    messages: [{
+      role: 'user',
+      content: [
+        { type: media.type, source: { type: 'base64', media_type: src.media_type, data: src.data } },
+        { type: 'text', text: text.text },
+      ],
+    }],
+  };
+}
+
 exports.anthropicProxy = onRequest(
-  { cors: true, secrets: [ANTHROPIC_KEY] },
+  { cors: true, secrets: [ANTHROPIC_KEY], maxInstances: 5 },
   async (req, res) => {
     if (req.method !== 'POST') {
       res.status(405).send({ error: 'POST only' });
+      return;
+    }
+    const proxyBody = buildProxyBody(req.body);
+    if (!proxyBody) {
+      console.warn('[anthropicProxy] 허용되지 않은 요청 형태 거절');
+      res.status(400).json({ error: 'request not allowed' });
       return;
     }
     try {
@@ -45,7 +93,7 @@ exports.anthropicProxy = onRequest(
           'x-api-key': ANTHROPIC_KEY.value(),
           'anthropic-version': '2023-06-01',
         },
-        body: JSON.stringify(req.body),
+        body: JSON.stringify(proxyBody),
       });
       const data = await response.json();
       res.status(response.status).json(data);
