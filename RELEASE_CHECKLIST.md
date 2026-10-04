@@ -88,5 +88,9 @@ cd android
   위 3번 실기기 스모크 테스트(라이딩 기록·프로세스킬 복구·정비 알림·SOS 문자·사진 촬영/공유)를 빠짐없이 할 것.
 - [ ] **Play Console 데이터 보안 신고 재점검** — 개인정보처리방침을 실제 동작에 맞게 고침(2026-10-04): 서버에 마지막 위치·알림 토큰 저장(notifyTargets),
   사진을 Anthropic(AI)로 전송, 머문 지점 좌표를 Google Places로 전송. 데이터 보안 양식의 "위치(정확한 위치) 수집·공유", "사진 공유(제3자 처리)" 항목이 이와 맞는지 확인.
+- [ ] **App Check 실제 동작 확인 (내부 테스트 트랙)** — Play에서 설치한 v3.1.1로 AI 사진 기능(경고등 확인 등)을 1회 사용한 뒤,
+  Firestore `appcheck_stats/{UTC 날짜}` 문서에 `ok_new`가 늘었는지 확인. `invalid_new`가 늘면 Play Console의 Play Integrity →
+  Cloud 프로젝트(838742335191) 연결이 필요 — Play 계정(iconbox.vn)에 Firebase 프로젝트 권한을 준 뒤 연결 재시도.
+  프로덕션 출시 1~2주 뒤 `missing_*`/`invalid_*`가 충분히 줄면 functions/ridemate-notify.js `APPCHECK_ENFORCE = true`로 재배포.
 - [ ] **출시 노트에 사용자 체감 변경 반영** — 아이콘 정리, 더보기 캐릭터 카드·앱 평가하기 제거, 캐릭터 이름 EN/VN 번역,
   EN/VN 백업·날씨 시각 표기 수정, 라이딩 기록 삭제 시 주행거리 되돌리기, 라이딩 기록 바이크 확인/변경.
