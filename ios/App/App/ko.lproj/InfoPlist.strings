@@ -1,0 +1,6 @@
+/* iOS 권한 안내 문구 (한국어) */
+"NSLocationWhenInUseUsageDescription" = "라이딩 거리·속도 기록, 현재 위치 날씨 표시, 긴급 상황 시 위치 공유에 위치 정보를 사용해요.";
+"NSCameraUsageDescription" = "계기판 경고등과 주행거리계를 촬영하는 데 카메라를 사용해요.";
+"NSPhotoLibraryUsageDescription" = "사진 보관함에서 계기판·주행거리계 사진을 선택할 수 있어요.";
+"NSPhotoLibraryAddUsageDescription" = "라이딩 공유 카드와 정비 이력서를 사진 보관함에 저장해요.";
+"NSMotionUsageDescription" = "라이딩 중 움직임 데이터를 사용해요.";

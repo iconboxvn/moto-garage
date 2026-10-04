@@ -1,0 +1,6 @@
+/* iOS 권한 안내 문구 (영어) — Info.plist의 기본값과 동일 */
+"NSLocationWhenInUseUsageDescription" = "Ridemate uses your location to record ride distance and speed, show local weather, and share your position in an emergency.";
+"NSCameraUsageDescription" = "Ridemate uses the camera to photograph dashboard warning lights and your odometer.";
+"NSPhotoLibraryUsageDescription" = "Ridemate lets you choose dashboard or odometer photos from your library.";
+"NSPhotoLibraryAddUsageDescription" = "Ridemate saves ride share cards and maintenance history to your photo library.";
+"NSMotionUsageDescription" = "Ridemate uses motion data while riding.";

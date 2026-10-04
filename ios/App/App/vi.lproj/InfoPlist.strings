@@ -1,0 +1,6 @@
+/* iOS 권한 안내 문구 (베트남어) */
+"NSLocationWhenInUseUsageDescription" = "Ridemate dùng vị trí của bạn để ghi quãng đường và tốc độ chuyến đi, hiển thị thời tiết tại chỗ và chia sẻ vị trí khi khẩn cấp.";
+"NSCameraUsageDescription" = "Ridemate dùng camera để chụp đèn cảnh báo trên đồng hồ xe và đồng hồ công-tơ-mét.";
+"NSPhotoLibraryUsageDescription" = "Ridemate cho phép bạn chọn ảnh đồng hồ xe hoặc công-tơ-mét từ thư viện ảnh.";
+"NSPhotoLibraryAddUsageDescription" = "Ridemate lưu thẻ chia sẻ chuyến đi và lịch sử bảo dưỡng vào thư viện ảnh.";
+"NSMotionUsageDescription" = "Ridemate sử dụng dữ liệu chuyển động khi bạn đang đi xe.";
