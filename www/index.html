@@ -2418,6 +2418,7 @@ function _insDDay(expiry){
 
 // PDF 등록
 async function insRegisterPDF(bikeId){
+  if(!(await _ensureAiConsent())) return;
   try{
     const input=document.createElement('input');
     input.type='file'; input.accept='application/pdf';
@@ -2433,6 +2434,7 @@ async function insRegisterPDF(bikeId){
 
 // 사진 촬영
 async function insRegisterPhoto(bikeId){
+  if(!(await _ensureAiConsent())) return;
   try{
     const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
     if(!Camera){ showToast('카메라를 사용할 수 없습니다'); return; }
@@ -2481,6 +2483,20 @@ function insManualDate(bikeId, val){
 // ─────────────────────────────────────────
 //  보험증 만료일 추출 — Anthropic API 프록시 (CORS 우회)
 // ─────────────────────────────────────────
+// 사진/PDF를 외부 AI(Anthropic Claude)로 보내기 전 1회 고지·동의 (보험증·경고등·주행거리 인식 공통).
+// App Store 5.1.2(i): 개인 데이터를 제3자 AI에 보내기 전 명시적 동의 필요. 동의 이력은 consent_logs에도 남김.
+var _aiConsentResolve = null;
+function _ensureAiConsent(){
+  if(localStorage.getItem('mg2-ai-consent') === '1') return Promise.resolve(true);
+  return new Promise(function(resolve){ _aiConsentResolve = resolve; openModal('m-ai-consent'); });
+}
+function _answerAiConsent(ok){
+  closeModal('m-ai-consent');
+  if(ok){ localStorage.setItem('mg2-ai-consent', '1'); logConsentToServer('ai_photo'); }
+  var r = _aiConsentResolve; _aiConsentResolve = null;
+  if(r) r(!!ok);
+}
+
 const ANTHROPIC_PROXY = 'https://us-central1-moto-garage-8da30.cloudfunctions.net/anthropicProxy';
 
 // PDF/이미지 파일 → base64 변환 후 프록시로 전달
@@ -2589,6 +2605,7 @@ function renderWarningLightPage(){
 }
 
 async function wlCapturePhoto(){
+  if(!(await _ensureAiConsent())) return;
   try{
     const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
     if(!Camera){ showToast('카메라를 사용할 수 없습니다'); return; }
@@ -3907,6 +3924,7 @@ function updateOdometer(bikeId){
 // 직접 확인 후 "업데이트"를 눌러야 반영됨(updateOdometer()의 하락값 확인도 그대로 적용).
 async function scanOdometerPhoto(bikeId){
   const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  if(!(await _ensureAiConsent())) return;
   const statusEl=document.getElementById('odo-scan-status-'+bikeId);
   try{
     const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
@@ -7373,6 +7391,22 @@ function renderMedicalCard(){
 
 <!-- SMS 권한 설명 모달 -->
 <!-- SOS 최초 동의 모달 -->
+<!-- 사진 AI 분석 동의 (_ensureAiConsent) -->
+<div class="modal-overlay" id="m-ai-consent">
+  <div class="modal" style="max-width:320px;">
+    <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
+      <div style="font-size:44px;margin-bottom:14px;">🤖</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;">사진 AI 분석 안내</div>
+      <div style="font-size:15px;color:var(--text);line-height:1.75;text-align:left;">사진(또는 PDF)을 분석하기 위해 <b>Anthropic의 AI(Claude)</b>로 전송해요. 분석 결과만 받아오며, Ridemate 서버에는 사진이 저장되지 않아요.<br><br>보험증처럼 개인정보가 담긴 서류는 필요한 부분만 보이게 찍어 주세요.</div>
+      <div style="margin-top:14px;font-size:13px;text-align:left;"><span onclick="window.open('https://www.anthropic.com/legal/privacy','_system')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">Anthropic 개인정보처리방침</span></div>
+    </div>
+    <div class="modal-footer" style="flex-direction:column;gap:8px;">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="_answerAiConsent(true)">동의하고 계속</button>
+      <button class="btn btn-sm" style="width:100%;justify-content:center;" onclick="_answerAiConsent(false)">취소</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="m-sos-consent">
   <div class="modal" style="max-width:320px;">
     <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">

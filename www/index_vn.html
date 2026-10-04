@@ -2122,6 +2122,7 @@ function _insDDay(expiry){
 }
 
 async function insRegisterPDF(bikeId){
+  if(!(await _ensureAiConsent())) return;
   try{
     const input=document.createElement('input');
     input.type='file'; input.accept='application/pdf';
@@ -2136,6 +2137,7 @@ async function insRegisterPDF(bikeId){
 }
 
 async function insRegisterPhoto(bikeId){
+  if(!(await _ensureAiConsent())) return;
   try{
     const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
     if(!Camera){ showToast('Không thể dùng camera'); return; }
@@ -2171,6 +2173,20 @@ function insDateOnly(bikeId){
   if(!bike.insurance) bike.insurance={};
   bike.insurance.expiry=formatted;save();scheduleInsuranceAlerts();
   renderBikes();showToast('✓ Đã đăng ký ngày hết hạn: '+formatted);
+}
+
+// Thông báo/đồng ý một lần trước khi gửi ảnh/PDF đến AI bên thứ ba (Anthropic Claude) — dùng chung cho quét bảo hiểm, đèn cảnh báo và công-tơ-mét.
+// App Store 5.1.2(i) yêu cầu đồng ý rõ ràng trước khi chia sẻ dữ liệu cá nhân với AI bên thứ ba. Lịch sử đồng ý cũng được ghi vào consent_logs.
+var _aiConsentResolve = null;
+function _ensureAiConsent(){
+  if(localStorage.getItem('mg2-ai-consent') === '1') return Promise.resolve(true);
+  return new Promise(function(resolve){ _aiConsentResolve = resolve; openModal('m-ai-consent'); });
+}
+function _answerAiConsent(ok){
+  closeModal('m-ai-consent');
+  if(ok){ localStorage.setItem('mg2-ai-consent', '1'); logConsentToServer('ai_photo'); }
+  var r = _aiConsentResolve; _aiConsentResolve = null;
+  if(r) r(!!ok);
 }
 
 const ANTHROPIC_PROXY='https://us-central1-moto-garage-8da30.cloudfunctions.net/anthropicProxy';
@@ -2243,6 +2259,7 @@ function renderWarningLightPage(){
 }
 
 async function wlCapturePhoto(){
+  if(!(await _ensureAiConsent())) return;
   try{
     const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
     if(!Camera){ showToast('Không thể sử dụng camera'); return; }
@@ -3538,6 +3555,7 @@ function updateOdometer(bikeId){
 // vẫn phải xem lại và bấm "Cập nhật" (vẫn giữ nguyên xác nhận khi số thấp hơn hiện tại).
 async function scanOdometerPhoto(bikeId){
   const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  if(!(await _ensureAiConsent())) return;
   const statusEl=document.getElementById('odo-scan-status-'+bikeId);
   try{
     const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
@@ -6903,6 +6921,22 @@ function renderMedicalCard(){
 </div>
 
 <!-- Modal đồng ý SOS lần đầu -->
+<!-- 사진 AI 분석 동의 (_ensureAiConsent) -->
+<div class="modal-overlay" id="m-ai-consent">
+  <div class="modal" style="max-width:320px;">
+    <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
+      <div style="font-size:44px;margin-bottom:14px;">🤖</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;">Phân tích ảnh bằng AI</div>
+      <div style="font-size:15px;color:var(--text);line-height:1.75;text-align:left;">Để phân tích, ảnh (hoặc PDF) của bạn sẽ được gửi đến <b>AI của Anthropic (Claude)</b>. Ridemate chỉ nhận lại kết quả phân tích và không lưu ảnh trên máy chủ của Ridemate.<br><br>Với giấy tờ có thông tin cá nhân như giấy chứng nhận bảo hiểm, hãy chỉ chụp phần cần thiết.</div>
+      <div style="margin-top:14px;font-size:13px;text-align:left;"><span onclick="window.open('https://www.anthropic.com/legal/privacy','_system')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">Chính sách quyền riêng tư của Anthropic</span></div>
+    </div>
+    <div class="modal-footer" style="flex-direction:column;gap:8px;">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="_answerAiConsent(true)">Đồng ý và tiếp tục</button>
+      <button class="btn btn-sm" style="width:100%;justify-content:center;" onclick="_answerAiConsent(false)">Hủy</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="m-sos-consent">
   <div class="modal" style="max-width:320px;">
     <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
