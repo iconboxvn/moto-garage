@@ -2191,6 +2191,40 @@ function _answerAiConsent(ok){
 
 const ANTHROPIC_PROXY='https://us-central1-moto-garage-8da30.cloudfunctions.net/anthropicProxy';
 
+// Gọi proxy dùng chung — gắn token Firebase App Check để proxy chỉ nhận yêu cầu từ ứng dụng chính thức (xem functions/ridemate-notify.js).
+// Bản debug không qua được Play Integrity nên dùng debug provider (cần đăng ký debug token trong console).
+// Header X-Ridemate-App báo đây là bản mới để khi bật chặn, máy chủ trả 426 khác với bản cũ.
+var _appCheckReady = null;
+function _initAppCheck(){
+  if (_appCheckReady) return _appCheckReady;
+  var P = window.Capacitor && window.Capacitor.Plugins;
+  var AC = P && P.FirebaseAppCheck;
+  if (!AC) return (_appCheckReady = Promise.resolve(false));
+  var R = P.Riding;
+  var dbg = (R && R.isDebugBuild) ? R.isDebugBuild().catch(function(){ return {isDebug:false}; }) : Promise.resolve({isDebug:false});
+  _appCheckReady = dbg.then(function(r){
+    return AC.initialize({debugToken: !!(r && r.isDebug), isTokenAutoRefreshEnabled: true});
+  }).then(function(){ return true; }).catch(function(e){ console.warn('[AppCheck] init 실패', e); return false; });
+  return _appCheckReady;
+}
+async function _aiProxyFetch(body){
+  var headers = {'Content-Type':'application/json', 'X-Ridemate-App':'2'};
+  try{
+    if (await _initAppCheck()){
+      var r = await window.Capacitor.Plugins.FirebaseAppCheck.getToken();
+      if (r && r.token) headers['X-Firebase-AppCheck'] = r.token;
+    }
+  }catch(e){ console.warn('[AppCheck] 토큰 실패', e); }
+  var res = await fetch(ANTHROPIC_PROXY, {method:'POST', headers:headers, body:JSON.stringify(body)});
+  if (res.status === 426){
+    showToast('Cần cập nhật ứng dụng. Vui lòng cập nhật lên phiên bản mới nhất.');
+    try{ checkAppUpdate(); }catch(e){}
+    throw new Error('app_update_required');
+  }
+  return res;
+}
+
+
 async function _insExtractExpiry(bikeId,file,type){
   try{
     const mediaType=type==='pdf'?'application/pdf':'image/jpeg';
@@ -2205,18 +2239,14 @@ async function _insExtractExpiryFromBase64(bikeId,base64,mediaType,filePath){
   try{
     const pureBase64=base64.includes(',')?base64.split(',')[1]:base64;
     const contentType=mediaType==='application/pdf'?'document':'image';
-    const res=await fetch(ANTHROPIC_PROXY,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const res=await _aiProxyFetch({
         model:'claude-sonnet-4-6',
         max_tokens:400,
         messages:[{role:'user',content:[
           {type:contentType,source:{type:'base64',media_type:mediaType,data:pureBase64}},
           {type:'text',text:'Đây là giấy chứng nhận bảo hiểm. Trích xuất thông tin sau và chỉ trả lời bằng JSON.\n{"expiry":"ngày hết hạn YYYY-MM-DD","insurer":"tên công ty bảo hiểm","type":"loại bảo hiểm","personLimit":"giới hạn bồi thường người hoặc null","propertyLimit":"giới hạn bồi thường tài sản hoặc null","plateNumber":"biển số xe hoặc null"}'}
         ]}]
-      })
-    });
+      });
     const data=await res.json();
     const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
     let parsed=null;
@@ -2290,10 +2320,7 @@ Chỉ trả lời theo định dạng JSON sau cho từng đèn cảnh báo tìm
 {"findings":[{"name":"tên đèn cảnh báo","meaning":"giải thích dễ hiểu","severity":"Cần dừng xe ngay"|"Nên đến tiệm sửa xe"|"Nhẹ","causes":["nguyên nhân có thể 1","nguyên nhân có thể 2"]}],"note":"nhận xét tổng quát (hoặc lời trấn an nếu không thấy đèn cảnh báo nào)"}
 
 Nếu không chắc chắn, hãy chọn "Nên đến tiệm sửa xe" để an toàn.`;
-    const res=await fetch(ANTHROPIC_PROXY, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const res=await _aiProxyFetch({
         model:'claude-sonnet-4-6',
         max_tokens:1200,
         messages:[{
@@ -2303,8 +2330,7 @@ Nếu không chắc chắn, hãy chọn "Nên đến tiệm sửa xe" để an t
             {type:'text', text:prompt}
           ]
         }]
-      })
-    });
+      });
     const data=await res.json();
     const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
     let parsed=null;
@@ -3572,10 +3598,7 @@ Lưu ý:
 - Đọc tổng số km lũy kế (ODO), không phải quãng đường chặng ngắn (TRIP A/B). Nếu có nhiều số trên màn hình, ODO là số có nhiều chữ số hơn và không bị reset bằng nút trip.
 - Nếu số không rõ, mờ, hoặc không nhìn rõ đồng hồ, hãy đặt odometer là null, confidence là "low", và giải thích lý do trong note.
 - Nếu có vẻ là đơn vị dặm (mile), ghi chú điều đó trong note (đừng tự quy đổi sang km).`;
-    const res=await fetch(ANTHROPIC_PROXY, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const res=await _aiProxyFetch({
         model:'claude-sonnet-4-6',
         max_tokens:300,
         messages:[{
@@ -3585,8 +3608,7 @@ Lưu ý:
             {type:'text', text:prompt}
           ]
         }]
-      })
-    });
+      });
     const data=await res.json();
     const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
     let parsed=null;

@@ -2499,6 +2499,40 @@ function _answerAiConsent(ok){
 
 const ANTHROPIC_PROXY = 'https://us-central1-moto-garage-8da30.cloudfunctions.net/anthropicProxy';
 
+// 프록시 호출 공통 — Firebase App Check 토큰을 붙여서 보냄(정식 앱 요청만 받도록, functions/ridemate-notify.js 참고).
+// 디버그 빌드는 Play Integrity를 통과 못 하므로 debug provider 사용(콘솔에 디버그 토큰 등록 필요).
+// X-Ridemate-App 헤더로 새 버전임을 알림 — 서버가 차단 모드일 때 옛 버전과 다르게(426) 응답하게.
+var _appCheckReady = null;
+function _initAppCheck(){
+  if (_appCheckReady) return _appCheckReady;
+  var P = window.Capacitor && window.Capacitor.Plugins;
+  var AC = P && P.FirebaseAppCheck;
+  if (!AC) return (_appCheckReady = Promise.resolve(false));
+  var R = P.Riding;
+  var dbg = (R && R.isDebugBuild) ? R.isDebugBuild().catch(function(){ return {isDebug:false}; }) : Promise.resolve({isDebug:false});
+  _appCheckReady = dbg.then(function(r){
+    return AC.initialize({debugToken: !!(r && r.isDebug), isTokenAutoRefreshEnabled: true});
+  }).then(function(){ return true; }).catch(function(e){ console.warn('[AppCheck] init 실패', e); return false; });
+  return _appCheckReady;
+}
+async function _aiProxyFetch(body){
+  var headers = {'Content-Type':'application/json', 'X-Ridemate-App':'2'};
+  try{
+    if (await _initAppCheck()){
+      var r = await window.Capacitor.Plugins.FirebaseAppCheck.getToken();
+      if (r && r.token) headers['X-Firebase-AppCheck'] = r.token;
+    }
+  }catch(e){ console.warn('[AppCheck] 토큰 실패', e); }
+  var res = await fetch(ANTHROPIC_PROXY, {method:'POST', headers:headers, body:JSON.stringify(body)});
+  if (res.status === 426){
+    showToast('앱 업데이트가 필요해요. 최신 버전으로 업데이트해 주세요.');
+    try{ checkAppUpdate(); }catch(e){}
+    throw new Error('app_update_required');
+  }
+  return res;
+}
+
+
 // PDF/이미지 파일 → base64 변환 후 프록시로 전달
 async function _insExtractExpiry(bikeId, file, type){
   try{
@@ -2514,10 +2548,7 @@ async function _insExtractExpiryFromBase64(bikeId, base64, mediaType, filePath){
   try{
     const pureBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
     const contentType = mediaType==='application/pdf' ? 'document' : 'image';
-    const res = await fetch(ANTHROPIC_PROXY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const res = await _aiProxyFetch({
         model: 'claude-sonnet-4-6',
         max_tokens: 400,
         messages: [{
@@ -2542,8 +2573,7 @@ async function _insExtractExpiryFromBase64(bikeId, base64, mediaType, filePath){
             }
           ]
         }]
-      })
-    });
+      });
     const data = await res.json();
     console.log('[INS] Claude 응답:', JSON.stringify(data));
     const text = (data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
@@ -2636,10 +2666,7 @@ ${note?'\n사용자가 추가로 알려준 내용: '+note:''}
 {"findings":[{"name":"표시등 이름","meaning":"쉬운 설명","severity":"즉시 정차 필요"|"정비소 방문 권장"|"경미함","causes":["가능한 원인1","가능한 원인2"]}],"note":"전반적인 코멘트 (경고등이 없으면 그에 대한 안내)"}
 
 확실하지 않으면 "정비소 방문 권장"으로 보수적으로 판단하세요.`;
-    const res=await fetch(ANTHROPIC_PROXY, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const res=await _aiProxyFetch({
         model:'claude-sonnet-4-6',
         max_tokens:1200,
         messages:[{
@@ -2649,8 +2676,7 @@ ${note?'\n사용자가 추가로 알려준 내용: '+note:''}
             {type:'text', text:prompt}
           ]
         }]
-      })
-    });
+      });
     const data=await res.json();
     const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
     let parsed=null;
@@ -3941,10 +3967,7 @@ async function scanOdometerPhoto(bikeId){
 - 트립미터(TRIP A/B, 짧은 구간 거리)가 아니라 반드시 누적 총주행거리(ODO)를 읽으세요. 화면에 숫자가 여러 개면 자릿수가 더 많고 트립 버튼으로 리셋되지 않는 쪽입니다.
 - 숫자가 불명확하거나 흐릿하거나 계기판이 잘 안 보이면 odometer를 null로, confidence를 "low"로 하고 note에 이유를 적으세요.
 - mile 단위로 보이면 note에 그렇게 적어주세요(km 변환은 하지 마세요).`;
-    const res=await fetch(ANTHROPIC_PROXY, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const res=await _aiProxyFetch({
         model:'claude-sonnet-4-6',
         max_tokens:300,
         messages:[{
@@ -3954,8 +3977,7 @@ async function scanOdometerPhoto(bikeId){
             {type:'text', text:prompt}
           ]
         }]
-      })
-    });
+      });
     const data=await res.json();
     const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
     let parsed=null;

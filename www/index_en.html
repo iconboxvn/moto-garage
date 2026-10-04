@@ -2191,6 +2191,40 @@ function _answerAiConsent(ok){
 
 const ANTHROPIC_PROXY='https://us-central1-moto-garage-8da30.cloudfunctions.net/anthropicProxy';
 
+// Shared proxy call — attaches a Firebase App Check token so the proxy only accepts the genuine app (see functions/ridemate-notify.js).
+// Debug builds can't pass Play Integrity, so they use the debug provider (register the debug token in the console).
+// The X-Ridemate-App header marks a new client so the server answers it differently (426) from old versions when enforcing.
+var _appCheckReady = null;
+function _initAppCheck(){
+  if (_appCheckReady) return _appCheckReady;
+  var P = window.Capacitor && window.Capacitor.Plugins;
+  var AC = P && P.FirebaseAppCheck;
+  if (!AC) return (_appCheckReady = Promise.resolve(false));
+  var R = P.Riding;
+  var dbg = (R && R.isDebugBuild) ? R.isDebugBuild().catch(function(){ return {isDebug:false}; }) : Promise.resolve({isDebug:false});
+  _appCheckReady = dbg.then(function(r){
+    return AC.initialize({debugToken: !!(r && r.isDebug), isTokenAutoRefreshEnabled: true});
+  }).then(function(){ return true; }).catch(function(e){ console.warn('[AppCheck] init 실패', e); return false; });
+  return _appCheckReady;
+}
+async function _aiProxyFetch(body){
+  var headers = {'Content-Type':'application/json', 'X-Ridemate-App':'2'};
+  try{
+    if (await _initAppCheck()){
+      var r = await window.Capacitor.Plugins.FirebaseAppCheck.getToken();
+      if (r && r.token) headers['X-Firebase-AppCheck'] = r.token;
+    }
+  }catch(e){ console.warn('[AppCheck] 토큰 실패', e); }
+  var res = await fetch(ANTHROPIC_PROXY, {method:'POST', headers:headers, body:JSON.stringify(body)});
+  if (res.status === 426){
+    showToast('An app update is required. Please update to the latest version.');
+    try{ checkAppUpdate(); }catch(e){}
+    throw new Error('app_update_required');
+  }
+  return res;
+}
+
+
 async function _insExtractExpiry(bikeId,file,type){
   try{
     const mediaType=type==='pdf'?'application/pdf':'image/jpeg';
@@ -2205,18 +2239,14 @@ async function _insExtractExpiryFromBase64(bikeId,base64,mediaType,filePath){
   try{
     const pureBase64=base64.includes(',')?base64.split(',')[1]:base64;
     const contentType=mediaType==='application/pdf'?'document':'image';
-    const res=await fetch(ANTHROPIC_PROXY,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const res=await _aiProxyFetch({
         model:'claude-sonnet-4-6',
         max_tokens:400,
         messages:[{role:'user',content:[
           {type:contentType,source:{type:'base64',media_type:mediaType,data:pureBase64}},
           {type:'text',text:'This is an insurance certificate. Extract the following and respond with JSON only.\n{"expiry":"policy end date YYYY-MM-DD","insurer":"company name","type":"insurance type","personLimit":"personal liability limit or null","propertyLimit":"property liability limit or null","plateNumber":"plate number or null"}'}
         ]}]
-      })
-    });
+      });
     const data=await res.json();
     const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
     let parsed=null;
@@ -2290,10 +2320,7 @@ Reply with ONLY the following JSON format for each warning indicator found, no o
 {"findings":[{"name":"indicator name","meaning":"plain-language explanation","severity":"Stop immediately"|"Visit a repair shop"|"Minor","causes":["possible cause 1","possible cause 2"]}],"note":"overall comment (or a reassuring note if no warnings found)"}
 
 If unsure, be conservative and choose "Visit a repair shop".`;
-    const res=await fetch(ANTHROPIC_PROXY, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const res=await _aiProxyFetch({
         model:'claude-sonnet-4-6',
         max_tokens:1200,
         messages:[{
@@ -2303,8 +2330,7 @@ If unsure, be conservative and choose "Visit a repair shop".`;
             {type:'text', text:prompt}
           ]
         }]
-      })
-    });
+      });
     const data=await res.json();
     const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
     let parsed=null;
@@ -3574,10 +3600,7 @@ Notes:
 - Read the total odometer (ODO), not the trip meter (TRIP A/B, a short-segment distance). If there are multiple numbers on screen, the odometer is the one with more digits that isn't reset by a trip button.
 - If the number is unclear, blurry, or the dashboard isn't clearly visible, set odometer to null and confidence to "low", and explain why in note.
 - If it looks like it's in miles, mention that in note (do not convert to km).`;
-    const res=await fetch(ANTHROPIC_PROXY, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const res=await _aiProxyFetch({
         model:'claude-sonnet-4-6',
         max_tokens:300,
         messages:[{
@@ -3587,8 +3610,7 @@ Notes:
             {type:'text', text:prompt}
           ]
         }]
-      })
-    });
+      });
     const data=await res.json();
     const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
     let parsed=null;

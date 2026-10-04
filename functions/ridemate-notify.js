@@ -30,12 +30,20 @@ const ANTHROPIC_KEY = defineSecret('ANTHROPIC_KEY');
 //  0) Anthropic API 프록시
 //     (앱 WebView의 CORS 제한 우회 — 보험증 만료일 추출 / 경고등 확인 / 주행거리 인식)
 //
-//  인증이 없는 공개 엔드포인트라, 앱이 실제로 보내는 형태(사진/PDF 1개 + 텍스트 1개,
-//  지정 모델, 작은 max_tokens)만 통과시키고 요청을 다시 조립해서 보낸다. 그 외 필드
-//  (system, tools, stream 등)는 버림 — 주소를 알아낸 제3자가 API 키로 임의 호출하는 것 방지.
-//  앱에서 모델/형태를 바꾸면 여기 허용 목록도 같이 고칠 것 (옛 버전 앱이 계속 보내는 값은 남겨둘 것).
+//  [1단계 방어 — 요청 형태 제한] 앱이 실제로 보내는 형태(사진/PDF 1개 + 텍스트 1개, 작은
+//  max_tokens)만 통과시키고 허용 필드만으로 다시 조립해서 보낸다(system, tools, stream 등 버림).
+//
+//  [2단계 방어 — Firebase App Check, v3.1.1~] 앱이 X-Firebase-AppCheck 토큰을 붙여 보냄.
+//   - APPCHECK_ENFORCE=false(기록만): 토큰이 없거나 틀려도 통과시키되 appcheck_stats에 일별로 셈.
+//     토큰 없는 요청은 모델을 PROXY_ALLOWED_MODELS로만 제한(옛 버전 앱이 보내는 값).
+//   - APPCHECK_ENFORCE=true(차단): 토큰 없는/틀린 요청은 Anthropic 호출 없이 "업데이트 필요" 응답.
+//     새 버전(X-Ridemate-App 헤더)은 426, 옛 버전은 옛 앱이 화면에 그대로 띄우는 응답 형태로 안내.
+//   - 유효한 토큰이면 Sonnet 계열 모델 전체 허용(앱에서 모델을 올려도 함수 수정 불필요).
+//  appcheck_stats/{YYYY-MM-DD}의 missing/invalid가 충분히 줄면 APPCHECK_ENFORCE를 켜고 재배포.
 // ─────────────────────────────────────────
-const PROXY_ALLOWED_MODELS = ['claude-sonnet-4-6'];
+const APPCHECK_ENFORCE = false;
+const PROXY_ALLOWED_MODELS = ['claude-sonnet-4-6'];   // 토큰 없는 요청(옛 버전 앱)용
+const PROXY_VERIFIED_MODEL_RE = /^claude-sonnet-[0-9a-z-]+$/;  // App Check 통과 요청용
 const PROXY_MAX_TOKENS = 1500;             // 앱 최대 사용값 1200
 const PROXY_MAX_TEXT_CHARS = 6000;         // 앱 프롬프트는 2천 자 안팎
 const PROXY_MAX_BASE64_CHARS = 15000000;   // 약 11MB 파일 (보험증 PDF 여유분)
@@ -45,10 +53,11 @@ const PROXY_MEDIA_TYPES = {
 };
 
 // 허용 형태면 Anthropic에 보낼 본문을, 아니면 null을 반환
-function buildProxyBody(body) {
+function buildProxyBody(body, verified) {
   if (!body || typeof body !== 'object') return null;
   const { model, max_tokens: maxTokens, messages } = body;
-  if (!PROXY_ALLOWED_MODELS.includes(model)) return null;
+  const modelOk = verified ? (typeof model === 'string' && PROXY_VERIFIED_MODEL_RE.test(model)) : PROXY_ALLOWED_MODELS.includes(model);
+  if (!modelOk) return null;
   if (!Number.isInteger(maxTokens) || maxTokens < 1 || maxTokens > PROXY_MAX_TOKENS) return null;
   if (!Array.isArray(messages) || messages.length !== 1) return null;
   const msg = messages[0];
@@ -72,6 +81,47 @@ function buildProxyBody(body) {
   };
 }
 
+// 'ok' | 'missing' | 'invalid'
+async function checkAppCheckToken(req) {
+  const token = req.get('X-Firebase-AppCheck');
+  if (!token) return 'missing';
+  try {
+    await admin.appCheck().verifyToken(token);
+    return 'ok';
+  } catch (e) {
+    return 'invalid';
+  }
+}
+
+function recordAppCheckStat(result, isNewClient) {
+  const day = new Date().toISOString().slice(0, 10);
+  const key = `${result}_${isNewClient ? 'new' : 'old'}`;
+  return db.collection('appcheck_stats').doc(day)
+    .set({ [key]: admin.firestore.FieldValue.increment(1) }, { merge: true })
+    .catch((e) => console.warn('[anthropicProxy] stat 기록 실패', e));
+}
+
+// 차단 모드에서 옛 버전 앱에 보낼 "업데이트 필요" 응답. 옛 앱은 content[0].text를 JSON으로
+// 파싱해 기능별로 화면에 그리므로, 각 기능이 note를 표시하는 형태로 만들어 준다.
+// (보험증 추출은 옛 앱이 고정 문구만 띄워서 안내문을 넣을 자리가 없음)
+const UPDATE_MSG = {
+  ko: '앱 업데이트가 필요해요. Play 스토어에서 Ridemate를 최신 버전으로 업데이트해 주세요.',
+  en: 'An app update is required. Please update Ridemate to the latest version on the Play Store.',
+  vn: 'Cần cập nhật ứng dụng. Vui lòng cập nhật Ridemate lên phiên bản mới nhất trên Play Store.',
+};
+function legacyUpdateResponse(body) {
+  let prompt = '';
+  try { prompt = body.messages[0].content.find((c) => c.type === 'text').text || ''; } catch (e) { /* 형태 불명 */ }
+  const lang = /[가-힣]/.test(prompt) ? 'ko'
+    : /[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/i.test(prompt) ? 'vn' : 'en';
+  const note = UPDATE_MSG[lang];
+  let payload;
+  if (prompt.includes('"findings"')) payload = { findings: [], note };                         // 경고등
+  else if (prompt.includes('"odometer"')) payload = { odometer: null, confidence: 'low', note }; // 주행거리
+  else payload = { expiry: null };                                                               // 보험증
+  return { type: 'message', role: 'assistant', content: [{ type: 'text', text: JSON.stringify(payload) }] };
+}
+
 exports.anthropicProxy = onRequest(
   { cors: true, secrets: [ANTHROPIC_KEY], maxInstances: 5 },
   async (req, res) => {
@@ -79,9 +129,17 @@ exports.anthropicProxy = onRequest(
       res.status(405).send({ error: 'POST only' });
       return;
     }
-    const proxyBody = buildProxyBody(req.body);
+    const isNewClient = !!req.get('X-Ridemate-App');
+    const appCheck = await checkAppCheckToken(req);
+    await recordAppCheckStat(appCheck, isNewClient);
+    if (appCheck !== 'ok' && APPCHECK_ENFORCE) {
+      if (isNewClient) res.status(426).json({ error: 'app_update_required' });
+      else res.status(200).json(legacyUpdateResponse(req.body));
+      return;
+    }
+    const proxyBody = buildProxyBody(req.body, appCheck === 'ok');
     if (!proxyBody) {
-      console.warn('[anthropicProxy] 허용되지 않은 요청 형태 거절');
+      console.warn('[anthropicProxy] 허용되지 않은 요청 형태 거절', appCheck);
       res.status(400).json({ error: 'request not allowed' });
       return;
     }
