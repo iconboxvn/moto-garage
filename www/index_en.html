@@ -164,25 +164,51 @@ option{background:var(--surface2);}
 .step-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--surface3);border:1px solid var(--border-bright);font-size:15px;font-weight:700;color:var(--text-dim);flex-shrink:0;}
 
 /* CONSUMABLE GRID */
-.c-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
-.c-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
-.c-item:hover{border-color:var(--border-bright);transform:translateY(-1px);}
-.c-item::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;}
-.c-item.ok::before{background:var(--green);}
-.c-item.warn::before{background:var(--accent);}
-.c-item.danger::before{background:var(--red);}
-.c-item.ok{border-color:rgba(56,168,104,0.2);}
-.c-item.warn{border-color:rgba(232,160,32,0.3);}
-.c-item.danger{border-color:rgba(208,64,64,0.35);}
 .c-icon-big{font-size:19px;margin-bottom:6px;}
 .c-name{font-size:15px;font-weight:600;margin-bottom:3px;}
 .c-info{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-dim);line-height:1.6;}
-.c-bar{height:3px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden;}
-.c-bar-fill{height:100%;border-radius:2px;transition:width 0.4s;}
 .c-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:var(--r-xs);margin-top:5px;}
 .c-tag.ok{background:var(--green-dim);color:var(--green);}
 .c-tag.warn{background:var(--accent-dim);color:var(--accent);}
 .c-tag.danger{background:var(--red-dim);color:var(--red);}
+/* Consumables (2026-10-05 Night Cluster pilot): numbers first · 3 groups · card only for overdue */
+.cs-head{display:flex;flex-direction:column;gap:6px;margin:4px 0 22px;}
+.cs-label{font-size:12px;font-weight:600;color:var(--text-muted);} /* KO/VN labels: no mono, no letter-spacing */
+.cs-odo{display:flex;align-items:baseline;gap:6px;}
+.cs-odo b{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:46px;line-height:1;color:var(--text);font-variant-numeric:tabular-nums;}
+.cs-odo span{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);}
+.cs-status{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;font-weight:600;color:var(--text);}
+.cs-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;flex-shrink:0;}
+.cs-group{display:flex;flex-direction:column;gap:8px;margin-bottom:22px;}
+.cs-group-h{display:flex;justify-content:space-between;align-items:baseline;}
+.cs-hero{background:linear-gradient(180deg,#1d0f0f,#160c0c);border:1px solid #4a1c1c;border-radius:var(--r-md);padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;}
+.cs-hero-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.cs-hero-name{font-size:16px;font-weight:600;color:var(--text);}
+.cs-pill-red{font-size:11px;font-weight:600;color:#ff8a85;background:#3a1414;border-radius:var(--r-pill);padding:3px 9px;flex-shrink:0;}
+.cs-hero-num{display:flex;align-items:baseline;gap:6px;color:#ff6b66;}
+.cs-hero-num b{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:54px;line-height:1;font-variant-numeric:tabular-nums;}
+.cs-hero-num span{font-size:15px;font-weight:600;}
+.cs-cap{font-size:12px;color:var(--text-muted);}
+.cs-bar{height:5px;background:var(--border-bright);border-radius:3px;overflow:hidden;}
+.cs-bar i{display:block;height:100%;border-radius:3px;}
+.cs-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.cs-acts .btn{justify-content:center;padding:11px;border-radius:var(--r-sm);font-weight:600;}
+.cs-rows{display:flex;flex-direction:column;}
+.cs-row{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:3px;padding:12px 2px;border-top:1px solid var(--border);align-items:baseline;cursor:pointer;}
+.cs-row:first-child{border-top:0;}
+.cs-row-name{font-size:15px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:8px;min-width:0;}
+.cs-row-name .cs-dot{width:7px;height:7px;margin-right:0;}
+.cs-edited{font-size:10px;font-weight:600;color:var(--text-dim);border:1px solid var(--border-bright);border-radius:var(--r-xs);padding:0 5px;}
+.cs-val{font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1;color:var(--text);text-align:right;font-variant-numeric:tabular-nums;}
+.cs-val small{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-left:3px;}
+.cs-row .cs-cap{grid-column:1;}
+.cs-row .cs-bar{grid-column:1/-1;height:3px;margin-top:5px;}
+.cs-row .cs-bar i{background:var(--text-muted);}
+.cs-row.soon .cs-val{font-size:28px;color:var(--accent);}
+.cs-row.soon .cs-bar i{background:var(--accent);}
+.cs-link{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--border);padding:14px 2px 4px;font-size:14px;color:var(--text-dim);cursor:pointer;}
+.cs-link b{color:var(--text);font-weight:500;}
+.cs-note{font-size:11px;color:var(--text-muted);text-align:center;margin:10px 0 18px;}
 
 /* LOG TABLE */
 /* HISTORY CARDS */
@@ -2612,50 +2638,78 @@ function _renderConsumablesCore(){
   if(cState.bikeIdx>=D.bikes.length) cState.bikeIdx=0;
   tabs.innerHTML=`<div class="pill-group">${D.bikes.map((b,i)=>`<div class="pill ${i===cState.bikeIdx?'selected':''}" onclick="switchCBike(${i})">${b.brand} ${b.model}</div>`).join('')}</div>`;
   const bike=D.bikes[cState.bikeIdx];
+  const km=bike.odometer;
+  const items=bike.consumables.map(c=>_consumableState(c,km));
+  const danger=items.filter(x=>x.level==='danger').sort((a,b)=>a.remain-b.remain);
+  const warn=items.filter(x=>x.level==='warn').sort((a,b)=>a.remain-b.remain);
+  const ok=items.filter(x=>x.level==='ok');
+  const status=(danger.length||warn.length)
+    ? [danger.length?`<span><i class="cs-dot" style="background:var(--red)"></i>${danger.length} to replace</span>`:'',
+       warn.length?`<span><i class="cs-dot" style="background:var(--accent)"></i>${warn.length} due soon</span>`:'',
+       ok.length?`<span style="color:var(--text-muted);font-weight:500;">${ok.length} good</span>`:''].join('')
+    : `<span><i class="cs-dot" style="background:var(--green)"></i>All good</span>`;
+  const group=(label,color,list,render)=>list.length?`
+    <div class="cs-group">
+      <div class="cs-group-h"><span class="cs-label" style="${color?'color:'+color:''}">${label}</span>${render===consumableHero?'':'<span class="cs-label">Remaining</span>'}</div>
+      ${render===consumableHero?list.map(consumableHero).join(''):`<div class="cs-rows">${list.map(render).join('')}</div>`}
+    </div>`:'';
   el.innerHTML=`
     <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} SERVICE</span><div class="sec-line"></div></div>
-    <div class="card" style="padding:12px 14px;margin-bottom:14px;border:1px solid rgba(208,64,64,0.35);background:var(--red-dim);cursor:pointer;" onclick="showPage('warningLight',document.getElementById('nav-more-btn'))">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:22px;">🚨</span>
-        <div>
-          <div class="tp-title">Got a dashboard warning light?</div>
-          <div class="tp-caption">Take a photo and let AI check it</div>
-        </div>
-      </div>
+    <div class="cs-head">
+      <span class="cs-label">Current mileage</span>
+      <div class="cs-odo"><b>${km.toLocaleString()}</b><span>KM</span></div>
+      <div class="cs-status">${status}</div>
     </div>
-    <div class="tp-body" style="margin-bottom:10px;">Current Mileage <span class="mono" style="color:var(--text);font-size:14px;">${bike.odometer.toLocaleString()} km</span></div>
-    <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
+    ${group('Needs attention','#ff8a85',danger,consumableHero)}
+    ${group('Due soon','',warn,consumableRow)}
+    ${group('Good','',ok,consumableRow)}
+    <div class="cs-link" onclick="showPage('warningLight',document.getElementById('nav-more-btn'))">
+      <span><b>Got a dashboard warning light?</b><br>Take a photo and let AI check it</span>
+      <span style="color:var(--accent);flex-shrink:0;">Check →</span>
+    </div>
+    ${bike.consumables.some(c=>c.isOfficial)?'<div class="cs-note">Intervals follow the official manufacturer schedule · items you changed are marked "Edited"</div>':''}`;
 }
 
-function consumableCard(c,km){
+// Status of one consumable (remaining = interval - km since last replacement; negative = overdue)
+function _consumableState(c,km){
   const used=km-c.lastKm;
   const pct=Math.min(100,Math.max(0,Math.round(used/c.km*100)));
   const remain=c.km-used;
-  const cls=pct>=100?'danger':pct>=80?'warn':'ok';
-  const fillColor=pct>=100?'var(--red)':pct>=80?'var(--accent)':'var(--green)';
-  const tag=pct>=100?'🚨 Replace Now':pct>=80?'⚠ Due Soon':'✓ Good';
-  const officialBadge=c.isOfficial?'<span style="font-size:11px;font-weight:600;background:#1a3020;color:#38a868;padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:middle;">Official</span>':'';
-  return `<div class="c-item ${cls}" onclick="openAiGuide('${c.id}')">
-    <div style="width:100%;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="display:flex;align-items:center;gap:7px;">
-          <span style="font-size:19px;line-height:1;">${c.icon}</span>
-          <span class="tp-title">${getCName(c.id)}</span>
-          ${officialBadge}
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <span class="c-tag ${cls}">${tag}</span>
-        </div>
-      </div>
-      <div style="padding-left:26px;">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:7px;flex-wrap:wrap;">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">Last: ${c.lastKm?c.lastKm.toLocaleString()+' km':'Not recorded'}</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-dim);">Interval: ${c.km.toLocaleString()} km</span>
-          ${remain>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:${fillColor};font-weight:600;">Remaining ${remain.toLocaleString()} km</span>`:''}
-        </div>
-        <div class="c-bar"><div class="c-bar-fill" style="width:${pct}%;background:${fillColor};"></div></div>
-      </div>
+  const level=pct>=100?'danger':pct>=80?'warn':'ok';
+  return {c,pct,remain,level};
+}
+function _consumableCaption(c,withLast){
+  const every=`Every ${c.km.toLocaleString()} km`;
+  if(!withLast) return every;
+  return every+' · '+(c.lastKm?`last replaced at ${c.lastKm.toLocaleString()} km`:'no replacement logged');
+}
+function _consumableName(c){
+  return `${getCName(c.id)}${c.userEdited?' <span class="cs-edited">Edited</span>':''}`;
+}
+// 'Needs attention' card — log replacement / check directly from the card
+function consumableHero(x){
+  const c=x.c;
+  return `<div class="cs-hero" onclick="openAiGuide('${c.id}')">
+    <div class="cs-hero-top"><span class="cs-hero-name">${_consumableName(c)}</span><span class="cs-pill-red">Replace now</span></div>
+    <div class="cs-hero-num"><b>${Math.abs(x.remain).toLocaleString()}</b><span>km overdue</span></div>
+    <div class="cs-bar"><i style="width:100%;background:var(--red);"></i></div>
+    <span class="cs-cap">${_consumableCaption(c,true)}</span>
+    <div class="cs-acts">
+      <button class="btn btn-primary" onclick="event.stopPropagation();openConsumModal('${c.id}')">Log replacement</button>
+      <button class="btn" onclick="event.stopPropagation();openConsumCheckModal('${c.id}')">Checked only</button>
     </div>
+  </div>`;
+}
+// 'Due soon' / 'Good' rows
+function consumableRow(x){
+  const c=x.c;
+  const soon=x.level==='warn';
+  const dot=soon?'var(--accent)':'var(--green)';
+  return `<div class="cs-row ${soon?'soon':''}" onclick="openAiGuide('${c.id}')">
+    <span class="cs-row-name"><i class="cs-dot" style="background:${dot}"></i>${_consumableName(c)}</span>
+    <span class="cs-val">${x.remain.toLocaleString()}<small>KM</small></span>
+    <span class="cs-cap">${_consumableCaption(c,soon)}</span>
+    <div class="cs-bar"><i style="width:${x.pct}%"></i></div>
   </div>`;
 }
 function switchCBike(idx){
