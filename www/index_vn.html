@@ -34,14 +34,15 @@
   --accent:#e8a020; --accent-dim:#3a2808;
   --red:#d04040; --red-dim:#2e1010;
   --green:#38a868; --green-dim:#0e2a1a;
-  --text:#e8ecf0; --text-dim:#9aa3ad; --text-muted:#5a6270;
+  --text:#e8ecf0; --text-dim:#9aa3ad; --text-muted:#8890a0;
+  --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px; /* 라운드 단계 (2026-10-05). 진행바 2px·원형 50%·토글은 예외 */
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden;}
 
 /* ═══ 타이포그래피 스케일 (2026-08-01, 폰트 크기 정비 작업) ═══ */
 .tp-display{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;line-height:1;}     /* 대형 브랜드 타이틀 (바이크명 등) */
-.tp-section{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2.5px;color:var(--metal-light);} /* 섹션 제목 */
+.tp-section{font-size:16px;font-weight:600;color:var(--metal-light);} /* 섹션 제목 — Bebas는 라틴 전용이라 한글/베트남어 제목엔 본문 폰트 */
 .tp-title{font-size:15px;font-weight:700;color:var(--text);}                                          /* 카드/리스트 타이틀 */
 .tp-body{font-size:14px;color:var(--text);}                                                           /* 본문 */
 .tp-sub{font-size:13px;color:var(--text-dim);}                                                        /* 보조 설명 */
@@ -59,7 +60,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .logo-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:2px;margin-top:2px;}
 .created-by{display:block;text-align:right;padding:8px 0 4px;font-size:11px;color:var(--text-muted);}
 .created-by a{color:var(--metal-light);text-decoration:none;}
-.lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-size:16px;line-height:1;text-decoration:none;transition:all 0.15s;opacity:0.5;display:inline-flex;align-items:center;}
+.lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px 5px;font-size:16px;line-height:1;text-decoration:none;transition:all 0.15s;opacity:0.5;display:inline-flex;align-items:center;}
 .lang-btn:hover{opacity:1;border-color:var(--border-bright);}
 .lang-btn.active{opacity:1;border-color:var(--accent);background:var(--accent-dim);}
 
@@ -82,15 +83,15 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 
 /* SECTION */
 .sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.sec-title{font-family:'Inter',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;color:var(--metal-light);white-space:nowrap;}
+.sec-title{font-size:16px;font-weight:600;color:var(--metal-light);white-space:nowrap;}
 .sec-line{flex:1;height:1px;background:var(--border);margin-left:10px;}
 
 /* CARD */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin-bottom:12px;}
 
 /* BIKE CARD */
-.bike-card{background:linear-gradient(135deg,#181a1d 0%,#101214 100%);border:1px solid var(--border-bright);border-radius:8px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;}
-.bike-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent) 0%,transparent 70%);}
+.bike-card{background:linear-gradient(135deg,#181a1d 0%,#101214 100%);border:1px solid var(--border-bright);border-radius:var(--r-md);padding:16px;margin-bottom:12px;position:relative;overflow:hidden;}
+.bike-card::before{content:none;}
   /* ── Insurance section ── */
   .ins-section{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;}
   .ins-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
@@ -117,15 +118,15 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
   .toggle-wrap input:checked + .toggle-slider:before{transform:translateX(20px);}
   .setting-section-title{font-size:15px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin:16px 0 6px;}
 .bike-name{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;line-height:1;}
-.bike-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);margin-top:3px;}
+.bike-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);margin-top:3px;}
 .bstat-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);}
 .bstat-lbl{font-size:15px;color:var(--text-dim);letter-spacing:1px;margin-top:2px;}
 
 /* BUTTONS */
-.btn{background:none;border:1px solid var(--border-bright);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:15px;font-weight:500;padding:8px 14px;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap;}
+.btn{background:none;border:1px solid var(--border-bright);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:15px;font-weight:500;padding:8px 14px;border-radius:var(--r-sm);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap;}
 .btn:hover{border-color:var(--metal);color:var(--text);}
-.btn-primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
-.btn-primary:hover{background:#f0b030;border-color:#f0b030;color:#000;}
+.btn-primary{background:var(--text);border-color:var(--text);color:var(--bg);font-weight:700;} /* 2026-10-05 앰버→흰색: 앰버는 상태/활성 표시에만 */
+.btn-primary:hover{background:#ffffff;border-color:#ffffff;color:var(--bg);}
 .btn-danger{color:var(--red);}
 .btn-danger:hover{background:var(--red-dim);border-color:#5a2020;}
 .btn-sm{padding:5px 9px;font-size:13px;}
@@ -133,7 +134,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 
 /* PILLS */
 .pill-group{display:flex;gap:6px;flex-wrap:wrap;}
-.pill{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:15px;font-weight:500;padding:6px 12px;border-radius:20px;cursor:pointer;transition:all 0.15s;}
+.pill{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:15px;font-weight:500;padding:6px 12px;border-radius:var(--r-pill);cursor:pointer;transition:all 0.15s;}
 .pill:hover{border-color:var(--border-bright);color:var(--text);}
 .pill.selected{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:700;}
 
@@ -142,7 +143,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .form-group{display:flex;flex-direction:column;gap:5px;}
 .form-group.full{grid-column:1/-1;}
 .form-label{font-size:13px;color:var(--text-dim);letter-spacing:0.5px;font-weight:600;}
-.form-input,.form-select{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;padding:9px 11px;outline:none;width:100%;transition:border-color 0.15s;}
+.form-input,.form-select{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;padding:9px 11px;outline:none;width:100%;transition:border-color 0.15s;}
 .form-input:focus,.form-select:focus{border-color:var(--accent);}
 .form-select{cursor:pointer;}
 option{background:var(--surface2);}
@@ -150,12 +151,12 @@ option{background:var(--surface2);}
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;padding:16px;}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:10px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;}
+.modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:var(--r-lg);width:100%;max-width:500px;max-height:92vh;overflow-y:auto;}
 .ride-detail-fs{max-width:100% !important;max-height:100vh !important;width:100vw;height:100vh;border-radius:0;}
-.ride-map-label{background:rgba(20,20,22,0.92);color:#f0f0f0;border:none;box-shadow:none;font-size:11px;font-weight:600;padding:3px 7px;border-radius:6px;white-space:nowrap;}
+.ride-map-label{background:rgba(20,20,22,0.92);color:#f0f0f0;border:none;box-shadow:none;font-size:11px;font-weight:600;padding:3px 7px;border-radius:var(--r-sm);white-space:nowrap;}
 .ride-map-label::before{display:none;}
 .modal-header{padding:15px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1;}
-.modal-title{font-family:'Inter',sans-serif;font-weight:700;font-size:16px;letter-spacing:0.5px;color:var(--metal-light);}
+.modal-title{font-size:16px;font-weight:600;color:var(--metal-light);}
 .modal-close{background:none;border:none;color:var(--text-dim);font-size:17px;cursor:pointer;padding:2px 4px;}
 .modal-body{padding:18px;}
 .modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
@@ -164,7 +165,7 @@ option{background:var(--surface2);}
 
 /* CONSUMABLE GRID */
 .c-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
-.c-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
+.c-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
 .c-item:hover{border-color:var(--border-bright);transform:translateY(-1px);}
 .c-item::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;}
 .c-item.ok::before{background:var(--green);}
@@ -178,20 +179,20 @@ option{background:var(--surface2);}
 .c-info{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-dim);line-height:1.6;}
 .c-bar{height:3px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden;}
 .c-bar-fill{height:100%;border-radius:2px;transition:width 0.4s;}
-.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-top:5px;}
+.c-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:var(--r-xs);margin-top:5px;}
 .c-tag.ok{background:var(--green-dim);color:var(--green);}
 .c-tag.warn{background:var(--accent-dim);color:var(--accent);}
 .c-tag.danger{background:var(--red-dim);color:var(--red);}
 
 /* LOG TABLE */
 /* HISTORY CARDS */
-.h-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:8px;}
+.h-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px;}
 .h-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .h-card-bike{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
 .h-card-meta{font-size:14px;color:var(--text-dim);line-height:1.65;}
 .h-card-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 .mono{font-family:'JetBrains Mono',monospace;font-size:17px;}
-.badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:11px;font-weight:700;letter-spacing:0.5px;}
+.badge{display:inline-block;padding:2px 6px;border-radius:var(--r-xs);font-size:11px;font-weight:700;letter-spacing:0.5px;}
 .badge-maint{background:#0e1e2e;color:#4a90d8;}
 .badge-cons{background:#2a1a08;color:var(--accent);}
 .badge-repair{background:var(--red-dim);color:var(--red);}
@@ -199,13 +200,13 @@ option{background:var(--surface2);}
 
 /* DASH */
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px;}
-.dash-w{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;text-align:center;}
+.dash-w{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;text-align:center;}
 .dash-num{font-family:'Bebas Neue',sans-serif;font-size:31px;letter-spacing:1px;line-height:1;}
-.dash-unit{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--accent);letter-spacing:1px;}
+.dash-unit{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text-dim);letter-spacing:1px;}
 .dash-lbl{font-size:17px;color:var(--text-dim);margin-top:4px;}
 
 /* ALERT */
-.alert-row{border-radius:5px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:15px;}
+.alert-row{border-radius:var(--r-sm);padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:15px;}
 .alert-row.danger{background:var(--red-dim);border:1px solid rgba(208,64,64,0.3);color:#e06060;}
 .alert-row.warn{background:var(--accent-dim);border:1px solid rgba(232,160,32,0.3);color:#d09020;}
 
@@ -213,27 +214,27 @@ option{background:var(--surface2);}
 .empty{text-align:center;padding:40px 20px;}
 .empty-icon{font-size:31px;margin-bottom:8px;}
 .empty-text{font-size:15px;color:var(--text-dim);}
-.no-bikes-box{background:var(--surface);border:1px dashed var(--border-bright);border-radius:10px;padding:40px;text-align:center;}
-.tag-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--metal);font-family:'JetBrains Mono',monospace;}
-.num-input-styled{background:var(--surface2);border:1px solid var(--border-bright);border-radius:4px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:500;padding:10px 14px;outline:none;text-align:center;transition:border-color 0.15s;}
+.no-bikes-box{background:var(--surface);border:1px dashed var(--border-bright);border-radius:var(--r-md);padding:40px;text-align:center;}
+.tag-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:2px 8px;font-size:11px;color:var(--metal);font-family:'JetBrains Mono',monospace;}
+.num-input-styled{background:var(--surface2);border:1px solid var(--border-bright);border-radius:var(--r-sm);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:500;padding:10px 14px;outline:none;text-align:center;transition:border-color 0.15s;}
 .num-input-styled:focus{border-color:var(--accent);}
 
 /* PWA BANNER */
 .pwa-banner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--surface);border-top:1px solid var(--border-bright);padding:14px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -8px 32px rgba(0,0,0,0.5);}
 .pwa-banner.show{display:block;}
 .pwa-banner-inner{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:12px;}
-.pwa-banner-icon{width:44px;height:44px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#1e2022,#111214);border:1px solid var(--border-bright);display:flex;align-items:center;justify-content:center;font-size:21px;}
+.pwa-banner-icon{width:44px;height:44px;border-radius:var(--r-md);flex-shrink:0;background:linear-gradient(135deg,#1e2022,#111214);border:1px solid var(--border-bright);display:flex;align-items:center;justify-content:center;font-size:21px;}
 .pwa-banner-text{flex:1;}
 .pwa-banner-title{font-weight:700;font-size:17px;color:var(--text);}
 .pwa-banner-sub{font-size:17px;color:var(--text-dim);margin-top:2px;}
-.backup-toast,.pwa-installed-toast{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:6px;font-size:17px;font-weight:600;z-index:600;white-space:nowrap;animation:fadeInUp 0.3s ease;}
+.backup-toast,.pwa-installed-toast{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:var(--r-sm);font-size:17px;font-weight:600;z-index:600;white-space:nowrap;animation:fadeInUp 0.3s ease;}
 .backup-toast.success,.pwa-installed-toast{background:var(--green);color:#fff;}
 .backup-toast.error{background:var(--red);color:#fff;}
 .backup-toast.show,.pwa-installed-toast.show{display:block;}
 @keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .backup-stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:14px;}
 .backup-stat-row:last-child{border-bottom:none;}
-.backup-stat-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--accent);}
+.backup-stat-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);}
 
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
@@ -266,7 +267,7 @@ option{background:var(--surface2);}
   .ai-guide-section {
     margin-bottom:16px; padding:14px;
     background:var(--surface2); border-radius:8px;
-    border-left:3px solid var(--accent);
+    border-left:3px solid var(--border-bright);
   }
   .ai-guide-section.danger { border-left-color:var(--red); }
   .ai-guide-section.tip { border-left-color:#4a90d8; }
@@ -348,7 +349,7 @@ option{background:var(--surface2);}
   }
   .weather-temp-unit {
     font-family:'JetBrains Mono',monospace;
-    font-size:15px;color:var(--accent);vertical-align:super;
+    font-size:15px;color:var(--text-dim);vertical-align:super;
   }
   .weather-desc {
     font-size:17px;color:var(--text-dim);margin-top:2px;
@@ -446,15 +447,15 @@ option{background:var(--surface2);}
   .sos-fab:active{cursor:grabbing;}
   .sos-fab.dragging{animation:none;box-shadow:0 8px 30px rgba(208,48,48,0.7);transform:scale(1.05);}
   @keyframes sosPulse{0%,100%{box-shadow:0 4px 20px rgba(208,48,48,0.5);}50%{box-shadow:0 4px 30px rgba(208,48,48,0.9),0 0 0 8px rgba(208,48,48,0.15);}}
-  .onb-highlight{position:absolute;border:4px solid #22d3ee;border-radius:14px;pointer-events:none;animation:onbPulse 1.4s ease-in-out infinite;box-sizing:border-box;}
+  .onb-highlight{position:absolute;border:4px solid #22d3ee;border-radius:var(--r-lg);pointer-events:none;animation:onbPulse 1.4s ease-in-out infinite;box-sizing:border-box;}
   @keyframes onbPulse{0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,0.6);}50%{box-shadow:0 0 0 12px rgba(34,211,238,0);}}
   .sos-fab-text{font-size:13px;font-weight:900;color:#fff;letter-spacing:0.5px;}
-  .sos-modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:14px 14px 0 0;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;}
+  .sos-modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:var(--r-lg) var(--r-lg) 0 0;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;}
   .sos-header{background:linear-gradient(135deg,#c02020,#8a1010);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;}
-  .sos-title{font-family:"Bebas Neue",sans-serif;font-size:22px;letter-spacing:3px;color:#fff;}
+  .sos-title{font-size:20px;font-weight:700;color:#fff;}
   .sos-body{padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
   .sos-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-  .sos-choice-btn{background:var(--surface2);border:2px solid var(--border-bright);border-radius:10px;padding:18px 12px;cursor:pointer;text-align:center;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
+  .sos-choice-btn{background:var(--surface2);border:2px solid var(--border-bright);border-radius:var(--r-md);padding:18px 12px;cursor:pointer;text-align:center;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
   .sos-choice-btn.selected{border-color:var(--red);background:var(--red-dim);}
   .sos-choice-icon{font-size:32px;margin-bottom:8px;}
   .sos-choice-label{font-size:15px;font-weight:700;color:var(--text);}
@@ -462,34 +463,34 @@ option{background:var(--surface2);}
   .sos-section{margin-bottom:14px;}
   .sos-section-title{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
   .sos-step{width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
-  .sos-call-btn{width:100%;background:var(--surface2);border:1px solid var(--border-bright);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:8px;transition:all 0.15s;-webkit-tap-highlight-color:transparent;text-decoration:none;}
+  .sos-call-btn{width:100%;background:var(--surface2);border:1px solid var(--border-bright);border-radius:var(--r-md);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:8px;transition:all 0.15s;-webkit-tap-highlight-color:transparent;text-decoration:none;}
   .sos-call-btn:active{background:var(--surface3);}
   .sos-call-btn.emergency{border-color:rgba(208,64,64,0.4);background:var(--red-dim);}
   .sos-call-btn.korea{border-color:rgba(74,144,216,0.4);background:#0e1e2e;}
   .sos-call-name{font-size:15px;font-weight:700;color:var(--text);}
   .sos-call-sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .sos-call-num{font-family:"JetBrains Mono",monospace;font-size:17px;font-weight:700;color:var(--accent);}
-  .sos-tts-btn{width:100%;background:linear-gradient(135deg,#1a2a4a,#0e1a30);border:1px solid #2a4a7a;border-radius:8px;padding:14px 16px;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;gap:12px;-webkit-tap-highlight-color:transparent;}
+  .sos-tts-btn{width:100%;background:linear-gradient(135deg,#1a2a4a,#0e1a30);border:1px solid #2a4a7a;border-radius:var(--r-md);padding:14px 16px;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;gap:12px;-webkit-tap-highlight-color:transparent;}
   .sos-tts-vi{font-size:14px;font-weight:700;color:#6ab0f5;}
   .sos-tts-ko{font-size:11px;color:var(--text-dim);margin-top:2px;}
-  .sos-location-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--text-dim);cursor:pointer;}
+  .sos-location-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;margin-bottom:8px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--text-dim);cursor:pointer;}
   .sos-checklist-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;}
   .sos-checklist-item:last-child{border-bottom:none;}
-  .sos-check{width:22px;height:22px;border-radius:5px;border:2px solid var(--border-bright);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all 0.15s;}
+  .sos-check{width:22px;height:22px;border-radius:var(--r-sm);border:2px solid var(--border-bright);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all 0.15s;}
   .sos-check.checked{background:var(--green);border-color:var(--green);}
   .sos-checklist-text{font-size:14px;color:var(--text);}
-  .medical-card{background:linear-gradient(135deg,#0e1e30,#061018);border:1px solid #2a4a7a;border-radius:10px;padding:18px;margin-bottom:10px;}
+  .medical-card{background:linear-gradient(135deg,#0e1e30,#061018);border:1px solid #2a4a7a;border-radius:var(--r-md);padding:18px;margin-bottom:10px;}
   .medical-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1a3040;}
   .medical-row:last-child{border-bottom:none;}
   .medical-label{font-size:12px;color:var(--text-dim);}
   .medical-value{font-size:14px;font-weight:600;color:var(--text);}
 
   /* ── More bottom sheet ── */
-  .more-sheet{background:var(--surface);border:1px solid var(--border-bright);border-radius:14px 14px 0 0;width:100%;max-width:460px;max-height:80vh;overflow-y:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
+  .more-sheet{background:var(--surface);border:1px solid var(--border-bright);border-radius:var(--r-lg) var(--r-lg) 0 0;width:100%;max-width:460px;max-height:80vh;overflow-y:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
   .more-sheet-handle{width:36px;height:4px;background:var(--border-bright);border-radius:2px;margin:10px auto 4px;}
   .more-sheet-title{font-size:15px;font-weight:700;color:var(--text-dim);letter-spacing:1px;padding:8px 18px 14px;}
   .more-sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 18px 18px;}
-  .more-sheet-tile{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px 12px;text-align:center;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
+  .more-sheet-tile{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:20px 12px;text-align:center;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
   .more-sheet-tile:active{background:var(--surface3);}
   .more-tile-icon{font-size:28px;display:block;margin-bottom:8px;}
   .more-tile-label{font-size:13px;font-weight:700;color:var(--text);}
@@ -497,28 +498,28 @@ option{background:var(--surface2);}
   /* ── FIRST LAUNCH WELCOME ── */
   .welcome-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:1100;align-items:center;justify-content:center;padding:20px;}
   .welcome-overlay.open{display:flex;}
-  .welcome-modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:16px;width:100%;max-width:340px;animation:slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);}
+  .welcome-modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:var(--r-lg);width:100%;max-width:340px;animation:slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);}
   .welcome-body{padding:30px 22px 20px;text-align:center;}
   .welcome-icon{font-size:52px;margin-bottom:14px;}
   .welcome-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.45;}
   .welcome-desc{font-size:13px;color:var(--text-dim);line-height:1.75;margin-bottom:0;}
   .welcome-footer{padding:14px 20px 20px;display:flex;flex-direction:column;gap:8px;}
   /* ── SAMPLE BANNER ── */
-  .sample-banner{background:linear-gradient(135deg,#101e30,#0a1420);border:1px solid rgba(74,144,216,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;gap:10px;cursor:pointer;transition:border-color 0.15s;-webkit-tap-highlight-color:transparent;}
+  .sample-banner{background:linear-gradient(135deg,#101e30,#0a1420);border:1px solid rgba(74,144,216,0.3);border-radius:var(--r-md);padding:10px 14px;margin-bottom:12px;display:none;align-items:center;gap:10px;cursor:pointer;transition:border-color 0.15s;-webkit-tap-highlight-color:transparent;}
   .sample-banner:hover{border-color:rgba(74,144,216,0.6);}
   .sample-banner-text{flex:1;font-size:12px;color:#6ab0f5;font-weight:600;}
   .sample-banner-arrow{font-size:18px;color:#6ab0f5;opacity:0.7;}
   /* ── RIDING CTRL BAR ── */
-  .riding-ctrl{margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
+  .riding-ctrl{margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
   .riding-ctrl.on{background:linear-gradient(135deg,#0a2018,#061410);border-color:rgba(56,168,104,0.35);}
   .riding-dot{width:9px;height:9px;border-radius:50%;background:var(--border-bright);flex-shrink:0;}
   .riding-dot.on{background:var(--green);animation:ridingPulse 1.5s ease-in-out infinite;}
-  .riding-stop-btn{background:transparent;border:1px solid rgba(208,64,64,0.5);color:var(--red);font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:8px 14px;border-radius:4px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+  .riding-stop-btn{background:transparent;border:1px solid rgba(208,64,64,0.5);color:var(--red);font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:8px 14px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
   /* ── AUTO SOS OVERLAY ── */
   .auto-sos-overlay{display:none;position:fixed;inset:0;z-index:1000;background:linear-gradient(180deg,#8a0808 0%,#4a0404 100%);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
   .auto-sos-overlay.show{display:flex;}
   .auto-sos-num{font-family:'Bebas Neue',sans-serif;font-size:120px;color:#fff;line-height:1;text-shadow:0 0 60px rgba(255,80,80,0.5);}
-  .auto-sos-cancel{background:#fff;color:#7a0606;font-family:'Inter',sans-serif;font-size:17px;font-weight:800;padding:16px 56px;border-radius:50px;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:28px;}
+  .auto-sos-cancel{background:#fff;color:#7a0606;font-family:'Inter',sans-serif;font-size:17px;font-weight:800;padding:16px 56px;border-radius:var(--r-pill);border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:28px;}
   /* ── Modal thông tin y tế: nhỏ hơn toàn cục 1px, chỉ áp dụng trong modal này ── */
   #m-medical .modal-title{font-size:16px;}
 </style>
@@ -577,7 +578,7 @@ option{background:var(--surface2);}
       <div style="display:flex;align-items:center;gap:10px;">
         <div id="riding-ctrl-dot" class="riding-dot"></div>
         <div>
-          <div id="riding-ctrl-title" style="font-size:14px;font-weight:700;color:var(--accent);">Chờ bắt đầu</div>
+          <div id="riding-ctrl-title" style="font-size:14px;font-weight:700;color:var(--text);">Chờ bắt đầu</div>
           <div id="riding-ctrl-sub" style="font-size:12px;color:var(--text);line-height:1.7;margin-top:4px;"></div>
           <div id="riding-ctrl-bike" style="display:none;font-size:12px;color:var(--text-dim);margin-top:4px;"></div>
         </div>
@@ -620,9 +621,9 @@ option{background:var(--surface2);}
       <div id="history-month-label" class="tp-title"></div>
       <button class="btn btn-sm" onclick="historyChangeMonth(1)">▶</button>
     </div>
-    <div style="background:var(--surface2);border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div class="tp-label">Chi phí bảo dưỡng tháng này</div>
-      <div class="tp-stat-sm" id="history-month-cost" style="color:var(--accent);"></div>
+      <div class="tp-stat-sm" id="history-month-cost" style="color:var(--text);"></div>
     </div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">Thêm nhật ký tại tab <strong style="color:var(--accent);">🔧 Bảo dưỡng</strong></div>
     <div id="history-table"></div>
@@ -660,7 +661,7 @@ option{background:var(--surface2);}
     </div>
     <div id="mstat-calendar" style="display:grid;grid-template-columns:repeat(7,1fr);row-gap:12px;"></div>
 
-    <div id="mstat-day-detail" style="display:none;margin-top:18px;background:var(--surface2);border-radius:10px;padding:14px;"></div>
+    <div id="mstat-day-detail" style="display:none;margin-top:18px;background:var(--surface2);border-radius:var(--r-md);padding:14px;"></div>
     <div id="mstat-motivate" style="display:none;margin-top:16px;margin-bottom:20px;text-align:center;font-size:13px;color:var(--text-dim);line-height:1.6;"></div>
   </div>
 
@@ -760,14 +761,14 @@ option{background:var(--surface2);}
   <div class="page" id="page-brandNews">
     <div class="sec-header"><span class="sec-title">🗞 TIN XE MÁY</span><div class="sec-line"></div></div>
     <div id="brand-news-cat-filter" style="display:flex;gap:6px;overflow-x:auto;padding:10px 0 12px;white-space:nowrap;position:sticky;top:calc(52px + env(safe-area-inset-top));background:var(--bg);z-index:50;">
-      <button class="brand-news-chip" data-cat="all" onclick="_brandNewsSelectCategory('all')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--accent);color:#fff;">Tất cả</button>
-      <button class="brand-news-chip" data-cat="safety" onclick="_brandNewsSelectCategory('safety')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🚨 An toàn</button>
-      <button class="brand-news-chip" data-cat="product" onclick="_brandNewsSelectCategory('product')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🆕 Sản phẩm mới</button>
-      <button class="brand-news-chip" data-cat="tech" onclick="_brandNewsSelectCategory('tech')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🔧 Công nghệ</button>
-      <button class="brand-news-chip" data-cat="service" onclick="_brandNewsSelectCategory('service')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🛠 Dịch vụ</button>
-      <button class="brand-news-chip" data-cat="event" onclick="_brandNewsSelectCategory('event')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🎪 Sự kiện</button>
-      <button class="brand-news-chip" data-cat="policy" onclick="_brandNewsSelectCategory('policy')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">📋 Chính sách</button>
-      <button class="brand-news-chip" data-cat="info" onclick="_brandNewsSelectCategory('info')" style="flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">💡 Thông tin</button>
+      <button class="brand-news-chip" data-cat="all" onclick="_brandNewsSelectCategory('all')" style="flex-shrink:0;padding:6px 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;border:none;background:var(--accent);color:#fff;">Tất cả</button>
+      <button class="brand-news-chip" data-cat="safety" onclick="_brandNewsSelectCategory('safety')" style="flex-shrink:0;padding:6px 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🚨 An toàn</button>
+      <button class="brand-news-chip" data-cat="product" onclick="_brandNewsSelectCategory('product')" style="flex-shrink:0;padding:6px 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🆕 Sản phẩm mới</button>
+      <button class="brand-news-chip" data-cat="tech" onclick="_brandNewsSelectCategory('tech')" style="flex-shrink:0;padding:6px 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🔧 Công nghệ</button>
+      <button class="brand-news-chip" data-cat="service" onclick="_brandNewsSelectCategory('service')" style="flex-shrink:0;padding:6px 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🛠 Dịch vụ</button>
+      <button class="brand-news-chip" data-cat="event" onclick="_brandNewsSelectCategory('event')" style="flex-shrink:0;padding:6px 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">🎪 Sự kiện</button>
+      <button class="brand-news-chip" data-cat="policy" onclick="_brandNewsSelectCategory('policy')" style="flex-shrink:0;padding:6px 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">📋 Chính sách</button>
+      <button class="brand-news-chip" data-cat="info" onclick="_brandNewsSelectCategory('info')" style="flex-shrink:0;padding:6px 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;border:none;background:var(--surface2);color:var(--text);">💡 Thông tin</button>
     </div>
     <div id="brand-news-debug-list" style="display:flex;flex-direction:column;gap:10px;"></div>
   </div>
@@ -787,7 +788,7 @@ option{background:var(--surface2);}
       <img id="wl-preview-img" style="width:100%;border-radius:12px;">
     </div>
     <div id="wl-result"></div>
-    <div style="margin-top:20px;padding:12px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--text-muted);line-height:1.5;">
+    <div style="margin-top:20px;padding:12px;background:var(--surface2);border-radius:var(--r-md);font-size:12px;color:var(--text-muted);line-height:1.5;">
       ⚠ Kết quả này chỉ mang tính tham khảo, không phải chẩn đoán chính xác. Nếu không chắc chắn hoặc có thể nguy hiểm, hãy đến tiệm sửa xe.
     </div>
   </div>
@@ -896,7 +897,7 @@ option{background:var(--surface2);}
     <div class="modal-body">
       <div style="margin-bottom:14px;">
         <div class="step-label"><span class="step-num">1</span>Số km khi thay</div>
-        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Hiện tại: <span class="mono" id="mc-current-km" style="color:var(--accent);"></span> km</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Hiện tại: <span class="mono" id="mc-current-km" style="color:var(--text);"></span> km</div>
         <div class="pill-group" style="margin-bottom:8px;" id="mc-km-pills"></div>
         <div style="display:flex;align-items:center;gap:8px;">
           <input type="number" class="num-input-styled" id="mc-km" style="width:140px;">
@@ -1836,7 +1837,7 @@ function renderTodayTip() {
     <div style="display:flex;align-items:flex-start;gap:10px;">
       <span style="font-size:22px;flex-shrink:0;">${tip.icon}</span>
       <div>
-        <div style="font-size:10px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:4px;">💡 Mẹo lái xe hôm nay · ${tip.tag}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:1px;margin-bottom:4px;">💡 Mẹo lái xe hôm nay · ${tip.tag}</div>
         <div style="font-size:13px;color:var(--text);line-height:1.6;">${tip.tip}</div>
       </div>
     </div>`;
@@ -1907,7 +1908,7 @@ function _renderDashInner(){
     ${D.bikes.length>1?`<div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;">
       ${D.bikes.map(b=>{
         const sel=b.id===dashSelectedBikeId;
-        return `<div onclick="selectDashBike(${b.id})" style="flex-shrink:0;width:152px;height:60px;box-sizing:border-box;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:10px;padding:0 12px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;">
+        return `<div onclick="selectDashBike(${b.id})" style="flex-shrink:0;width:152px;height:60px;box-sizing:border-box;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:var(--r-md);padding:0 12px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;">
           <div style="font-size:14px;font-weight:700;line-height:1.3;color:${sel?'var(--accent)':'var(--text)'};overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${b.brand} ${b.model}</div>
         </div>`;
       }).join('')}
@@ -1920,7 +1921,7 @@ function _renderDashInner(){
           ${sb.consumables[0]?.category?`<div style="margin-top:4px;"><span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:3px;background:var(--surface3);color:var(--metal);">${{sport:'🏁 SPORT',naked:'🏙 NAKED',adventure:'🌍 ADVENTURE',classic:'🛣 CLASSIC'}[sb.consumables[0].category]||''}</span></div>`:''}
         </div>
         <div style="text-align:right;cursor:pointer;" onclick="showPage('bikes',document.getElementById('nav-more-btn'))">
-          <div class="tp-stat" style="color:var(--accent);">${sb.odometer.toLocaleString()}</div>
+          <div class="tp-stat" style="color:var(--text);">${sb.odometer.toLocaleString()}</div>
           <div class="tp-caption" style="letter-spacing:1px;">Tổng KM</div>
         </div>
       </div>
@@ -1961,21 +1962,21 @@ function _renderDashInner(){
     }
     <div class="sec-header" style="margin-top:14px;"><span class="sec-title">LÁI XE THÁNG NÀY</span><div class="sec-line"></div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;cursor:pointer;" onclick="showPage('monthlyStats',document.getElementById('nav-ridehistory-btn'))">
-      <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+      <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
         <div class="tp-label">Tổng quãng đường</div>
         <div class="tp-stat-sm" style="margin-top:2px;">${monthDistance.toFixed(1)} km</div>
       </div>
-      <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+      <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
         <div class="tp-label">Tổng số chuyến</div>
         <div class="tp-stat-sm" style="margin-top:2px;">${monthRides.length}</div>
       </div>
-      <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+      <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
         <div class="tp-label">Tốc độ TB</div>
         <div class="tp-stat-sm" style="margin-top:2px;">${Math.round(monthAvgSpeed)} km/h</div>
       </div>
-      <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+      <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
         <div class="tp-label">Tốc độ tối đa</div>
-        <div class="tp-stat-sm" style="color:var(--accent);margin-top:2px;">${Math.round(monthMaxSpeed)} km/h</div>
+        <div class="tp-stat-sm" style="color:var(--text);margin-top:2px;">${Math.round(monthMaxSpeed)} km/h</div>
       </div>
     </div>`;
   try{ renderFuelPriceCard(); }catch(e){}
@@ -2622,7 +2623,7 @@ function _renderConsumablesCore(){
         </div>
       </div>
     </div>
-    <div class="tp-body" style="margin-bottom:10px;">Tổng số km <span class="mono" style="color:var(--accent);font-size:14px;">${bike.odometer.toLocaleString()} km</span></div>
+    <div class="tp-body" style="margin-bottom:10px;">Tổng số km <span class="mono" style="color:var(--text);font-size:14px;">${bike.odometer.toLocaleString()} km</span></div>
     <div class="c-grid">${bike.consumables.map(c=>consumableCard(c,bike.odometer)).join('')}</div>`;
 }
 
@@ -2874,7 +2875,7 @@ function renderRideHistoryList(){
     return `<div class="bike-card" style="margin-bottom:10px;cursor:pointer;" onclick="openRideDetail(${r.id})">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
         <span class="tp-title">${r.date} · ${r.startTime}~${r.endTime}</span>
-        <span class="tp-title" style="color:var(--accent);">${r.distanceKm}km</span>
+        <span class="tp-title" style="color:var(--text);">${r.distanceKm}km</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:13px;color:var(--text-muted);">${bike?bike.brand+' '+bike.model+' · ':''}TB ${r.avgKmh}km/h · Tối đa ${r.maxKmh}km/h</span>
@@ -3000,7 +3001,7 @@ function mstatRenderBikeSelector(){
   wrap.style.display='flex';
   wrap.innerHTML = D.bikes.map(function(b){
     var sel = b.id === mstatState.bikeId;
-    return `<div onclick="mstatSelectBike(${b.id})" style="flex-shrink:0;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>`;
+    return `<div onclick="mstatSelectBike(${b.id})" style="flex-shrink:0;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:var(--r-md);padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700;color:${sel?'var(--accent)':'var(--text)'};">${b.brand} ${b.model}</div>`;
   }).join('');
 }
 
@@ -3371,7 +3372,7 @@ function renderVisitedPlacesPage(){
       return `<div style="border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;${placeNames.length ? 'cursor:pointer;' : ''}" ${placeNames.length ? `onclick="_toggleVisitedPlaceSub(${idx})"` : ''}>
           <span style="font-size:14px;">${name}${placeNames.length ? ' <span style="color:var(--text-dim);font-size:11px;">▾</span>' : ''}</span>
-          <span style="font-size:14px;font-weight:700;color:var(--accent);">${counts[name]} lần</span>
+          <span style="font-size:14px;font-weight:700;color:var(--text);">${counts[name]} lần</span>
         </div>
         ${sub}
       </div>`;
@@ -3441,21 +3442,21 @@ function mstatRender(){
   var avgSpeed = totalDuration > 0 ? totalDistance / (totalDuration/3600000) : 0;
 
   document.getElementById('mstat-summary').innerHTML = `
-    <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
       <div class="tp-label">Tổng quãng đường</div>
       <div class="tp-stat-sm" style="margin-top:2px;">${totalDistance.toFixed(1)} km</div>
     </div>
-    <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
       <div class="tp-label">Tổng số chuyến</div>
       <div class="tp-stat-sm" style="margin-top:2px;">${rides.length}</div>
     </div>
-    <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
       <div class="tp-label">Tốc độ TB</div>
       <div class="tp-stat-sm" style="margin-top:2px;">${Math.round(avgSpeed)} km/h</div>
     </div>
-    <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
       <div class="tp-label">Tốc độ tối đa</div>
-      <div class="tp-stat-sm" style="color:var(--accent);margin-top:2px;">${Math.round(maxSpeed)} km/h</div>
+      <div class="tp-stat-sm" style="color:var(--text);margin-top:2px;">${Math.round(maxSpeed)} km/h</div>
     </div>
   `;
 
@@ -3502,7 +3503,7 @@ function mstatRender(){
         <div><span style="color:var(--text-dim);">Quãng đường</span> <strong style="color:var(--text);">${info2.distance.toFixed(1)}km</strong></div>
         <div><span style="color:var(--text-dim);">Thời gian</span> <strong style="color:var(--text);">${_mstatFmtDuration(info2.duration)}</strong></div>
         <div><span style="color:var(--text-dim);">TB</span> <strong style="color:var(--text);">${Math.round(info2.avgSum/info2.count)}km/h</strong></div>
-        <div><span style="color:var(--text-dim);">Tối đa</span> <strong style="color:var(--accent);">${Math.round(info2.max)}km/h</strong></div>
+        <div><span style="color:var(--text-dim);">Tối đa</span> <strong style="color:var(--text);">${Math.round(info2.max)}km/h</strong></div>
       </div>
       <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="shareMonthlyDayCard()">Chia sẻ</button>
     `;
@@ -4659,7 +4660,7 @@ function updateRidingBar() {
   } else {
     bar.className = 'riding-ctrl';
     dot.className = 'riding-dot';
-    title.style.color = 'var(--accent)';
+    title.style.color = 'var(--text)';
     title.textContent = 'Chờ bắt đầu';
     sub.textContent = '';
     btn.innerHTML = '<button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:11px 14px;" onclick="startRiding()">▶ Bắt đầu ghi</button>';
@@ -4691,7 +4692,7 @@ function openRideBikePicker(mode){
   var list = document.getElementById('ride-bike-pick-list');
   list.innerHTML = D.bikes.map(function(b){
     var on = b.id===cur;
-    return '<div onclick="pickRideBike('+b.id+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid '+(on?'var(--accent)':'var(--border)')+';border-radius:10px;margin-bottom:8px;cursor:pointer;">'
+    return '<div onclick="pickRideBike('+b.id+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid '+(on?'var(--accent)':'var(--border)')+';border-radius:var(--r-md);margin-bottom:8px;cursor:pointer;">'
       + '<span style="font-size:14px;font-weight:600;color:var(--text);">🏍 '+_rbEsc(b.brand+' '+b.model)+'</span>'
       + (on ? '<span style="color:var(--accent);font-size:13px;">✓</span>' : '') + '</div>';
   }).join('');
@@ -5310,7 +5311,7 @@ function _brandNewsCardHtml(d){
   var summary = (d.summary && d.summary.vn) || '';
   var catLabel = BRAND_NEWS_CATEGORY_LABEL[d.category] || d.category || '';
   var isSafety = d.category === 'safety';
-  var cardStyle = 'border-radius:10px;padding:12px;'
+  var cardStyle = 'border-radius:var(--r-md);padding:12px;'
     + (isSafety ? 'background:var(--red-dim);border:1px solid rgba(208,64,64,0.35);border-left:3px solid var(--red);' : 'background:var(--surface2);');
   var vnWarn = d.vnConfirmed === false
     ? '<div style="font-size:13px;color:var(--orange,#e0a030);background:rgba(224,160,48,0.12);border-radius:6px;padding:5px 9px;margin-bottom:6px;">⚠ Tin được công bố ở nước ngoài (Mỹ, v.v.), chưa xác nhận có áp dụng cho xe bán tại Việt Nam hay không</div>'
@@ -6933,7 +6934,7 @@ function renderMedicalCard(){
 <!-- Màn hình chào mừng lần đầu -->
 <div class="auto-sos-overlay" id="auto-sos-overlay">
   <div style="font-size:64px;margin-bottom:14px;">🚨</div>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:#fff;margin-bottom:8px;">Phát hiện va chạm!</div>
+  <div style="font-size:28px;font-weight:700;color:#fff;margin-bottom:8px;">Phát hiện va chạm!</div>
   <div style="font-size:15px;color:rgba(255,255,255,0.85);margin-bottom:24px;max-width:290px;line-height:1.65;">Bạn có ổn không?<br>Nhấn nút hoặc di chuyển 10m+ để hủy</div>
   <div class="auto-sos-num" id="auto-sos-cd">60</div>
   <div style="font-size:14px;color:rgba(255,255,255,0.65);margin-top:10px;">giây nữa sẽ gửi tin nhắn khẩn cấp</div>
@@ -7043,7 +7044,7 @@ function renderMedicalCard(){
       <div style="font-size:13px;color:var(--text);line-height:1.7;">
         Thao tác này sẽ mở trang tra cứu vi phạm giao thông chính thức của Việt Nam (CSGT) với biển số xe đã đăng ký được điền sẵn.
       </div>
-      <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--text-dim);line-height:1.7;">
+      <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:var(--r-md);font-size:12px;color:var(--text-dim);line-height:1.7;">
         <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">⚠ Bạn cần đăng nhập bằng tài khoản VNeTraffic của chính mình để xem kết quả</div>
         Người nước ngoài cư trú hợp pháp cũng có thể đăng ký, nhưng không thể thực hiện trực tiếp trong ứng dụng này. Cần:
         <div style="margin-top:8px;">
@@ -7075,27 +7076,27 @@ function renderMedicalCard(){
       <div id="ride-detail-stats" style="padding:16px;">
         <div id="ride-detail-date" class="tp-sub" style="margin-bottom:12px;"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
             <div class="tp-label">Quãng đường</div>
             <div id="ride-detail-distance" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
-          <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
             <div class="tp-label">Thời gian</div>
             <div id="ride-detail-duration" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
-          <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
             <div class="tp-label">Tốc độ TB</div>
             <div id="ride-detail-avg" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
-          <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
             <div class="tp-label">Tốc độ tối đa</div>
-            <div id="ride-detail-max" class="tp-stat-sm" style="color:var(--accent);margin-top:2px;"></div>
+            <div id="ride-detail-max" class="tp-stat-sm" style="color:var(--text);margin-top:2px;"></div>
           </div>
-          <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
             <div class="tp-label">Tăng tốc gấp</div>
             <div id="ride-detail-accel" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
-          <div style="background:var(--surface2);border-radius:10px;padding:12px;">
+          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
             <div class="tp-label">Phanh gấp</div>
             <div id="ride-detail-brake" class="tp-stat-sm" style="margin-top:2px;"></div>
           </div>
@@ -7112,10 +7113,10 @@ function renderMedicalCard(){
     <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
       <div id="ride-summary-emoji" style="font-size:44px;margin-bottom:10px;">🏁</div>
       <div id="ride-summary-title" style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;">Tóm tắt chuyến đi</div>
-      <div id="ride-summary-ach-headline" style="display:none;font-size:15px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:10px;padding:10px 14px;margin-bottom:16px;"></div>
-      <div id="ride-summary-insight" style="display:none;font-size:15px;font-weight:700;color:var(--accent);background:rgba(232,160,32,0.12);border:1px solid rgba(232,160,32,0.3);border-radius:10px;padding:10px 14px;margin-bottom:16px;"></div>
+      <div id="ride-summary-ach-headline" style="display:none;font-size:15px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:var(--r-md);padding:10px 14px;margin-bottom:16px;"></div>
+      <div id="ride-summary-insight" style="display:none;font-size:15px;font-weight:700;color:var(--accent);background:rgba(232,160,32,0.12);border:1px solid rgba(232,160,32,0.3);border-radius:var(--r-md);padding:10px 14px;margin-bottom:16px;"></div>
       <div id="ride-summary-bike" style="display:none;font-size:13px;color:var(--text-dim);margin-bottom:12px;">🏍 Đã lưu cho xe <span id="ride-summary-bike-name" style="color:var(--text);font-weight:600;"></span> · <span onclick="openRideBikePicker('summary')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">Đổi xe</span></div>
-      <div id="ride-summary-odo" style="display:none;font-size:14px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:10px;padding:10px 14px;margin-bottom:16px;">🛣 Đã cập nhật số km đã đi lên <span id="ride-summary-odo-val"></span></div>
+      <div id="ride-summary-odo" style="display:none;font-size:14px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:var(--r-md);padding:10px 14px;margin-bottom:16px;">🛣 Đã cập nhật số km đã đi lên <span id="ride-summary-odo-val"></span></div>
       <div id="ride-summary-stat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;">
         <div>
           <div style="font-size:11px;color:var(--text-dim);">Thời gian</div>
@@ -7131,7 +7132,7 @@ function renderMedicalCard(){
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-dim);">Tốc độ tối đa</div>
-          <div id="ride-summary-max" style="font-size:18px;font-weight:700;color:var(--accent);">-</div>
+          <div id="ride-summary-max" style="font-size:18px;font-weight:700;color:var(--text);">-</div>
         </div>
       </div>
       <div id="ride-summary-note" style="display:none;margin-top:16px;font-size:11px;color:var(--text-dim);line-height:1.6;">
@@ -7139,7 +7140,7 @@ function renderMedicalCard(){
       </div>
       <div id="ride-summary-memo-wrap" style="margin-top:18px;text-align:left;">
         <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">🏍 Chọn nhân vật</div>
-        <div onclick="openCharacterPicker()" style="display:flex;align-items:center;gap:12px;background:var(--surface,#161618);border:1px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;">
+        <div onclick="openCharacterPicker()" style="display:flex;align-items:center;gap:12px;background:var(--surface,#161618);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 14px;cursor:pointer;">
           <div style="width:52px;height:52px;border-radius:8px;background:#000;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
             <img id="ride-summary-char-preview" src="" style="width:100%;height:100%;object-fit:contain;">
           </div>
