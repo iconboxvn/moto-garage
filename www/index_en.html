@@ -179,8 +179,6 @@ option{background:var(--surface2);}
 .cs-odo span{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);}
 .cs-status{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;font-weight:600;color:var(--text);}
 .cs-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;flex-shrink:0;}
-.cs-group{display:flex;flex-direction:column;gap:8px;margin-bottom:22px;}
-.cs-group-h{display:flex;justify-content:space-between;align-items:baseline;}
 .cs-hero{background:linear-gradient(180deg,#1d0f0f,#160c0c);border:1px solid #4a1c1c;border-radius:var(--r-md);padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;}
 .cs-hero-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .cs-hero-name{font-size:16px;font-weight:600;color:var(--text);}
@@ -209,6 +207,42 @@ option{background:var(--surface2);}
 .cs-link{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--border);padding:14px 2px 4px;font-size:14px;color:var(--text-dim);cursor:pointer;}
 .cs-link b{color:var(--text);font-weight:500;}
 .cs-note{font-size:11px;color:var(--text-muted);text-align:center;margin:10px 0 18px;}
+/* 홈·소모품 공통 섹션 (2026-10-05 v2): 제목 19px + 섹션 내용은 컨테이너 하나 (항목마다 카드 아님) */
+.hs{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+.hs-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.hs-t b{font-size:19px;font-weight:600;color:var(--text);}
+.hs-link{font-size:14px;font-weight:500;color:var(--accent);cursor:pointer;flex-shrink:0;}
+.hs-sub{font-size:12px;color:var(--text-muted);margin-top:-6px;}
+.hs-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:2px 14px;}
+.hs-box.pad{padding:14px;}
+.hs-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 0;border-top:1px solid var(--border);font-size:14px;min-width:0;cursor:pointer;}
+.hs-row:first-child{border-top:0;}
+.hs-row .k{color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hs-row .v{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;}
+.hs-empty{padding:14px 0;font-size:13px;color:var(--text-muted);text-align:center;}
+/* 홈 헤더 · 소모품 요약 · 이번 달 라이딩 */
+.dh{display:flex;flex-direction:column;gap:4px;margin:6px 0 18px;}
+.dh-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.dh-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1.5px;line-height:1.05;color:var(--text);}
+.dh-meta{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);margin-top:4px;}
+.dh-switch{font-size:13px;font-weight:600;color:var(--text-dim);border:1px solid var(--border-bright);border-radius:var(--r-pill);padding:5px 12px;cursor:pointer;flex-shrink:0;white-space:nowrap;}
+.dh-odo{display:flex;align-items:baseline;gap:6px;margin-top:8px;cursor:pointer;}
+.dh-odo b{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:60px;line-height:.9;color:var(--text);font-variant-numeric:tabular-nums;}
+.dh-odo span{font-size:13px;color:var(--text-dim);}
+.dc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;display:flex;flex-direction:column;gap:4px;cursor:pointer;}
+.dc-head{font-size:17px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:6px;}
+.dc-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 0;border-top:1px solid var(--border);}
+.dc-rows .dc-row:first-child{border-top:0;}
+.dc-n{font-size:15px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:8px;min-width:0;}
+.dc-v{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;font-variant-numeric:tabular-nums;flex-shrink:0;}
+.dc-v small{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;margin-left:4px;}
+.ds3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.ds3 .l{font-size:12px;font-weight:600;color:var(--text-muted);}
+.ds3 .n{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1.1;color:var(--text);font-variant-numeric:tabular-nums;}
+.ds3 .u{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-left:3px;}
+/* 라이딩 대기 상태: 흰 버튼 한 줄만 (기록 중 표시는 기존 그대로) */
+.riding-ctrl.idle{background:none;border:none;padding:0;gap:8px;margin-bottom:28px;}
+.riding-ctrl.idle #riding-ctrl-dot,.riding-ctrl.idle #riding-ctrl-title{display:none !important;} /* 대기 상태에선 점·제목 숨김 (언어별 마크업 구조가 달라 id로 지정) */
 
 /* LOG TABLE */
 /* HISTORY CARDS */
@@ -600,7 +634,8 @@ option{background:var(--surface2);}
       <span class="sample-banner-text">Sample data mode · Tap to register your own bike</span>
       <span class="sample-banner-arrow">›</span>
     </div>
-    <div id="riding-ctrl-bar" class="riding-ctrl" style="margin-top:4px;">
+    <div id="dash-hero"></div>
+    <div id="riding-ctrl-bar" class="riding-ctrl idle" style="margin-top:4px;">
       <div style="display:flex;align-items:center;gap:10px;">
         <div id="riding-ctrl-dot" class="riding-dot"></div>
         <div>
@@ -610,7 +645,7 @@ option{background:var(--surface2);}
         </div>
       </div>
       <div id="riding-ctrl-btn" style="width:100%;">
-        <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:11px 14px;" onclick="startRiding()">▶ Start recording</button>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:15px;padding:14px;" onclick="startRiding()">▶ Start ride recording</button>
       </div>
     </div>
     <div id="dash-content"></div>
@@ -1901,7 +1936,9 @@ function _renderDashInner(){
   if(stored){ try{ const p=JSON.parse(stored); if(p.bikes) D=p; }catch(e){} }
   const el=document.getElementById('dash-content');
   if(!el) throw new Error('dash-content element not found');
+  const hero=document.getElementById('dash-hero');
   if(!D.bikes.length){
+    if(hero) hero.innerHTML='';
     el.innerHTML=`<div class="no-bikes-box"><div style="font-size:43px;margin-bottom:14px;">🏍</div><div class="tp-title" style="margin-bottom:6px;">Register a vehicle to get started</div><div class="tp-sub" style="margin-bottom:20px;">Service alerts · Mileage · History</div><button class="btn btn-primary" onclick="openModal('m-bike')">Register First Vehicle</button></div>`;
     return;
   }
@@ -1912,17 +1949,21 @@ function _renderDashInner(){
     if(idx>=0) cState.bikeIdx=idx; // keep the Service tab in sync with the same bike
   }
   const sb=D.bikes.find(b=>b.id===dashSelectedBikeId);
-  const consumableRows=sb.consumables.map(c=>{
-    const used=sb.odometer-c.lastKm;
-    const pct=Math.min(100,Math.max(0,Math.round(used/c.km*100)));
-    const remain=c.km-used;
-    const cls=pct>=100?'danger':pct>=80?'warn':'ok';
-    const fillColor=pct>=100?'var(--red)':pct>=80?'var(--accent)':'var(--green)';
-    const tag=pct>=100?'🚨 Replace Now':pct>=80?'⚠ Due Soon':'✓ Good';
-    return{c,pct,remain,cls,fillColor,tag};
-  });
+  // Parts summary: up to 2 most urgent (overdue → due soon)
+  const cItems=sb.consumables.map(c=>_consumableState(c,sb.odometer));
+  const urgent=[...cItems.filter(x=>x.level==='danger').sort((a,b)=>a.remain-b.remain),
+                ...cItems.filter(x=>x.level==='warn').sort((a,b)=>a.remain-b.remain)];
+  const okItems=cItems.filter(x=>x.level==='ok');
+  const shown=urgent.length?urgent.slice(0,2):okItems.slice().sort((a,b)=>a.remain-b.remain).slice(0,1);
+  const restOk=urgent.length?okItems.length:0;
+  const dcRow=x=>{
+    const over=x.remain<0;
+    const color=x.level==='danger'?'#ff6b66':x.level==='warn'?'var(--accent)':'var(--text)';
+    const dot=x.level==='danger'?'var(--red)':x.level==='warn'?'var(--accent)':'var(--green)';
+    return `<div class="dc-row"><span class="dc-n"><i class="cs-dot" style="background:${dot};margin-right:0;"></i>${getCName(x.c.id)}</span><span class="dc-v" style="color:${color}">${Math.abs(x.remain).toLocaleString()}<small>km ${over?'overdue':'left'}</small></span></div>`;
+  };
+  const goCons="showPage('consumables',document.querySelector('.nav-btn:nth-child(2)'))";
   const recentHistory=D.history.filter(l=>l.bikeId==sb.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  const typeBadge={'Parts Replacement':'badge-cons','Inspection':'badge-maint','Repair':'badge-repair','Other':'badge-other','소모품교체':'badge-cons','정기점검':'badge-maint','수리':'badge-repair','기타':'badge-other'};
   const _now=new Date();
   const _monthPrefix=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');
   const monthRides=(D.rides||[]).filter(r=>r.bikeId===sb.id && r.date && r.date.indexOf(_monthPrefix)===0);
@@ -1930,81 +1971,46 @@ function _renderDashInner(){
   const monthDuration=monthRides.reduce((s,r)=>s+(r.durationMs||0),0);
   const monthMaxSpeed=monthRides.reduce((m,r)=>Math.max(m,r.maxKmh||0),0);
   const monthAvgSpeed=monthDuration>0?monthDistance/(monthDuration/3600000):0;
+  const catLabel={sport:'SPORT',naked:'NAKED',adventure:'ADVENTURE',classic:'CLASSIC'}[sb.consumables[0]?.category]||'';
+  if(hero) hero.innerHTML=`
+    <div class="dh">
+      <div class="dh-top">
+        <div style="min-width:0;">
+          <div class="dh-name">${sb.brand} ${sb.model}</div>
+          <div class="dh-meta">${[sb.year, sb.cc?sb.cc+'cc':'', sb.plate||'', catLabel].filter(Boolean).join(' · ')}</div>
+        </div>
+        ${D.bikes.length>1?`<span class="dh-switch" onclick="openRideBikePicker('home')">Switch bike ▾</span>`:''}
+      </div>
+      <div class="dh-odo" onclick="showPage('bikes',document.getElementById('nav-more-btn'))"><b>${sb.odometer.toLocaleString()}</b><span>KM total</span></div>
+    </div>`;
   el.innerHTML=`
-    ${D.bikes.length>1?`<div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;">
-      ${D.bikes.map(b=>{
-        const sel=b.id===dashSelectedBikeId;
-        return `<div onclick="selectDashBike(${b.id})" style="flex-shrink:0;width:152px;height:60px;box-sizing:border-box;background:${sel?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:var(--r-md);padding:0 12px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;">
-          <div style="font-size:14px;font-weight:700;line-height:1.3;color:${sel?'var(--accent)':'var(--text)'};overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${b.brand} ${b.model}</div>
-        </div>`;
-      }).join('')}
-    </div>`:''}
-    <div class="bike-card" style="margin-bottom:14px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div class="bike-name">${sb.brand} ${sb.model}</div>
-          <div class="bike-meta">${sb.year}${sb.cc?' · '+sb.cc+'cc':''}${sb.plate?' · '+sb.plate:''}</div>
-          ${sb.consumables[0]?.category?`<div style="margin-top:4px;"><span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:3px;background:var(--surface3);color:var(--metal);">${{sport:'🏁 SPORT',naked:'🏙 NAKED',adventure:'🌍 ADVENTURE',classic:'🛣 CLASSIC'}[sb.consumables[0].category]||''}</span></div>`:''}
-        </div>
-        <div style="text-align:right;cursor:pointer;" onclick="showPage('bikes',document.getElementById('nav-more-btn'))">
-          <div class="tp-stat" style="color:var(--text);">${sb.odometer.toLocaleString()}</div>
-          <div class="tp-caption" style="letter-spacing:1px;">Total KM</div>
-        </div>
+    <div class="hs">
+      <div class="hs-t"><b>Service</b><span class="hs-link" onclick="${goCons}">See all ›</span></div>
+      <div class="dc" onclick="${goCons}">
+        <div class="dc-head">${urgent.length?`${urgent.length} part${urgent.length>1?'s':''} need attention`:'All parts are in good shape'}</div>
+        <div class="dc-rows">${shown.map(dcRow).join('')}</div>
+        ${restOk?`<div class="cs-cap" style="margin-top:4px;">${restOk} others are good</div>`:''}
       </div>
     </div>
-    <div class="card" style="padding:14px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="showPage('consumables',document.querySelector('.nav-btn:nth-child(2)'))">
-      <div>
-        <div class="tp-sub" style="margin-bottom:3px;">Parts status</div>
-        <div class="tp-title">${sb.brand} ${sb.model}</div>
+    <div class="hs">
+      <div class="hs-t"><b>This month's riding</b><span class="hs-link" onclick="showPage('monthlyStats',document.getElementById('nav-ridehistory-btn'))">Monthly stats ›</span></div>
+      <div class="hs-box pad" style="cursor:pointer;" onclick="showPage('monthlyStats',document.getElementById('nav-ridehistory-btn'))">
+        <div class="ds3">
+          <div><div class="l">Distance</div><span class="n">${monthDistance.toFixed(1)}</span><span class="u">KM</span></div>
+          <div><div class="l">Rides</div><span class="n">${monthRides.length}</span></div>
+          <div><div class="l">Avg</div><span class="n">${Math.round(monthAvgSpeed)}</span><span class="u">KM/H</span></div>
+        </div>
+        <div class="cs-cap" style="margin-top:10px;">Top speed ${Math.round(monthMaxSpeed)} km/h</div>
       </div>
-      ${(()=>{
-        const dc=consumableRows.filter(r=>r.cls==='danger').length;
-        const wc=consumableRows.filter(r=>r.cls==='warn').length;
-        const okc=consumableRows.filter(r=>r.cls==='ok').length;
-        const total=consumableRows.length;
-        const n=dc+wc;
-        const score = total>0 ? Math.round((okc*100 + wc*50) / total) : 100;
-        const face = score>=90?'status_1_happy.png':score>=75?'status_2_good.png':score>=55?'status_3_worried.png':score>=35?'status_4_urgent.png':'status_5_angry.png';
-        return `<div style="display:flex;align-items:center;gap:8px;">
-          <img src="./assets/status/${face}" style="width:36px;height:36px;flex-shrink:0;" alt="Vehicle status">
-          ${n>0
-            ? `<span class="c-tag ${dc>0?'danger':'warn'}" style="padding:5px 12px;">${dc>0?'🚨':'⚠'} ${n} need attention</span>`
-            : `<span class="c-tag ok" style="padding:5px 12px;">✓ Good</span>`}
-        </div>`;
-      })()}
     </div>
     <div id="fuel-price-card"></div>
-    <div id="brand-news-home-card"></div>
-    <div class="sec-header"><span class="sec-title">RECENT SERVICE</span><div class="sec-line"></div></div>
-    ${recentHistory.length
-      ?`<div class="card" style="padding:0;overflow:hidden;"><table class="log-table"><tbody>
-          ${recentHistory.map(l=>`<tr>
-            <td class="mono tp-caption" style="white-space:nowrap;font-size:14px;">${l.date}</td>
-            <td><span class="badge ${typeBadge[l.type]||'badge-other'}">${localizeType(l.type)}</span></td>
-            <td class="tp-body">${l.desc||'—'}</td>
-          </tr>`).join('')}
-        </tbody></table></div>`
-      :`<div class="card tp-sub" style="text-align:center;padding:16px;">No service records</div>`
-    }
-    <div class="sec-header" style="margin-top:14px;"><span class="sec-title">THIS MONTH'S RIDING</span><div class="sec-line"></div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;cursor:pointer;" onclick="showPage('monthlyStats',document.getElementById('nav-ridehistory-btn'))">
-      <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-        <div class="tp-label">Total distance</div>
-        <div class="tp-stat-sm" style="margin-top:2px;">${monthDistance.toFixed(1)} km</div>
-      </div>
-      <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-        <div class="tp-label">Total rides</div>
-        <div class="tp-stat-sm" style="margin-top:2px;">${monthRides.length}</div>
-      </div>
-      <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-        <div class="tp-label">Avg speed</div>
-        <div class="tp-stat-sm" style="margin-top:2px;">${Math.round(monthAvgSpeed)} km/h</div>
-      </div>
-      <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-        <div class="tp-label">Top speed</div>
-        <div class="tp-stat-sm" style="color:var(--text);margin-top:2px;">${Math.round(monthMaxSpeed)} km/h</div>
-      </div>
-    </div>`;
+    <div class="hs">
+      <div class="hs-t"><b>Recent service</b><span class="hs-link" onclick="showPage('history',document.querySelector('.nav-btn:nth-child(3)'))">See all ›</span></div>
+      <div class="hs-box">${recentHistory.length
+        ? recentHistory.map(l=>`<div class="hs-row" onclick="showPage('history',document.querySelector('.nav-btn:nth-child(3)'))"><span class="k">${l.desc||localizeType(l.type)}</span><span class="v">${l.date.replace(/-/g,'.')}</span></div>`).join('')
+        : `<div class="hs-empty">No service records</div>`}</div>
+    </div>
+    <div id="brand-news-home-card"></div>`;
   try{ renderFuelPriceCard(); }catch(e){}
   try{ renderBrandNewsHomeCard(); }catch(e){}
   try{ updateRidingBar(); }catch(e){} // 라이딩 바의 "기록될 바이크" 표시 갱신
@@ -2649,9 +2655,9 @@ function _renderConsumablesCore(){
        ok.length?`<span style="color:var(--text-muted);font-weight:500;">${ok.length} good</span>`:''].join('')
     : `<span><i class="cs-dot" style="background:var(--green)"></i>All good</span>`;
   const group=(label,color,list,render)=>list.length?`
-    <div class="cs-group">
-      <div class="cs-group-h"><span class="cs-label" style="${color?'color:'+color:''}">${label}</span>${render===consumableHero?'':'<span class="cs-label">Remaining</span>'}</div>
-      ${render===consumableHero?list.map(consumableHero).join(''):`<div class="cs-rows">${list.map(render).join('')}</div>`}
+    <div class="hs">
+      <div class="hs-t"><b style="${color?'color:'+color:''}">${label}</b>${render===consumableHero?'':'<span class="cs-label">Remaining</span>'}</div>
+      ${render===consumableHero?list.map(consumableHero).join(''):`<div class="cs-rows hs-box">${list.map(render).join('')}</div>`}
     </div>`:'';
   el.innerHTML=`
     <div class="sec-header"><span class="sec-title">${bike.brand} ${bike.model} SERVICE</span><div class="sec-line"></div></div>
@@ -4714,12 +4720,12 @@ function updateRidingBar() {
     btn.innerHTML = '<button class="riding-stop-btn" style="width:100%;justify-content:center;" onclick="stopRiding()">■ Stop</button>';
     _renderRidingBikeLine(_ride.bikeId, 'Recording to {b}');
   } else {
-    bar.className = 'riding-ctrl';
+    bar.className = 'riding-ctrl idle';
     dot.className = 'riding-dot';
     title.style.color = 'var(--text)';
     title.textContent = 'Riding Standby';
     sub.textContent = '';
-    btn.innerHTML = '<button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:11px 14px;" onclick="startRiding()">▶ Start recording</button>';
+    btn.innerHTML = '<button class="btn btn-primary" style="width:100%;justify-content:center;font-size:15px;padding:14px;" onclick="startRiding()">▶ Start ride recording</button>';
     _renderRidingBikeLine(dashSelectedBikeId, 'Will record to {b}');
   }
 }
@@ -4742,6 +4748,8 @@ function _renderRidingBikeLine(bikeId, tpl){
 var _rideBikePickMode = null;
 function openRideBikePicker(mode){
   _rideBikePickMode = mode;
+  var _pt = document.getElementById('ride-bike-pick-title');
+  if (_pt) _pt.textContent = mode==='home' ? 'Select bike' : '🏍 Which bike are you riding?';
   var cur = mode==='riding' ? _ride.bikeId
     : mode==='summary' ? ((D.rides||[]).find(function(r){ return r.id===window._lastSavedRideId; })||{}).bikeId
     : dashSelectedBikeId;
@@ -5242,9 +5250,9 @@ function _fuelPriceRow(label, price, delta){
   } else if(delta === 0){
     deltaHtml = '<span style="font-size:12px;color:var(--text-dim);margin-left:6px;">-</span>';
   }
-  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;">'
-    + '<span style="font-size:13px;color:var(--text-dim);">'+label+'</span>'
-    + '<span style="font-size:15px;font-weight:700;color:var(--text);">'+price.toLocaleString()+'đ/L'+deltaHtml+'</span>'
+  return '<div class="hs-row" style="cursor:default;">'
+    + '<span class="k" style="color:var(--text-dim);">'+label+'</span>'
+    + '<span style="font-family:\'JetBrains Mono\',monospace;font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;">'+price.toLocaleString()+'đ/L'+deltaHtml+'</span>'
     + '</div>';
 }
 
@@ -5269,15 +5277,13 @@ function renderFuelPriceCard(){
   var stale = t && (Date.now() - t) > 10*86400000; // show "update delayed" if older than 10 days
   var sourceName = _fuelPriceLatest.sourceName || '';
   var metaText = _fuelPriceFmtEffective(ts) + (sourceName ? ' · '+_fuelPriceSourceLabel(sourceName) : '');
-  el.innerHTML = '<div class="card" style="padding:14px 16px;margin-bottom:14px;">'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-    + '<span style="font-size:17px;color:var(--text-dim);">⛽ Fuel Price</span>'
-    + (stale ? '<span style="font-size:11px;color:var(--text-muted);">Update delayed</span>' : '')
-    + '</div>'
+  el.innerHTML = '<div class="hs">'
+    + '<div class="hs-t"><b>Fuel Price</b>'+(stale ? '<span style="font-size:12px;color:var(--text-muted);">Update delayed</span>' : '')+'</div>'
+    + '<div class="hs-sub">'+metaText+'</div>'
+    + '<div class="hs-box">'
     + _fuelPriceRow('E5 RON92', p.e5_ron92, d.e5_ron92)
     + _fuelPriceRow('E10 RON95', p.e10_ron95, d.e10_ron95)
-    + '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">'+metaText+'</div>'
-    + '</div>';
+    + '</div></div>';
 }
 
 // Home screen "Bike News" preview card (date+title only, right below the fuel price card).
@@ -5320,19 +5326,14 @@ function renderBrandNewsHomeCard(){
   var el = document.getElementById('brand-news-home-card');
   if(!el) return;
   if(!_brandNewsHomeItems.length){ el.innerHTML=''; return; }
+  var go = 'showPage(\'brandNews\',document.getElementById(\'nav-more-btn\'))';
   var rows = _brandNewsHomeItems.map(function(d){
     var title = (d.title && d.title.en) || '(No title)';
-    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;">'
-      + '<span style="font-size:14px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+title+'</span>'
-      + '<span style="font-size:12px;color:var(--text-dim);flex-shrink:0;">'+_brandNewsFmtDate(d.publishedAt)+'</span>'
-      + '</div>';
+    return '<div class="hs-row" onclick="'+go+'"><span class="k">'+title+'</span><span class="v">'+_brandNewsFmtDate(d.publishedAt)+'</span></div>';
   }).join('');
-  el.innerHTML = '<div class="card" style="padding:14px 16px;margin-bottom:14px;cursor:pointer;" onclick="showPage(\'brandNews\',document.getElementById(\'nav-more-btn\'))">'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">'
-    + '<span style="font-size:17px;color:var(--text-dim);">🗞 Bike News</span>'
-    + '<span style="font-size:12px;color:var(--accent);">More →</span>'
-    + '</div>'
-    + rows
+  el.innerHTML = '<div class="hs">'
+    + '<div class="hs-t"><b>Bike News</b><span class="hs-link" onclick="'+go+'">More ›</span></div>'
+    + '<div class="hs-box">'+rows+'</div>'
     + '</div>';
 }
 
@@ -7034,7 +7035,7 @@ function renderMedicalCard(){
 <!-- SMS Permission Modal -->
 <div class="modal-overlay" id="m-ride-bike-pick">
   <div class="modal" style="max-width:320px;">
-    <div class="modal-header"><span class="modal-title">🏍 Which bike are you riding?</span><button class="modal-close" onclick="closeModal('m-ride-bike-pick')">✕</button></div>
+    <div class="modal-header"><span class="modal-title" id="ride-bike-pick-title">🏍 Which bike are you riding?</span><button class="modal-close" onclick="closeModal('m-ride-bike-pick')">✕</button></div>
     <div class="modal-body" id="ride-bike-pick-list" style="padding:16px;"></div>
   </div>
 </div>
