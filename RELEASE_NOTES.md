@@ -1,5 +1,60 @@
 # Release Notes
 
+## v3.1.1 (versionCode 36) — 2026-10 (예정)
+
+v3.1.0(versionCode 35) 이후 누적분.
+
+- 🎨 **Night Cluster 리디자인 1차** — 폰트 정리(Bebas는 숫자·영문만), 라운드 토큰, 앰버는 상태·활성
+  표시에만, 1차 버튼 흰색(390ada7). 소모품 화면 3그룹(지금 필요/곧 교체/양호) + 카드에서 교체 기록·
+  점검 바로 처리, "공식" 태그 → 직접 바꾼 주기만 "수정됨"(61bc2b0). 홈 화면 재구성: 바이크 헤더·
+  소모품 요약·섹션 구분, 캐릭터 표정 아이콘 제거(230cce3, 1ec2bee). 라이딩 상세·요약: 어두운 지도
+  (OSM 타일 CSS 반전)+앰버 경로, 요약에 경로 지도, 시간 37:12 표기(3456189)
+- 🏍 라이딩 기록 바이크 확인/변경 — 라이딩 바 + 요약 화면, 바이크 2대 이상일 때(0293c98)
+- 🐛 라이딩 기록 삭제 시 주행거리계 자동 반영분(odoAdded)도 되돌리기(de8fdaf)
+- 🔒 사진 AI 분석(보험증·경고등·주행거리) 전 1회 개인정보 고지·동의(dca8399), 개인정보처리방침
+  KO/EN/VN(c7bf4f3), anthropicProxy 요청 형태 제한(2bb75e7)
+- 🛡 Firebase App Check 1단계 — 프록시 요청에 토큰 첨부, 서버는 기록만(092bdd6, 7258483)
+- 📊 가혹 조건 판정 1단계(수집만): 정지 횟수/저속·정차 시간, 재출발 시점 확정값, 정차 3분 상한
+  버그 수정(91177ba, 733de35, 27fb861, fe01c09)
+- 🧹 더보기 캐릭터 카드·앱 평가하기·회사 캐릭터 제거(127fb58), 앱 아이콘 ✦ 워터마크 제거(f323441)
+- 🌐 EN/VN 캐릭터 이름 번역(33a9b19), 백업·날씨 시각 로케일(3592f70), 온보딩 4번째 이미지 재촬영(73f7375)
+- ⚙️ Capacitor 8.4 → 8.5.2 (iOS 플랫폼 추가와 함께, Android 회귀 점검 필요)
+
+### Play 스토어 출시 노트 (사용자용, 언어별)
+
+`release-notes/whatsnew-{ko-KR,en-US,vi-VN}.txt` 참고 (각 500자 이내).
+
+**ko-KR**
+```
+• 홈·소모품·라이딩 화면을 새로 디자인했어요. 남은 거리와 주행 기록이 큰 숫자로 한눈에 보여요
+• 교체가 필요한 소모품은 카드에서 바로 '교체 기록'이나 '점검만 했어요'로 처리할 수 있어요
+• 라이딩 요약에 방금 달린 경로 지도가 보여요
+• 라이딩 기록을 어떤 바이크로 저장할지 확인하고 바꿀 수 있어요 (바이크 2대 이상)
+• 라이딩 기록을 지우면 자동으로 더해졌던 주행거리도 함께 되돌려요
+• 사진 AI 분석 전에 개인정보 안내를 보여줘요
+• 앱 아이콘 정리, 영어·베트남어 화면의 표시 오류 수정
+```
+**en-US**
+```
+• Redesigned Home, Service and Ride screens: remaining distance and ride stats in big, easy-to-read numbers
+• Log a replacement or mark a check right from an overdue part's card
+• Ride summary now shows a map of the route you just rode
+• Check and change which bike a ride is saved to (2+ bikes)
+• Deleting a ride also removes the distance it added to your odometer
+• Privacy notice before AI photo analysis
+• Refreshed app icon and fixed display issues
+```
+**vi-VN**
+```
+• Thiết kế mới cho Trang chủ, Bảo dưỡng và Chuyến đi: số km còn lại và thông số chuyến đi hiển thị bằng số lớn, dễ đọc
+• Ghi nhận thay hoặc đánh dấu đã kiểm tra ngay trên thẻ phụ tùng quá hạn
+• Tóm tắt chuyến đi hiển thị bản đồ lộ trình vừa chạy
+• Xem và đổi xe được lưu cho chuyến đi (khi có từ 2 xe)
+• Xóa chuyến đi sẽ trừ lại số km đã tự cộng vào đồng hồ
+• Thông báo quyền riêng tư trước khi AI phân tích ảnh
+• Làm mới biểu tượng ứng dụng và sửa lỗi hiển thị
+```
+
 ## v3.1.0 (versionCode 35) — 2026-09-24
 
 v3.0.9(versionCode 34, ACCESS_BACKGROUND_LOCATION 제거) 이후 누적분.

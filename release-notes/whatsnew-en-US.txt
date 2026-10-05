@@ -1,6 +1,7 @@
-• Odometer now updates automatically after each ride
-• Read your odometer from a dashboard photo
-• More reliable ride distance and speed tracking, even in the background
-• Remembers the bike you selected last
-• Emergency SOS numbers always visible; Vietnam app finds nearby hospitals
-• Translated onboarding and fixed a scroll glitch
+• Redesigned Home, Service and Ride screens: remaining distance and ride stats in big, easy-to-read numbers
+• Log a replacement or mark a check right from an overdue part's card
+• Ride summary now shows a map of the route you just rode
+• Check and change which bike a ride is saved to (2+ bikes)
+• Deleting a ride also removes the distance it added to your odometer
+• Privacy notice before AI photo analysis
+• Refreshed app icon and fixed display issues

@@ -1,6 +1,7 @@
-• Số km tự động cập nhật sau mỗi chuyến đi, luôn gần đúng mà không cần nhập tay
-• Chụp ảnh đồng hồ để tự nhận số km tổng
-• Ghi quãng đường và tốc độ ổn định hơn, kể cả khi ứng dụng chạy nền hoặc khởi động lại
-• Ứng dụng nhớ chiếc xe bạn chọn lần trước
-• SOS khẩn cấp: số khẩn cấp khi có tai nạn luôn hiển thị, có thể tìm bệnh viện gần nhất
-• Dịch màn hình giới thiệu và sửa lỗi vị trí cuộn khi chuyển màn hình
+• Thiết kế mới cho Trang chủ, Bảo dưỡng và Chuyến đi: số km còn lại và thông số chuyến đi hiển thị bằng số lớn, dễ đọc
+• Ghi nhận thay hoặc đánh dấu đã kiểm tra ngay trên thẻ phụ tùng quá hạn
+• Tóm tắt chuyến đi hiển thị bản đồ lộ trình vừa chạy
+• Xem và đổi xe được lưu cho chuyến đi (khi có từ 2 xe)
+• Xóa chuyến đi sẽ trừ lại số km đã tự cộng vào đồng hồ
+• Thông báo quyền riêng tư trước khi AI phân tích ảnh
+• Làm mới biểu tượng ứng dụng và sửa lỗi hiển thị

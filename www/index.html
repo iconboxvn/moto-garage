@@ -3316,7 +3316,7 @@ function renderRideHistoryList(){
     const bike=D.bikes.find(b=>b.id===r.bikeId);
     return `<div class="bike-card" style="margin-bottom:10px;cursor:pointer;" onclick="openRideDetail(${r.id})">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span class="tp-title">${r.date} · ${r.startTime}~${r.endTime}</span>
+        <span class="tp-title">${r.date} · ${_fmtHM(r.startTime)}~${_fmtHM(r.endTime)}</span>
         <span class="tp-title" style="color:var(--text);">${r.distanceKm}km</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -3352,6 +3352,14 @@ function _fmtClock(ms){
   var p=function(n){ return String(n).padStart(2,'0'); };
   return h>0 ? h+':'+p(m)+':'+p(sec) : m+':'+p(sec);
 }
+// 저장된 시각을 24시간제 "HH:MM"으로 — 기록은 저장 당시 앱 언어 형식 그대로라
+// KO에서 저장한 기록은 "오전 07:46"/"오후 05:41" (EN/VN 화면에서 열어도 그대로 보였음)
+function _fmtHM(t){
+  var m=String(t||'').match(/(\d{1,2}):(\d{2})/); if(!m) return t||'';
+  var h=parseInt(m[1],10), pm=/오후|PM|p\.m\.|CH/i.test(t), am=/오전|AM|a\.m\.|SA/i.test(t);
+  if(pm && h<12) h+=12; if(am && h===12) h=0;
+  return String(h).padStart(2,'0')+':'+m[2];
+}
 function _fmtRideDay(dateStr){
   var d=new Date(dateStr+'T00:00:00'); if(isNaN(d)) return dateStr;
   return (d.getMonth()+1)+'월 '+d.getDate()+'일 ('+'일월화수목금토'[d.getDay()]+')';
@@ -3364,8 +3372,8 @@ function openRideDetail(id){
   var m = Math.floor((r.durationMs%3600000)/60000);
   var sec = Math.floor((r.durationMs%60000)/1000);
   var _bn = _rideBikeName(r.bikeId);
-  document.getElementById('ride-detail-date').innerHTML = '<b>'+_fmtRideDay(r.date)+'</b> · '+r.startTime+'–'+r.endTime+(_bn && D.bikes.length>1 ? ' · '+_rbEsc(_bn) : '');
-  document.getElementById('ride-detail-distance').textContent = r.distanceKm;
+  document.getElementById('ride-detail-date').innerHTML = '<b>'+_fmtRideDay(r.date)+'</b> · '+_fmtHM(r.startTime)+'–'+_fmtHM(r.endTime)+(_bn && D.bikes.length>1 ? ' · '+_rbEsc(_bn) : '');
+  document.getElementById('ride-detail-distance').textContent = Number(r.distanceKm||0).toFixed(1);
   document.getElementById('ride-detail-duration').textContent = _fmtClock(r.durationMs);
   document.getElementById('ride-detail-avg').textContent = r.avgKmh;
   document.getElementById('ride-detail-max').textContent = r.maxKmh;
@@ -4894,7 +4902,8 @@ function updateRidingBar() {
     title.textContent = '라이딩 대기중';
     sub.textContent = '';
     btn.innerHTML = '<button class="btn btn-primary" style="width:100%;justify-content:center;font-size:15px;padding:14px;" onclick="startRiding()">▶ 라이딩 기록 시작</button>';
-    _renderRidingBikeLine(dashSelectedBikeId, '{b}(으)로 기록돼요');
+    // 대기 상태에선 홈 헤더의 '바이크 바꾸기'와 같은 동작이라 숨김 — 기록 중에만 표시
+    var _rbl = document.getElementById('riding-ctrl-bike'); if (_rbl) _rbl.style.display = 'none';
   }
 }
 
@@ -5700,7 +5709,7 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
   window._lastRideBikeId = (bikeIdOverride!=null) ? bikeIdOverride : null;
   window._achievementMilestone = null;
   var _rec = !dateOverride && window._lastSavedRideId ? (D.rides||[]).find(function(r){ return r.id===window._lastSavedRideId; }) : null;
-  var _times = _rec ? ' · '+_rec.startTime+'–'+_rec.endTime : (dateOverride ? ' · '+_fmtRideDay(dateOverride) : '');
+  var _times = _rec ? ' · '+_fmtHM(_rec.startTime)+'–'+_fmtHM(_rec.endTime) : (dateOverride ? ' · '+_fmtRideDay(dateOverride) : '');
   document.getElementById('ride-summary-title').innerHTML = '<b>라이딩 완료</b>'+_times;
   document.getElementById('ride-summary-ach-headline').style.display = 'none';
   document.getElementById('ride-summary-stat-grid').style.display = 'flex';
