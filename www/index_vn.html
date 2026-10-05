@@ -243,6 +243,25 @@ option{background:var(--surface2);}
 /* 라이딩 대기 상태: 흰 버튼 한 줄만 (기록 중 표시는 기존 그대로) */
 .riding-ctrl.idle{background:none;border:none;padding:0;gap:8px;margin-bottom:28px;}
 .riding-ctrl.idle #riding-ctrl-dot,.riding-ctrl.idle #riding-ctrl-title{display:none !important;} /* 대기 상태에선 점·제목 숨김 (언어별 마크업 구조가 달라 id로 지정) */
+/* 라이딩 상세·요약 (2026-10-05 Night Cluster 시범 3) */
+.rd-body{padding:16px;display:flex;flex-direction:column;gap:16px;}
+.rd-date{font-size:13px;color:var(--text-dim);}
+.rd-date b{color:var(--text);font-weight:600;}
+.rd-hero{display:flex;align-items:baseline;gap:6px;}
+.rd-hero b{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:58px;line-height:.9;color:var(--text);font-variant-numeric:tabular-nums;}
+.rd-hero span{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);}
+.rd-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:12px 0;}
+.rd-3 .l{font-size:12px;font-weight:600;color:var(--text-muted);}
+.rd-3 .n{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1.1;color:var(--text);font-variant-numeric:tabular-nums;}
+.rd-3 .u{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);margin-left:3px;}
+.rd-sec{display:flex;flex-direction:column;gap:8px;}
+.rd-sec-t{font-size:16px;font-weight:600;color:var(--text);}
+.rd-row-v{font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1;color:var(--text);}
+.rd-row-v small{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;margin-left:3px;}
+/* 어두운 지도: OSM 타일 반전 + 출처 표기 */
+.rm-dark-tiles{filter:invert(100%) hue-rotate(180deg) brightness(0.85) contrast(0.85) saturate(0.35);}
+.leaflet-container .leaflet-control-attribution{background:rgba(15,17,19,0.75)!important;color:#5a6270!important;font-size:9px!important;line-height:1.4;padding:0 5px;}
+.leaflet-container .leaflet-control-attribution a{color:#8890a0!important;}
 
 /* LOG TABLE */
 /* HISTORY CARDS */
@@ -731,7 +750,7 @@ option{background:var(--surface2);}
     <div class="sec-header"><span class="sec-title">NƠI ĐÃ ĐẾN</span><div class="sec-line"></div></div>
     <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats', document.getElementById('nav-ridehistory-btn'))">Quay lại Thống kê tháng</button>
     <div id="visited-places-note" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Chỉ tính các chuyến đi dừng lại một chỗ từ 30 phút trở lên (áp dụng từ chuyến đi hôm nay trở đi)</div>
-    <div id="visited-places-map" style="width:100%;height:420px;border-radius:12px;overflow:hidden;background:#eef5fc;position:relative;z-index:0;"></div>
+    <div id="visited-places-map" style="width:100%;height:420px;border-radius:12px;overflow:hidden;background:#0f1113;position:relative;z-index:0;"></div>
     <div id="visited-places-list" style="margin-top:14px;"></div>
   </div>
 
@@ -2951,6 +2970,29 @@ function renderRideHistoryList(){
 
 var _rideDetailMap = null;
 var _rideDetailCurrentRide = null;
+// 어두운 지도: 기존 OSM 타일을 CSS 필터로 반전 (.rm-dark-tiles). CARTO 다크 타일은 API 키가 필요해져서 사용 안 함(2026-10 확인).
+// OSM 타일 사용 정책상 출처 표기 필수
+function _addDarkTiles(map){
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, className:'rm-dark-tiles', attribution:'© OpenStreetMap'}).addTo(map);
+  if(map.attributionControl) map.attributionControl.setPrefix(false);
+}
+// 경로 그리기: 앰버 선 + 출발(흰 점)·도착(앰버 점)
+function _drawRideRoute(map, path){
+  var line = L.polyline(path, {color:'#e8a020', weight:4, opacity:0.95}).addTo(map);
+  L.circleMarker(path[0], {radius:6, color:'#0f1113', weight:2, fillColor:'#e8ecf0', fillOpacity:1}).addTo(map);
+  L.circleMarker(path[path.length-1], {radius:6, color:'#0f1113', weight:2, fillColor:'#e8a020', fillOpacity:1}).addTo(map);
+  return line;
+}
+// 37:12 / 1:05:30 (숫자 폰트용, 한글 단위 없음)
+function _fmtClock(ms){
+  var h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000), sec=Math.floor((ms%60000)/1000);
+  var p=function(n){ return String(n).padStart(2,'0'); };
+  return h>0 ? h+':'+p(m)+':'+p(sec) : m+':'+p(sec);
+}
+function _fmtRideDay(dateStr){
+  var d=new Date(dateStr+'T00:00:00'); if(isNaN(d)) return dateStr;
+  return ['CN','T2','T3','T4','T5','T6','T7'][d.getDay()]+', '+d.getDate()+'/'+(d.getMonth()+1);
+}
 function openRideDetail(id){
   var r = (D.rides||[]).find(x=>x.id===id);
   if(!r) return;
@@ -2958,19 +3000,17 @@ function openRideDetail(id){
   var h = Math.floor(r.durationMs/3600000);
   var m = Math.floor((r.durationMs%3600000)/60000);
   var sec = Math.floor((r.durationMs%60000)/1000);
-  document.getElementById('ride-detail-date').textContent = r.date+' · '+r.startTime+'~'+r.endTime;
-  document.getElementById('ride-detail-distance').textContent = r.distanceKm+' km';
-  document.getElementById('ride-detail-duration').textContent = h>0 ? `${h} giờ ${m} phút` : m>0 ? `${m} phút ${sec} giây` : `${sec} giây`;
-  document.getElementById('ride-detail-avg').textContent = r.avgKmh+' km/h';
-  document.getElementById('ride-detail-max').textContent = r.maxKmh+' km/h';
-  var accelEl = document.getElementById('ride-detail-accel');
-  var brakeEl = document.getElementById('ride-detail-brake');
-  var accelN = r.harshAccelCount || 0;
-  var brakeN = r.harshBrakeCount || 0;
-  accelEl.textContent = accelN+' lần';
-  accelEl.style.color = accelN > 0 ? 'var(--red)' : 'var(--text)';
-  brakeEl.textContent = brakeN+' lần';
-  brakeEl.style.color = brakeN > 0 ? 'var(--red)' : 'var(--text)';
+  var _bn = _rideBikeName(r.bikeId);
+  document.getElementById('ride-detail-date').innerHTML = '<b>'+_fmtRideDay(r.date)+'</b> · '+r.startTime+'–'+r.endTime+(_bn && D.bikes.length>1 ? ' · '+_rbEsc(_bn) : '');
+  document.getElementById('ride-detail-distance').textContent = r.distanceKm;
+  document.getElementById('ride-detail-duration').textContent = _fmtClock(r.durationMs);
+  document.getElementById('ride-detail-avg').textContent = r.avgKmh;
+  document.getElementById('ride-detail-max').textContent = r.maxKmh;
+  // 운전 습관: 1회 이상이면 앰버 점(경고 수준), 0회면 회색 점
+  [['accel', r.harshAccelCount||0], ['brake', r.harshBrakeCount||0]].forEach(function(x){
+    document.getElementById('ride-detail-'+x[0]).textContent = x[1];
+    document.getElementById('ride-detail-'+x[0]+'-dot').style.background = x[1] > 0 ? 'var(--accent)' : 'var(--border-bright)';
+  });
   var poiBtn = document.getElementById('ride-detail-poi-btn');
   if(poiBtn) poiBtn.style.display = (VISITED_PLACES_ENABLED && r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
   document.getElementById('ride-detail-modal').classList.remove('ride-detail-fs');
@@ -2984,19 +3024,12 @@ function openRideDetail(id){
     mapEl.innerHTML = '';
     expandBtn.style.display = 'flex';
     setTimeout(function(){
-      _rideDetailMap = L.map('ride-detail-map', {zoomControl:true, attributionControl:false});
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(_rideDetailMap);
-      var line = L.polyline(r.path, {color:'#1a73e8', weight:5}).addTo(_rideDetailMap);
-
-      var mkStart = L.circleMarker(r.path[0], {radius:7, color:'#fff', weight:2, fillColor:'#22c55e', fillOpacity:1}).addTo(_rideDetailMap);
-      mkStart.bindTooltip('🟢 Xuất phát '+r.startTime, {permanent:true, direction:'top', offset:[0,-6], className:'ride-map-label'});
-
-      var mkEnd = L.circleMarker(r.path[r.path.length-1], {radius:7, color:'#fff', weight:2, fillColor:'#e0453c', fillOpacity:1}).addTo(_rideDetailMap);
-      mkEnd.bindTooltip('🔴 Kết thúc '+r.endTime, {permanent:true, direction:'top', offset:[0,-6], className:'ride-map-label'});
-
+      _rideDetailMap = L.map('ride-detail-map', {zoomControl:true, attributionControl:true});
+      _addDarkTiles(_rideDetailMap);
+      var line = _drawRideRoute(_rideDetailMap, r.path);
       if(r.maxSpeedLat != null && r.maxSpeedLon != null){
-        var mkMax = L.circleMarker([r.maxSpeedLat, r.maxSpeedLon], {radius:7, color:'#fff', weight:2, fillColor:'#a855f7', fillOpacity:1}).addTo(_rideDetailMap);
-        mkMax.bindTooltip('⚡ Tối đa '+r.maxKmh+'km/h', {permanent:true, direction:'top', offset:[0,-6], className:'ride-map-label'});
+        var mkMax = L.circleMarker([r.maxSpeedLat, r.maxSpeedLon], {radius:4, color:'#e8a020', weight:2, fillColor:'#0f1113', fillOpacity:1}).addTo(_rideDetailMap);
+        mkMax.bindTooltip(r.maxKmh+' km/h', {permanent:true, direction:'right', offset:[6,0], className:'ride-map-label'});
       }
 
       _rideDetailMap.fitBounds(line.getBounds(), {padding:[36,36]});
@@ -3032,7 +3065,7 @@ function closeRideDetail(){
 function shareHistoryRide(id){
   var r = (D.rides||[]).find(x=>x.id===id);
   if(!r) return;
-  var s = {durationMs:r.durationMs, distanceKm:r.distanceKm, avgKmh:r.avgKmh, maxKmh:r.maxKmh};
+  var s = {durationMs:r.durationMs, distanceKm:r.distanceKm, avgKmh:r.avgKmh, maxKmh:r.maxKmh, path:r.path};
   showRideSummary(s, r.date, r.bikeId);
 }
 
@@ -3380,7 +3413,7 @@ function renderVisitedPlacesPage(){
 
         try {
           var geoLayer = L.geoJSON(provincesGeo, {
-            style: {fillColor:'#dce8f5', fillOpacity:1, color:'#b8cfe8', weight:0.75}
+            style: {fillColor:'#1b1d20', fillOpacity:1, color:'#363b42', weight:0.75} // 어두운 지도 톤 (라이딩 지도와 통일)
           }).addTo(_visitedPlacesMap);
           _fitVisitedPlacesInitialView(_visitedPlacesMap, geoLayer.getBounds());
         } catch(e2) {
@@ -3398,7 +3431,7 @@ function renderVisitedPlacesPage(){
           var size = iconSize(n);
           var icon = L.divIcon({
             className: 'vp-marker',
-            html: '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:#d85a30;border:1.5px solid #a32d2d;display:flex;align-items:center;justify-content:center;color:#fff;font-size:'+Math.max(9, Math.round(size*0.42))+'px;font-weight:700;line-height:1;">'+n+'</div>',
+            html: '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:#e8a020;border:1.5px solid #0f1113;display:flex;align-items:center;justify-content:center;color:#1a1000;font-size:'+Math.max(9, Math.round(size*0.42))+'px;font-weight:700;line-height:1;">'+n+'</div>',
             iconSize: [size, size],
             iconAnchor: [size/2, size/2]
           });
@@ -4807,7 +4840,8 @@ function _renderRideSummaryBike(){
   var ride = window._lastSavedRideId ? (D.rides||[]).find(function(r){ return r.id===window._lastSavedRideId; }) : null;
   if (!ride || !D.bikes || D.bikes.length < 2) { el.style.display = 'none'; return; }
   document.getElementById('ride-summary-bike-name').textContent = _rideBikeName(ride.bikeId);
-  el.style.display = 'block';
+  el.style.display = 'flex';
+  _syncRideSummaryInfo();
 }
 
 function toggleRiding() { ridingState.active ? stopRiding() : startRiding(); }
@@ -5518,10 +5552,11 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
   window._lastRideDate = dateOverride || null;
   window._lastRideBikeId = (bikeIdOverride!=null) ? bikeIdOverride : null;
   window._achievementMilestone = null;
-  document.getElementById('ride-summary-emoji').textContent = '🏁';
-  document.getElementById('ride-summary-title').textContent = 'Tóm tắt chuyến đi';
+  var _rec = !dateOverride && window._lastSavedRideId ? (D.rides||[]).find(function(r){ return r.id===window._lastSavedRideId; }) : null;
+  var _times = _rec ? ' · '+_rec.startTime+'–'+_rec.endTime : (dateOverride ? ' · '+_fmtRideDay(dateOverride) : '');
+  document.getElementById('ride-summary-title').innerHTML = '<b>Hoàn thành chuyến đi</b>'+_times;
   document.getElementById('ride-summary-ach-headline').style.display = 'none';
-  document.getElementById('ride-summary-stat-grid').style.display = 'grid';
+  document.getElementById('ride-summary-stat-grid').style.display = 'flex';
   window._selectedCharacterId = RIDE_CHARACTERS[0].id;
   renderCharacterPicker();
   _prewarmCharacterShareImages(window._selectedCharacterId);
@@ -5530,10 +5565,10 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
   var h = Math.floor(s.durationMs/3600000);
   var m = Math.floor((s.durationMs%3600000)/60000);
   var sec = Math.floor((s.durationMs%60000)/1000);
-  document.getElementById('ride-summary-duration').textContent = h>0 ? `${h} giờ ${m} phút` : m>0 ? `${m} phút ${sec} giây` : `${sec} giây`;
-  document.getElementById('ride-summary-distance').textContent = s.distanceKm > 0 ? s.distanceKm.toFixed(1)+' km' : '-';
-  document.getElementById('ride-summary-avg').textContent = s.avgKmh > 0 ? Math.round(s.avgKmh)+' km/h' : '-';
-  document.getElementById('ride-summary-max').textContent = s.maxKmh > 0 ? Math.round(s.maxKmh)+' km/h' : '-';
+  document.getElementById('ride-summary-duration').textContent = _fmtClock(s.durationMs);
+  document.getElementById('ride-summary-distance').textContent = s.distanceKm > 0 ? s.distanceKm.toFixed(1) : '-';
+  document.getElementById('ride-summary-avg').textContent = s.avgKmh > 0 ? Math.round(s.avgKmh) : '-';
+  document.getElementById('ride-summary-max').textContent = s.maxKmh > 0 ? Math.round(s.maxKmh) : '-';
   // 방금 끝낸 라이딩일 때만 바이크 변경 허용 (이력에서 다시 연 요약은 dateOverride가 있음)
   if (dateOverride) { var _rsb = document.getElementById('ride-summary-bike'); if (_rsb) _rsb.style.display = 'none'; }
   else _renderRideSummaryBike();
@@ -5542,7 +5577,7 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
     if(typeof s.updatedOdometer === 'number'){
       var odoValEl = document.getElementById('ride-summary-odo-val');
       if(odoValEl) odoValEl.textContent = s.updatedOdometer.toLocaleString()+' km';
-      odoEl.style.display = 'block';
+      odoEl.style.display = 'flex';
     } else {
       odoEl.style.display = 'none';
     }
@@ -5558,19 +5593,50 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
     else { note.style.display='none'; }
   }
   var canShare = !tooShort && !noGps;
-  if(memoWrap) memoWrap.style.display = canShare ? 'block' : 'none';
+  if(memoWrap) memoWrap.style.display = canShare ? 'flex' : 'none';
   if(shareBtn) shareBtn.style.display = canShare ? 'block' : 'none';
   var insightEl = document.getElementById('ride-summary-insight');
   if(insightEl){
     var insightMsg = (!dateOverride && canShare) ? computeRideInsight() : null;
     if(insightMsg){
       insightEl.textContent = insightMsg;
-      insightEl.style.display = 'block';
+      insightEl.style.display = 'flex';
     } else {
       insightEl.style.display = 'none';
     }
   }
+  _syncRideSummaryInfo();
   openModal('m-ride-summary');
+  _renderRideSummaryMap(canShare ? (s.path || (_rec && _rec.path)) : null);
+}
+
+// 요약 화면 정보 행(인사이트·주행거리·바이크)이 하나도 없으면 상자째 숨김
+function _syncRideSummaryInfo(){
+  var box = document.getElementById('ride-summary-info');
+  if(!box) return;
+  var any = ['ride-summary-insight','ride-summary-odo','ride-summary-bike'].some(function(id){
+    var e = document.getElementById(id); return e && e.style.display !== 'none';
+  });
+  box.style.display = any ? 'block' : 'none';
+}
+// 요약 화면 작은 경로 지도 (조작 불가, 보기 전용)
+var _rideSummaryMap = null;
+function _renderRideSummaryMap(path){
+  var el = document.getElementById('ride-summary-map');
+  if(!el) return;
+  if(_rideSummaryMap){ _rideSummaryMap.remove(); _rideSummaryMap = null; }
+  if(!path || path.length < 2 || !window.L){ el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  setTimeout(function(){
+    try{
+      if(el._leaflet_id) delete el._leaflet_id;
+      _rideSummaryMap = L.map(el, {zoomControl:false, attributionControl:true, dragging:false, scrollWheelZoom:false, doubleClickZoom:false, touchZoom:false, boxZoom:false, keyboard:false, tap:false});
+      _addDarkTiles(_rideSummaryMap);
+      var line = _drawRideRoute(_rideSummaryMap, path);
+      _rideSummaryMap.fitBounds(line.getBounds(), {padding:[18,18]});
+      _rideSummaryMap.invalidateSize();
+    }catch(e){ el.style.display = 'none'; }
+  }, 80);
 }
 
 // Thẻ thành tích khi đạt mốc lũy kế 500km (dùng lại modal tóm tắt chuyến đi)
@@ -5585,8 +5651,7 @@ function showAchievementSummary(bikeId, milestoneKm, dateStr){
   _prewarmCharacterShareImages(window._selectedCharacterId);
   var memoEl = document.getElementById('ride-summary-memo');
   if(memoEl) memoEl.value = `🏆 Đạt ${milestoneKm.toLocaleString()}km!!`;
-  document.getElementById('ride-summary-emoji').textContent = '🏆';
-  document.getElementById('ride-summary-title').textContent = 'Đạt thành tích!';
+  document.getElementById('ride-summary-title').innerHTML = '<b>Đạt thành tích!</b>';
   var headline = document.getElementById('ride-summary-ach-headline');
   headline.textContent = (bike ? `${bike.brand} ${bike.model} · ` : '') + `Đã vượt mốc ${milestoneKm.toLocaleString()}km!`;
   headline.style.display = 'block';
@@ -5597,8 +5662,11 @@ function showAchievementSummary(bikeId, milestoneKm, dateStr){
   if(note) note.style.display = 'none';
   var insightEl = document.getElementById('ride-summary-insight');
   if(insightEl) insightEl.style.display = 'none';
+  var _rsb2 = document.getElementById('ride-summary-bike'); if(_rsb2) _rsb2.style.display = 'none';
+  _syncRideSummaryInfo();
+  _renderRideSummaryMap(null);
   var memoWrap = document.getElementById('ride-summary-memo-wrap');
-  if(memoWrap) memoWrap.style.display = 'block';
+  if(memoWrap) memoWrap.style.display = 'flex';
   var shareBtn = document.getElementById('ride-summary-share-btn');
   if(shareBtn) shareBtn.style.display = 'block';
   openModal('m-ride-summary');
@@ -7128,35 +7196,22 @@ function renderMedicalCard(){
         <div id="ride-detail-map" style="width:100%;height:220px;background:var(--surface2);"></div>
         <button id="ride-detail-expand-btn" onclick="toggleRideDetailFullscreen()" style="position:absolute;top:10px;right:10px;z-index:1000;width:34px;height:34px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.5);">⛶</button>
       </div>
-      <div id="ride-detail-stats" style="padding:16px;">
-        <div id="ride-detail-date" class="tp-sub" style="margin-bottom:12px;"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-            <div class="tp-label">Quãng đường</div>
-            <div id="ride-detail-distance" class="tp-stat-sm" style="margin-top:2px;"></div>
-          </div>
-          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-            <div class="tp-label">Thời gian</div>
-            <div id="ride-detail-duration" class="tp-stat-sm" style="margin-top:2px;"></div>
-          </div>
-          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-            <div class="tp-label">Tốc độ TB</div>
-            <div id="ride-detail-avg" class="tp-stat-sm" style="margin-top:2px;"></div>
-          </div>
-          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-            <div class="tp-label">Tốc độ tối đa</div>
-            <div id="ride-detail-max" class="tp-stat-sm" style="color:var(--text);margin-top:2px;"></div>
-          </div>
-          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-            <div class="tp-label">Tăng tốc gấp</div>
-            <div id="ride-detail-accel" class="tp-stat-sm" style="margin-top:2px;"></div>
-          </div>
-          <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-            <div class="tp-label">Phanh gấp</div>
-            <div id="ride-detail-brake" class="tp-stat-sm" style="margin-top:2px;"></div>
+      <div id="ride-detail-stats" class="rd-body">
+        <div id="ride-detail-date" class="rd-date"></div>
+        <div class="rd-hero"><b id="ride-detail-distance"></b><span>KM</span></div>
+        <div class="rd-3">
+          <div><div class="l">Thời gian</div><span class="n" id="ride-detail-duration"></span></div>
+          <div><div class="l">TB</div><span class="n" id="ride-detail-avg"></span><span class="u">KM/H</span></div>
+          <div><div class="l">Tối đa</div><span class="n" id="ride-detail-max"></span><span class="u">KM/H</span></div>
+        </div>
+        <div class="rd-sec">
+          <span class="rd-sec-t">Thói quen lái xe</span>
+          <div class="hs-box">
+            <div class="hs-row" style="cursor:default;align-items:center;"><span class="k"><i id="ride-detail-accel-dot" class="cs-dot"></i>Tăng tốc gấp</span><span class="rd-row-v"><span id="ride-detail-accel"></span><small>lần</small></span></div>
+            <div class="hs-row" style="cursor:default;align-items:center;"><span class="k"><i id="ride-detail-brake-dot" class="cs-dot"></i>Phanh gấp</span><span class="rd-row-v"><span id="ride-detail-brake"></span><small>lần</small></span></div>
           </div>
         </div>
-        <button id="ride-detail-poi-btn" class="btn btn-full" style="margin-top:12px;display:none;" onclick="_startVisitedPoiFlow(_rideDetailCurrentRide)">📍 Xác nhận địa điểm</button>
+        <button id="ride-detail-poi-btn" class="btn btn-full" style="display:none;" onclick="_startVisitedPoiFlow(_rideDetailCurrentRide)">📍 Xác nhận địa điểm</button>
       </div>
     </div>
   </div>
@@ -7165,37 +7220,28 @@ function renderMedicalCard(){
 <!-- Modal tóm tắt chuyến đi -->
 <div class="modal-overlay" id="m-ride-summary">
   <div class="modal" style="max-width:320px;">
-    <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
-      <div id="ride-summary-emoji" style="font-size:44px;margin-bottom:10px;">🏁</div>
-      <div id="ride-summary-title" style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px;">Tóm tắt chuyến đi</div>
-      <div id="ride-summary-ach-headline" style="display:none;font-size:15px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:var(--r-md);padding:10px 14px;margin-bottom:16px;"></div>
-      <div id="ride-summary-insight" style="display:none;font-size:15px;font-weight:700;color:var(--accent);background:rgba(232,160,32,0.12);border:1px solid rgba(232,160,32,0.3);border-radius:var(--r-md);padding:10px 14px;margin-bottom:16px;"></div>
-      <div id="ride-summary-bike" style="display:none;font-size:13px;color:var(--text-dim);margin-bottom:12px;">🏍 Đã lưu cho xe <span id="ride-summary-bike-name" style="color:var(--text);font-weight:600;"></span> · <span onclick="openRideBikePicker('summary')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">Đổi xe</span></div>
-      <div id="ride-summary-odo" style="display:none;font-size:14px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:var(--r-md);padding:10px 14px;margin-bottom:16px;">🛣 Đã cập nhật số km đã đi lên <span id="ride-summary-odo-val"></span></div>
-      <div id="ride-summary-stat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;">
-        <div>
-          <div style="font-size:11px;color:var(--text-dim);">Thời gian</div>
-          <div id="ride-summary-duration" style="font-size:18px;font-weight:700;color:var(--text);">-</div>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--text-dim);">Quãng đường</div>
-          <div id="ride-summary-distance" style="font-size:18px;font-weight:700;color:var(--text);">-</div>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--text-dim);">Tốc độ TB</div>
-          <div id="ride-summary-avg" style="font-size:18px;font-weight:700;color:var(--text);">-</div>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--text-dim);">Tốc độ tối đa</div>
-          <div id="ride-summary-max" style="font-size:18px;font-weight:700;color:var(--text);">-</div>
+    <div class="modal-body" style="padding:18px 18px 14px;display:flex;flex-direction:column;gap:14px;">
+      <div id="ride-summary-map" style="display:none;height:140px;border-radius:var(--r-md);overflow:hidden;background:#0f1113;"></div>
+      <div id="ride-summary-title" class="rd-date"><b>Hoàn thành chuyến đi</b></div>
+      <div id="ride-summary-ach-headline" style="display:none;font-size:20px;font-weight:700;color:var(--accent);line-height:1.4;"></div>
+      <div id="ride-summary-stat-grid" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="rd-hero"><b id="ride-summary-distance">-</b><span>KM</span></div>
+        <div class="rd-3">
+          <div><div class="l">Thời gian</div><span class="n" id="ride-summary-duration">-</span></div>
+          <div><div class="l">TB</div><span class="n" id="ride-summary-avg">-</span><span class="u">KM/H</span></div>
+          <div><div class="l">Tối đa</div><span class="n" id="ride-summary-max">-</span><span class="u">KM/H</span></div>
         </div>
       </div>
-      <div id="ride-summary-note" style="display:none;margin-top:16px;font-size:11px;color:var(--text-dim);line-height:1.6;">
-        ⚠ Tín hiệu GPS yếu — không thể ghi lại dữ liệu chính xác.
+      <div id="ride-summary-note" style="display:none;font-size:12px;color:var(--text-dim);line-height:1.6;"></div>
+      <div id="ride-summary-info" class="hs-box" style="display:none;">
+        <div id="ride-summary-insight" class="hs-row" style="display:none;cursor:default;"></div>
+        <div id="ride-summary-odo" class="hs-row" style="display:none;cursor:default;"><span class="k" style="color:var(--text-dim);">Tổng số km</span><span class="v" style="color:var(--text);" id="ride-summary-odo-val"></span></div>
+        <div id="ride-summary-bike" class="hs-row" style="display:none;cursor:default;"><span class="k" style="color:var(--text-dim);">Đã lưu cho xe</span><span style="font-size:14px;white-space:nowrap;"><span id="ride-summary-bike-name" style="color:var(--text);font-weight:600;"></span> · <span onclick="openRideBikePicker('summary')" style="color:var(--accent);cursor:pointer;">Đổi xe</span></span></div>
       </div>
-      <div id="ride-summary-memo-wrap" style="margin-top:18px;text-align:left;">
-        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">🏍 Chọn nhân vật</div>
-        <div onclick="openCharacterPicker()" style="display:flex;align-items:center;gap:12px;background:var(--surface,#161618);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 14px;cursor:pointer;">
+      <div id="ride-summary-memo-wrap" class="rd-sec">
+        <span class="rd-sec-t">Thẻ chia sẻ</span>
+        <div class="hs-box" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
+        <div onclick="openCharacterPicker()" style="display:flex;align-items:center;gap:12px;cursor:pointer;">
           <div style="width:52px;height:52px;border-radius:8px;background:#000;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
             <img id="ride-summary-char-preview" src="" style="width:100%;height:100%;object-fit:contain;">
           </div>
@@ -7205,8 +7251,8 @@ function renderMedicalCard(){
           </div>
           <div style="font-size:18px;color:var(--text-dim);">›</div>
         </div>
-        <div style="font-size:11px;color:var(--text-dim);margin:14px 0 6px;">📝 Ghi chú ngắn (tùy chọn)</div>
-        <input type="text" class="form-input" id="ride-summary-memo" placeholder="VD: Đi dọc sông Hồng, chú ý mưa" maxlength="40" style="font-size:13px;">
+        <input type="text" class="form-input" id="ride-summary-memo" placeholder="Ghi chú ngắn (tùy chọn) · VD: Đi dọc sông Hồng, chú ý mưa" maxlength="40" style="font-size:13px;">
+        </div>
       </div>
     </div>
     <div class="modal-footer" style="flex-direction:column;gap:8px;">
