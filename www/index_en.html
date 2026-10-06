@@ -563,6 +563,19 @@ option{background:var(--surface2);}
   .medical-row:last-child{border-bottom:none;}
   .medical-label{font-size:12px;color:var(--text-dim);}
   .medical-value{font-size:14px;font-weight:600;color:var(--text);}
+  /* SOS 시트 (2026-10-06 시범 4): 세그먼트 탭, 단계 제목 크게, 번호는 숫자 폰트로 크게, 색 박스 대신 중립 행 */
+  .sos-choice{background:var(--surface2);border-radius:var(--r-md);padding:4px;gap:4px;margin-bottom:16px;}
+  .sos-choice-btn{border:none;background:transparent;padding:10px 8px;border-radius:9px;}
+  .sos-choice-btn.selected{background:var(--text);border:none;}
+  .sos-choice-btn.selected .sos-choice-label{color:var(--bg);}
+  .sos-choice-btn.selected .sos-choice-sub{color:#4a5058;}
+  .sos-choice-icon{display:none;}
+  .sos-section{margin-bottom:18px;}
+  .sos-section-title{font-size:15px;font-weight:600;color:var(--text);letter-spacing:0;}
+  .sos-call-btn,.sos-call-btn.emergency,.sos-call-btn.korea{background:var(--surface2);border:1px solid var(--border);}
+  .sos-call-num{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:24px;letter-spacing:0.5px;color:#ff8a85;}
+  .sos-call-btn.emergency .sos-call-num{font-size:32px;}
+  body:has(#m-sos.open) .sos-fab{display:none;} /* 시트 위를 SOS 버튼이 가리던 문제 */
 
   /* ── More bottom sheet ── */
   .more-sheet{background:var(--surface);border:1px solid var(--border-bright);border-radius:var(--r-lg) var(--r-lg) 0 0;width:100%;max-width:460px;max-height:80vh;overflow-y:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
@@ -595,10 +608,28 @@ option{background:var(--surface2);}
   .riding-dot.on{background:var(--green);animation:ridingPulse 1.5s ease-in-out infinite;}
   .riding-stop-btn{background:transparent;border:1px solid rgba(208,64,64,0.5);color:var(--red);font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:8px 14px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
   /* ── AUTO SOS OVERLAY ── */
-  .auto-sos-overlay{display:none;position:fixed;inset:0;z-index:1000;background:linear-gradient(180deg,#8a0808 0%,#4a0404 100%);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+  /* 자동 SOS 카운트다운 (2026-10-06 Night Cluster 시범 4): 질문 하나 + 원형 진행 + 발송 대상 + 아래쪽 전폭 취소 */
+  .auto-sos-overlay{display:none;position:fixed;inset:0;z-index:1000;background:radial-gradient(120% 70% at 50% 35%,#5a0a0a 0%,#2a0505 60%,#170303 100%);flex-direction:column;align-items:center;text-align:center;padding:calc(28px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));color:#fff;}
   .auto-sos-overlay.show{display:flex;}
-  .auto-sos-num{font-family:'Bebas Neue',sans-serif;font-size:120px;color:#fff;line-height:1;text-shadow:0 0 60px rgba(255,80,80,0.5);}
-  .auto-sos-cancel{background:#fff;color:#7a0606;font-family:'Inter',sans-serif;font-size:17px;font-weight:800;padding:16px 56px;border-radius:var(--r-pill);border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:28px;}
+  .auto-sos-sim{display:none;font-size:12px;font-weight:700;color:#1a1000;background:var(--accent);border-radius:var(--r-pill);padding:5px 12px;margin-bottom:14px;}
+  .auto-sos-overlay.sim .auto-sos-sim{display:inline-block;}
+  .auto-sos-eyebrow{font-size:13px;font-weight:600;color:#ffb3ae;}
+  .auto-sos-q{font-size:28px;font-weight:700;line-height:1.25;margin-top:6px;}
+  .auto-sos-ring{position:relative;width:min(58vw,230px);aspect-ratio:1;margin:auto 0;}
+  .auto-sos-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+  .auto-sos-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:min(30vw,112px);line-height:1;color:#fff;font-variant-numeric:tabular-nums;}
+  .auto-sos-unit{position:absolute;left:20%;right:20%;bottom:17%;font-size:12px;font-weight:500;line-height:1.3;color:#ffb3ae;} /* 원 안쪽 폭에서 줄바꿈 (EN/VN 문구가 길어서) */
+  .auto-sos-target{width:100%;max-width:420px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.14);border-radius:var(--r-md);padding:12px 14px;font-size:14px;text-align:left;}
+  .auto-sos-target .k{color:rgba(255,255,255,0.65);flex-shrink:0;}
+  .auto-sos-target .v{font-family:'JetBrains Mono',monospace;font-weight:500;}
+  .auto-sos-warn{width:100%;max-width:420px;background:#3a2808;border:1px solid var(--accent);color:#ffd27a;border-radius:var(--r-md);padding:12px 14px;font-size:14px;line-height:1.5;text-align:left;}
+  .auto-sos-cancel{width:100%;max-width:420px;min-height:64px;background:#fff;color:#7a0606;font-family:'Inter',sans-serif;font-size:19px;font-weight:800;border-radius:var(--r-lg);border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:14px;}
+  .auto-sos-move{font-size:14px;color:rgba(255,255,255,0.8);line-height:1.6;margin-top:12px;}
+  .auto-sos-move small{display:block;font-size:12px;color:rgba(255,255,255,0.55);font-variant-numeric:tabular-nums;}
+  .auto-sos-result{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;margin:auto 0;max-width:420px;}
+  .auto-sos-overlay.done .auto-sos-result{display:flex;}
+  .auto-sos-overlay.done .auto-sos-live{display:none!important;}
+  .auto-sos-live{display:contents;}
   /* ── Medical info modal: 1px smaller than global, scoped to this modal only ── */
   #m-medical .modal-title{font-size:16px;}
 </style>
@@ -785,6 +816,10 @@ option{background:var(--surface2);}
         <input type="tel" class="form-input" id="sos-contact-phone" placeholder="+84-xxx-xxxx-xxxx" style="width:100%;">
       </div>
       <button class="btn btn-primary" onclick="saveSosContact()">Save</button>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+        <button class="btn btn-full" onclick="_sosSimulate()">Try auto SOS (simulation)</button>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.6;">See what appears when a crash is detected. No real message is sent.</div>
+      </div>
     </div>
     <div class="card" style="margin-bottom:12px;">
       <div class="setting-section-title">🔔 Notifications</div>
@@ -6091,20 +6126,19 @@ function _sosTrigger() {
   _sos.cdVal = 60;
   var ov = document.getElementById('auto-sos-overlay');
   if (ov) ov.classList.add('show');
-  var cd = document.getElementById('auto-sos-cd');
-  if (cd) cd.textContent = '60';
+  if (ov) ov.classList.remove('sim','done');
+  _sosRenderCountdown(60);
   var dbgEl = document.getElementById('auto-sos-dbg');
-  if (dbgEl) dbgEl.textContent = '📍 Acquiring GPS position...';
+  if (dbgEl) dbgEl.textContent = 'Checking location';
   var med = getMedical();
-  var ci = document.getElementById('auto-sos-contact');
-  if (ci) ci.textContent = med.emergencyPhone ? 'Sending to: ' + (med.emergency||'') + ' ' + med.emergencyPhone : '⚠ No emergency contact — SOS cannot be sent';
+  _sosRenderTarget(med);
   navigator.geolocation.getCurrentPosition(function(p) {
     _sos.startLat = p.coords.latitude;
     _sos.startLng = p.coords.longitude;
     _sos.startAccuracy = p.coords.accuracy || 30;
-    if (dbgEl) dbgEl.textContent = '📍 Distance moved: 0m (accounting for GPS accuracy)';
+    if (dbgEl) dbgEl.textContent = 'Moved 0m';
   }, function() {
-    if (dbgEl) dbgEl.textContent = '📍 GPS position unavailable';
+    if (dbgEl) dbgEl.textContent = 'GPS position unavailable';
   }, {timeout: 10000, enableHighAccuracy: true});
   // Require movement beyond the combined accuracy radius of both fixes, confirmed twice in a row,
   // before cancelling — a false cancel from GPS noise could mean a real emergency goes unreported.
@@ -6114,7 +6148,7 @@ function _sosTrigger() {
       var dist = _gpsDistance(_sos.startLat, _sos.startLng, p.coords.latitude, p.coords.longitude);
       var acc = p.coords.accuracy || 30;
       var margin = Math.max(10, _sos.startAccuracy + acc);
-      if (dbgEl) dbgEl.textContent = '📍 Distance moved: ' + dist.toFixed(0) + 'm (margin ' + margin.toFixed(0) + 'm)';
+      if (dbgEl) dbgEl.textContent = 'Moved ' + dist.toFixed(0) + 'm · threshold ' + margin.toFixed(0) + 'm';
       if (dist > margin) {
         _sos.moveConfirmCount = (_sos.moveConfirmCount || 0) + 1;
         if (_sos.moveConfirmCount >= 2) { cancelAutoSOS(); showToast('✓ Movement detected — Auto SOS cancelled'); }
@@ -6133,10 +6167,66 @@ function _sosTrigger() {
   } catch (e) {}
   _sos.cdTimer = setInterval(function() {
     _sos.cdVal--;
-    var el = document.getElementById('auto-sos-cd');
-    if (el) el.textContent = _sos.cdVal;
+    _sosRenderCountdown(_sos.cdVal);
     if (_sos.cdVal <= 0) { clearInterval(_sos.cdTimer); _sos.cdTimer = null; _sosSend(); }
   }, 1000);
+}
+
+// 카운트다운 숫자 + 원형 진행 (60초 기준)
+function _sosRenderCountdown(v) {
+  var el = document.getElementById('auto-sos-cd');
+  if (el) el.textContent = v;
+  var fg = document.getElementById('auto-sos-ring-fg');
+  if (fg) fg.setAttribute('stroke-dashoffset', (282.7 * (1 - Math.max(0, v) / 60)).toFixed(1));
+}
+function _sosEsc(t){ return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// 발송 대상 — 번호가 없으면 앰버 경고 (실제 사고 때 문자가 안 나간다는 걸 분명히)
+function _sosRenderTarget(med) {
+  var ci = document.getElementById('auto-sos-contact');
+  if (!ci) return;
+  ci.innerHTML = med.emergencyPhone
+    ? '<div class="auto-sos-target"><span class="k">Sending to</span><span class="v">' + _sosEsc((med.emergency||'') + ' ' + med.emergencyPhone) + '</span></div>'
+    : '<div class="auto-sos-warn">⚠ No emergency contact, so no message can be sent. Call 115 or 113 yourself.</div>';
+}
+function _sosCancelPressed() {
+  var ov = document.getElementById('auto-sos-overlay');
+  if (ov && ov.classList.contains('sim')) { _sosSimEnd(); showToast('Simulation cancelled'); return; }
+  cancelAutoSOS();
+}
+
+// ── 자동 SOS 미리 체험 (모의 모드): 실제와 같은 화면·60초 진행, 문자·알림·라이딩 상태는 건드리지 않음
+var _sosSimTimer = null;
+function _sosSimulate() {
+  if (_sos.phase === 'COUNTDOWN') return; // 실제 카운트다운 중엔 실행 안 함
+  logAnalyticsEvent('sos_simulated', {});
+  var ov = document.getElementById('auto-sos-overlay');
+  if (!ov) return;
+  ov.classList.remove('done');
+  ov.classList.add('sim', 'show');
+  var med = getMedical();
+  _sosRenderTarget(med);
+  var dbgEl = document.getElementById('auto-sos-dbg');
+  if (dbgEl) dbgEl.textContent = 'Movement isn\'t checked in simulation';
+  var v = 60;
+  _sosRenderCountdown(v);
+  if (_sosSimTimer) clearInterval(_sosSimTimer);
+  _sosSimTimer = setInterval(function() {
+    v--;
+    _sosRenderCountdown(v);
+    if (v <= 0) {
+      clearInterval(_sosSimTimer); _sosSimTimer = null;
+      var msg = document.getElementById('auto-sos-result-msg');
+      if (msg) msg.innerHTML = med.emergencyPhone
+        ? 'In a real emergency, a message with the accident location would have just been sent to <b>' + _sosEsc((med.emergency||'') + ' ' + med.emergencyPhone) + '</b>.'
+        : 'Without an emergency contact, <b>no message would have been sent</b> in a real emergency. Please add one in Settings first.';
+      ov.classList.add('done');
+    }
+  }, 1000);
+}
+function _sosSimEnd() {
+  if (_sosSimTimer) { clearInterval(_sosSimTimer); _sosSimTimer = null; }
+  var ov = document.getElementById('auto-sos-overlay');
+  if (ov) ov.classList.remove('show', 'sim', 'done');
 }
 
 function cancelAutoSOS() {
@@ -6718,7 +6808,7 @@ function openSOS() {
   var med=getMedical();
   var insBtn=document.getElementById('sos-insurance-btn');
   if(med.insurance){
-    insBtn.innerHTML='<a href="tel:'+med.insurance.replace(/[^0-9+]/g,'')+ '" class="sos-call-btn korea"><div><div class="sos-call-name">📋 My Travel Insurance</div><div class="sos-call-sub">'+med.insurance+'</div></div><div style="font-size:20px;">📞</div></a>';
+    insBtn.innerHTML='<a href="tel:'+med.insurance.replace(/[^0-9+]/g,'')+ '" class="sos-call-btn korea"><div><div class="sos-call-name">My Travel Insurance</div><div class="sos-call-sub">'+med.insurance+'</div></div><div style="font-size:20px;">📞</div></a>';
   } else {
     insBtn.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:8px;text-align:center;">Add your insurance contact in the medical info card</div>';
   }
@@ -7058,14 +7148,24 @@ function renderMedicalCard(){
 
 <!-- First Launch Welcome Modal -->
 <div class="auto-sos-overlay" id="auto-sos-overlay">
-  <div style="font-size:64px;margin-bottom:14px;">🚨</div>
-  <div style="font-size:28px;font-weight:700;color:#fff;margin-bottom:8px;">Impact Detected!</div>
-  <div style="font-size:15px;color:rgba(255,255,255,0.85);margin-bottom:24px;max-width:290px;line-height:1.65;">Are you okay?<br>Press the button or move 10m+ to cancel</div>
-  <div class="auto-sos-num" id="auto-sos-cd">60</div>
-  <div style="font-size:14px;color:rgba(255,255,255,0.65);margin-top:10px;">seconds until emergency contact is messaged</div>
-  <button class="auto-sos-cancel" onclick="cancelAutoSOS()">✓ I'm okay</button>
-  <div style="margin-top:20px;font-size:12px;color:rgba(255,255,255,0.4);max-width:300px;line-height:1.5;" id="auto-sos-contact"></div>
-  <div id="auto-sos-dbg" style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.25);font-family:'Inter',sans-serif;"></div>
+  <span class="auto-sos-sim">Simulation · No real message is sent</span>
+  <div class="auto-sos-live">
+    <div class="auto-sos-eyebrow">Impact detected</div>
+    <div class="auto-sos-q">Are you okay?</div>
+    <div class="auto-sos-ring">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="5"/><circle id="auto-sos-ring-fg" cx="50" cy="50" r="45" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="282.7" stroke-dashoffset="0"/></svg>
+      <div class="auto-sos-num" id="auto-sos-cd">60</div>
+      <div class="auto-sos-unit">sec until message is sent</div>
+    </div>
+    <div id="auto-sos-contact" style="width:100%;display:flex;justify-content:center;"></div>
+    <button class="auto-sos-cancel" onclick="_sosCancelPressed()">I'm okay · Cancel</button>
+    <div class="auto-sos-move">Moving away cancels it automatically<small id="auto-sos-dbg"></small></div>
+  </div>
+  <div class="auto-sos-result">
+    <div class="auto-sos-q" style="font-size:22px;">Simulation result</div>
+    <div id="auto-sos-result-msg" style="font-size:16px;line-height:1.6;color:rgba(255,255,255,0.88);"></div>
+    <button class="auto-sos-cancel" onclick="_sosSimEnd()">OK</button>
+  </div>
 </div>
 
 <!-- SOS First-time Consent Modal -->
@@ -7400,7 +7500,6 @@ function renderMedicalCard(){
   <div class="sos-modal">
     <div class="sos-header">
       <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:24px;">🚨</span>
         <div><div class="sos-title">Emergency SOS</div><div style="font-size:11px;color:rgba(255,255,255,0.7);">Who had the accident?</div></div>
       </div>
       <button class="modal-close" style="color:#fff;" onclick="closeModal('m-sos')">✕</button>
@@ -7422,9 +7521,9 @@ function renderMedicalCard(){
       <div id="sos-colleague" style="display:none;">
         <div class="sos-section">
           <div class="sos-section-title"><span class="sos-step">1</span>Call for help now</div>
-          <a href="tel:115" class="sos-call-btn emergency"><div><div class="sos-call-name">🚑 Ambulance</div><div class="sos-call-sub">Xe cấp cứu</div></div><div class="sos-call-num">115</div></a>
-          <a href="tel:113" class="sos-call-btn emergency"><div><div class="sos-call-name">🚔 Police</div><div class="sos-call-sub">Cảnh sát</div></div><div class="sos-call-num">113</div></a>
-          <a href="tel:18001567" class="sos-call-btn"><div><div class="sos-call-name">🌐 Tourist Police</div><div class="sos-call-sub">English support · Cảnh sát du lịch</div></div><div class="sos-call-num" style="font-size:14px;">1800-1567</div></a>
+          <a href="tel:115" class="sos-call-btn emergency"><div><div class="sos-call-name">Ambulance</div><div class="sos-call-sub">Xe cấp cứu</div></div><div class="sos-call-num">115</div></a>
+          <a href="tel:113" class="sos-call-btn emergency"><div><div class="sos-call-name">Police</div><div class="sos-call-sub">Cảnh sát</div></div><div class="sos-call-num">113</div></a>
+          <a href="tel:18001567" class="sos-call-btn"><div><div class="sos-call-name">Tourist Police</div><div class="sos-call-sub">English support · Cảnh sát du lịch</div></div><div class="sos-call-num" style="font-size:14px;">1800-1567</div></a>
         </div>
         <div class="sos-section">
           <div class="sos-section-title"><span class="sos-step">2</span>Ask for help in Vietnamese</div>
@@ -7440,25 +7539,25 @@ function renderMedicalCard(){
         </div>
         <div class="sos-section">
           <div class="sos-section-title"><span class="sos-step">3</span>Korean interpreter line</div>
-          <a href="tel:+8223210404" class="sos-call-btn korea"><div><div class="sos-call-name">🇰🇷 Korean Consular Call Center</div><div class="sos-call-sub">24/7 · Korean · Free · Interpreter</div></div><div class="sos-call-num" style="font-size:12px;">+82-2-3210-0404</div></a>
-          <a href="tel:+842438315111" class="sos-call-btn korea"><div><div class="sos-call-name">🇰🇷 Korean Embassy in Hanoi</div><div class="sos-call-sub">Emergency consular service</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3831-5111</div></a>
+          <a href="tel:+8223210404" class="sos-call-btn korea"><div><div class="sos-call-name">Korean Consular Call Center</div><div class="sos-call-sub">24/7 · Korean · Free · Interpreter</div></div><div class="sos-call-num" style="font-size:12px;">+82-2-3210-0404</div></a>
+          <a href="tel:+842438315111" class="sos-call-btn korea"><div><div class="sos-call-name">Korean Embassy in Hanoi</div><div class="sos-call-sub">Emergency consular service</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3831-5111</div></a>
           <div id="sos-insurance-btn"></div>
         </div>
         <div class="sos-section">
           <div class="sos-section-title"><span class="sos-step">4</span>International hospitals in Hanoi (KR·EN)</div>
-          <a href="tel:+842439743556" class="sos-call-btn"><div><div class="sos-call-name">🏥 Vinmec International</div><div class="sos-call-sub">Korean interpreter available</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3974-3556</div></a>
-          <a href="tel:+842439275568" class="sos-call-btn"><div><div class="sos-call-name">🏥 Hong Ngoc Hospital</div><div class="sos-call-sub">Korean interpreter available</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3927-5568</div></a>
-          <a href="tel:+842438430748" class="sos-call-btn"><div><div class="sos-call-name">🏥 Family Medical Practice</div><div class="sos-call-sub">English only</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3843-0748</div></a>
+          <a href="tel:+842439743556" class="sos-call-btn"><div><div class="sos-call-name">Vinmec International</div><div class="sos-call-sub">Korean interpreter available</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3974-3556</div></a>
+          <a href="tel:+842439275568" class="sos-call-btn"><div><div class="sos-call-name">Hong Ngoc Hospital</div><div class="sos-call-sub">Korean interpreter available</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3927-5568</div></a>
+          <a href="tel:+842438430748" class="sos-call-btn"><div><div class="sos-call-name">Family Medical Practice</div><div class="sos-call-sub">English only</div></div><div class="sos-call-num" style="font-size:12px;">+84-24-3843-0748</div></a>
           <div style="font-size:11px;color:var(--text-dim);padding:6px 0;">⚠️ Outside Hanoi: first aid at nearest hospital → transfer to Hanoi once stable</div>
         </div>
         <div class="sos-section">
           <div class="sos-section-title"><span class="sos-step">5</span>Document the scene (for insurance)</div>
           <div id="sos-checklist">
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of other vehicle's plate</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of whole vehicle</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of injuries</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of road conditions</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of traffic lights/signs</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">Photo of other vehicle's plate</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">Photo of whole vehicle</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">Photo of injuries</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">Photo of road conditions</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">Photo of traffic lights/signs</div></div>
             <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 Get witness contact info</div></div>
             <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 Note accident time/location</div></div>
           </div>
@@ -7468,18 +7567,18 @@ function renderMedicalCard(){
       <div id="sos-colleague-kr" style="display:none;">
         <div class="sos-section">
           <div class="sos-section-title"><span class="sos-step">1</span>Call for help now</div>
-          <a href="tel:112" class="sos-call-btn emergency"><div><div class="sos-call-name">🚔 Police</div><div class="sos-call-sub">Traffic accidents · crime</div></div><div class="sos-call-num">112</div></a>
-          <a href="tel:119" class="sos-call-btn emergency"><div><div class="sos-call-name">🚑 Fire · Ambulance</div><div class="sos-call-sub">Emergency rescue</div></div><div class="sos-call-num">119</div></a>
+          <a href="tel:112" class="sos-call-btn emergency"><div><div class="sos-call-name">Police</div><div class="sos-call-sub">Traffic accidents · crime</div></div><div class="sos-call-num">112</div></a>
+          <a href="tel:119" class="sos-call-btn emergency"><div><div class="sos-call-name">Fire · Ambulance</div><div class="sos-call-sub">Emergency rescue</div></div><div class="sos-call-num">119</div></a>
           <div class="sos-location-box" onclick="copySOSLocation()">📍 Getting location... (tap to copy)</div>
         </div>
         <div class="sos-section">
           <div class="sos-section-title"><span class="sos-step">2</span>Document the scene (for insurance)</div>
           <div id="sos-checklist-kr">
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of other vehicle's plate</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of whole vehicle</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of injuries</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of road conditions</div></div>
-            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📸 Photo of traffic lights/signs</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">Photo of other vehicle's plate</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">Photo of whole vehicle</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">Photo of injuries</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">Photo of road conditions</div></div>
+            <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">Photo of traffic lights/signs</div></div>
             <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 Get witness contact info</div></div>
             <div class="sos-checklist-item" onclick="toggleCheck(this)"><div class="sos-check">☐</div><div class="sos-checklist-text">📝 Note accident time/location</div></div>
           </div>
