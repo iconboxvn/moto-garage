@@ -845,7 +845,7 @@ option{background:var(--surface2);}
         <input type="tel" class="form-input" id="sos-contact-phone" placeholder="+84-xxx-xxxx-xxxx" style="width:100%;">
       </div>
       <button class="btn btn-primary" onclick="saveSosContact()">Save</button>
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <div id="settings-sos-sim" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
         <button class="btn btn-full" onclick="_sosSimulate()">Try auto SOS (simulation)</button>
         <div style="font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.6;">See what appears when a crash is detected. No real message is sent.</div>
       </div>
@@ -1335,7 +1335,11 @@ option{background:var(--surface2);}
 // Route it through the Capacitor Geolocation plugin on iOS only so one app permission covers it (Android unchanged).
 // iOS v1 has no impact detection or automatic SOS text — used to hide/reword those notices on iOS only
 var _IS_IOS = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios');
-if (_IS_IOS) { var _sosAutoDesc = document.getElementById('settings-sos-auto-desc'); if (_sosAutoDesc) _sosAutoDesc.style.display = 'none'; }
+if (_IS_IOS) {
+  var _sosAutoDesc = document.getElementById('settings-sos-auto-desc'); if (_sosAutoDesc) _sosAutoDesc.style.display = 'none';
+  // iOS v1은 낙차 감지·자동 문자 제외라 "자동 SOS 미리 체험"도 숨김
+  var _sosSimBox = document.getElementById('settings-sos-sim'); if (_sosSimBox) _sosSimBox.style.display = 'none';
+}
 
 (function _iosGeolocationShim(){
   var C = window.Capacitor;

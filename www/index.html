@@ -871,7 +871,7 @@ option{background:var(--surface2);}
         <input type="tel" class="form-input" id="sos-contact-phone" placeholder="010-xxxx-xxxx" style="width:100%;">
       </div>
       <button class="btn btn-primary" onclick="saveSosContact()">저장</button>
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <div id="settings-sos-sim" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
         <button class="btn btn-full" onclick="_sosSimulate()">자동 SOS 미리 체험하기</button>
         <div style="font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.6;">사고가 감지되면 어떤 화면이 뜨는지 미리 확인해 보세요. 실제 문자는 보내지 않아요.</div>
       </div>
@@ -1377,7 +1377,11 @@ option{background:var(--surface2);}
 // iOS에서만 Capacitor Geolocation 플러그인으로 대체해서 앱 권한 하나로 통일 (Android는 기존 동작 유지).
 // iOS v1은 충격/낙차 감지·SOS 자동 문자가 없음 — 관련 안내/문구를 iOS에서만 숨기거나 바꿀 때 사용
 var _IS_IOS = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios');
-if (_IS_IOS) { var _sosAutoDesc = document.getElementById('settings-sos-auto-desc'); if (_sosAutoDesc) _sosAutoDesc.style.display = 'none'; }
+if (_IS_IOS) {
+  var _sosAutoDesc = document.getElementById('settings-sos-auto-desc'); if (_sosAutoDesc) _sosAutoDesc.style.display = 'none';
+  // iOS v1은 낙차 감지·자동 문자 제외라 "자동 SOS 미리 체험"도 숨김
+  var _sosSimBox = document.getElementById('settings-sos-sim'); if (_sosSimBox) _sosSimBox.style.display = 'none';
+}
 
 (function _iosGeolocationShim(){
   var C = window.Capacitor;
@@ -4738,7 +4742,7 @@ function initDebugMode(){
   RidingPlugin.isDebugBuild().then(function(res){
     window._isDebugBuild = !!(res && res.isDebug);
     if (window._isDebugBuild) {
-      var _dt = document.getElementById('sos-dev-test'); if (_dt) _dt.style.display = 'block'; // 실제 문자가 나가는 테스트라 디버그 빌드에서만
+      var _dt = document.getElementById('sos-dev-test'); if (_dt && !_IS_IOS) _dt.style.display = 'block'; // 실제 문자가 나가는 테스트라 디버그 빌드에서만
       try {
         var saved = localStorage.getItem('mg2-dbglog');
         if (saved) _dbg.events = JSON.parse(saved);

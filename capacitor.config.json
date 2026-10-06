@@ -8,6 +8,23 @@
       "keystoreAlias": "moto-garage"
     }
   },
+  "ios": {
+    "includePlugins": [
+      "@capacitor-community/in-app-review",
+      "@capacitor-firebase/analytics",
+      "@capacitor-firebase/firestore",
+      "@capacitor/app",
+      "@capacitor/camera",
+      "@capacitor/filesystem",
+      "@capacitor/geolocation",
+      "@capacitor/haptics",
+      "@capacitor/local-notifications",
+      "@capacitor/push-notifications",
+      "@capacitor/share",
+      "@capacitor/splash-screen",
+      "@capacitor/status-bar"
+    ]
+  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 2000,
