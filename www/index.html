@@ -7460,7 +7460,7 @@ function renderMedicalCard(){
     // 터치
     fab.addEventListener('touchstart', onStart, {passive:false});
     document.addEventListener('touchmove',  onMove,  {passive:false});
-    document.addEventListener('touchend',   onEnd,   {passive:true});
+    document.addEventListener('touchend',   onEnd,   {passive:false});
     // 마우스 (PC)
     fab.addEventListener('mousedown',  onStart);
     document.addEventListener('mousemove', onMove);
@@ -7529,6 +7529,10 @@ function renderMedicalCard(){
     fab.classList.remove('dragging');
 
     if(!drag.moved){
+      // 탭: 뒤따르는 클릭을 막음 — 시트가 열리면 버튼이 숨겨져서, 그 클릭이 버튼 자리에 온
+      // 시트의 전화 버튼(113 등)에 떨어져 전화 화면이 열리던 문제 (2026-10-07)
+      if(e && e.type === 'touchend' && e.cancelable) e.preventDefault();
+      window._sosOpenedAt = Date.now();
       openSOS();
       return;
     }
@@ -7548,6 +7552,12 @@ function renderMedicalCard(){
   }
 
   document.addEventListener('DOMContentLoaded', init);
+  // 안전장치: 시트가 열린 직후 0.5초 안의 시트 안 클릭은 버튼 탭의 잔여 클릭으로 보고 무시
+  document.addEventListener('click', function(e){
+    if(window._sosOpenedAt && Date.now() - window._sosOpenedAt < 500 && e.target.closest && e.target.closest('#m-sos')){
+      e.preventDefault(); e.stopPropagation();
+    }
+  }, true);
 })();
 
 </script>
