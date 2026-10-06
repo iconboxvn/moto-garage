@@ -258,6 +258,33 @@ option{background:var(--surface2);}
 .rd-sec-t{font-size:16px;font-weight:600;color:var(--text);}
 .rd-row-v{font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1;color:var(--text);}
 .rd-row-v small{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;margin-left:3px;}
+/* 라이딩 탭 (2026-10-06 시범 5): 월 요약 + 달력 + 그 달의 라이딩 목록 한 페이지 */
+.ms-head{display:flex;justify-content:space-between;align-items:center;margin:4px 0 14px;}
+.ms-head b{font-size:19px;font-weight:600;color:var(--text);}
+.ms-nav{display:flex;gap:6px;}
+.ms-nav button{width:36px;height:36px;border:1px solid var(--border-bright);border-radius:var(--r-sm);background:none;color:var(--text-dim);font-size:13px;cursor:pointer;}
+.ms-cal-day{text-align:center;}
+.ms-cal-day .n{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:4px;}
+.ms-cal-day.ride .n{color:var(--text);}
+.ms-cal-day.today .n{color:var(--accent);font-weight:700;}
+.ms-dot{width:22px;height:22px;border-radius:50%;margin:0 auto;cursor:pointer;background:var(--surface2);}
+.ms-dot.t1{background:var(--accent-dim);box-shadow:inset 0 0 0 2px var(--accent);}
+.ms-dot.t2{background:var(--accent);}
+.ms-dot.t3{background:var(--accent);box-shadow:0 0 0 3px rgba(232,160,32,0.35);}
+.ms-dot.ms-ms{background:#f5c542;color:#1a1000;font-size:11px;font-weight:800;line-height:22px;}
+.ms-dot.sel{outline:2px solid var(--text);outline-offset:2px;}
+.ms-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--text-muted);margin-top:12px;}
+.ms-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;}
+.ms-day-h{font-size:14px;font-weight:600;color:var(--text-dim);margin:14px 0 8px;scroll-margin-top:80px;}
+.ms-day-h.sel{color:var(--accent);}
+.ms-row{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:2px;padding:12px 0;border-top:1px solid var(--border);align-items:center;cursor:pointer;}
+.ms-row:first-child{border-top:0;}
+.ms-row .t{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);}
+.ms-row .s{font-size:12px;color:var(--text-muted);grid-column:1;}
+.ms-row .v{grid-column:2;grid-row:1/3;font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:var(--text);font-variant-numeric:tabular-nums;}
+.ms-row .v small{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-left:3px;}
+.rd-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.rd-actions .btn{justify-content:center;padding:12px;}
 /* 어두운 지도: OSM 타일 반전 + 출처 표기 */
 .rm-dark-tiles{filter:invert(100%) hue-rotate(180deg) brightness(0.85) contrast(0.85) saturate(0.35);}
 .leaflet-container .leaflet-control-attribution{background:rgba(15,17,19,0.75)!important;color:#5a6270!important;font-size:9px!important;line-height:1.4;padding:0 5px;}
@@ -741,45 +768,28 @@ option{background:var(--surface2);}
   </div>
 
   <!-- 백업 -->
-  <!-- Ride History -->
-  <div class="page" id="page-rideHistory">
-    <div class="sec-header"><span class="sec-title">RIDE HISTORY</span><div class="sec-line"></div></div>
-    <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats', document.getElementById('nav-ridehistory-btn'))">View Monthly Stats</button>
-    <div id="ride-history-list"></div>
-    <button class="btn btn-full" id="ride-history-more-btn" onclick="showMoreRideHistory()" style="display:none;margin-top:8px;">Load more</button>
-  </div>
-
   <!-- Monthly Stats -->
   <div class="page" id="page-monthlyStats">
-    <div class="sec-header"><span class="sec-title">MONTHLY STATS</span><div class="sec-line"></div></div>
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="showPage('rideHistory', document.getElementById('nav-ridehistory-btn'))">View Detailed History</button>
-      <button class="btn btn-primary" id="visited-places-entry-btn" style="flex:1;justify-content:center;" onclick="showPage('visitedPlaces', document.getElementById('nav-ridehistory-btn'))">View Places Map</button>
-    </div>
-
+    <div class="sec-header"><span class="sec-title">RIDE HISTORY</span><div class="sec-line"></div></div>
     <div id="mstat-bike-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;"></div>
-
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <button class="btn btn-sm" onclick="mstatChangeMonth(-1)">◀</button>
-      <div id="mstat-month-label" class="tp-title"></div>
-      <button class="btn btn-sm" onclick="mstatChangeMonth(1)">▶</button>
+    <div class="ms-head"><b id="mstat-month-label"></b><div class="ms-nav"><button onclick="mstatChangeMonth(-1)" aria-label="Previous month">◀</button><button onclick="mstatChangeMonth(1)" aria-label="Next month">▶</button></div></div>
+    <div id="mstat-summary"></div>
+    <div class="hs-box pad" style="margin-bottom:28px;">
+      <div id="mstat-weekday-header" style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:8px;">
+        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+      </div>
+      <div id="mstat-calendar" style="display:grid;grid-template-columns:repeat(7,1fr);row-gap:10px;"></div>
+      <div class="ms-legend"><span><i style="background:var(--accent-dim);box-shadow:inset 0 0 0 2px var(--accent);"></i>Rode</span><span><i style="background:var(--accent);"></i>50km+</span><span><i style="background:var(--accent);box-shadow:0 0 0 2px rgba(232,160,32,0.35);"></i>200km+</span></div>
     </div>
-
-    <div id="mstat-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;"></div>
-
-    <div id="mstat-weekday-header" style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--text-dim);margin-bottom:8px;">
-      <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
-    </div>
-    <div id="mstat-calendar" style="display:grid;grid-template-columns:repeat(7,1fr);row-gap:12px;"></div>
-
-    <div id="mstat-day-detail" style="display:none;margin-top:18px;background:var(--surface2);border-radius:var(--r-md);padding:14px;"></div>
+    <div class="hs-t"><b>Rides</b><span class="hs-link" id="visited-places-entry-btn" onclick="showPage('visitedPlaces', document.getElementById('nav-ridehistory-btn'))">Places map ›</span></div>
+    <div id="mstat-rides"></div>
     <div id="mstat-motivate" style="display:none;margin-top:16px;margin-bottom:20px;text-align:center;font-size:13px;color:var(--text-dim);line-height:1.6;"></div>
   </div>
 
   <!-- Places visited -->
   <div class="page" id="page-visitedPlaces">
     <div class="sec-header"><span class="sec-title">PLACES VISITED</span><div class="sec-line"></div></div>
-    <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats', document.getElementById('nav-ridehistory-btn'))">Back to Monthly Stats</button>
+    <button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="showPage('monthlyStats', document.getElementById('nav-ridehistory-btn'))">Back to Ride History</button>
     <div id="visited-places-note" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Only rides where you stayed 30+ minutes in one spot are counted (applies from today's rides onward)</div>
     <div id="visited-places-map" style="width:100%;height:420px;border-radius:12px;overflow:hidden;background:#0f1113;position:relative;z-index:0;"></div>
     <div id="visited-places-list" style="margin-top:14px;"></div>
@@ -1883,7 +1893,6 @@ function showPage(name,btn){
   if(name==='consumables') renderConsumables();
   if(name==='history') renderHistory();
   if(name==='backup') renderBackupPage();
-  if(name==='rideHistory') renderRideHistoryPage();
   if(name==='monthlyStats') openMonthlyStats();
   if(name==='visitedPlaces') renderVisitedPlacesPage();
   if(name==='brandNews') renderBrandNewsPage();
@@ -2047,7 +2056,7 @@ function _renderDashInner(){
       </div>
     </div>
     <div class="hs">
-      <div class="hs-t"><b>This month's riding</b><span class="hs-link" onclick="showPage('monthlyStats',document.getElementById('nav-ridehistory-btn'))">Monthly stats ›</span></div>
+      <div class="hs-t"><b>This month's riding</b><span class="hs-link" onclick="showPage('monthlyStats',document.getElementById('nav-ridehistory-btn'))">Ride history ›</span></div>
       <div class="hs-box pad" style="cursor:pointer;" onclick="showPage('monthlyStats',document.getElementById('nav-ridehistory-btn'))">
         <div class="ds3">
           <div><div class="l">Distance</div><span class="n">${monthDistance.toFixed(1)}</span><span class="u">KM</span></div>
@@ -2962,47 +2971,6 @@ function saveExtra(){
   _reviewAfterMaint();
 }
 
-// ═══════════════════════════════════════════
-//  Ride history page (full list, load-more pagination)
-// ═══════════════════════════════════════════
-var rideHistoryShown = 10;
-const RIDE_HISTORY_PAGE_SIZE = 10;
-
-function renderRideHistoryPage(){
-  rideHistoryShown = RIDE_HISTORY_PAGE_SIZE;
-  renderRideHistoryList();
-}
-
-function showMoreRideHistory(){
-  rideHistoryShown += RIDE_HISTORY_PAGE_SIZE;
-  renderRideHistoryList();
-}
-
-function renderRideHistoryList(){
-  const el=document.getElementById('ride-history-list');
-  const moreBtn=document.getElementById('ride-history-more-btn');
-  if(!el) return;
-  const all=(D.rides||[]).slice().sort((a,b)=>b.id-a.id);
-  const shown=all.slice(0, rideHistoryShown);
-  el.innerHTML = shown.length ? shown.map(r=>{
-    const bike=D.bikes.find(b=>b.id===r.bikeId);
-    return `<div class="bike-card" style="margin-bottom:10px;cursor:pointer;" onclick="openRideDetail(${r.id})">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span class="tp-title">${r.date} · ${_fmtHM(r.startTime)}~${_fmtHM(r.endTime)}</span>
-        <span class="tp-title" style="color:var(--text);">${r.distanceKm}km</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:13px;color:var(--text-muted);">${bike?bike.brand+' '+bike.model+' · ':''}Avg ${r.avgKmh}km/h · Top ${r.maxKmh}km/h</span>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-sm" onclick="event.stopPropagation();shareHistoryRide(${r.id})">Share</button>
-          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteRide(${r.id})">Delete</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('') : `<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">No rides recorded yet</div></div>`;
-  if(moreBtn) moreBtn.style.display = (all.length > rideHistoryShown) ? 'block' : 'none';
-}
-
 var _rideDetailMap = null;
 var _rideDetailCurrentRide = null;
 // 어두운 지도: 기존 OSM 타일을 CSS 필터로 반전 (.rm-dark-tiles). CARTO 다크 타일은 API 키가 필요해져서 사용 안 함(2026-10 확인).
@@ -3526,9 +3494,6 @@ function _mstatFmtDuration(ms){
   return h>0 ? `${h}h ${m}min` : `${m}min`;
 }
 
-// Outer = darker, inner = lighter
-var MSTAT_RING_COLORS = ['#7a3b12','#a8551a','#d17a22','#e8a020','#fbe3b8'];
-
 // Dates where a bike's cumulative ride distance crossed a 500km multiple { 'YYYY-MM-DD': milestone reached (km) }
 // Recomputed from ride history in chronological (id-ascending) order each time - no separate storage needed, stays correct if rides are edited/deleted
 function _computeBikeMilestones(bikeId){
@@ -3544,20 +3509,10 @@ function _computeBikeMilestones(bikeId){
   return map;
 }
 
-function _mstatRingSvg(numRings, size){
-  var cx = size/2, cy = size/2;
-  var circles = '';
-  for(var i=0; i<numRings; i++){
-    var radius = (size/2) * ((numRings-i)/numRings);
-    var color = MSTAT_RING_COLORS[5-numRings+i];
-    circles += `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${color}"/>`;
-  }
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;">${circles}</svg>`;
-}
-
 function mstatRender(){
   var year = mstatState.year, month = mstatState.month;
-  document.getElementById('mstat-month-label').textContent = `${year}.${String(month).padStart(2,'0')}`;
+  document.getElementById('mstat-month-label').textContent = `${['January','February','March','April','May','June','July','August','September','October','November','December'][month-1]} ${year}`;
+  _applyVisitedPlacesVisibility();
 
   var prefix = year + '-' + String(month).padStart(2,'0');
   var rides = (D.rides||[]).filter(function(r){ return r.bikeId===mstatState.bikeId && r.date && r.date.indexOf(prefix)===0; });
@@ -3579,23 +3534,13 @@ function mstatRender(){
   var avgSpeed = totalDuration > 0 ? totalDistance / (totalDuration/3600000) : 0;
 
   document.getElementById('mstat-summary').innerHTML = `
-    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-      <div class="tp-label">Total Distance</div>
-      <div class="tp-stat-sm" style="margin-top:2px;">${totalDistance.toFixed(1)} km</div>
-    </div>
-    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-      <div class="tp-label">Total Rides</div>
-      <div class="tp-stat-sm" style="margin-top:2px;">${rides.length}</div>
-    </div>
-    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-      <div class="tp-label">Avg Speed</div>
-      <div class="tp-stat-sm" style="margin-top:2px;">${Math.round(avgSpeed)} km/h</div>
-    </div>
-    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px;">
-      <div class="tp-label">Top Speed</div>
-      <div class="tp-stat-sm" style="color:var(--text);margin-top:2px;">${Math.round(maxSpeed)} km/h</div>
-    </div>
-  `;
+    <div class="dh-odo" style="margin:0 0 4px;cursor:default;"><b>${totalDistance.toFixed(1)}</b><span>KM · ${['January','February','March','April','May','June','July','August','September','October','November','December'][month-1]}</span></div>
+    <div class="ds3" style="margin:12px 0 18px;">
+      <div><div class="l">Rides</div><span class="n">${rides.length}</span></div>
+      <div><div class="l">Avg</div><span class="n">${Math.round(avgSpeed)}</span><span class="u">KM/H</span></div>
+      <div><div class="l">Top</div><span class="n">${Math.round(maxSpeed)}</span><span class="u">KM/H</span></div>
+    </div>`;
+
 
   var firstDay = new Date(year, month-1, 1);
   var daysInMonth = new Date(year, month, 0).getDate();
@@ -3611,55 +3556,42 @@ function mstatRender(){
     var isToday = dateStr === todayStr;
     var isSelected = dateStr === mstatState.selectedDate;
     var milestoneKm = milestoneMap[dateStr];
-    var dotHtml;
-    if(milestoneKm){
-      // Day a 500km multiple was crossed - shown as a gold badge, tapping opens the achievement card
-      var achSize = info && info.distance > 0 ? (info.distance <= 10 ? 19 : info.distance <= 50 ? 25 : info.distance <= 100 ? 31 : 36) : 25;
-      dotHtml = `<div onclick="mstatSelectDay('${dateStr}'); showAchievementSummary(${mstatState.bikeId}, ${milestoneKm}, '${dateStr}')" style="width:${achSize}px;height:${achSize}px;margin:0 auto;cursor:pointer;border-radius:50%;position:relative;background:linear-gradient(135deg,#ffd76a,#e8a020);${isSelected?'box-shadow:0 0 0 3px var(--accent-dim);':''}"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:${Math.round(achSize*0.55)}px;line-height:1;">🏆</span></div>`;
-    } else if(info && info.distance > 0){
-      var tier = info.distance <= 10 ? {size:19, rings:2} : info.distance <= 50 ? {size:25, rings:3} : info.distance <= 100 ? {size:31, rings:4} : {size:36, rings:5};
-      dotHtml = `<div onclick="mstatSelectDay('${dateStr}')" style="width:${tier.size}px;height:${tier.size}px;margin:0 auto;cursor:pointer;border-radius:50%;${isSelected?'box-shadow:0 0 0 3px var(--accent-dim);':''}">${_mstatRingSvg(tier.rings, tier.size)}</div>`;
-    } else {
-      dotHtml = `<div onclick="mstatSelectDay('${dateStr}')" style="width:14px;height:14px;border-radius:50%;border:1.5px dashed ${isToday?'var(--accent)':'var(--border)'};margin:0 auto;cursor:pointer;"></div>`;
-    }
-    cells.push(`<div style="text-align:center;">
-      <div style="font-size:10px;color:${isToday?'var(--accent)':'var(--text-dim)'};margin-bottom:4px;font-weight:${isToday?'700':'400'};">${day}</div>
-      ${dotHtml}
-    </div>`);
+    // 점: 탄 날 / 50km 이상 / 200km 이상 3단계, 누적 500km 달성일은 노란 별(탭하면 달성 카드)
+    var dist = info ? info.distance : 0;
+    var tierCls = dist >= 200 ? 't3' : dist >= 50 ? 't2' : dist > 0 ? 't1' : '';
+    var dotHtml = milestoneKm
+      ? `<div class="ms-dot ms-ms${isSelected?' sel':''}" onclick="mstatSelectDay('${dateStr}'); showAchievementSummary(${mstatState.bikeId}, ${milestoneKm}, '${dateStr}')">★</div>`
+      : `<div class="ms-dot ${tierCls}${isSelected?' sel':''}" onclick="mstatSelectDay('${dateStr}')"></div>`;
+    cells.push(`<div class="ms-cal-day${dist>0?' ride':''}${isToday?' today':''}"><div class="n">${day}</div>${dotHtml}</div>`);
   }
   document.getElementById('mstat-calendar').innerHTML = cells.join('');
 
-  var detailEl = document.getElementById('mstat-day-detail');
-  if(mstatState.selectedDate && byDay[mstatState.selectedDate]){
-    var info2 = byDay[mstatState.selectedDate];
-    var d2 = new Date(mstatState.selectedDate + 'T00:00:00');
-    detailEl.style.display = 'block';
-    detailEl.innerHTML = `
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">${d2.getMonth()+1}/${d2.getDate()}${info2.count>1?` (${info2.count} rides)`:''}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">
-        <div><span style="color:var(--text-dim);">Distance</span> <strong style="color:var(--text);">${info2.distance.toFixed(1)}km</strong></div>
-        <div><span style="color:var(--text-dim);">Duration</span> <strong style="color:var(--text);">${_mstatFmtDuration(info2.duration)}</strong></div>
-        <div><span style="color:var(--text-dim);">Avg</span> <strong style="color:var(--text);">${Math.round(info2.avgSum/info2.count)}km/h</strong></div>
-        <div><span style="color:var(--text-dim);">Top</span> <strong style="color:var(--text);">${Math.round(info2.max)}km/h</strong></div>
-      </div>
-      <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="shareMonthlyDayCard()">Share</button>
-    `;
-  } else if(mstatState.selectedDate){
-    detailEl.style.display = 'block';
-    var d3 = new Date(mstatState.selectedDate + 'T00:00:00');
-    detailEl.innerHTML = `<div style="font-size:13px;color:var(--text-dim);text-align:center;">No ride recorded on ${d3.getMonth()+1}/${d3.getDate()}</div>`;
-  } else {
-    detailEl.style.display = 'none';
+  // 그 달의 라이딩 목록 (날짜별 그룹, 최신순) — 공유·삭제는 라이딩 상세 화면에서
+  var listEl = document.getElementById('mstat-rides');
+  if(listEl){
+    var sorted = rides.slice().sort(function(a,b){ return a.date===b.date ? b.id - a.id : (a.date < b.date ? 1 : -1); });
+    var groups = [];
+    sorted.forEach(function(r){
+      var g = groups.length && groups[groups.length-1].date===r.date ? groups[groups.length-1] : null;
+      if(!g){ g = {date:r.date, rows:[]}; groups.push(g); }
+      g.rows.push(r);
+    });
+    listEl.innerHTML = groups.length ? groups.map(function(g){
+      return `<div class="ms-day-h${g.date===mstatState.selectedDate?' sel':''}" id="mstat-day-${g.date}">${_fmtRideDay(g.date)}</div>
+        <div class="hs-box">${g.rows.map(function(r){
+          return `<div class="ms-row" onclick="openRideDetail(${r.id})"><span class="t">${_fmtHM(r.startTime)}–${_fmtHM(r.endTime)}</span><span class="v">${Number(r.distanceKm||0).toFixed(1)}<small>KM</small></span><span class="s">Avg ${r.avgKmh} · Top ${r.maxKmh} km/h</span></div>`;
+        }).join('')}</div>`;
+    }).join('') : ((year === new Date().getFullYear() && month === new Date().getMonth()+1) ? '' : '<div class="hs-empty">No rides this month</div>');
   }
 
   var motivateEl = document.getElementById('mstat-motivate');
   var isCurrentMonth = (year === new Date().getFullYear() && month === new Date().getMonth()+1);
   if(isCurrentMonth && rides.length === 0){
     motivateEl.style.display = 'block';
-    motivateEl.innerHTML = '🏍️ No rides recorded this month yet.<br>How about a ride today?';
+    motivateEl.innerHTML = 'No rides recorded this month yet.<br>How about a ride today?';
   } else if(isCurrentMonth && rides.length < 3){
     motivateEl.style.display = 'block';
-    motivateEl.innerHTML = "Fill up this month's calendar! 🔥";
+    motivateEl.innerHTML = "Fill up this month's calendar!";
   } else {
     motivateEl.style.display = 'none';
   }
@@ -3669,22 +3601,10 @@ function mstatSelectDay(dateStr){
   var opening = (mstatState.selectedDate !== dateStr);
   mstatState.selectedDate = opening ? dateStr : null;
   mstatRender();
-  if(opening){
-    window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'});
-  }
-}
-
-function shareMonthlyDayCard(){
-  var dateStr = mstatState.selectedDate;
-  if(!dateStr) return;
-  var rides = (D.rides||[]).filter(function(r){ return r.bikeId===mstatState.bikeId && r.date===dateStr; });
-  if(!rides.length) return;
-  var distance = rides.reduce(function(sum,r){ return sum + (r.distanceKm||0); }, 0);
-  var duration = rides.reduce(function(sum,r){ return sum + (r.durationMs||0); }, 0);
-  var max = rides.reduce(function(m,r){ return Math.max(m, r.maxKmh||0); }, 0);
-  var avgSum = rides.reduce(function(sum,r){ return sum + (r.avgKmh||0); }, 0);
-  var s = {durationMs:duration, distanceKm:distance, avgKmh:avgSum/rides.length, maxKmh:max};
-  showRideSummary(s, dateStr, mstatState.bikeId);
+  if(!opening) return;
+  var h = document.getElementById('mstat-day-' + dateStr);
+  if(h) h.scrollIntoView({behavior:'smooth', block:'start'});
+  else showToast('No ride on this day');
 }
 
 function deleteRide(id){
@@ -3699,7 +3619,8 @@ function deleteRide(id){
   D.rides=D.rides.filter(r=>r.id!==id);
   if(odoBike) odoBike.odometer = Math.max(0, (odoBike.odometer||0) - ride.odoAdded);
   save();
-  renderRideHistoryList();
+  try{ mstatRender(); }catch(e){}
+  if(document.getElementById('m-ride-detail').classList.contains('open')) closeRideDetail();
   if(odoBike){ renderBikes(); renderDash(); scheduleConsumableAlerts(); }
   showToast('✓ Ride record deleted');
 }
@@ -7314,6 +7235,10 @@ function renderMedicalCard(){
           </div>
         </div>
         <button id="ride-detail-poi-btn" class="btn btn-full" style="display:none;" onclick="_startVisitedPoiFlow(_rideDetailCurrentRide)">📍 Check places</button>
+        <div class="rd-actions">
+          <button class="btn btn-primary" onclick="var _id=_rideDetailCurrentRide&&_rideDetailCurrentRide.id;closeRideDetail();shareHistoryRide(_id);">Share</button>
+          <button class="btn btn-danger" onclick="deleteRide(_rideDetailCurrentRide&&_rideDetailCurrentRide.id)">Delete</button>
+        </div>
       </div>
     </div>
   </div>
