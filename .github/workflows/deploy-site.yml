@@ -43,6 +43,7 @@ jobs:
           SITE_LANGS: ko,en,vn
         run: |
           npm ci
+          npm test
           node build.mjs
 
       - name: Deploy to Firebase Hosting

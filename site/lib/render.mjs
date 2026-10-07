@@ -1,6 +1,7 @@
 /**
  * 공통 렌더링: HTML 이스케이프, URL 로컬라이즈, 페이지 레이아웃(head/헤더/푸터).
  */
+import { languageRoutingScript } from './languageRouting.mjs';
 
 export const SITE_ORIGIN = 'https://ridemate.iconbox.com';
 export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.iconbox.motogarage';
@@ -79,13 +80,17 @@ export function layout(o) {
   const langSwitch = (BUILT_LANGS.length > 1 ? BUILT_LANGS : []).map((l) => {
     const label = { ko: 'KO', en: 'EN', vn: 'VN' }[l];
     const cls = l === lang ? 'lang-link active' : 'lang-link';
-    return `<a class="${cls}" href="${esc(localizedPath(path, l))}" hreflang="${HREFLANG[l]}">${label}</a>`;
+    // Root is also the Korean home. An explicit query avoids bouncing a manual
+    // Korean selection back to the browser language when storage is unavailable.
+    const href = path === '/' && l === 'ko' ? '/?lang=ko' : localizedPath(path, l);
+    return `<a class="${cls}" href="${esc(href)}" hreflang="${HREFLANG[l]}" data-site-language="${l}">${label}</a>`;
   }).join('');
 
   return `<!DOCTYPE html>
 <html lang="${HREFLANG[lang]}">
 <head>
 <meta charset="UTF-8">
+${languageRoutingScript(BUILT_LANGS)}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">

@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Ridemate 홍보 웹사이트 정적 생성기 (ridemate.iconbox.com)",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "qrcode": "^1.5.4"
