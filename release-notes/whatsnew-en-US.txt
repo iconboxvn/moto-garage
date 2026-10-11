@@ -1,7 +1,6 @@
-• Redesigned Home, Service and Ride screens: remaining distance and ride stats in big, easy-to-read numbers
-• Log a replacement or mark a check right from an overdue part's card
-• Ride summary now shows a map of the route you just rode
-• Check and change which bike a ride is saved to (2+ bikes)
-• Deleting a ride also removes the distance it added to your odometer
-• Privacy notice before AI photo analysis
-• Refreshed app icon and fixed display issues
+• Redesigned SOS: a clearer countdown screen and a practice mode so you can try it without sending a real message
+• Ride history and monthly stats now live on a single page
+• Service history is grouped by year
+• Bike news is now a compact, easy-to-scan list
+• Fixed the SOS button also tapping the 113 call button in the SOS sheet
+• Terms of Service now available in English and Vietnamese; Terms and Privacy Policy links moved to the new site (ridemate.iconbox.com)

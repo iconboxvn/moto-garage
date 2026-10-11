@@ -1,6 +1,29 @@
 # Release Notes
 
-## v3.1.1 (versionCode 36) — 2026-10 (예정)
+## v3.1.2 (versionCode 37) — 2026-10 (예정)
+
+v3.1.1(versionCode 36) 이후 누적분. Night Cluster 리디자인 나머지 화면 + SOS 수정.
+
+- 🎨 **Night Cluster 리디자인 2차** — SOS 재구성: 카운트다운 화면·모의 체험·SOS 시트 정리, [DEV] 테스트
+  버튼은 디버그 빌드만(738f133). 라이딩 이력·월별 통계 한 페이지로 통합(87dc1e3). 정비 이력 연 단위
+  재구성(63f9c4e). 바이크 소식 줄 목록(3f9d81c)
+- 🐛 SOS 버튼 탭 시 시트의 113 전화 버튼이 같이 눌리던 문제(6b10eb6)
+- 🔗 약관·개인정보처리방침 링크를 GitHub Pages에서 `ridemate.iconbox.com`으로 이전(e435d17) —
+  저장소 Private 전환 준비. 구버전 앱의 github.io 링크는 Pages가 켜져 있는 동안만 동작
+- 🌐 이용약관 EN/VN 번역 추가(`landing/terms_of_service_en|vn.html`) — EN/VN 앱의 약관 링크가 각 언어 약관으로 연결, 3개 약관 페이지에 언어 전환 링크
+- 🍎 iOS 전용: 자동 SOS 체험 숨김, App Check 플러그인 iOS 제외(9ccb2bc) — Android 빌드 영향 없음
+
+### Play 스토어 출시 노트
+
+`release-notes/whatsnew-{ko-KR,en-US,vi-VN}.txt` 참고 (각 500자 이내, v3.1.2용으로 교체됨).
+
+### 배포 전 확인 (2026-10-11 자동 점검 완료)
+- JS 문법 3개 파일 OK, 고정값(알림 8시·`_MIN_SPD` 20·SOS 60초·패키지명) 변경 없음
+- KO/EN/VN 함수·모달 개수 일치(`sos-dev-test`는 KO 전용 [DEV] 버튼이라 의도된 차이)
+- 신규 타이머 `_sosSimTimer`는 `clearInterval` 가드 있음
+- 남은 것: 실기기 점검(리디자인 화면·SOS), 인앱 평가 요청 노출 확인, AAB 빌드·내부 테스트 업로드
+
+## v3.1.1 (versionCode 36) — 2026-10-06 프로덕션 게시
 
 v3.1.0(versionCode 35) 이후 누적분.
 
