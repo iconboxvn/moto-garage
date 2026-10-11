@@ -34,7 +34,7 @@ for (const lang of langs) {
     localStorage.setItem('mg2-last-bike-id', String(janusId));
     ['mg2-tos-consent','mg2-sos-consent','mg2-ai-consent','mg2-review-asked'].forEach(k => localStorage.setItem(k,'1'));
     localStorage.setItem('mg2-last-backup-ts', String(Date.now()));
-    localStorage.setItem('mg2-medical', JSON.stringify({ emergency: ({vn:'Mẹ', en:'Mom', ko:'엄마'})[lang], emergencyPhone:'0912 345 678' }));
+    localStorage.setItem('mg2-medical', JSON.stringify({ emergency: ({vn:'Bạn Minh', en:'Friend Minh', ko:'친구 민수'})[lang], emergencyPhone:'09** *** ***' }));
   }, D, janusId, lang);
   await p.evaluateOnNewDocument((news, fuel) => {
     const db = { brand_news: news, fuel_prices: fuel };
