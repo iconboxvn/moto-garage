@@ -3,3 +3,5 @@ raw/
 out*/
 fs_*.json
 compose.html
+.DS_Store
+*_contact.png
