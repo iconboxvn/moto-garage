@@ -1,0 +1,7 @@
+{
+  "name": "store-screenshots",
+  "private": true,
+  "type": "module",
+  "description": "Play 스토어 스크린샷 생성기: www/ 앱을 헤드리스 Chrome으로 캡처 + 카피 합성",
+  "dependencies": { "puppeteer-core": "^24.0.0" }
+}
