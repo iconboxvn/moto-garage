@@ -15,6 +15,13 @@ export function setBuiltLangs(langs) {
   BUILT_LANGS = langs.filter((l) => LANGS.includes(l));
 }
 
+// styles.css 내용 해시. /assets/** 는 7일 캐시라 CSS를 고쳐도 재방문자는 옛 스타일을 쓰므로
+// ?v= 로 붙여 CSS가 바뀌면 주소도 바뀌게 한다 (build.mjs가 정적 자산 복사 후 설정).
+export let CSS_VERSION = '';
+export function setCssVersion(v) {
+  CSS_VERSION = v;
+}
+
 export function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;')
@@ -110,7 +117,7 @@ ${hreflangLinks(path)}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/styles.css">
+<link rel="stylesheet" href="/assets/styles.css${CSS_VERSION ? `?v=${CSS_VERSION}` : ''}">
 <link rel="alternate" type="application/rss+xml" title="Ridemate ${esc(t.newsTitle)}" href="${esc(SITE_ORIGIN)}/rss.xml">
 ${o.jsonLd ? `<script type="application/ld+json">${o.jsonLd}</script>` : ''}
 ${o.headExtra || ''}

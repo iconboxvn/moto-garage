@@ -15,7 +15,7 @@ import QRCode from 'qrcode';
 
 import { fetchCollection } from './lib/firestore.mjs';
 import {
-  LANGS, setBuiltLangs, localizedPath, absUrl, SITE_ORIGIN, PLAY_URL, esc, isoDate,
+  LANGS, setBuiltLangs, setCssVersion, localizedPath, absUrl, SITE_ORIGIN, PLAY_URL, esc, isoDate,
 } from './lib/render.mjs';
 import { articleSlug, brandSlug } from './lib/slug.mjs';
 import STRINGS, { CATEGORY_ORDER, CATEGORY_LABEL, brandLabel } from './content/strings.mjs';
@@ -172,6 +172,9 @@ async function main() {
     console.warn('  (static/ 없음)');
   });
   await fs.writeFile(path.join(DIST, 'assets', 'favicon.svg'), FAVICON_SVG, 'utf8');
+  try {
+    setCssVersion(createHash('md5').update(await fs.readFile(path.join(DIST, 'assets', 'styles.css'))).digest('hex').slice(0, 8));
+  } catch { /* styles.css 없으면 버전 없이 */ }
 
   // 앱 스크린샷 기본값 (한국어 앱 화면). site/static/shot-*-<lang>.png 가 있으면
   // 그 언어에서는 그걸 우선 사용 (static/ 통째 복사로 이미 dist/assets 에 들어와 있음).
