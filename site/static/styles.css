@@ -154,9 +154,9 @@ h1, h2, h3 { line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
 /* ── Screenshots row ───────────────────── */
 .shots-section { background: var(--surface); }
 .shots-row {
-  display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;
+  display: flex; gap: 24px; justify-content: center; flex-wrap: nowrap;
 }
-.shot { max-width: 280px; flex: 0 0 auto; }
+.shot { max-width: 250px; flex: 1 1 0; min-width: 0; }
 .shot img {
   border-radius: 18px; border: 1px solid var(--border-bright);
   box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.7);
@@ -293,6 +293,6 @@ h1, h2, h3 { line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
     flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
     scroll-snap-type: x mandatory; margin: 0 -20px; padding: 0 20px 8px;
   }
-  .shot { max-width: 220px; scroll-snap-align: center; }
+  .shot { max-width: 220px; flex: 0 0 auto; scroll-snap-align: center; }
   .shot img { height: auto; }
 }

@@ -203,7 +203,7 @@ async function main() {
   const assetFiles = new Set(await fs.readdir(path.join(DIST, 'assets')));
   // 언어별 스크린샷 구성. 새 언어 이미지를 넣으려면
   // site/static/shot-<key>-<lang>.png 추가 후 여기 배열만 조정.
-  const SHOT_LAYOUT = { ko: ['home', 'consumables', 'sos'], en: ['home', 'consumables', 'sos'], vn: ['home', 'consumables', 'sos'] };
+  const SHOT_LAYOUT = { ko: ['home', 'consumables', 'sos', 'news'], en: ['home', 'consumables', 'sos', 'news'], vn: ['home', 'consumables', 'sos', 'news'] };
   const resolveShots = (lang) => {
     const t = STRINGS[lang];
     return (SHOT_LAYOUT[lang] || SHOT_LAYOUT.ko).map((key) => {
