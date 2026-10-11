@@ -8,6 +8,7 @@
  * 배포: firebase deploy --only hosting  (firebase.json hosting.public = site/dist)
  */
 import { promises as fs } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
@@ -201,6 +202,14 @@ async function main() {
 
   // dist/assets 파일 목록 → 언어별 스크린샷 해석
   const assetFiles = new Set(await fs.readdir(path.join(DIST, 'assets')));
+  // 스크린샷은 파일명이 같아도 /assets/** 캐시(7일) 때문에 옛 이미지가 남으므로,
+  // 내용 해시를 ?v= 로 붙여 이미지가 바뀌면 주소도 바뀌게 한다.
+  const shotVer = {};
+  for (const f of assetFiles) {
+    if (/^shot-.*\.png$/.test(f)) {
+      shotVer[f] = createHash('md5').update(await fs.readFile(path.join(DIST, 'assets', f))).digest('hex').slice(0, 8);
+    }
+  }
   // 언어별 스크린샷 구성. 새 언어 이미지를 넣으려면
   // site/static/shot-<key>-<lang>.png 추가 후 여기 배열만 조정.
   const SHOT_LAYOUT = { ko: ['home', 'consumables', 'sos', 'news'], en: ['home', 'consumables', 'sos', 'news'], vn: ['home', 'consumables', 'sos', 'news'] };
@@ -210,7 +219,7 @@ async function main() {
       const localized = `shot-${key}-${lang}.png`;
       const base = `shot-${key}.png`;
       const file = assetFiles.has(localized) ? localized : assetFiles.has(base) ? base : null;
-      return file ? { src: `/assets/${file}`, alt: t.shotCaptions[key] } : null;
+      return file ? { src: `/assets/${file}?v=${shotVer[file]}`, alt: t.shotCaptions[key] } : null;
     }).filter(Boolean);
   };
 
