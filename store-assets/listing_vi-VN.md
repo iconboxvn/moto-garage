@@ -107,7 +107,8 @@ Tải Ridemate và bắt đầu quản lý chiếc xe máy của bạn ngay hôm
 - [x] vi-VN 스토어 등록정보에 위 3개 필드 입력 (2026-09-10 반영 요청 완료)
 - [ ] KO/EN 등록정보도 같은 구조로 키워드 보강 여부 검토
 - [ ] "데이터 보안" 섹션과 설명이 일치하는지 확인 (SMS/위치 = 기기 내 저장, 광고 수집 없음)
-- [x] 베트남어 스크린샷 5장 (`store-assets/screenshots/vi_01~05.png`, commit d7f51f0) — Play Console 업로드 대기
+- [x] 베트남어 스크린샷 5장 (`store-assets/screenshots/vi_01~05.png`, commit d7f51f0) — 옛 디자인, 아래 v2로 교체됨
+- [x] 새 디자인(Night Cluster) 스크린샷 v2 KO/EN/VN 각 5장 (`store-assets/screenshots/v2/`, 생성기 `tools/store-screenshots/`, commit 0605722) — 2026-10-11 Play Console ko-KR/vi/en-US에 업로드, 검토 제출(순서: 홈→소모품→정비이력→SOS→소식). 심사 결과 확인 필요
 - [ ] 변경 후 `RELEASE_NOTES.md`에 등록정보 변경 기록 (기존 관행)
 
 ### 스크린샷 캡처 방법 (재현용)
