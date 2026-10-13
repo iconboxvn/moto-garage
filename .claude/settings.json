@@ -11,7 +11,10 @@
       "PowerShell(Get-Content*)",
       "PowerShell(Write-Output*)",
       "Bash(adb devices)",
-      "PowerShell(Select-String*)"
+      "PowerShell(Select-String*)",
+      "Bash(curl -s https://firestore.googleapis.com/v1/projects/moto-garage-8da30/*)",
+      "Bash(adb logcat:*)",
+      "Bash(grep:*)"
     ]
   }
 }
