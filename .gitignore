@@ -10,3 +10,9 @@ android/build/
 moto-garage-*-*.json
 *-service-account*.json
 *serviceaccount*.json
+
+# macOS Finder 메타데이터
+.DS_Store
+
+# Pomelli 생성 이미지 — 원본은 Drive AI Project Data/Moto_manager/Pomelli/
+store-assets/pomelli/
