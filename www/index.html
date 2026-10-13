@@ -4701,6 +4701,20 @@ function initBackButton(){
 
 // FCM 푸시 토큰 등록 (앱 최초 로드 시 1회 호출)
 function registerPushNotifications(){
+  // iOS: @capacitor/push-notifications는 APNs 토큰을 주므로 서버(FCM)용 토큰은 FirebaseMessaging으로 받음
+  if (_IS_IOS) {
+    try{
+      var FM = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseMessaging;
+      if (!FM) return;
+      var _saveFcm = function(t){ if (!t) return; localStorage.setItem('mg2-fcm-token', t); syncNotifyTarget(); };
+      FM.addListener('tokenReceived', function(ev){ _saveFcm(ev && ev.token); });
+      FM.requestPermissions().then(function(res){
+        if (res.receive !== 'granted') return;
+        return FM.getToken().then(function(r){ _saveFcm(r && r.token); });
+      }).catch(function(e){ console.warn('[MOTO] FCM 등록 실패', e); });
+    } catch(e){ console.warn('[MOTO] registerPushNotifications error', e); }
+    return;
+  }
   try{
     var PN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications;
     if (!PN) return;

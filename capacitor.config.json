@@ -6,12 +6,11 @@
     "buildOptions": {
       "keystorePath": "moto-garage.keystore",
       "keystoreAlias": "moto-garage"
-    }
-  },
-  "ios": {
+    },
     "includePlugins": [
       "@capacitor-community/in-app-review",
       "@capacitor-firebase/analytics",
+      "@capacitor-firebase/app-check",
       "@capacitor-firebase/firestore",
       "@capacitor/app",
       "@capacitor/camera",
@@ -20,6 +19,24 @@
       "@capacitor/haptics",
       "@capacitor/local-notifications",
       "@capacitor/push-notifications",
+      "@capacitor/share",
+      "@capacitor/splash-screen",
+      "@capacitor/status-bar"
+    ]
+  },
+  "ios": {
+    "includePlugins": [
+      "@capacitor-community/in-app-review",
+      "@capacitor-firebase/analytics",
+      "@capacitor-firebase/app-check",
+      "@capacitor-firebase/firestore",
+      "@capacitor-firebase/messaging",
+      "@capacitor/app",
+      "@capacitor/camera",
+      "@capacitor/filesystem",
+      "@capacitor/geolocation",
+      "@capacitor/haptics",
+      "@capacitor/local-notifications",
       "@capacitor/share",
       "@capacitor/splash-screen",
       "@capacitor/status-bar"
@@ -41,7 +58,32 @@
       "iconColor": "#e8a020"
     },
     "PushNotifications": {
-      "presentationOptions": ["badge", "sound", "alert"]
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    },
+    "FirebaseMessaging": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    }
+  },
+  "experimental": {
+    "ios": {
+      "spm": {
+        "packageOptions": {
+          "@capacitor-firebase/messaging": {
+            "symlink": true
+          },
+          "@capacitor-firebase/app-check": {
+            "symlink": true
+          }
+        }
+      }
     }
   }
 }

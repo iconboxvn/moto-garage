@@ -11,3 +11,6 @@ capacitor-cordova-ios-plugins
 # Generated Config files
 App/App/capacitor.config.json
 App/App/config.xml
+
+# cap sync가 node_modules로 거는 절대경로 심링크(SPM packageOptions symlink) — 머신마다 다름
+App/CapApp-SPM/symlinks
