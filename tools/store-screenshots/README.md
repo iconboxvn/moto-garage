@@ -32,3 +32,11 @@ node compose.mjs ko out_ko
 - 위치 권한은 SOS 컷에서만 허용한다(그 외엔 실시간 날씨 팝업이 화면을 덮음).
 - 앱 화면(`www/`)이 바뀌어 요소 이름이 달라지면 `capture.mjs`의 셀렉터/함수(`showPage`, `.sos-fab`, `_sosSimulate`, `.auto-sos-sim`, `#auto-sos-dbg`)를 확인할 것.
 - 헤드라인은 한 줄에 약 22자(영문)/14자(한글) 안팎, 최대 2줄. 넘치면 폰 화면과 겹치니 합성 후 눈으로 확인할 것.
+
+## App Store (iOS) 스크린샷
+```
+node compose.mjs ko out_ios_ko ios   # 1320×2868 (6.9"), en/vn도 동일
+```
+- iOS v1엔 낙차 감지·자동 SOS 문자가 없어서 4번째 컷(`sosauto`)을 SOS 시트(`sos`, 긴급번호·의료카드)로 바꾼다.
+  없는 기능을 스크린샷에 넣으면 App Store 심사 2.3.1로 거절된다.
+- 결과물은 `store-assets/screenshots/ios/`에 복사. 등록정보 문구는 `store-assets/listing_appstore.md`.
