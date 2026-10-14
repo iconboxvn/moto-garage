@@ -124,6 +124,8 @@ public class RidingService extends Service {
     private long   rideLowSpeedMsCommitted = 0;
     private long   rideStoppedMsCommitted = 0;
 
+    private final GpsDebugLog gpsLog = new GpsDebugLog(); // 디버그 빌드 전용 원시 GPS 로그
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -137,7 +139,16 @@ public class RidingService extends Service {
                 if (loc == null) return;
                 updateSpeedGate(loc);
                 long now = loc.getTime() > 0 ? loc.getTime() : System.currentTimeMillis();
+                double kmBefore = rideDistanceKm;
                 boolean rideIsMoving = updateRideTracking(loc, now);
+                // 디버그 빌드만: 묶여 온 위치까지 전부 기록(계산에는 마지막 위치만 쓰임 — bi==bn-1인 줄)
+                java.util.List<android.location.Location> batch = result.getLocations();
+                for (int i = 0; i < batch.size(); i++) {
+                    android.location.Location b = batch.get(i);
+                    boolean last = i == batch.size() - 1;
+                    gpsLog.fix(b, i, batch.size(), b.getAccuracy() <= RIDING_MAX_POS_ACCURACY_M,
+                        last ? rideDistanceKm - kmBefore : 0, last && rideIsMoving, rideDistanceKm);
+                }
                 Intent broadcast = new Intent(ACTION_LOCATION);
                 broadcast.putExtra("lat", loc.getLatitude());
                 broadcast.putExtra("lon", loc.getLongitude());
@@ -176,6 +187,7 @@ public class RidingService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(NOTIF_ID, buildNotification());
+        gpsLog.open(this);
         startLocationUpdates();
         return START_STICKY;
     }
@@ -184,6 +196,7 @@ public class RidingService extends Service {
     public void onDestroy() {
         super.onDestroy();
         instance = null;
+        gpsLog.close();
         if (fusedClient != null && locationCallback != null) {
             fusedClient.removeLocationUpdates(locationCallback);
         }
@@ -224,6 +237,8 @@ public class RidingService extends Service {
             int harshAccelCount, int harshBrakeCount, int gpsGapCount, double maxGpsGapSec,
             int stopCount, long lowSpeedMs, long stoppedMs) {
         if (instance == null) return;
+        instance.gpsLog.event("seed", String.format(java.util.Locale.US,
+            "\"seedKm\":%.4f,\"svcKm\":%.4f", distanceKm, instance.rideDistanceKm));
         if (distanceKm > instance.rideDistanceKm) instance.rideDistanceKm = distanceKm;
         if (maxSpeedKmh > instance.rideMaxSpeedKmh) {
             instance.rideMaxSpeedKmh = maxSpeedKmh;
