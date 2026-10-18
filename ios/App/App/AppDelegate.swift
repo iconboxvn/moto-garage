@@ -1,5 +1,7 @@
 import UIKit
 import Capacitor
+import FirebaseCore
+import FirebaseAppCheck
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,7 +9,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // App Check provider factory는 반드시 FirebaseApp.configure()보다 먼저 등록해야 함 —
+        // FirebaseAppCheck가 configure() 순간(AlwaysEager)에 인스턴스를 만들며 factory를 읽음.
+        // 플러그인 로드 때 configure()가 먼저 불리면 JS의 FirebaseAppCheck.initialize()는 늦어서
+        // 토큰이 안 붙었음(2026-10-18 TestFlight에서 missing_new로 확인).
+        #if DEBUG
+        AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())  // 콘솔에 디버그 토큰 등록 필요
+        #else
+        AppCheck.setAppCheckProviderFactory(RidemateAppAttestProviderFactory())
+        #endif
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
         return true
     }
 
@@ -53,5 +66,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                                           sessionRole: connectingSceneSession.role)
         config.delegateClass = SceneDelegate.self
         return config
+    }
+}
+
+// Firebase에는 App Attest용 기본 factory가 없어서 직접 만듦(배포 타깃 iOS 15라 App Attest만 사용)
+class RidemateAppAttestProviderFactory: NSObject, AppCheckProviderFactory {
+    func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
+        return AppAttestProvider(app: app)
     }
 }
