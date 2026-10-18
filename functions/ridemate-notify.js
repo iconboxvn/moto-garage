@@ -41,7 +41,7 @@ const ANTHROPIC_KEY = defineSecret('ANTHROPIC_KEY');
 //   - 유효한 토큰이면 Sonnet 계열 모델 전체 허용(앱에서 모델을 올려도 함수 수정 불필요).
 //  appcheck_stats/{YYYY-MM-DD}의 missing/invalid가 충분히 줄면 APPCHECK_ENFORCE를 켜고 재배포.
 // ─────────────────────────────────────────
-const APPCHECK_ENFORCE = false;
+const APPCHECK_ENFORCE = true;
 const PROXY_ALLOWED_MODELS = ['claude-sonnet-4-6'];   // 토큰 없는 요청(옛 버전 앱)용
 const PROXY_VERIFIED_MODEL_RE = /^claude-sonnet-[0-9a-z-]+$/;  // App Check 통과 요청용
 const PROXY_MAX_TOKENS = 1500;             // 앱 최대 사용값 1200
