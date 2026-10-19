@@ -4912,17 +4912,23 @@ function logConsentToServer(kind){
   try{
     var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseFirestore;
     if(!FS){ console.log('[consent] Không có plugin Firestore, chỉ ghi cục bộ'); return; }
-    FS.addDocument({
-      reference: 'consent_logs',
-      data: {
-        deviceId: _getOrCreateDeviceId(),
-        kind: kind, // 'onboarding' | 'ride_start'
-        timestamp: new Date().toISOString(),
-        tosVersion: '2026-07-09',
-        privacyVersion: '2026-07-09',
-        lang: 'vn',
-        appVersion: '2.0'
-      }
+    // Phiên bản app lấy từ plugin App, không ghi cứng (giá trị cố định '2.0' cũ vẫn được ghi cả ở bản 3.x)
+    var CapApp = window.Capacitor.Plugins.App;
+    var verP = (CapApp && CapApp.getInfo) ? CapApp.getInfo().catch(function(){ return null; }) : Promise.resolve(null);
+    verP.then(function(info){
+      return FS.addDocument({
+        reference: 'consent_logs',
+        data: {
+          deviceId: _getOrCreateDeviceId(),
+          kind: kind, // 'onboarding' | 'ride_start'
+          timestamp: new Date().toISOString(),
+          tosVersion: '2026-07-09',
+          privacyVersion: '2026-07-09',
+          lang: 'vn',
+          appVersion: (info && info.version) ? (info.version + (info.build ? ' (' + info.build + ')' : '')) : 'unknown',
+          platform: (window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || 'unknown'
+        }
+      });
     }).catch(function(e){ console.warn('[consent] Ghi lên máy chủ thất bại', e); });
   }catch(e){ console.warn('[consent] Lỗi', e); }
 }

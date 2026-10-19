@@ -4914,17 +4914,23 @@ function logConsentToServer(kind){
   try{
     var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseFirestore;
     if(!FS){ console.log('[consent] Firestore plugin unavailable, logged locally only'); return; }
-    FS.addDocument({
-      reference: 'consent_logs',
-      data: {
-        deviceId: _getOrCreateDeviceId(),
-        kind: kind, // 'onboarding' | 'ride_start'
-        timestamp: new Date().toISOString(),
-        tosVersion: '2026-07-09',
-        privacyVersion: '2026-07-09',
-        lang: 'en',
-        appVersion: '2.0'
-      }
+    // App version comes from the App plugin, not hardcoded (the old fixed '2.0' was logged even on 3.x)
+    var CapApp = window.Capacitor.Plugins.App;
+    var verP = (CapApp && CapApp.getInfo) ? CapApp.getInfo().catch(function(){ return null; }) : Promise.resolve(null);
+    verP.then(function(info){
+      return FS.addDocument({
+        reference: 'consent_logs',
+        data: {
+          deviceId: _getOrCreateDeviceId(),
+          kind: kind, // 'onboarding' | 'ride_start'
+          timestamp: new Date().toISOString(),
+          tosVersion: '2026-07-09',
+          privacyVersion: '2026-07-09',
+          lang: 'en',
+          appVersion: (info && info.version) ? (info.version + (info.build ? ' (' + info.build + ')' : '')) : 'unknown',
+          platform: (window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || 'unknown'
+        }
+      });
     }).catch(function(e){ console.warn('[consent] server log failed', e); });
   }catch(e){ console.warn('[consent] error', e); }
 }

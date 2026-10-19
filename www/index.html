@@ -5050,17 +5050,23 @@ function logConsentToServer(kind){
   try{
     var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseFirestore;
     if(!FS){ console.log('[consent] Firestore 플러그인 없음, 로컬만 기록됨'); return; }
-    FS.addDocument({
-      reference: 'consent_logs',
-      data: {
-        deviceId: _getOrCreateDeviceId(),
-        kind: kind, // 'onboarding' | 'ride_start'
-        timestamp: new Date().toISOString(),
-        tosVersion: '2026-07-09',
-        privacyVersion: '2026-07-09',
-        lang: 'ko',
-        appVersion: '2.0'
-      }
+    // 앱 버전은 하드코딩하지 않고 App 플러그인에서 조회(예전 '2.0' 고정값이 3.x까지 그대로 기록됐었음)
+    var CapApp = window.Capacitor.Plugins.App;
+    var verP = (CapApp && CapApp.getInfo) ? CapApp.getInfo().catch(function(){ return null; }) : Promise.resolve(null);
+    verP.then(function(info){
+      return FS.addDocument({
+        reference: 'consent_logs',
+        data: {
+          deviceId: _getOrCreateDeviceId(),
+          kind: kind, // 'onboarding' | 'ride_start'
+          timestamp: new Date().toISOString(),
+          tosVersion: '2026-07-09',
+          privacyVersion: '2026-07-09',
+          lang: 'ko',
+          appVersion: (info && info.version) ? (info.version + (info.build ? ' (' + info.build + ')' : '')) : 'unknown',
+          platform: (window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || 'unknown'
+        }
+      });
     }).catch(function(e){ console.warn('[consent] 서버 기록 실패', e); });
   }catch(e){ console.warn('[consent] 오류', e); }
 }
