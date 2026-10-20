@@ -16,3 +16,4 @@ moto-garage-*-*.json
 
 # Pomelli 생성 이미지 — 원본은 Drive AI Project Data/Moto_manager/Pomelli/
 store-assets/pomelli/
+*.p8

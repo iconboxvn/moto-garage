@@ -14,7 +14,13 @@
 #   업로드 검증("Invalid Signature")에서 막혔다.
 # - 첫 실행 때 키체인 접근 창이 뜨면 Mac 로그인 암호 입력 후 "항상 허용".
 # - 프로필이 만료되거나 entitlements(capabilities)를 바꾸면 developer.apple.com에서 프로필을 다시 생성할 것.
-# 실행 전: www 변경이 있으면 `npx cap sync ios`. Xcode에 개발자 계정 로그인 필요.
+# 인증(2026-10-20~): Xcode 27의 "Apple Accounts" 로그인으로는 xcodebuild 업로드가 "Failed to Use Accounts"로 실패해서
+#   App Store Connect API 키를 쓴다. ~/.appstoreconnect/ridemate.env(저장소 밖)에
+#     ASC_KEY_ID=XXXXXXXXXX
+#     ASC_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+#   를 적고, 키 파일은 ~/.appstoreconnect/private_keys/AuthKey_<ASC_KEY_ID>.p8에 둔다(원본은 Drive Ridemate_Key/).
+#   이 파일이 없으면 예전처럼 Xcode 계정 로그인으로 시도한다.
+# 실행 전: www 변경이 있으면 `npx cap sync ios`.
 set -euo pipefail
 BUILD="${1:?빌드번호를 지정하세요 (App Store Connect에 올린 적 없는 숫자)}"
 UPLOAD="${2:-}"
@@ -26,10 +32,21 @@ OUT="$ROOT/ios/App/output"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
+AUTH=()
+ASC_ENV="$HOME/.appstoreconnect/ridemate.env"
+if [[ -f "$ASC_ENV" ]]; then
+  # shellcheck disable=SC1090
+  source "$ASC_ENV"
+  ASC_KEY_PATH="${ASC_KEY_PATH:-$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8}"
+  [[ -f "$ASC_KEY_PATH" ]] || { echo "❌ API 키 파일 없음: $ASC_KEY_PATH"; exit 1; }
+  AUTH=(-authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+  echo "🔑 App Store Connect API 키로 인증 ($ASC_KEY_ID)"
+fi
+
 cd "$ROOT/ios/App"
 xcodebuild -project App.xcodeproj -scheme App -configuration Release \
   -destination 'generic/platform=iOS' -archivePath "$TMP/App.xcarchive" \
-  -allowProvisioningUpdates CURRENT_PROJECT_VERSION="$BUILD" archive -quiet
+  -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"} CURRENT_PROJECT_VERSION="$BUILD" archive -quiet
 
 mkplist() { # $1 = export | upload
   cat <<EOF
@@ -49,7 +66,7 @@ EOF
 mkplist export > "$TMP/export.plist"
 rm -rf "$OUT"
 xcodebuild -exportArchive -archivePath "$TMP/App.xcarchive" -exportPath "$OUT" \
-  -exportOptionsPlist "$TMP/export.plist" -allowProvisioningUpdates -quiet
+  -exportOptionsPlist "$TMP/export.plist" -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"} -quiet
 
 # 확인: 배포 서명 + 푸시·App Attest가 들어갔는지
 mkdir "$TMP/ipa" && (cd "$TMP/ipa" && unzip -q "$OUT/App.ipa")
@@ -65,6 +82,6 @@ echo "✅ $OUT/App.ipa — $(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVers
 if [[ "$UPLOAD" == "upload" ]]; then
   mkplist upload > "$TMP/upload.plist"
   xcodebuild -exportArchive -archivePath "$TMP/App.xcarchive" -exportPath "$TMP/upload" \
-    -exportOptionsPlist "$TMP/upload.plist" -allowProvisioningUpdates -quiet
+    -exportOptionsPlist "$TMP/upload.plist" -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"} -quiet
   echo "✅ App Store Connect 업로드 완료 — 처리 후 TestFlight에 나타남"
 fi
