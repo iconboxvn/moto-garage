@@ -1,6 +1,4 @@
-• Thiết kế mới cho SOS: màn hình đếm ngược rõ ràng hơn và chế độ trải nghiệm thử, không gửi tin nhắn thật
-• Lịch sử chuyến đi và thống kê theo tháng gộp vào một trang
-• Lịch sử bảo dưỡng được nhóm theo từng năm
-• Tin tức xe máy hiển thị dạng danh sách gọn, dễ lướt
-• Sửa lỗi: bấm nút SOS đôi khi bấm nhầm nút gọi 113 trong bảng SOS
-• Điều khoản sử dụng nay có thêm bản tiếng Anh và tiếng Việt; liên kết Điều khoản và Chính sách quyền riêng tư chuyển sang trang mới (ridemate.iconbox.com)
+• Giờ đây bạn nhập trực tiếp ngày hết hạn bảo hiểm. Để bảo vệ quyền riêng tư, tính năng tải ảnh/PDF giấy chứng nhận bảo hiểm đã được bỏ. Nhắc trước khi hết hạn vẫn hoạt động như cũ
+• Thông báo rõ ràng hơn khi phân tích ảnh bằng AI (đèn cảnh báo, công-tơ-mét)
+• Làm gọn hình ảnh ở màn hình giới thiệu
+• Cải thiện nhỏ về câu chữ và cách ghi nhận

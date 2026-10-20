@@ -77,7 +77,9 @@ ENTS="$(codesign -d --entitlements :- "$APP" 2>/dev/null)"
 for k in aps-environment com.apple.developer.devicecheck.appattest-environment; do
   [[ "$ENTS" == *"$k"* ]] || { echo "❌ entitlement 누락: $k"; exit 1; }
 done
-echo "✅ $OUT/App.ipa — $(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Info.plist") ($BUILD)"
+VER="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Info.plist")"
+cp "$OUT/App.ipa" "$OUT/Ridemate-$VER-$BUILD.ipa"   # 릴리즈 파일은 버전을 붙인 이름으로도 남김(2026-10-20 사용자 요청)
+echo "✅ $OUT/Ridemate-$VER-$BUILD.ipa — $VER ($BUILD)"
 
 if [[ "$UPLOAD" == "upload" ]]; then
   mkplist upload > "$TMP/upload.plist"

@@ -1,6 +1,4 @@
-• Redesigned SOS: a clearer countdown screen and a practice mode so you can try it without sending a real message
-• Ride history and monthly stats now live on a single page
-• Service history is grouped by year
-• Bike news is now a compact, easy-to-scan list
-• Fixed the SOS button also tapping the 113 call button in the SOS sheet
-• Terms of Service now available in English and Vietnamese; Terms and Privacy Policy links moved to the new site (ridemate.iconbox.com)
+• You now enter your insurance expiry date directly. To protect your privacy, uploading insurance certificate photos or PDFs has been removed. Expiry reminders work as before
+• Clearer notice for photo AI analysis (warning lights and odometer)
+• Cleaned-up images on the welcome screens
+• Minor wording and logging improvements
