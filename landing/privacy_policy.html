@@ -10,12 +10,17 @@
   h2 { color: #1a1a2e; margin-top: 30px; }
   .date { color: #888; font-size: 14px; }
   .highlight { background: #fff8e8; padding: 12px; border-left: 4px solid #e8a020; border-radius: 4px; margin: 16px 0; }
+  table.xfer { border-collapse: collapse; width: 100%; font-size: 14px; margin: 12px 0; }
+  table.xfer th, table.xfer td { border: 1px solid #ddd; padding: 8px; vertical-align: top; text-align: left; }
+  table.xfer th { background: #f6f6f6; }
+  table.xfer td:nth-child(2), table.xfer td:nth-child(4) { min-width: 72px; }
+  .xfer-wrap { overflow-x: auto; }
 </style>
 </head>
 <body>
 
 <h1><img src="/icon.png" alt="" style="width:32px;height:32px;vertical-align:middle;border-radius:8px;margin-right:8px;"> Ridemate 개인정보처리방침</h1>
-<p class="date">최종 업데이트: 2026년 10월 4일</p>
+<p class="date">최종 업데이트: 2026년 10월 20일</p>
 <p class="date">한국어 · <a href="/privacy_policy_en/">English</a> · <a href="/privacy_policy_vn/">Tiếng Việt</a></p>
 
 <div class="highlight">
@@ -53,15 +58,16 @@ Ridemate는 사용자의 개인정보를 중요하게 생각합니다. 본 방�
 
 <h3>1-4. 사진 AI 분석</h3>
 <ul>
-  <li>보험증 만료일 자동 추출, 계기판 경고등 확인, 계기판 주행거리 인식 기능을 사용할 때, 사용자가 촬영하거나 선택한 사진(또는 PDF)을 분석을 위해 <strong>Anthropic(Claude AI)</strong>에 전송합니다</li>
+  <li>계기판 경고등 확인, 계기판 주행거리 인식 기능을 사용할 때, 사용자가 촬영하거나 선택한 사진을 분석을 위해 미국의 <strong>Anthropic(Claude AI)</strong>에 전송합니다 (4. 국외 이전 참고)</li>
+  <li>보험증 사진/PDF로 만료일을 자동 추출하던 기능은 앱 3.1.3부터 삭제되었습니다. 보험 만료일은 직접 입력하며 기기에만 저장됩니다. 이전 버전(3.1.2 이하) 앱에서는 이 기능을 쓸 때 보험증 사진/PDF가 같은 방식으로 전송될 수 있습니다</li>
   <li>이 기능은 처음 사용할 때 안내와 동의를 거치며, 동의하지 않으면 사진이 전송되지 않습니다</li>
   <li>Ridemate는 분석 결과만 받아오며, 사진을 Ridemate 서버에 저장하지 않습니다. Anthropic의 데이터 처리는 <a href="https://www.anthropic.com/legal/privacy">Anthropic 개인정보처리방침</a>을 따릅니다</li>
-  <li>보험증 등 개인정보가 포함된 서류는 필요한 부분만 촬영하시기를 권장합니다</li>
+  <li>번호판 등 개인정보가 사진에 찍히지 않도록 계기판만 촬영하시기를 권장합니다</li>
 </ul>
 
 <h3>1-5. 이용 분석</h3>
 <ul>
-  <li>서비스 개선을 위해 <strong>Firebase Analytics</strong>를 통해 앱 내 행동 데이터(화면 조회, 차량 등록, 라이딩 시작/종료 및 주행 통계, 보험증 스캔 사용, SOS 버튼 사용, 소모품 교체 기록, 카드 공유 등 기능 사용 여부와 빈도)를 비식별 형태로 수집합니다</li>
+  <li>서비스 개선을 위해 <strong>Firebase Analytics</strong>를 통해 앱 내 행동 데이터(화면 조회, 차량 등록, 라이딩 시작/종료 및 주행 통계, 보험증 스캔 사용(이전 버전), SOS 버튼 사용, 소모품 교체 기록, 카드 공유 등 기능 사용 여부와 빈도)를 비식별 형태로 수집합니다</li>
   <li>Analytics로 수집되는 정보에는 이용자의 이름, 연락처 등 개인 식별 정보가 포함되지 않으며, 기기 식별자 및 대략적인 지역(국가) 정보가 포함될 수 있습니다</li>
 </ul>
 
@@ -77,7 +83,7 @@ Ridemate는 사용자의 개인정보를 중요하게 생각합니다. 본 방�
   <li>소모품 교체 주기 관리 및 알림</li>
   <li>라이딩 기록 및 다녀온 곳 표시</li>
   <li>날씨 및 대기질 정보 제공</li>
-  <li>사진 AI 분석 (보험 만료일·경고등·주행거리 인식)</li>
+  <li>사진 AI 분석 (경고등·주행거리 인식, 이전 버전은 보험 만료일 포함)</li>
   <li>충격/낙차 감지 시 비상 알림 발송 (Android)</li>
   <li>앱 기능 제공 및 개선</li>
   <li>Analytics를 통한 서비스 이용 현황 분석 및 기능 개선 우선순위 결정</li>
@@ -92,19 +98,36 @@ Ridemate는 사용자의 개인정보를 중요하게 생각합니다. 본 방�
   <li><strong>Anthropic (Claude AI)</strong>: 사진 AI 분석 (사용자가 동의 후 선택한 사진/PDF 전송)</li>
 </ul>
 
-<h2>4. SMS 전송 (Android)</h2>
+<h2>4. 국외 이전</h2>
+<p>Ridemate는 서비스 제공에 필요한 범위에서 아래와 같이 개인정보를 국외의 업체로 이전(전송·처리 위탁)합니다. 모든 전송은 암호화된 연결(HTTPS)로 이루어집니다.</p>
+<div class="xfer-wrap"><table class="xfer">
+<tr><th>받는 자 (연락처)</th><th>국가</th><th>이전 항목</th><th>목적</th><th>시기·방법</th><th>보유 기간</th></tr>
+<tr><td><a href="https://policies.google.com/privacy">Google LLC</a><br>Firebase (Firestore·Functions·Cloud Messaging)</td><td>미국</td><td>임의 식별자, 알림 토큰, 마지막 위치(위도·경도), 언어, 소모품 요약, 동의 기록</td><td>정비·날씨 알림 발송, 동의 이력 증빙</td><td>앱 실행·알림 설정·동의 시 자동 전송</td><td>알림 대상 정보는 알림 토큰이 무효가 되면(앱 삭제 등) 자동 삭제, 그 전에도 요청 시 삭제. 동의 기록은 삭제 요청 시까지</td></tr>
+<tr><td><a href="https://policies.google.com/privacy">Google LLC</a><br>Firebase Analytics</td><td>미국 등 Google 데이터센터</td><td>기기 식별자, 앱 이용 이벤트, 대략적인 지역(국가)</td><td>서비스 이용 분석</td><td>앱 사용 중 자동 전송</td><td>Google Analytics 보존 기간 설정(최대 14개월)에 따라 자동 삭제</td></tr>
+<tr><td><a href="https://policies.google.com/privacy">Google LLC</a><br>Google Places</td><td>미국</td><td>라이딩 중 머문 지점의 좌표</td><td>다녀온 곳의 장소 이름 찾기</td><td>라이딩 후 Ridemate 서버(미국)를 거쳐 전송</td><td>Ridemate는 저장하지 않음. Google의 처리는 Google 정책에 따름</td></tr>
+<tr><td><a href="mailto:privacy@anthropic.com">Anthropic, PBC</a></td><td>미국</td><td>사용자가 고른 계기판(경고등·주행거리) 사진과 분석 요청 문장. 이전 버전 앱은 보험증 사진/PDF 포함</td><td>사진 AI 분석</td><td>기능 사용 시(최초 동의 후) Ridemate 서버를 거쳐 전송</td><td>Ridemate는 저장하지 않음. Anthropic은 받은 날부터 30일 이내 자동 삭제(이용 정책 위반이 의심되는 경우 최대 2년 보관될 수 있음)</td></tr>
+<tr><td><a href="https://openweather.co.uk/privacy-policy">OpenWeather Ltd</a><br>OpenWeatherMap</td><td>영국</td><td>현재 위치 좌표</td><td>날씨·대기질 정보 제공</td><td>날씨 정보를 불러올 때 직접 전송</td><td>Ridemate는 저장하지 않음. OpenWeather의 처리는 OpenWeather 정책에 따름</td></tr>
+</table></div>
+<p><strong>이전을 거부하는 방법과 그 결과</strong></p>
+<ul>
+  <li>위치 권한을 허용하지 않으면 위치 정보는 전송되지 않습니다. 이 경우 라이딩 기록, 날씨, 위치 기반 알림을 쓸 수 없습니다</li>
+  <li>사진 AI 분석은 처음 사용할 때 동의하지 않으면 사진이 전송되지 않으며, 그 밖의 기능은 그대로 쓸 수 있습니다</li>
+  <li>서버에 저장된 알림 대상 정보·동의 기록·이용 분석 데이터는 아래 이메일로 요청하시면 삭제해 드립니다</li>
+</ul>
+
+<h2>5. SMS 전송 (Android)</h2>
 <p>Android 앱에서 충격/낙차 감지 기능 사용 시, 사용자가 직접 등록한 비상연락처로 위치가 포함된 SMS가 발송됩니다. SMS 발송을 위해 SEND_SMS 권한이 필요하며, 사용자의 명시적 동의 후에만 활성화됩니다. iOS 앱에는 이 기능이 없습니다.</p>
 
-<h2>5. 데이터 보안</h2>
+<h2>6. 데이터 보안</h2>
 <p>기기에 저장되는 데이터는 앱을 삭제하면 함께 삭제됩니다. 서버로 전송되는 정보는 암호화된 연결(HTTPS)로 전송되며, 위 1-3, 1-6에 적힌 최소한의 정보만 서버에 저장합니다.</p>
 
-<h2>6. 아동 개인정보</h2>
+<h2>7. 아동 개인정보</h2>
 <p>Ridemate는 13세 미만 아동을 대상으로 하지 않으며, 아동의 개인정보를 의도적으로 수집하지 않습니다.</p>
 
-<h2>7. 방침 변경</h2>
+<h2>8. 방침 변경</h2>
 <p>본 방침이 변경될 경우 앱 업데이트를 통해 공지합니다.</p>
 
-<h2>8. 데이터 삭제 요청</h2>
+<h2>9. 데이터 삭제 요청</h2>
 <p><strong>Ridemate는 별도의 회원가입이나 계정이 없습니다.</strong> 데이터는 아래와 같이 삭제됩니다.</p>
 <ul>
   <li><strong>기기에 저장된 데이터</strong> (차량 정보, 정비 이력, 의료 정보, 앱 설정 등): 앱을 삭제(제거)하면 별도 요청 없이 즉시 함께 삭제됩니다. 이 정보는 처음부터 서버에 저장되지 않습니다.</li>
@@ -114,7 +137,7 @@ Ridemate는 사용자의 개인정보를 중요하게 생각합니다. 본 방�
 </ul>
 <p>데이터 삭제 요청: <a href="mailto:iconbox.vn@gmail.com">iconbox.vn@gmail.com</a></p>
 
-<h2>9. 문의</h2>
+<h2>10. 문의</h2>
 <p>개인정보 관련 문의: <a href="mailto:iconbox.vn@gmail.com">iconbox.vn@gmail.com</a></p>
 
 <hr>

@@ -10,12 +10,17 @@
   h2 { color: #1a1a2e; margin-top: 30px; }
   .date { color: #888; font-size: 14px; }
   .highlight { background: #fff8e8; padding: 12px; border-left: 4px solid #e8a020; border-radius: 4px; margin: 16px 0; }
+  table.xfer { border-collapse: collapse; width: 100%; font-size: 14px; margin: 12px 0; }
+  table.xfer th, table.xfer td { border: 1px solid #ddd; padding: 8px; vertical-align: top; text-align: left; }
+  table.xfer th { background: #f6f6f6; }
+  table.xfer td:nth-child(2), table.xfer td:nth-child(4) { min-width: 72px; }
+  .xfer-wrap { overflow-x: auto; }
 </style>
 </head>
 <body>
 
 <h1><img src="/icon.png" alt="" style="width:32px;height:32px;vertical-align:middle;border-radius:8px;margin-right:8px;"> Ridemate Privacy Policy</h1>
-<p class="date">Last updated: October 4, 2026</p>
+<p class="date">Last updated: October 20, 2026</p>
 <p class="date"><a href="/privacy_policy/">한국어</a> · English · <a href="/privacy_policy_vn/">Tiếng Việt</a></p>
 
 <div class="highlight">
@@ -53,15 +58,16 @@ Ridemate cares about your privacy. This policy explains what information the app
 
 <h3>1-4. Photo AI analysis</h3>
 <ul>
-  <li>When you use automatic insurance expiry extraction, dashboard warning light check, or odometer reading from a dashboard photo, the photo (or PDF) you take or select is sent to <strong>Anthropic (Claude AI)</strong> for analysis</li>
+  <li>When you use the dashboard warning light check or odometer reading from a dashboard photo, the photo you take or select is sent to <strong>Anthropic (Claude AI)</strong> in the United States for analysis (see 4. International Transfers)</li>
+  <li>Automatic insurance expiry extraction from an insurance certificate photo/PDF was removed in app version 3.1.3. You now enter the expiry date yourself and it is stored only on your device. In older versions (3.1.2 and earlier), an insurance certificate photo/PDF may be sent in the same way when that feature is used</li>
   <li>The first time you use these features, you are shown a notice and asked for consent. If you do not agree, no photo is sent</li>
   <li>Ridemate only receives the analysis result and does not store photos on Ridemate's servers. Anthropic's handling of data is governed by the <a href="https://www.anthropic.com/legal/privacy">Anthropic Privacy Policy</a></li>
-  <li>For documents containing personal information, such as insurance certificates, we recommend capturing only the parts that are needed</li>
+  <li>We recommend photographing only the dashboard, so that personal details such as your license plate are not in the photo</li>
 </ul>
 
 <h3>1-5. Usage analytics</h3>
 <ul>
-  <li>To improve the service, <strong>Firebase Analytics</strong> collects in-app activity data in de-identified form (screen views, vehicle registration, ride start/end and ride statistics, insurance scan usage, SOS button usage, consumable replacement records, card sharing, and other feature usage and frequency)</li>
+  <li>To improve the service, <strong>Firebase Analytics</strong> collects in-app activity data in de-identified form (screen views, vehicle registration, ride start/end and ride statistics, insurance scan usage (older versions), SOS button usage, consumable replacement records, card sharing, and other feature usage and frequency)</li>
   <li>Analytics data does not include personally identifying information such as your name or contact details, but may include a device identifier and approximate region (country)</li>
 </ul>
 
@@ -77,7 +83,7 @@ Ridemate cares about your privacy. This policy explains what information the app
   <li>Managing consumable replacement intervals and reminders</li>
   <li>Ride records and visited places</li>
   <li>Providing weather and air quality information</li>
-  <li>Photo AI analysis (insurance expiry, warning lights, odometer reading)</li>
+  <li>Photo AI analysis (warning lights, odometer reading; insurance expiry in older versions)</li>
   <li>Sending emergency alerts when a crash or fall is detected (Android)</li>
   <li>Providing and improving app features</li>
   <li>Analyzing service usage through Analytics to prioritize improvements</li>
@@ -92,19 +98,36 @@ Ridemate cares about your privacy. This policy explains what information the app
   <li><strong>Anthropic (Claude AI)</strong>: Photo AI analysis (photos/PDFs you select after giving consent are sent)</li>
 </ul>
 
-<h2>4. SMS (Android)</h2>
+<h2>4. International Transfers</h2>
+<p>To provide the service, Ridemate transfers personal information to companies outside your country (transmission and processing on our behalf) as described below. All transfers use an encrypted connection (HTTPS).</p>
+<div class="xfer-wrap"><table class="xfer">
+<tr><th>Recipient (contact)</th><th>Country</th><th>Data</th><th>Purpose</th><th>When and how</th><th>Retention</th></tr>
+<tr><td><a href="https://policies.google.com/privacy">Google LLC</a><br>Firebase (Firestore, Functions, Cloud Messaging)</td><td>United States</td><td>Random identifier, notification token, last known location (latitude/longitude), language, consumables summary, consent records</td><td>Sending maintenance and weather notifications; proof of consent</td><td>Sent automatically when you open the app, change notification settings or give consent</td><td>Notification target data is deleted automatically when the notification token becomes invalid (e.g. the app is deleted), or earlier on request. Consent records are kept until you request deletion</td></tr>
+<tr><td><a href="https://policies.google.com/privacy">Google LLC</a><br>Firebase Analytics</td><td>United States and other Google data centers</td><td>Device identifier, in-app usage events, approximate region (country)</td><td>Service usage analysis</td><td>Sent automatically while you use the app</td><td>Deleted automatically according to the Google Analytics retention setting (up to 14 months)</td></tr>
+<tr><td><a href="https://policies.google.com/privacy">Google LLC</a><br>Google Places</td><td>United States</td><td>Coordinates of places where you stopped during a ride</td><td>Finding place names for visited places</td><td>Sent through the Ridemate server (United States) after a ride</td><td>Not stored by Ridemate. Google's handling follows Google's policy</td></tr>
+<tr><td><a href="mailto:privacy@anthropic.com">Anthropic, PBC</a></td><td>United States</td><td>Dashboard photos you choose (warning light, odometer) and the analysis request text. In older app versions, also insurance certificate photos/PDFs</td><td>Photo AI analysis</td><td>Sent through the Ridemate server when you use the feature (after your first-time consent)</td><td>Not stored by Ridemate. Anthropic deletes it automatically within 30 days of receipt (it may be kept for up to 2 years if a usage policy violation is suspected)</td></tr>
+<tr><td><a href="https://openweather.co.uk/privacy-policy">OpenWeather Ltd</a><br>OpenWeatherMap</td><td>United Kingdom</td><td>Current location coordinates</td><td>Weather and air quality information</td><td>Sent directly when weather information is loaded</td><td>Not stored by Ridemate. OpenWeather's handling follows OpenWeather's policy</td></tr>
+</table></div>
+<p><strong>How to refuse, and what happens</strong></p>
+<ul>
+  <li>If you do not allow location access, no location is sent. Ride records, weather and location-based notifications will not be available</li>
+  <li>If you do not agree when you first use photo AI analysis, no photo is sent, and all other features keep working</li>
+  <li>Notification target data, consent records and usage analytics data stored on the server will be deleted on request to the email below</li>
+</ul>
+
+<h2>5. SMS (Android)</h2>
 <p>In the Android app, when the crash/fall detection feature is used, an SMS including your location is sent to the emergency contact you registered. The SEND_SMS permission is required and is enabled only after your explicit consent. The iOS app does not have this feature.</p>
 
-<h2>5. Data Security</h2>
+<h2>6. Data Security</h2>
 <p>Data stored on your device is deleted when you delete the app. Information sent to our server is transmitted over an encrypted connection (HTTPS), and only the minimum information described in 1-3 and 1-6 is stored on the server.</p>
 
-<h2>6. Children's Privacy</h2>
+<h2>7. Children's Privacy</h2>
 <p>Ridemate is not directed at children under 13 and does not knowingly collect personal information from children.</p>
 
-<h2>7. Changes to This Policy</h2>
+<h2>8. Changes to This Policy</h2>
 <p>If this policy changes, we will notify you through an app update.</p>
 
-<h2>8. Data Deletion Requests</h2>
+<h2>9. Data Deletion Requests</h2>
 <p><strong>Ridemate has no sign-up or user accounts.</strong> Data is deleted as follows.</p>
 <ul>
   <li><strong>Data stored on your device</strong> (vehicle information, maintenance history, medical information, app settings, etc.): Deleted immediately when you delete (uninstall) the app, with no request needed. This information is never stored on our server.</li>
@@ -114,7 +137,7 @@ Ridemate cares about your privacy. This policy explains what information the app
 </ul>
 <p>Data deletion requests: <a href="mailto:iconbox.vn@gmail.com">iconbox.vn@gmail.com</a></p>
 
-<h2>9. Contact</h2>
+<h2>10. Contact</h2>
 <p>Privacy inquiries: <a href="mailto:iconbox.vn@gmail.com">iconbox.vn@gmail.com</a></p>
 
 <hr>
