@@ -114,7 +114,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .bike-card{background:linear-gradient(135deg,#181a1d 0%,#101214 100%);border:1px solid var(--border-bright);border-radius:var(--r-md);padding:16px;margin-bottom:12px;position:relative;overflow:hidden;}
 .bike-card::before{content:none;}
 
-  /* ── 보험증 섹션 ── */
+  /* ── 보험 만료일 섹션 ── */
   .ins-section{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;}
   .ins-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
   .ins-title{font-size:15px;color:var(--text-dim);}
@@ -126,7 +126,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
   .ins-dday-warn{color:#E8A020;font-size:15px;font-weight:700;}
   .ins-dday-danger{color:#E84040;font-size:15px;font-weight:700;}
   .ins-btn-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
-  .ins-loading{font-size:15px;color:var(--text-muted);padding:8px 0;}
 
   /* ── 설정 토글 스위치 ── */
   .setting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
@@ -917,7 +916,7 @@ option{background:var(--surface2);}
         <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
       </div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:10px;">내보내기 후 카카오톡 나에게 보내기로 보관하세요</div>
-      <div style="font-size:11px;color:var(--red);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">⚠️ 안드로이드 자동 백업은 기기 변경 시 데이터를 못 살릴 수 있습니다. <strong>반드시 위 "JSON 내보내기"로 정기적으로(월 1회 권장) 직접 백업</strong>해두세요.</div>
+      <div style="font-size:11px;color:var(--red);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">⚠️ 휴대폰 자동 백업만으로는 기기를 바꿀 때 데이터가 복원되지 않을 수 있습니다. <strong>반드시 위 "JSON 내보내기"로 정기적으로(월 1회 권장) 직접 백업</strong>해두세요.</div>
       <div id="backup-stats" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"></div>
       <div style="margin-top:14px;">
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 전체 데이터 초기화</button>
@@ -2434,7 +2433,7 @@ function renderBikes(){
     </div>
     <div class="ins-section">
       <div class="ins-header" onclick="toggleInsSection(${b.id})">
-        <span class="ins-title">🛡 보험증 등록${b.insurance?.expiry?` · ${b.insurance.expiry}`:''}</span>
+        <span class="ins-title">🛡 보험 만료일${b.insurance?.expiry?` · ${b.insurance.expiry}`:''}</span>
         <span id="ins-arrow-${b.id}" style="font-size:11px;color:var(--text-muted);">▼</span>
       </div>
       <div id="ins-body-${b.id}" style="display:none;">
@@ -2472,7 +2471,7 @@ function autoSaveBikeMemo(id){
 }
 
 // ═══════════════════════════════════════════
-//  보험증 관련
+//  보험 만료일
 // ═══════════════════════════════════════════
 function toggleInsSection(id){
   const body=document.getElementById('ins-body-'+id);
@@ -2484,45 +2483,23 @@ function toggleInsSection(id){
 
 function _renderInsBody(b){
   const ins=b.insurance||{};
-  const dDayHtml=_insDDay(ins.expiry);
   return `<div class="ins-body">
     <p style="font-size:15px;color:var(--text-muted);margin:0 0 10px 0;line-height:1.6;">
-      보험증 PDF 또는 사진으로 등록하면 보험 만료일 전 자동으로 알려 드립니다.<br>
+      보험 만료일을 입력하면 만료 전에 자동으로 알려 드립니다.<br>
       <span style="font-size:13px;">(만료 14일 전 1회, 7일 전부터는 매일 자동알림)</span>
     </p>
-    ${ins.expiry?`
-    <div class="ins-row">
-      <span class="ins-label">보험사</span>
-      <span class="ins-value">${ins.insurer||'-'}</span>
-    </div>
-    <div class="ins-row">
-      <span class="ins-label">보험 종류</span>
-      <span class="ins-value">${ins.type||'-'}</span>
-    </div>
-    <div class="ins-row">
+    <div class="ins-row" style="align-items:center;">
       <span class="ins-label">만료일</span>
-      <span class="ins-value">${ins.expiry}</span>
-    </div>
-    <div class="ins-row">
-      <span class="ins-label">남은 기간</span>
-      ${dDayHtml}
-    </div>
-    ${ins.personLimit?`<div class="ins-row"><span class="ins-label">대인 한도</span><span class="ins-value">${ins.personLimit}</span></div>`:''}
-    ${ins.propertyLimit?`<div class="ins-row"><span class="ins-label">대물 한도</span><span class="ins-value">${ins.propertyLimit}</span></div>`:''}
-    ${ins.plateNumber?`<div class="ins-row"><span class="ins-label">차량번호</span><span class="ins-value">${ins.plateNumber}</span></div>`:''}
-    `:''}
-    <div class="ins-btn-row">
-      <button class="btn btn-sm" onclick="insRegisterPDF(${b.id})">📄 PDF 등록</button>
-      <button class="btn btn-sm" onclick="insRegisterPhoto(${b.id})">📷 사진 촬영</button>
-      <button class="btn btn-sm" onclick="insDateOnly(${b.id})">📅 보험기간 수동 입력</button>
-      ${ins.expiry?`<button class="btn btn-sm btn-danger" onclick="insDelete(${b.id})">삭제</button>`:''}
-    </div>
-    <div id="ins-loading-${b.id}" class="ins-loading" style="display:none;">⏳ 만료일 분석 중...</div>
-    ${ins.expiry?`<div style="margin-top:8px;">
-      <span style="font-size:15px;color:var(--text-muted);">만료일 직접 수정: </span>
       <input type="date" id="ins-date-${b.id}" value="${ins.expiry||''}"
-        style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:2px 6px;"
+        style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:15px;padding:6px 8px;"
         onchange="insManualDate(${b.id},this.value)">
+    </div>
+    ${ins.expiry?`<div class="ins-row">
+      <span class="ins-label">남은 기간</span>
+      ${_insDDay(ins.expiry)}
+    </div>
+    <div class="ins-btn-row">
+      <button class="btn btn-sm btn-danger" onclick="insDelete(${b.id})">삭제</button>
     </div>`:''}
   </div>`;
 }
@@ -2536,74 +2513,27 @@ function _insDDay(expiry){
   return `<span class="ins-dday-ok">D-${diff}</span>`;
 }
 
-// PDF 등록
-async function insRegisterPDF(bikeId){
-  if(!(await _ensureAiConsent())) return;
-  try{
-    const input=document.createElement('input');
-    input.type='file'; input.accept='application/pdf';
-    input.onchange=async(e)=>{
-      const file=e.target.files[0]; if(!file) return;
-      _insShowLoading(bikeId, true);
-      await _insExtractExpiry(bikeId, file, 'pdf');
-      _insShowLoading(bikeId, false);
-    };
-    input.click();
-  } catch(err){ console.warn('[INS] PDF 등록 오류', err); showToast('PDF 등록 중 오류가 발생했습니다'); }
-}
-
-// 사진 촬영
-async function insRegisterPhoto(bikeId){
-  if(!(await _ensureAiConsent())) return;
-  try{
-    const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
-    if(!Camera){ showToast('카메라를 사용할 수 없습니다'); return; }
-    const photo=await Camera.getPhoto({
-      quality:90, allowEditing:false,
-      resultType:'base64',
-      source:'CAMERA'
-    });
-    _insShowLoading(bikeId, true);
-    await _insExtractExpiryFromBase64(bikeId, photo.base64String, 'image/jpeg', null);
-    _insShowLoading(bikeId, false);
-  } catch(err){ _insShowLoading(bikeId,false); if(err.message!=='User cancelled photos app') showToast('카메라 오류가 발생했습니다'); }
-}
-
-// 보험증 삭제
+// 보험 만료일 삭제
 function insDelete(bikeId){
-  if(!confirm('보험증 정보를 삭제하시겠습니까?')) return;
+  if(!confirm('보험 만료일을 삭제하시겠습니까?')) return;
   const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
   bike.insurance={}; save(); scheduleInsuranceAlerts();
-  renderBikes(); showToast('✓ 보험증 정보가 삭제됐습니다');
-}
-
-// 날짜만 입력 (파일 없이 만료일만 등록)
-function insDateOnly(bikeId){
-  const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
-  const current=(bike.insurance?.expiry||'').replace(/-/g,'');
-  const val=prompt('보험 만료일을 입력하세요 (예: 20261219)', current);
-  if(!val) return;
-  const digits=val.replace(/\D/g,'');
-  if(digits.length!==8){ showToast('8자리 숫자로 입력해주세요 (예: 20261219)'); return; }
-  const formatted=`${digits.slice(0,4)}-${digits.slice(4,6)}-${digits.slice(6,8)}`;
-  if(!bike.insurance) bike.insurance={};
-  bike.insurance.expiry=formatted;
-  save(); scheduleInsuranceAlerts();
-  renderBikes(); showToast(`✓ 만료일 ${formatted} 등록됐습니다`);
+  renderBikes(); showToast('✓ 보험 만료일이 삭제됐습니다');
 }
 
 // 만료일 직접 수정
 function insManualDate(bikeId, val){
   const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  if(!val){ bike.insurance={}; save(); scheduleInsuranceAlerts(); renderBikes(); return; }
   if(!bike.insurance) bike.insurance={};
   bike.insurance.expiry=val; save(); scheduleInsuranceAlerts();
   renderBikes(); showToast('✓ 만료일이 업데이트됐습니다');
 }
 
 // ─────────────────────────────────────────
-//  보험증 만료일 추출 — Anthropic API 프록시 (CORS 우회)
+//  사진 AI 분석 — Anthropic API 프록시 (CORS 우회)
 // ─────────────────────────────────────────
-// 사진/PDF를 외부 AI(Anthropic Claude)로 보내기 전 1회 고지·동의 (보험증·경고등·주행거리 인식 공통).
+// 사진을 외부 AI(Anthropic Claude)로 보내기 전 1회 고지·동의 (경고등·주행거리 인식 공통). 보험증 사진/PDF 인식은 2026-10-20 제거(국외 이전 고지 부담) — 만료일 직접 입력만.
 // App Store 5.1.2(i): 개인 데이터를 제3자 AI에 보내기 전 명시적 동의 필요. 동의 이력은 consent_logs에도 남김.
 var _aiConsentResolve = null;
 function _ensureAiConsent(){
@@ -2652,95 +2582,6 @@ async function _aiProxyFetch(body){
   return res;
 }
 
-
-// PDF/이미지 파일 → base64 변환 후 프록시로 전달
-async function _insExtractExpiry(bikeId, file, type){
-  try{
-    const mediaType = type==='pdf' ? 'application/pdf' : 'image/jpeg';
-    const dataUrl = await _fileToBase64(file);
-    const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
-    await _insExtractExpiryFromBase64(bikeId, base64, mediaType, null);
-  } catch(e){ console.warn('[INS] 추출 오류', e); showToast('만료일 추출에 실패했습니다. 직접 입력해주세요.'); }
-}
-
-async function _insExtractExpiryFromBase64(bikeId, base64, mediaType, filePath){
-  logAnalyticsEvent('insurance_scan_used', {media_type: mediaType});
-  try{
-    const pureBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
-    const contentType = mediaType==='application/pdf' ? 'document' : 'image';
-    const res = await _aiProxyFetch({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 400,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: contentType,
-              source: { type: 'base64', media_type: mediaType, data: pureBase64 }
-            },
-            {
-              type: 'text',
-              text: `이 보험증에서 아래 정보를 추출해서 JSON으로만 답하세요. 다른 텍스트 없이 JSON만.
-{
-  "expiry": "보험 만료일 YYYY-MM-DD 형식 (베트남어: Đến/ngày X tháng Y năm Z, 한국어: 만료/종료)",
-  "insurer": "보험사명",
-  "type": "보험 종류 (책임보험/종합보험/의무보험 등)",
-  "personLimit": "대인 한도 금액 (문자열, 없으면 null)",
-  "propertyLimit": "대물 한도 금액 (문자열, 없으면 null)",
-  "plateNumber": "차량번호/번호판 (없으면 null)"
-}
-정보가 없거나 불명확하면 null로.`
-            }
-          ]
-        }]
-      });
-    const data = await res.json();
-    console.log('[INS] Claude 응답:', JSON.stringify(data));
-    const text = (data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
-    // JSON 파싱
-    let parsed = null;
-    try{
-      const clean = text.replace(/```json|```/g,'').trim();
-      parsed = JSON.parse(clean);
-    } catch(e){ console.warn('[INS] JSON 파싱 실패, 텍스트:', text); }
-
-    if(parsed && parsed.expiry && parsed.expiry.match(/\d{4}-\d{2}-\d{2}/)){
-      const bike = D.bikes.find(b=>b.id===bikeId); if(!bike) return;
-      bike.insurance = {
-        expiry: parsed.expiry,
-        insurer: parsed.insurer||null,
-        type: parsed.type||null,
-        personLimit: parsed.personLimit||null,
-        propertyLimit: parsed.propertyLimit||null,
-        plateNumber: parsed.plateNumber||null,
-      };
-      save(); scheduleInsuranceAlerts();
-      renderBikes(); showToast(`✓ 보험 정보가 자동 등록됐습니다 (만료: ${parsed.expiry})`);
-    } else {
-      console.warn('[INS] 날짜 파싱 실패, 응답:', text);
-      showToast('만료일을 찾지 못했습니다. 직접 입력해주세요.');
-      renderBikes();
-    }
-  } catch(e){
-    console.warn('[INS] 프록시 오류', e);
-    showToast('만료일 추출에 실패했습니다. 직접 입력해주세요.');
-    renderBikes();
-  }
-}
-
-function _insShowLoading(bikeId, show){
-  const el=document.getElementById('ins-loading-'+bikeId);
-  if(el) el.style.display=show?'block':'none';
-}
-
-function _fileToBase64(file){
-  return new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=()=>res(r.result);
-    r.onerror=()=>rej(new Error('파일 읽기 실패'));
-    r.readAsDataURL(file);
-  });
-}
 
 // ─────────────────────────────────────────
 //  경고등 확인 — 계기판 사진을 Claude Vision으로 분석
@@ -7686,7 +7527,7 @@ function renderMedicalCard(){
     <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
       <div style="font-size:44px;margin-bottom:14px;">🤖</div>
       <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;">사진 AI 분석 안내</div>
-      <div style="font-size:15px;color:var(--text);line-height:1.75;text-align:left;">사진(또는 PDF)을 분석하기 위해 <b>Anthropic의 AI(Claude)</b>로 전송해요. 분석 결과만 받아오며, Ridemate 서버에는 사진이 저장되지 않아요.<br><br>보험증처럼 개인정보가 담긴 서류는 필요한 부분만 보이게 찍어 주세요.</div>
+      <div style="font-size:15px;color:var(--text);line-height:1.75;text-align:left;">사진을 분석하기 위해 미국 <b>Anthropic의 AI(Claude)</b>로 전송해요. 분석 결과만 받아오며, Ridemate 서버에는 사진이 저장되지 않아요.<br><br>번호판처럼 개인정보가 보이지 않게 계기판만 찍어 주세요.</div>
       <div style="margin-top:14px;font-size:13px;text-align:left;"><span onclick="window.open('https://www.anthropic.com/legal/privacy','_system')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">Anthropic 개인정보처리방침</span></div>
     </div>
     <div class="modal-footer" style="flex-direction:column;gap:8px;">

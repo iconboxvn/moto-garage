@@ -104,7 +104,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
   .ins-dday-warn{color:#E8A020;font-size:15px;font-weight:700;}
   .ins-dday-danger{color:#E84040;font-size:15px;font-weight:700;}
   .ins-btn-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
-  .ins-loading{font-size:15px;color:var(--text-muted);padding:8px 0;}
   /* ── Settings toggle switch ── */
   .setting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
   .setting-row:last-child{border-bottom:none;}
@@ -885,7 +884,7 @@ option{background:var(--surface2);}
         <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
       </div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:10px;">Save the exported file somewhere safe</div>
-      <div style="font-size:11px;color:var(--red);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">⚠️ Android's automatic backup may not restore your data when you switch devices. <strong>Please back up regularly (monthly recommended) using "Export JSON" above.</strong></div>
+      <div style="font-size:11px;color:var(--red);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">⚠️ Your phone's automatic backup may not restore your data when you switch devices. <strong>Please back up regularly (monthly recommended) using "Export JSON" above.</strong></div>
       <div id="backup-stats" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"></div>
       <div style="margin-top:14px;">
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑 Reset All Data</button>
@@ -2152,7 +2151,7 @@ function renderBikes(){
     </div>
     <div class="ins-section">
       <div class="ins-header" onclick="toggleInsSection(${b.id})">
-        <span class="ins-title">🛡 Insurance Registration${b.insurance?.expiry?' · '+b.insurance.expiry:''}</span>
+        <span class="ins-title">🛡 Insurance Expiry${b.insurance?.expiry?' · '+b.insurance.expiry:''}</span>
         <span id="ins-arrow-${b.id}" style="font-size:11px;color:var(--text-muted);">▼</span>
       </div>
       <div id="ins-body-${b.id}" style="display:none;">
@@ -2189,7 +2188,7 @@ function autoSaveBikeMemo(id){
   }, 500);
 }
 // ═══════════════════════════════════════════
-//  Insurance certificate
+//  Insurance expiry
 // ═══════════════════════════════════════════
 function toggleInsSection(id){
   const body=document.getElementById('ins-body-'+id);
@@ -2201,33 +2200,23 @@ function toggleInsSection(id){
 
 function _renderInsBody(b){
   const ins=b.insurance||{};
-  const dDayHtml=_insDDay(ins.expiry);
   return `<div class="ins-body">
     <p style="font-size:15px;color:var(--text-muted);margin:0 0 10px 0;line-height:1.6;">
-      Register your insurance certificate as PDF or photo and we'll automatically remind you before it expires.<br>
+      Enter your insurance expiry date and we'll remind you before it expires.<br>
       <span style="font-size:13px;">(1 alert 14 days before, daily from 7 days before)</span>
     </p>
-    ${ins.expiry?`
-    <div class="ins-row"><span class="ins-label">Insurer</span><span class="ins-value">${ins.insurer||'-'}</span></div>
-    <div class="ins-row"><span class="ins-label">Type</span><span class="ins-value">${ins.type||'-'}</span></div>
-    <div class="ins-row"><span class="ins-label">Expiry</span><span class="ins-value">${ins.expiry}</span></div>
-    <div class="ins-row"><span class="ins-label">Remaining</span>${dDayHtml}</div>
-    ${ins.personLimit?`<div class="ins-row"><span class="ins-label">Person Limit</span><span class="ins-value">${ins.personLimit}</span></div>`:''}
-    ${ins.propertyLimit?`<div class="ins-row"><span class="ins-label">Property Limit</span><span class="ins-value">${ins.propertyLimit}</span></div>`:''}
-    ${ins.plateNumber?`<div class="ins-row"><span class="ins-label">Plate No.</span><span class="ins-value">${ins.plateNumber}</span></div>`:''}
-    `:''}
-    <div class="ins-btn-row">
-      <button class="btn btn-sm" onclick="insRegisterPDF(${b.id})">📄 Register PDF</button>
-      <button class="btn btn-sm" onclick="insRegisterPhoto(${b.id})">📷 Take Photo</button>
-      <button class="btn btn-sm" onclick="insDateOnly(${b.id})">📅 Enter Manually</button>
-      ${ins.expiry?`<button class="btn btn-sm btn-danger" onclick="insDelete(${b.id})">Delete</button>`:''}
-    </div>
-    <div id="ins-loading-${b.id}" class="ins-loading" style="display:none;">⏳ Analyzing expiry date...</div>
-    ${ins.expiry?`<div style="margin-top:8px;">
-      <span style="font-size:15px;color:var(--text-muted);">Edit expiry date: </span>
+    <div class="ins-row" style="align-items:center;">
+      <span class="ins-label">Expiry</span>
       <input type="date" id="ins-date-${b.id}" value="${ins.expiry||''}"
-        style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:2px 6px;"
+        style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:15px;padding:6px 8px;"
         onchange="insManualDate(${b.id},this.value)">
+    </div>
+    ${ins.expiry?`<div class="ins-row">
+      <span class="ins-label">Remaining</span>
+      ${_insDDay(ins.expiry)}
+    </div>
+    <div class="ins-btn-row">
+      <button class="btn btn-sm btn-danger" onclick="insDelete(${b.id})">Delete</button>
     </div>`:''}
   </div>`;
 }
@@ -2241,61 +2230,22 @@ function _insDDay(expiry){
   return `<span class="ins-dday-ok">D-${diff}</span>`;
 }
 
-async function insRegisterPDF(bikeId){
-  if(!(await _ensureAiConsent())) return;
-  try{
-    const input=document.createElement('input');
-    input.type='file'; input.accept='application/pdf';
-    input.onchange=async(e)=>{
-      const file=e.target.files[0]; if(!file) return;
-      _insShowLoading(bikeId,true);
-      await _insExtractExpiry(bikeId,file,'pdf');
-      _insShowLoading(bikeId,false);
-    };
-    input.click();
-  } catch(err){ console.warn('[INS] PDF error',err); showToast('Error registering PDF'); }
-}
-
-async function insRegisterPhoto(bikeId){
-  if(!(await _ensureAiConsent())) return;
-  try{
-    const Camera=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Camera;
-    if(!Camera){ showToast('Camera unavailable'); return; }
-    const photo=await Camera.getPhoto({quality:90,allowEditing:false,resultType:'base64',source:'CAMERA'});
-    _insShowLoading(bikeId,true);
-    await _insExtractExpiryFromBase64(bikeId,photo.base64String,'image/jpeg',null);
-    _insShowLoading(bikeId,false);
-  } catch(err){ _insShowLoading(bikeId,false); if(err.message!=='User cancelled photos app') showToast('Camera error occurred'); }
-}
-
 function insDelete(bikeId){
-  if(!confirm('Delete insurance information?')) return;
+  if(!confirm('Delete the insurance expiry date?')) return;
   const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
   bike.insurance={};save();scheduleInsuranceAlerts();
-  renderBikes();showToast('✓ Insurance information deleted');
+  renderBikes();showToast('✓ Insurance expiry date deleted');
 }
 
 function insManualDate(bikeId,val){
   const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
+  if(!val){ bike.insurance={}; save(); scheduleInsuranceAlerts(); renderBikes(); return; }
   if(!bike.insurance) bike.insurance={};
   bike.insurance.expiry=val;save();scheduleInsuranceAlerts();
   renderBikes();showToast('✓ Expiry date updated');
 }
 
-function insDateOnly(bikeId){
-  const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
-  const current=(bike.insurance?.expiry||'').replace(/-/g,'');
-  const val=prompt('Enter insurance expiry date (e.g. 20261219)',current);
-  if(!val) return;
-  const digits=val.replace(/\D/g,'');
-  if(digits.length!==8){ showToast('Please enter 8 digits (e.g. 20261219)'); return; }
-  const formatted=`${digits.slice(0,4)}-${digits.slice(4,6)}-${digits.slice(6,8)}`;
-  if(!bike.insurance) bike.insurance={};
-  bike.insurance.expiry=formatted;save();scheduleInsuranceAlerts();
-  renderBikes();showToast('✓ Expiry date registered: '+formatted);
-}
-
-// One-time notice/consent before sending a photo/PDF to a third-party AI (Anthropic Claude) — shared by insurance, warning light and odometer scans.
+// One-time notice/consent before sending a photo to a third-party AI (Anthropic Claude) — shared by warning light and odometer scans. Insurance photo/PDF scan removed 2026-10-20; expiry is entered manually.
 // App Store 5.1.2(i) requires explicit consent before sharing personal data with third-party AI. Consent is also logged to consent_logs.
 var _aiConsentResolve = null;
 function _ensureAiConsent(){
@@ -2344,57 +2294,6 @@ async function _aiProxyFetch(body){
   return res;
 }
 
-
-async function _insExtractExpiry(bikeId,file,type){
-  try{
-    const mediaType=type==='pdf'?'application/pdf':'image/jpeg';
-    const dataUrl=await _fileToBase64(file);
-    const base64=dataUrl.includes(',')?dataUrl.split(',')[1]:dataUrl;
-    await _insExtractExpiryFromBase64(bikeId,base64,mediaType,null);
-  } catch(e){ console.warn('[INS] error',e); showToast('Extraction failed. Please enter manually.'); }
-}
-
-async function _insExtractExpiryFromBase64(bikeId,base64,mediaType,filePath){
-  logAnalyticsEvent('insurance_scan_used', {media_type: mediaType});
-  try{
-    const pureBase64=base64.includes(',')?base64.split(',')[1]:base64;
-    const contentType=mediaType==='application/pdf'?'document':'image';
-    const res=await _aiProxyFetch({
-        model:'claude-sonnet-4-6',
-        max_tokens:400,
-        messages:[{role:'user',content:[
-          {type:contentType,source:{type:'base64',media_type:mediaType,data:pureBase64}},
-          {type:'text',text:'This is an insurance certificate. Extract the following and respond with JSON only.\n{"expiry":"policy end date YYYY-MM-DD","insurer":"company name","type":"insurance type","personLimit":"personal liability limit or null","propertyLimit":"property liability limit or null","plateNumber":"plate number or null"}'}
-        ]}]
-      });
-    const data=await res.json();
-    const text=(data.content||[]).find(c=>c.type==='text')?.text?.trim()||'';
-    let parsed=null;
-    try{ const clean=text.replace(/```json|```/g,'').trim(); parsed=JSON.parse(clean); } catch(e){}
-    if(parsed&&parsed.expiry&&parsed.expiry.match(/\d{4}-\d{2}-\d{2}/)){
-      const bike=D.bikes.find(b=>b.id===bikeId); if(!bike) return;
-      bike.insurance={expiry:parsed.expiry,insurer:parsed.insurer||null,type:parsed.type||null,personLimit:parsed.personLimit||null,propertyLimit:parsed.propertyLimit||null,plateNumber:parsed.plateNumber||null};
-      save();scheduleInsuranceAlerts();
-      renderBikes();showToast('✓ Insurance information registered (Expiry: '+parsed.expiry+')');
-    } else {
-      showToast('Could not find expiry date. Please enter manually.');renderBikes();
-    }
-  } catch(e){ console.warn('[INS] proxy error',e); showToast('Extraction failed. Please enter manually.'); renderBikes(); }
-}
-
-function _insShowLoading(bikeId,show){
-  const el=document.getElementById('ins-loading-'+bikeId);
-  if(el) el.style.display=show?'block':'none';
-}
-
-function _fileToBase64(file){
-  return new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=()=>res(r.result);
-    r.onerror=()=>rej(new Error('File read failed'));
-    r.readAsDataURL(file);
-  });
-}
 
 // ─────────────────────────────────────────
 //  Warning Light Check — analyze a dashboard photo with Claude Vision
@@ -7208,7 +7107,7 @@ function renderMedicalCard(){
     <div class="modal-body" style="text-align:center;padding:28px 20px 16px;">
       <div style="font-size:44px;margin-bottom:14px;">🤖</div>
       <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;">Photo AI analysis</div>
-      <div style="font-size:15px;color:var(--text);line-height:1.75;text-align:left;">To analyze your photo (or PDF), Ridemate sends it to <b>Anthropic's AI (Claude)</b>. Only the analysis result is returned, and the photo is not stored on Ridemate's servers.<br><br>For documents with personal information, such as insurance certificates, please capture only what's needed.</div>
+      <div style="font-size:15px;color:var(--text);line-height:1.75;text-align:left;">To analyze your photo, Ridemate sends it to <b>Anthropic's AI (Claude)</b> in the United States. Only the analysis result is returned, and the photo is not stored on Ridemate's servers.<br><br>Please photograph only the dashboard, without personal details such as your license plate.</div>
       <div style="margin-top:14px;font-size:13px;text-align:left;"><span onclick="window.open('https://www.anthropic.com/legal/privacy','_system')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">Anthropic Privacy Policy</span></div>
     </div>
     <div class="modal-footer" style="flex-direction:column;gap:8px;">
