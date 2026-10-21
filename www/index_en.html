@@ -2946,21 +2946,23 @@ function openRideDetail(id){
     document.getElementById('ride-detail-'+x[0]+'-dot').style.background = x[1] > 0 ? 'var(--accent)' : 'var(--border-bright)';
   });
   var poiBtn = document.getElementById('ride-detail-poi-btn');
-  if(poiBtn) poiBtn.style.display = (VISITED_PLACES_ENABLED && r.pathT && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
+  if(poiBtn) poiBtn.style.display = (VISITED_PLACES_ENABLED && _rideGeo(r) && _findUnconfirmedVisitedPoints(r).length > 0) ? 'block' : 'none';
   document.getElementById('ride-detail-modal').classList.remove('ride-detail-fs');
   openModal('m-ride-detail');
 
+  getRidePath(r).then(function(_rp){
+  var _rpath = _rp && _rp.path;
   var mapEl = document.getElementById('ride-detail-map');
   var expandBtn = document.getElementById('ride-detail-expand-btn');
   if(_rideDetailMap){ _rideDetailMap.remove(); _rideDetailMap = null; }
 
-  if(r.path && r.path.length >= 2 && window.L){
+  if(_rpath && _rpath.length >= 2 && window.L){
     mapEl.innerHTML = '';
     expandBtn.style.display = 'flex';
     setTimeout(function(){
       _rideDetailMap = L.map('ride-detail-map', {zoomControl:true, attributionControl:true});
       _addDarkTiles(_rideDetailMap);
-      var line = _drawRideRoute(_rideDetailMap, r.path);
+      var line = _drawRideRoute(_rideDetailMap, _rpath);
       if(r.maxSpeedLat != null && r.maxSpeedLon != null){
         var mkMax = L.circleMarker([r.maxSpeedLat, r.maxSpeedLon], {radius:4, color:'#e8a020', weight:2, fillColor:'#0f1113', fillOpacity:1}).addTo(_rideDetailMap);
         mkMax.bindTooltip(r.maxKmh+' km/h', {permanent:true, direction:'right', offset:[6,0], className:'ride-map-label'});
@@ -2973,6 +2975,7 @@ function openRideDetail(id){
     expandBtn.style.display = 'none';
     mapEl.innerHTML = '<div style="height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px;gap:6px;"><span style="font-size:24px;">🗺</span>No route recorded</div>';
   }
+  });
 }
 function toggleRideDetailFullscreen(){
   var modal = document.getElementById('ride-detail-modal');
@@ -2999,8 +3002,10 @@ function closeRideDetail(){
 function shareHistoryRide(id){
   var r = (D.rides||[]).find(x=>x.id===id);
   if(!r) return;
-  var s = {durationMs:r.durationMs, distanceKm:r.distanceKm, avgKmh:r.avgKmh, maxKmh:r.maxKmh, path:r.path};
-  showRideSummary(s, r.date, r.bikeId);
+  getRidePath(r).then(function(rp){
+    var s = {durationMs:r.durationMs, distanceKm:r.distanceKm, avgKmh:r.avgKmh, maxKmh:r.maxKmh, path: rp && rp.path};
+    showRideSummary(s, r.date, r.bikeId);
+  });
 }
 
 // ═══════════════════════════════════════════
@@ -3121,6 +3126,146 @@ function _findDwellPoints(path, pathT){
   return dwells;
 }
 
+// ═══════════════════════════════════════════
+//  Ride path store (2026-10-21)
+// ═══════════════════════════════════════════
+// Route coordinates live outside localStorage ('mg2', ~5MB WKWebView limit — filled up on an iPhone on 2026-10-21)
+// in app files (Capacitor Filesystem, DATA/ride_paths/<id>.json). D.rides keeps the summary + geo (start/end/stop
+// points) so visited places work without the files. Rides older than RIDE_PATH_FULL_DAYS keep a simplified shape.
+// Without Filesystem (browser preview) the path stays inside the record as before.
+var RIDE_PATH_DIR = 'ride_paths';
+var RIDE_PATH_FULL_DAYS = 180;
+var RIDE_PATH_LITE_MAX_PTS = 150;
+var _ridePathCache = {};
+function _rpFS(){ var P = window.Capacitor && window.Capacitor.Plugins; return (P && P.Filesystem) || null; }
+function _rpRound(p){ return [Math.round(p[0]*1e5)/1e5, Math.round(p[1]*1e5)/1e5]; }
+function _rideGeoFromPath(path, pathT){
+  if(!path || !path.length) return null;
+  var n = path.length - 1;
+  return {
+    s: [path[0][0], path[0][1], (pathT && pathT[0]) || null],
+    e: [path[n][0], path[n][1], (pathT && pathT[n]) || null],
+    dw: _findDwellPoints(path, pathT).map(function(d){ return [d.lat, d.lon, d.t]; })
+  };
+}
+function _rideGeo(r){
+  if(!r) return null;
+  if(r.geo) return r.geo;
+  if(r.path && r.path.length) return (r.geo = _rideGeoFromPath(r.path, r.pathT));
+  return null;
+}
+function _rpFile(id){ return RIDE_PATH_DIR + '/' + id + '.json'; }
+function _rpWrite(id, path, pathT){
+  var FS = _rpFS();
+  if(!FS) return Promise.reject(new Error('no filesystem'));
+  var body = JSON.stringify({v:1, path: path.map(_rpRound), pathT: pathT || []});
+  return FS.writeFile({path: _rpFile(id), data: body, directory: 'DATA', encoding: 'utf8', recursive: true});
+}
+function getRidePath(r){
+  if(!r) return Promise.resolve(null);
+  if(r.path && r.path.length) return Promise.resolve({path: r.path, pathT: r.pathT || []});
+  if(_ridePathCache[r.id]) return Promise.resolve(_ridePathCache[r.id]);
+  var FS = _rpFS();
+  if(!r.hasPath || !FS) return Promise.resolve(null);
+  return FS.readFile({path: _rpFile(r.id), directory: 'DATA', encoding: 'utf8'}).then(function(res){
+    var o = JSON.parse(res.data);
+    _ridePathCache[r.id] = o;
+    return o;
+  }).catch(function(e){ console.warn('[ridePath] read', r.id, e); return null; });
+}
+function _rpDelete(id){
+  delete _ridePathCache[id];
+  var FS = _rpFS();
+  if(FS) FS.deleteFile({path: _rpFile(id), directory: 'DATA'}).catch(function(){});
+}
+function _rpDeleteAll(){
+  _ridePathCache = {};
+  var FS = _rpFS();
+  if(FS) FS.rmdir({path: RIDE_PATH_DIR, directory: 'DATA', recursive: true}).catch(function(){});
+}
+function _rpOffload(r){
+  if(!r.path || !r.path.length) return Promise.resolve(false);
+  if(!r.geo) r.geo = _rideGeoFromPath(r.path, r.pathT);
+  var path = r.path, pathT = r.pathT || [];
+  return _rpWrite(r.id, path, pathT).then(function(){
+    _ridePathCache[r.id] = {path: path.map(_rpRound), pathT: pathT};
+    delete r.path; delete r.pathT;
+    r.hasPath = path.length >= 2; r.pathPts = path.length;
+    return true;
+  }).catch(function(e){ console.warn('[ridePath] write', r.id, e); return false; });
+}
+var _rpMigrating = false;
+function migrateRidePaths(){
+  if(_rpMigrating || !_rpFS()) return Promise.resolve(0);
+  var todo = (D.rides || []).filter(function(r){ return r.path && r.path.length; });
+  if(!todo.length) return Promise.resolve(0);
+  _rpMigrating = true;
+  var moved = 0, chain = Promise.resolve();
+  todo.forEach(function(r){ chain = chain.then(function(){ return _rpOffload(r).then(function(ok){ if(ok) moved++; }); }); });
+  return chain.then(function(){
+    _rpMigrating = false;
+    if(moved){ try{ save(); }catch(e){ console.warn('[ridePath] save after migrate', e); } }
+    _rideDbgNative('path_migrate', {moved: moved, total: todo.length});
+    return moved;
+  });
+}
+function _rpSimplify(path, pathT, maxPts){
+  if(!path || path.length <= maxPts) return {path: path, pathT: pathT};
+  var kx = 111320 * Math.cos(path[0][0] * Math.PI / 180), ky = 110540;
+  function segDist(p, a, b){
+    var x = (p[1]-a[1])*kx, y = (p[0]-a[0])*ky, dx = (b[1]-a[1])*kx, dy = (b[0]-a[0])*ky, L = dx*dx + dy*dy;
+    var t = L ? Math.max(0, Math.min(1, (x*dx + y*dy) / L)) : 0;
+    var ex = x - t*dx, ey = y - t*dy;
+    return Math.sqrt(ex*ex + ey*ey);
+  }
+  var eps = 5, keep = null;
+  for(var iter = 0; iter < 14; iter++){
+    keep = new Uint8Array(path.length); keep[0] = 1; keep[path.length-1] = 1;
+    var stack = [[0, path.length-1]];
+    while(stack.length){
+      var seg = stack.pop(), a = seg[0], b = seg[1], md = 0, mi = -1;
+      for(var i = a+1; i < b; i++){ var d = segDist(path[i], path[a], path[b]); if(d > md){ md = d; mi = i; } }
+      if(mi > 0 && md > eps){ keep[mi] = 1; stack.push([a, mi], [mi, b]); }
+    }
+    var n = 0; for(var j = 0; j < keep.length; j++) n += keep[j];
+    if(n <= maxPts) break;
+    eps *= 1.6;
+  }
+  var p2 = [], t2 = [];
+  for(var k = 0; k < path.length; k++) if(keep[k]){ p2.push(path[k]); t2.push(pathT ? pathT[k] : null); }
+  return {path: p2, pathT: t2};
+}
+function compactOldRidePaths(){
+  var FS = _rpFS();
+  if(!FS) return Promise.resolve(0);
+  var last = Number(localStorage.getItem('mg2-rp-compact-ts') || 0);
+  if(Date.now() - last < 86400000) return Promise.resolve(0);
+  var cutoff = Date.now() - RIDE_PATH_FULL_DAYS * 86400000;
+  var olds = (D.rides || []).filter(function(r){ return r.hasPath && !r.pathLite && r.date && new Date(r.date).getTime() < cutoff; });
+  var changed = 0, chain = Promise.resolve();
+  olds.forEach(function(r){
+    chain = chain.then(function(){
+      return getRidePath(r).then(function(rp){
+        if(!rp || !rp.path) return;
+        var s = _rpSimplify(rp.path, rp.pathT, RIDE_PATH_LITE_MAX_PTS);
+        return _rpWrite(r.id, s.path, s.pathT).then(function(){ _ridePathCache[r.id] = s; r.pathLite = true; r.pathPts = s.path.length; changed++; });
+      }).catch(function(){});
+    });
+  });
+  return chain.then(function(){
+    localStorage.setItem('mg2-rp-compact-ts', String(Date.now()));
+    if(changed){ try{ save(); }catch(e){} }
+    return changed;
+  });
+}
+function _ridesForExport(){
+  return Promise.all((D.rides || []).map(function(r){
+    if(r.path || !r.hasPath) return r;
+    return getRidePath(r).then(function(rp){ return rp ? Object.assign({}, r, {path: rp.path, pathT: rp.pathT}) : r; });
+  }));
+}
+setTimeout(function(){ migrateRidePaths().then(compactOldRidePaths).catch(function(e){ console.warn('[ridePath] startup', e); }); }, 2000);
+
 // Confirming visited place names (rolled out to all users starting 2026-08-09 — test period over)
 var VISITED_POI_ENDPOINT = 'https://us-central1-moto-garage-8da30.cloudfunctions.net/visitedPlacePoi';
 var _visitedPoiQueue = [];
@@ -3129,9 +3274,10 @@ var _visitedPoiCurrentRideId = null;
 
 // Dwell/end points that don't have a confirmed place yet (reused at ride-end and from the ride detail "check again" button)
 function _findUnconfirmedVisitedPoints(ride){
-  var points = _findDwellPoints(ride.path, ride.pathT).slice();
-  if(ride.path && ride.path.length && ride.pathT && ride.pathT.length){
-    var lastPt = {lat: ride.path[ride.path.length-1][0], lon: ride.path[ride.path.length-1][1], t: ride.pathT[ride.pathT.length-1]};
+  var g = _rideGeo(ride);
+  var points = g ? g.dw.map(function(d){ return {lat:d[0], lon:d[1], t:d[2]}; }) : [];
+  if(g && g.e && g.e[2]){
+    var lastPt = {lat: g.e[0], lon: g.e[1], t: g.e[2]};
     var alreadyNear = points.some(function(p){ return _haversineKm(p.lat,p.lon,lastPt.lat,lastPt.lon) <= VISITED_CLUSTER_RADIUS_KM; });
     if(!alreadyNear) points.push(lastPt);
   }
@@ -3236,23 +3382,23 @@ function _computeVisitedPlaces(provincesGeo){
 
   var byBike = {};
   (D.rides||[]).forEach(function(r){
-    if(!r.pathT || !r.pathT.length || !r.path || !r.path.length) return;
+    if(!_rideGeo(r) || !_rideGeo(r).s[2]) return;
     if(!byBike[r.bikeId]) byBike[r.bikeId] = [];
     byBike[r.bikeId].push(r);
   });
   Object.keys(byBike).forEach(function(bikeId){
-    byBike[bikeId].sort(function(a,b){ return a.pathT[0] - b.pathT[0]; });
+    byBike[bikeId].sort(function(a,b){ return _rideGeo(a).s[2] - _rideGeo(b).s[2]; });
   });
 
   (D.rides||[]).forEach(function(r){
-    if(!r.pathT || !r.pathT.length || !r.path || !r.path.length) return;
+    if(!_rideGeo(r) || !_rideGeo(r).s[2]) return;
     // 1) In-ride dwell points (30+ min) always count
-    var dwells = _findDwellPoints(r.path, r.pathT);
+    var dwells = _rideGeo(r).dw.map(function(d){ return {lat:d[0], lon:d[1], t:d[2]}; });
     dwells.forEach(addVisit);
 
     // 2) The ride's end point counts at most once per ride, and only if it was already caught as a
     //    dwell within this ride / the gap to the next ride is 30+ min / the user manually confirmed a place there
-    var endPt = {lat: r.path[r.path.length-1][0], lon: r.path[r.path.length-1][1]};
+    var endPt = {lat: _rideGeo(r).e[0], lon: _rideGeo(r).e[1]};
     var endInDwells = dwells.some(function(d){ return _haversineKm(d.lat, d.lon, endPt.lat, endPt.lon) <= VISITED_CLUSTER_RADIUS_KM; });
     if(endInDwells) return;
 
@@ -3263,9 +3409,9 @@ function _computeVisitedPlaces(provincesGeo){
       var idx = bikeRides.indexOf(r);
       if(idx >= 0 && idx < bikeRides.length - 1){
         var next = bikeRides[idx+1];
-        var endT = r.pathT[r.pathT.length-1];
-        var startT = next.pathT[0];
-        var startPt = next.path[0];
+        var endT = _rideGeo(r).e[2];
+        var startT = _rideGeo(next).s[2];
+        var startPt = [_rideGeo(next).s[0], _rideGeo(next).s[1]];
         if(endT && startT && (startT - endT) >= VISITED_DWELL_MS &&
            _haversineKm(endPt.lat, endPt.lon, startPt[0], startPt[1]) <= VISITED_CLUSTER_RADIUS_KM){
           hasGapDwell = true;
@@ -3540,6 +3686,7 @@ function deleteRide(id){
     + (odoBike ? '\n'+ride.odoAdded+' km will also be removed from the '+odoBike.brand+' '+odoBike.model+' odometer.' : '');
   if(!confirm(msg)) return;
   D.rides=D.rides.filter(r=>r.id!==id);
+  _rpDelete(id);
   if(odoBike) odoBike.odometer = Math.max(0, (odoBike.odometer||0) - ride.odoAdded);
   save();
   try{ mstatRender(); }catch(e){}
@@ -3798,7 +3945,7 @@ function showBackupToast(msg,type='success'){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 async function exportJSON(){
-  const jsonStr = JSON.stringify(D, null, 2);
+  const jsonStr = JSON.stringify(Object.assign({}, D, {rides: await _ridesForExport()}), null, 2);
   const fileName = `ridemate-backup-${new Date().toISOString().slice(0,10)}.json`;
   const Filesystem = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
   const Share = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
@@ -3844,7 +3991,8 @@ function importJSON(event){
       const imported=JSON.parse(e.target.result);
       if(!imported.bikes||!imported.history) throw new Error('Invalid format');
       if(!confirm(`Restoring backup will replace current data.\nVehicles: ${imported.bikes.length}, records: ${imported.history.length}\n\nContinue?`)) return;
-      D=imported; save();
+      D=imported; try{ save(); }catch(e){ console.warn('[import] save before path migration', e); }
+      migrateRidePaths();
       showBackupToast('✓ Data restored');
       renderBackupPage(); renderDash();
       scheduleConsumableAlerts();
@@ -3857,6 +4005,7 @@ function confirmReset(){
   if(!confirm('Delete all data?\nThis cannot be undone.')) return;
   if(!confirm('Have you made a backup first?')) return;
   D={bikes:[],rides:[],history:[]}; save();
+  _rpDeleteAll();
   localStorage.removeItem('mg2-launched');
   localStorage.removeItem('mg2-sample');
   showBackupToast('Data has been reset','error');
@@ -4515,6 +4664,28 @@ function _dbgLog(type, data){
   try { localStorage.setItem('mg2-dbglog', JSON.stringify(_dbg.events)); } catch(e){}
 }
 
+// Writes JS state into the native ride log file (iOS debug builds) — survives WebView restarts. No-op on release/Android
+function _rideDbgNative(type, data){
+  try{
+    var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+    if (R && R.debugLog) R.debugLog({type:type, json:JSON.stringify(data||{})}).catch(function(){});
+  }catch(e){}
+}
+
+// When _ride is empty (e.g. WebView restart), rebuild the summary from the periodically saved progress
+function _buildRideSummaryFromProgress(){
+  var p = null;
+  try { p = JSON.parse(localStorage.getItem('mg2-ride-progress') || 'null'); } catch(e){}
+  if (!p || !p.startTime) return null;
+  var keepPath = (_ride && _ride.path) || [];
+  var liveDist = (_ride && _ride.distance) || 0;
+  var liveMax = (_ride && _ride.maxSpeed) || 0;
+  _ride = Object.assign({}, _ride || {}, p, {path: keepPath, pauseStartedAt: null});
+  _ride.distance = Math.max(liveDist, p.distance || 0);
+  _ride.maxSpeed = Math.max(liveMax, p.maxSpeed || 0);
+  return _buildRideSummary();
+}
+
 function initDebugMode(){
   var RidingPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (!RidingPlugin || !RidingPlugin.isDebugBuild) return;
@@ -4904,6 +5075,7 @@ function _doStartRiding() {
   _sosMotionStart();
   var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
   if (R) R.startForeground().catch(function() {});
+  _rideDbgNative('ride_start', {startTime: _ride.startTime});
   if (_ridingPauseTimer) clearInterval(_ridingPauseTimer);
   _ridingPauseTimer = setInterval(_checkRidingPauseTimer, RIDING_PAUSE_CHECK_MS);
   updateRidingBar();
@@ -4913,13 +5085,15 @@ function _doStartRiding() {
 
 function stopRiding(customMsg, skipSummary) {
   var summary = _buildRideSummary();
+  var _fromProgress = false;
+  if (!summary) { summary = _buildRideSummaryFromProgress(); _fromProgress = !!summary; }
+  _rideDbgNative('ride_stop', {hasSummary: !!summary, fromProgress: _fromProgress, distanceKm: summary ? summary.distanceKm : null, durationMs: summary ? summary.durationMs : null, active: ridingState.active});
   _dbgLog('ride_stop', {distanceKm: summary ? Math.round(summary.distanceKm*10)/10 : null, durationMs: summary ? summary.durationMs : null});
   ridingState.active = false;
   ridingState.paused = false;
   _syncWidgetState();
   if (_ridingPauseTimer) { clearInterval(_ridingPauseTimer); _ridingPauseTimer = null; }
   localStorage.removeItem('mg2-riding');
-  localStorage.removeItem('mg2-ride-progress');
   _sosCountdownCancel();
   _sosGPSStop();
   _sosMotionStop();
@@ -4927,19 +5101,25 @@ function stopRiding(customMsg, skipSummary) {
   _sos.speedOk = false;
   var ov = document.getElementById('auto-sos-overlay');
   if (ov) ov.classList.remove('show');
-  var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
-  if (R) R.stopForeground().catch(function() {});
   updateRidingBar();
   showToast(customMsg || '■ Riding stopped');
+  if (!summary) localStorage.removeItem('mg2-ride-progress');
   if (summary) {
     window._lastSavedRideId = null;
-    var savedRide = saveRideRecord(summary);
+    var savedRide = null, _saveOk = false;
+    try { savedRide = saveRideRecord(summary); _saveOk = true; }
+    catch(e) { console.warn('[ride] save failed', e); _rideDbgNative('save_error', {msg: String(e && e.message || e)}); showToast('⚠ Something went wrong while saving the ride'); }
+    if (_saveOk) localStorage.removeItem('mg2-ride-progress');  // only cleared after a successful save
     if (!skipSummary) {
       _reviewPendingAfterSummary = !!(savedRide && savedRide.distanceKm >= 3);  // ask for review when summary is closed
-      showRideSummary(summary);
+      try { showRideSummary(summary); }
+      catch(e) { console.warn('[ride] summary failed', e); _rideDbgNative('summary_error', {msg: String(e && e.message || e)}); }
     }
     if (savedRide && VISITED_PLACES_ENABLED) _startVisitedPoiFlow(savedRide);
   }
+  // Stop location tracking last — so save/summary errors still reach the native debug log (the file closes here)
+  var R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
+  if (R) R.stopForeground().catch(function() {});
 }
 
 // Save ride record to D.rides (with date / start & end time)
@@ -4994,6 +5174,20 @@ function saveRideRecord(s){
     lowSpeedMs: _ride.lowSpeedMs || 0,
     stoppedMs: _ride.stoppedMs || 0
   };
+  newRide.geo = _rideGeoFromPath(newRide.path, newRide.pathT);
+  if(_rpFS() && newRide.path.length){
+    var _np = newRide.path, _npt = newRide.pathT;
+    _ridePathCache[newRide.id] = {path: _np, pathT: _npt};
+    delete newRide.path; delete newRide.pathT;
+    newRide.hasPath = _np.length >= 2; newRide.pathPts = _np.length;
+    _rpWrite(newRide.id, _np, _npt).catch(function(e){
+      // If the file write fails: keep a simplified path inside the record; migrateRidePaths() moves it on the next launch
+      console.warn('[ridePath] write new', e);
+      var sp = _rpSimplify(_np, _npt, 300);
+      newRide.path = sp.path; newRide.pathT = sp.pathT; newRide.hasPath = false;
+      try{ save(); }catch(e2){}
+    });
+  }
   D.rides.push(newRide);
   var rideBike = D.bikes.find(function(b){ return b.id===rideBikeId; });
   if(rideBike && rideDistKm > 0){
@@ -5576,7 +5770,7 @@ function showRideSummary(s, dateOverride, bikeIdOverride){
   }
   _syncRideSummaryInfo();
   openModal('m-ride-summary');
-  _renderRideSummaryMap(canShare ? (s.path || (_rec && _rec.path)) : null);
+  _renderRideSummaryMap(canShare ? (s.path || (_rec && (_rec.path || (_ridePathCache[_rec.id] && _ridePathCache[_rec.id].path)))) : null);
 }
 
 // 요약 화면 정보 행(인사이트·주행거리·바이크)이 하나도 없으면 상자째 숨김
@@ -6224,6 +6418,7 @@ function _sosDoSend(phone, body, mapsUrl) {
 }
 
 (function() {
+  var _pageLoadInfo = {riding: !!localStorage.getItem('mg2-riding'), hasProgress: !!localStorage.getItem('mg2-ride-progress')};
   if (localStorage.getItem('mg2-riding')) {
     ridingState.active = true;
     if (!_ride.startTime) {
@@ -6242,6 +6437,7 @@ function _sosDoSend(phone, body, mapsUrl) {
       var _ridingR = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Riding;
       if (_ridingR) {
         _ridingR.startForeground().catch(function() {});
+        _rideDbgNative('ride_restore', {fromProgress: !!(_savedProgress && _savedProgress.startTime), startTime: _ride.startTime, distanceKm: _ride.distance});
         if (_savedProgress && _savedProgress.startTime) {
           _ridingR.seedRideTracking({
             distanceKm: _ride.distance || 0,
@@ -6266,6 +6462,7 @@ function _sosDoSend(phone, body, mapsUrl) {
     if (_ridingPauseTimer) clearInterval(_ridingPauseTimer);
     _ridingPauseTimer = setInterval(_checkRidingPauseTimer, RIDING_PAUSE_CHECK_MS);
   }
+  _rideDbgNative('page_load', _pageLoadInfo);
   document.addEventListener('DOMContentLoaded', updateRidingBar);
   if (document.readyState !== 'loading') updateRidingBar();
 

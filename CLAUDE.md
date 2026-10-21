@@ -94,6 +94,22 @@ private static final float MIN_SPD_KMH = 20f;    // 감지 활성화 최소 속�
 **미이전 상태 (B안, 향후 검토)**: 카운트다운 UI/SMS 발송까지 전부 네이티브(알림+액션 버튼)로 옮겨서
 WebView가 완전히 죽어있어도 안전기능이 살아있게 하는 안. 지금은 A안(상태머신만 이전)까지만 완료.
 
+## 라이딩 경로 저장 구조 — 2026-10-21 변경
+
+> 아이폰에서 localStorage(`mg2`, WKWebView 한도 약 5MB)가 꽉 차 라이딩 저장이 조용히 실패한 사건 이후 변경.
+
+- **경로 좌표는 localStorage에 두지 않는다.** Capacitor Filesystem `DATA/ride_paths/<rideId>.json`
+  (`{v:1, path:[[lat,lon]..](소수 5자리), pathT:[ms..]}`, iOS=Documents, Android=내부 files).
+- `D.rides[]`에는 요약 + `geo:{s:[lat,lon,t], e:[lat,lon,t], dw:[[lat,lon,t]..]}` + `hasPath/pathPts/pathLite`만.
+  "다녀온 곳"(`_findUnconfirmedVisitedPoints`, `_computeVisitedPlaces`)은 `_rideGeo(r)`만 쓰고 파일을 읽지 않음.
+- 경로가 필요하면 `getRidePath(r)`(Promise, `_ridePathCache` 캐시). 새 경로 사용처를 만들 때 `r.path` 직접 참조 금지.
+- 앱 시작 2초 뒤 `migrateRidePaths()`(기록 안에 남은 경로 → 파일, 쓰기 성공 후에만 제거) → `compactOldRidePaths()`
+  (하루 1회, `RIDE_PATH_FULL_DAYS`=180일 지난 경로를 ≤150점으로 간략화).
+- 백업 내보내기는 `_ridesForExport()`로 전체 경로 포함, 가져오기 후 `migrateRidePaths()`, 기록 삭제·초기화 시 파일도 삭제.
+- `stopRiding()`은 저장·요약을 각각 try/catch, 메모리 상태가 비면 `mg2-ride-progress`로 재구성. 진단은
+  iOS 디버그 빌드 `RideDebugLog`(`Library/Application Support/gpslog/`, JS는 `_rideDbgNative()`로 같은 파일에 기록).
+  iOS 앱 데이터는 디버그 빌드만 `xcrun devicectl device copy from --domain-type appDataContainer`로 꺼낼 수 있음.
+
 ## 주행 조건 지표 수집 (가혹 조건 판정 1단계, RidingService.java) — 2026-09-28
 
 > 도심 가다 서다·짧은 주행 등 "가혹 조건"을 GPS로 판정해 정비 주기(오일/브레이크패드)에
