@@ -34,5 +34,6 @@ setGlobalOptions({ maxInstances: 10 });
 Object.assign(exports, require('./ridemate-notify'));
 Object.assign(exports, require('./brandNews'));
 Object.assign(exports, require('./fuelPrice'));
+Object.assign(exports, require('./fxRates'));
 Object.assign(exports, require('./visitedPlacePoi'));
 Object.assign(exports, require('./getAppReviews'));
