@@ -54,3 +54,6 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MOTO_GARAGE }}
           projectId: moto-garage-8da30
           channelId: live
+          # 15.34.1부터 서비스계정에 serviceusage.services.get 권한을 요구해 403으로 실패(2026-10-21~).
+          # 서비스계정에 'Service Usage Consumer' 역할을 주면 이 고정을 풀어도 됨.
+          firebaseToolsVersion: '15.34.0'
