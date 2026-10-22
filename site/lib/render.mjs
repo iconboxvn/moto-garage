@@ -5,8 +5,11 @@ import { languageRoutingScript } from './languageRouting.mjs';
 
 export const SITE_ORIGIN = 'https://ridemate.iconbox.com';
 export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.iconbox.motogarage';
-// 국가 코드 없는 주소 — 방문자의 App Store 국가로 자동 연결됨
-export const APP_STORE_URL = 'https://apps.apple.com/app/id6822284984';
+// 앱이 VN·KR 스토어에만 출시돼 국가 코드 없는 주소(미국 스토어로 감)는 404 — 언어별 스토어로 연결
+export const APP_STORE_COUNTRIES = { ko: 'kr', en: 'vn', vn: 'vn' };
+export function appStoreUrl(lang) {
+  return `https://apps.apple.com/${APP_STORE_COUNTRIES[lang] || 'vn'}/app/id6822284984`;
+}
 export const LANGS = ['ko', 'en', 'vn'];
 export const HREFLANG = { ko: 'ko', en: 'en', vn: 'vi' };
 
@@ -135,7 +138,7 @@ ${o.headExtra || ''}
     <nav class="site-nav" aria-label="${esc(t.navLabel)}">
       <a href="${navUrl('/')}"${o.activeNav === 'home' ? ' aria-current="page"' : ''}>${esc(t.navHome)}</a>
       <a href="${navUrl('/news')}"${o.activeNav === 'news' ? ' aria-current="page"' : ''}>${esc(t.navNews)}</a>
-      <a class="nav-cta" href="${esc(PLAY_URL)}" data-ios-href="${esc(APP_STORE_URL)}" target="_blank" rel="noopener">${esc(t.navDownload)}</a>
+      <a class="nav-cta" href="${esc(PLAY_URL)}" data-ios-href="${esc(appStoreUrl(lang))}" target="_blank" rel="noopener">${esc(t.navDownload)}</a>
     </nav>
     <div class="lang-switch" aria-label="Language">${langSwitch}</div>
   </div>
@@ -155,7 +158,7 @@ ${body}
       <a href="/privacy_policy${lang === 'ko' ? '' : '_' + lang}">${esc(t.privacy)}</a>
       <a href="/terms_of_service">${esc(t.terms)}</a>
       <a href="${esc(PLAY_URL)}" target="_blank" rel="noopener">Google Play</a>
-      <a href="${esc(APP_STORE_URL)}" target="_blank" rel="noopener">App Store</a>
+      <a href="${esc(appStoreUrl(lang))}" target="_blank" rel="noopener">App Store</a>
     </nav>
   </div>
   <div class="wrap footer-legal">

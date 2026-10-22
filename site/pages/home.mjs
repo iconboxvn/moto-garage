@@ -1,4 +1,4 @@
-import { layout, esc, localizedPath, absUrl, SITE_ORIGIN, PLAY_URL, APP_STORE_URL } from '../lib/render.mjs';
+import { layout, esc, localizedPath, absUrl, SITE_ORIGIN, PLAY_URL, appStoreUrl } from '../lib/render.mjs';
 import { articleCard, downloadCta } from '../lib/components.mjs';
 
 /**
@@ -32,7 +32,7 @@ export function renderHome({ lang, t, latestNews, shots: shotList }) {
     applicationCategory: 'AutoAndVehiclesApplication',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     url: absUrl('/', lang),
-    downloadUrl: [PLAY_URL, APP_STORE_URL],
+    downloadUrl: [PLAY_URL, appStoreUrl(lang)],
     description: t.metaHomeDesc,
   });
 
@@ -43,7 +43,7 @@ export function renderHome({ lang, t, latestNews, shots: shotList }) {
       <p class="kicker">${esc(t.heroKicker)}</p>
       <h1>${t.heroTitle}</h1>
       <p class="hero-sub">${esc(t.heroSub)}</p>
-      ${downloadCta(t, { withQr: true, variant: 'hero' })}
+      ${downloadCta(t, { lang, withQr: true, variant: 'hero' })}
       <a class="link-arrow" href="${esc(localizedPath('/news', lang))}">${esc(t.heroCtaNews)} →</a>
     </div>
     <div class="hero-shot">
@@ -93,7 +93,7 @@ ${newsCards}
   <div class="wrap bottom-cta-inner">
     <h2>${esc(t.bottomCtaTitle)}</h2>
     <p>${esc(t.bottomCtaSub)}</p>
-    ${downloadCta(t, { withQr: false, variant: 'bottom' })}
+    ${downloadCta(t, { lang, withQr: false, variant: 'bottom' })}
   </div>
 </section>
 `;

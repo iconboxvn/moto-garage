@@ -15,7 +15,7 @@ import QRCode from 'qrcode';
 
 import { fetchCollection } from './lib/firestore.mjs';
 import {
-  LANGS, setBuiltLangs, setCssVersion, localizedPath, absUrl, SITE_ORIGIN, PLAY_URL, APP_STORE_URL, esc, isoDate,
+  LANGS, setBuiltLangs, setCssVersion, localizedPath, absUrl, SITE_ORIGIN, PLAY_URL, APP_STORE_COUNTRIES, appStoreUrl, esc, isoDate,
 } from './lib/render.mjs';
 import { articleSlug, brandSlug } from './lib/slug.mjs';
 import STRINGS, { CATEGORY_ORDER, CATEGORY_LABEL, brandLabel } from './content/strings.mjs';
@@ -193,7 +193,8 @@ async function main() {
   if (!(await copyIfExists(path.join(STATIC, 'og-default.png'), path.join(DIST, 'assets', 'og-default.png')))) {
     await copyIfExists(path.join(REPO, 'landing/helmet.png'), path.join(DIST, 'assets', 'og-default.png'));
   }
-  for (const [name, url] of [['qr-play.png', PLAY_URL], ['qr-appstore.png', APP_STORE_URL]]) {
+  for (const [name, url] of [['qr-play.png', PLAY_URL],
+    ...LANGS.map((l) => [`qr-appstore-${APP_STORE_COUNTRIES[l]}.png`, appStoreUrl(l)])]) {
     await QRCode.toFile(path.join(DIST, 'assets', name), url, {
       margin: 1, width: 224, color: { dark: '#0c0c0d', light: '#ffffff' },
     });

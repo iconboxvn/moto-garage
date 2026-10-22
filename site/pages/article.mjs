@@ -63,7 +63,7 @@ ${related.map((d) => articleCard(d, lang, t)).join('\n')}
       ${doc.sourceUrl ? `<a href="${esc(doc.sourceUrl)}" target="_blank" rel="nofollow noopener">${esc(t.readOriginal)} ↗</a>` : ''}
     </div>
     <div class="article-cta">
-      ${downloadCta(t, { withQr: false, variant: 'article' })}
+      ${downloadCta(t, { lang, withQr: false, variant: 'article' })}
     </div>
   </div>
 </article>

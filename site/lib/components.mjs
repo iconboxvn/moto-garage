@@ -1,7 +1,7 @@
 /**
  * 재사용 UI 조각: 소식 카드, 다운로드 CTA, 카테고리 배지.
  */
-import { esc, localizedPath, fmtDate, PLAY_URL, APP_STORE_URL } from './render.mjs';
+import { esc, localizedPath, fmtDate, PLAY_URL, APP_STORE_COUNTRIES, appStoreUrl } from './render.mjs';
 import { articleSlug } from './slug.mjs';
 import { displaySourceName } from './sourceName.mjs';
 import { CATEGORY_LABEL } from '../content/strings.mjs';
@@ -42,7 +42,7 @@ export function articleCard(doc, lang, t) {
 /**
  * 다운로드 CTA. withQr=true면 데스크톱에서 QR 노출.
  */
-export function downloadCta(t, { withQr = false, variant = 'default' } = {}) {
+export function downloadCta(t, { lang, withQr = false, variant = 'default' } = {}) {
   const qr = withQr
     ? `<div class="qr-box">
     <div class="qr-pair">
@@ -51,7 +51,7 @@ export function downloadCta(t, { withQr = false, variant = 'default' } = {}) {
         <figcaption>Google Play</figcaption>
       </figure>
       <figure>
-        <img src="/assets/qr-appstore.png" width="112" height="112" alt="App Store QR" loading="lazy">
+        <img src="/assets/qr-appstore-${esc(APP_STORE_COUNTRIES[lang] || 'vn')}.png" width="112" height="112" alt="App Store QR" loading="lazy">
         <figcaption>App Store</figcaption>
       </figure>
     </div>
@@ -63,7 +63,7 @@ export function downloadCta(t, { withQr = false, variant = 'default' } = {}) {
     <span class="btn-play-sub">Google Play</span>
     <span class="btn-play-main">${esc(t.heroCtaPrimary)}</span>
   </a>
-  <a class="btn btn-play btn-appstore" href="${esc(APP_STORE_URL)}" target="_blank" rel="noopener">
+  <a class="btn btn-play btn-appstore" href="${esc(appStoreUrl(lang))}" target="_blank" rel="noopener">
     <span class="btn-play-sub">App Store</span>
     <span class="btn-play-main">${esc(t.heroCtaAppStore)}</span>
   </a>
