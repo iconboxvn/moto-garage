@@ -5,6 +5,8 @@ import { languageRoutingScript } from './languageRouting.mjs';
 
 export const SITE_ORIGIN = 'https://ridemate.iconbox.com';
 export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.iconbox.motogarage';
+// 국가 코드 없는 주소 — 방문자의 App Store 국가로 자동 연결됨
+export const APP_STORE_URL = 'https://apps.apple.com/app/id6822284984';
 export const LANGS = ['ko', 'en', 'vn'];
 export const HREFLANG = { ko: 'ko', en: 'en', vn: 'vi' };
 
@@ -133,7 +135,7 @@ ${o.headExtra || ''}
     <nav class="site-nav" aria-label="${esc(t.navLabel)}">
       <a href="${navUrl('/')}"${o.activeNav === 'home' ? ' aria-current="page"' : ''}>${esc(t.navHome)}</a>
       <a href="${navUrl('/news')}"${o.activeNav === 'news' ? ' aria-current="page"' : ''}>${esc(t.navNews)}</a>
-      <a class="nav-cta" href="${esc(PLAY_URL)}" target="_blank" rel="noopener">${esc(t.navDownload)}</a>
+      <a class="nav-cta" href="${esc(PLAY_URL)}" data-ios-href="${esc(APP_STORE_URL)}" target="_blank" rel="noopener">${esc(t.navDownload)}</a>
     </nav>
     <div class="lang-switch" aria-label="Language">${langSwitch}</div>
   </div>
@@ -153,6 +155,7 @@ ${body}
       <a href="/privacy_policy${lang === 'ko' ? '' : '_' + lang}">${esc(t.privacy)}</a>
       <a href="/terms_of_service">${esc(t.terms)}</a>
       <a href="${esc(PLAY_URL)}" target="_blank" rel="noopener">Google Play</a>
+      <a href="${esc(APP_STORE_URL)}" target="_blank" rel="noopener">App Store</a>
     </nav>
   </div>
   <div class="wrap footer-legal">
@@ -160,6 +163,10 @@ ${body}
     <span>${esc(t.madeBy)} <a href="https://iconbox.com" target="_blank" rel="noopener">iconbox.com</a></span>
   </div>
 </footer>
+<script>
+// iPhone/iPad에서는 "앱 받기" 버튼을 App Store로 (iPadOS는 Mac UA라 터치 여부로 구분)
+(function(){var ua=navigator.userAgent;if(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1)){document.querySelectorAll('[data-ios-href]').forEach(function(a){a.href=a.getAttribute('data-ios-href');});}})();
+</script>
 </body>
 </html>`;
 }

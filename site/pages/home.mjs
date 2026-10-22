@@ -1,4 +1,4 @@
-import { layout, esc, localizedPath, absUrl, SITE_ORIGIN, PLAY_URL } from '../lib/render.mjs';
+import { layout, esc, localizedPath, absUrl, SITE_ORIGIN, PLAY_URL, APP_STORE_URL } from '../lib/render.mjs';
 import { articleCard, downloadCta } from '../lib/components.mjs';
 
 /**
@@ -28,11 +28,11 @@ export function renderHome({ lang, t, latestNews, shots: shotList }) {
     '@context': 'https://schema.org',
     '@type': 'MobileApplication',
     name: 'Ridemate',
-    operatingSystem: 'Android',
+    operatingSystem: 'Android, iOS',
     applicationCategory: 'AutoAndVehiclesApplication',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     url: absUrl('/', lang),
-    downloadUrl: PLAY_URL,
+    downloadUrl: [PLAY_URL, APP_STORE_URL],
     description: t.metaHomeDesc,
   });
 
